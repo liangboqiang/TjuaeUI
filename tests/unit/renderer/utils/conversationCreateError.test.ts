@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -103,11 +103,11 @@ describe('conversationCreateError', () => {
 
   it('extracts backend payloads from stringified BackendHttpError messages', () => {
     const error =
-      'Backend POST /api/teams failed (400): {"success":false,"error":"Workspace path is unavailable: /Users/zhoukai/Documents/Archive . Make sure the selected workspace path exists and is accessible.","code":"WORKSPACE_PATH_UNAVAILABLE","details":{"workspace_path":"/Users/zhoukai/Documents/Archive ","operation":"create"}}';
+      'Backend POST /api/teams failed (400): {"success":false,"error":"Workspace path is unavailable: /Users/developer/Documents/Archive . Make sure the selected workspace path exists and is accessible.","code":"WORKSPACE_PATH_UNAVAILABLE","details":{"workspace_path":"/Users/developer/Documents/Archive ","operation":"create"}}';
 
     expect(normalizeConversationCreateErrorCode(error)).toBe('WORKSPACE_PATH_UNAVAILABLE');
     expect(getConversationCreateErrorMessage(error, t)).toBe(
-      'The selected workspace path is unavailable. Make sure the workspace path "/Users/zhoukai/Documents/Archive " exists and is accessible.'
+      'The selected workspace path is unavailable. Make sure the workspace path "/Users/developer/Documents/Archive " exists and is accessible.'
     );
   });
 });

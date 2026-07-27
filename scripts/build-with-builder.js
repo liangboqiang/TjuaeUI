@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Simplified build script for AionUi
- * Coordinates electron-vite (bundling) and electron-builder (packaging)
+ * TjuaeUI 统一构建脚本。
+ * 协调 electron-vite 打包与 electron-builder 分发包生成。
  *
- * Features:
- * - Incremental builds: use --skip-vite to skip Vite compilation if out/ exists
- * - Skip native rebuild: use --skip-native to skip native module rebuilding
- * - Packaging only: use --pack-only to skip electron-builder distributable creation
+ * 功能：
+ * - 增量构建：out/ 存在时可用 --skip-vite 跳过 Vite 编译
+ * - 跳过原生模块重建：--skip-native
+ * - 仅生成应用目录：--pack-only
  */
 
 const { execSync, spawnSync } = require('child_process');
@@ -26,7 +26,7 @@ const DMG_RETRY_DELAY_SEC = 30;
 
 // Incremental build: hash of source files to detect changes
 const INCREMENTAL_CACHE_FILE = 'out/.build-hash';
-const DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV = 'AIONUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION';
+const DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV = 'TJUAEUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION';
 
 function patchElectronBuilderNsisInstaller() {
   const rootDir = path.resolve(__dirname, '..');
@@ -54,14 +54,14 @@ function patchElectronBuilderNsisInstaller() {
     try {
       appBuilderDir = path.dirname(require.resolve('app-builder-lib/package.json'));
     } catch (error) {
-      console.warn(`Warning: app-builder-lib is not resolvable; skipping NSIS template patch: ${error.message}`);
+      console.warn(`警告：无法解析 app-builder-lib，已跳过 NSIS 模板补丁：${error.message}`);
       return;
     }
   }
 
   const installUtilPath = path.join(appBuilderDir, 'templates', 'nsis', 'include', 'installUtil.nsh');
   if (!fs.existsSync(installUtilPath)) {
-    console.warn(`Warning: electron-builder NSIS installUtil.nsh not found: ${installUtilPath}`);
+    console.warn(`警告：未找到 electron-builder NSIS installUtil.nsh：${installUtilPath}`);
     return;
   }
 
@@ -84,9 +84,7 @@ function patchElectronBuilderNsisInstaller() {
   if (patched.includes(retryPrompt)) {
     patched = patched.replace(retryPrompt, retryHandoff);
   } else if (!patched.includes(retryHandoff)) {
-    throw new Error(
-      'electron-builder NSIS uninstall retry prompt template changed; update patchElectronBuilderNsisInstaller.'
-    );
+    throw new Error('electron-builder NSIS 卸载重试提示模板已变化，请更新 patchElectronBuilderNsisInstaller。');
   }
 
   const oneMoreAttemptLabel = '  OneMoreAttempt:\n';
@@ -95,22 +93,20 @@ function patchElectronBuilderNsisInstaller() {
   }
 
   const copiedUninstallerExec = `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0`;
-  const copiedUninstallerExecWithLog = `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 --installer-log="$AionUiSessionLogPath" --installer-session="$AionUiSessionId" _?=$installationDir' $R0`;
+  const copiedUninstallerExecWithLog = `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 --installer-log="$TjuaeUISessionLogPath" --installer-session="$TjuaeUISessionId" _?=$installationDir' $R0`;
   if (patched.includes(copiedUninstallerExec)) {
     patched = patched.replace(copiedUninstallerExec, copiedUninstallerExecWithLog);
   } else if (
     patched.includes(
-      `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 --installer-log="$AionUiSessionLogPath" _?=$installationDir' $R0`
+      `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 --installer-log="$TjuaeUISessionLogPath" _?=$installationDir' $R0`
     )
   ) {
     patched = patched.replace(
-      `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 --installer-log="$AionUiSessionLogPath" _?=$installationDir' $R0`,
+      `ExecWait '"$uninstallerFileNameTemp" /S /KEEP_APP_DATA $0 --installer-log="$TjuaeUISessionLogPath" _?=$installationDir' $R0`,
       copiedUninstallerExecWithLog
     );
   } else if (!patched.includes(copiedUninstallerExecWithLog)) {
-    throw new Error(
-      'electron-builder copied-uninstaller ExecWait template changed; update patchElectronBuilderNsisInstaller.'
-    );
+    throw new Error('electron-builder 的复制卸载器 ExecWait 模板已变化，请更新 patchElectronBuilderNsisInstaller。');
   }
 
   const uninstallerCopySource = [
@@ -118,9 +114,9 @@ function patchElectronBuilderNsisInstaller() {
     '  !insertmacro copyFile "$uninstallerFileName" "$uninstallerFileNameTemp"',
   ].join('\n');
   const bundledUninstallerOverride = [
-    '  ${if} ${FileExists} "$PLUGINSDIR\\AionUi-fixed-uninstaller.exe"',
-    '    DetailPrint `AionUi-bundled-uninstaller override source.`',
-    '    StrCpy $uninstallerFileName "$PLUGINSDIR\\AionUi-fixed-uninstaller.exe"',
+    '  ${if} ${FileExists} "$PLUGINSDIR\\TjuaeUI-fixed-uninstaller.exe"',
+    '    DetailPrint `TjuaeUI-bundled-uninstaller override source.`',
+    '    StrCpy $uninstallerFileName "$PLUGINSDIR\\TjuaeUI-fixed-uninstaller.exe"',
     '  ${endIf}',
   ].join('\n');
   const bundledUninstallerCopySource = [
@@ -142,33 +138,29 @@ function patchElectronBuilderNsisInstaller() {
   } else if (patched.includes(uninstallerCopySource)) {
     patched = patched.replace(uninstallerCopySource, bundledUninstallerCopySource);
   } else {
-    throw new Error(
-      'electron-builder old-uninstaller copy template changed; update patchElectronBuilderNsisInstaller.'
-    );
+    throw new Error('electron-builder 的旧卸载器复制模板已变化，请更新 patchElectronBuilderNsisInstaller。');
   }
 
   const inPlaceUninstallerExec = `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 _?=$installationDir' $R0`;
-  const inPlaceUninstallerExecWithLog = `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 --installer-log="$AionUiSessionLogPath" --installer-session="$AionUiSessionId" _?=$installationDir' $R0`;
+  const inPlaceUninstallerExecWithLog = `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 --installer-log="$TjuaeUISessionLogPath" --installer-session="$TjuaeUISessionId" _?=$installationDir' $R0`;
   if (patched.includes(inPlaceUninstallerExec)) {
     patched = patched.replace(inPlaceUninstallerExec, inPlaceUninstallerExecWithLog);
   } else if (
     patched.includes(
-      `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 --installer-log="$AionUiSessionLogPath" _?=$installationDir' $R0`
+      `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 --installer-log="$TjuaeUISessionLogPath" _?=$installationDir' $R0`
     )
   ) {
     patched = patched.replace(
-      `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 --installer-log="$AionUiSessionLogPath" _?=$installationDir' $R0`,
+      `ExecWait '"$uninstallerFileName" /S /KEEP_APP_DATA $0 --installer-log="$TjuaeUISessionLogPath" _?=$installationDir' $R0`,
       inPlaceUninstallerExecWithLog
     );
   } else if (!patched.includes(inPlaceUninstallerExecWithLog)) {
-    throw new Error(
-      'electron-builder in-place uninstaller ExecWait template changed; update patchElectronBuilderNsisInstaller.'
-    );
+    throw new Error('electron-builder 的原位卸载器 ExecWait 模板已变化，请更新 patchElectronBuilderNsisInstaller。');
   }
 
   if (patched !== original) {
     fs.writeFileSync(installUtilPath, patched);
-    console.log('Patched electron-builder NSIS uninstall failure handoff.');
+    console.log('已修补 electron-builder NSIS 卸载失败交接流程。');
   }
 }
 
@@ -313,7 +305,7 @@ function validateRendererBuildOutput(rendererDir) {
   for (const htmlFile of htmlFiles) {
     const html = fs.readFileSync(htmlFile.fullPath, 'utf8');
     if (/src=["'][^"']*\.tsx(?:[?#][^"']*)?["']/.test(html)) {
-      problems.push(`Renderer build output is incomplete: ${htmlFile.relativePath} still references TypeScript source`);
+      problems.push(`渲染进程构建输出不完整：${htmlFile.relativePath} 仍引用 TypeScript 源码`);
     }
 
     const htmlDirRelative = path.dirname(htmlFile.relativePath);
@@ -325,19 +317,19 @@ function validateRendererBuildOutput(rendererDir) {
 
   const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
   if (!/<div\s+id=["']root["']/.test(indexHtml)) {
-    problems.push('Renderer build output is incomplete: index.html is missing #root');
+    problems.push('渲染进程构建输出不完整：index.html 缺少 #root');
   }
   if (!/<script\b[^>]*type=["']module["'][^>]*\bsrc=["']\.\/assets\/[^"']+\.js["']/.test(indexHtml)) {
-    problems.push('Renderer build output is incomplete: index.html has no bundled module script');
+    problems.push('渲染进程构建输出不完整：index.html 没有打包后的模块脚本');
   }
 
   if (assetRefs.size === 0) {
-    problems.push('Renderer build output is incomplete: no bundled renderer asset references found');
+    problems.push('渲染进程构建输出不完整：未找到打包后的渲染资源引用');
   }
 
   for (const ref of [...assetRefs].sort()) {
     if (!fs.existsSync(path.join(rendererDir, ref))) {
-      problems.push(`Renderer build output is incomplete: missing referenced asset ${ref}`);
+      problems.push(`渲染进程构建输出不完整：缺少引用的资源 ${ref}`);
     }
   }
 
@@ -350,7 +342,7 @@ function validateViteBuildOutput() {
 
   for (const relPath of ['main/index.js', 'preload/index.js']) {
     if (!fs.existsSync(path.join(outDir, relPath))) {
-      problems.push(`Vite build output is incomplete: missing out/${relPath}`);
+      problems.push(`Vite 构建输出不完整：缺少 out/${relPath}`);
     }
   }
 
@@ -369,14 +361,14 @@ function shouldSkipViteBuild(skipViteFlag, forceFlag) {
   const cachedHash = loadCachedHash();
 
   if (cachedHash && currentHash === cachedHash && viteBuildExists()) {
-    console.log('📦 Incremental build: Vite output unchanged, skipping compilation');
+    console.log('📦 增量构建：Vite 输出未变化，已跳过编译');
     return true;
   }
 
   if (cachedHash && currentHash === cachedHash) {
     const validation = validateViteBuildOutput();
     if (!validation.valid) {
-      console.warn('Incremental build cache matched but output is incomplete; rebuilding.');
+      console.warn('增量构建缓存匹配，但输出不完整；将重新构建。');
       for (const problem of validation.problems.slice(0, 5)) {
         console.warn(`   ${problem}`);
       }
@@ -399,11 +391,11 @@ function cleanupDiskImages() {
       { stdio: 'ignore' }
     );
     if (result.status !== 0) {
-      console.log(`   ℹ️  Disk image cleanup exit code: ${result.status}`);
+      console.log(`   ℹ️  磁盘镜像清理退出码：${result.status}`);
     }
     return result.status === 0;
   } catch (error) {
-    console.log(`   ℹ️  Disk image cleanup failed: ${error.message}`);
+    console.log(`   ℹ️  磁盘镜像清理失败：${error.message}`);
     return false;
   }
 }
@@ -441,7 +433,7 @@ function tryRemoveDir(targetDir) {
     });
     return true;
   } catch (error) {
-    console.log(`❌ Failed to remove ${targetDir}: ${error.message}`);
+    console.log(`❌ 无法删除 ${targetDir}：${error.message}`);
     return false;
   }
 }
@@ -471,21 +463,6 @@ function formatExecError(error) {
   return [error?.message, error?.stdout?.toString?.(), error?.stderr?.toString?.()].filter(Boolean).join('\n').trim();
 }
 
-function escapeNsisDefineValue(value) {
-  return String(value ?? '')
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '$\\"');
-}
-
-function writeGeneratedSentryDsnInclude(projectRoot) {
-  const generatedInclude = path.join(projectRoot, 'resources/windows/support/_sentry-dsn.generated.nsh');
-  fs.mkdirSync(path.dirname(generatedInclude), { recursive: true });
-  fs.writeFileSync(
-    generatedInclude,
-    `!define AIONUI_SENTRY_DSN "${escapeNsisDefineValue(process.env.SENTRY_DSN || '')}"\n`
-  );
-}
-
 function isValidPackageVersion(value) {
   return /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(
     value
@@ -498,27 +475,25 @@ function applyDebugAutoUpdateVersionOverride(packageJsonPath) {
     return () => {};
   }
   if (!isValidPackageVersion(debugAutoUpdateCurrentVersion)) {
-    throw new Error(`${DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV} must be a valid semver version`);
+    throw new Error(`${DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV} 必须是有效的语义化版本`);
   }
 
   const originalPackageJsonText = fs.readFileSync(packageJsonPath, 'utf8');
   const packageJson = JSON.parse(originalPackageJsonText);
   const originalPackageVersion = packageJson.version;
   if (originalPackageVersion === debugAutoUpdateCurrentVersion) {
-    console.log(`Debug auto-update build version already set to ${debugAutoUpdateCurrentVersion}`);
+    console.log(`调试自动更新构建版本已是 ${debugAutoUpdateCurrentVersion}`);
     return () => {};
   }
 
   packageJson.version = debugAutoUpdateCurrentVersion;
   fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-  console.log(
-    `Debug auto-update build version override: ${originalPackageVersion} -> ${debugAutoUpdateCurrentVersion}`
-  );
+  console.log(`调试自动更新构建版本覆盖：${originalPackageVersion} -> ${debugAutoUpdateCurrentVersion}`);
 
   return () => {
     if (fs.readFileSync(packageJsonPath, 'utf8') !== originalPackageJsonText) {
       fs.writeFileSync(packageJsonPath, originalPackageJsonText);
-      console.log(`Restored package.json version to ${originalPackageVersion}`);
+      console.log(`已将 package.json 版本恢复为 ${originalPackageVersion}`);
     }
   };
 }
@@ -527,7 +502,7 @@ function applyDebugAutoUpdateVersionOverride(packageJsonPath) {
 // This preserves DMG styling and still emits the zip required by MacUpdater.
 function createMacArtifactsWithPrepackaged(appDir, targetArch) {
   const appName = fs.readdirSync(appDir).find((f) => f.endsWith('.app'));
-  if (!appName) throw new Error(`No .app found in ${appDir}`);
+  if (!appName) throw new Error(`${appDir} 中未找到 .app`);
   const appPath = path.join(appDir, appName);
 
   execSync(
@@ -552,23 +527,23 @@ function buildWithDmgRetry(cmd, targetArch) {
     if (!appDir || dmgExists(outDir)) throw error;
 
     // .app exists but no .dmg → DMG creation failed
-    console.log('\n🔄 Build failed during DMG creation (.app exists, .dmg missing)');
-    console.log('   Retrying macOS distributable creation with --prepackaged...');
+    console.log('\n🔄 创建 DMG 时构建失败（存在 .app，但缺少 .dmg）');
+    console.log('   正在使用 --prepackaged 重试创建 macOS 分发包……');
 
     for (let attempt = 1; attempt <= DMG_RETRY_MAX; attempt++) {
       cleanupDiskImages();
       spawnSync('sleep', [String(DMG_RETRY_DELAY_SEC)]);
 
       try {
-        console.log(`\n📀 DMG retry attempt ${attempt}/${DMG_RETRY_MAX}...`);
+        console.log(`\n📀 第 ${attempt}/${DMG_RETRY_MAX} 次重试创建 DMG……`);
         createMacArtifactsWithPrepackaged(appDir, targetArch);
-        console.log('✅ macOS distributables created successfully on retry');
+        console.log('✅ 重试后已成功创建 macOS 分发包');
         return;
       } catch (retryError) {
-        console.log(`   ⚠️  DMG retry ${attempt}/${DMG_RETRY_MAX} failed`);
+        console.log(`   ⚠️  第 ${attempt}/${DMG_RETRY_MAX} 次 DMG 重试失败`);
         cleanupDiskImages();
         if (attempt === DMG_RETRY_MAX) {
-          console.log(`   ❌ DMG creation failed after ${DMG_RETRY_MAX} retries`);
+          console.log(`   ❌ 重试 ${DMG_RETRY_MAX} 次后仍无法创建 DMG`);
           throw retryError;
         }
       }
@@ -582,7 +557,7 @@ function cleanupWindowsPackOutput() {
   if (!fs.existsSync(outDir)) return;
 
   const removed = [];
-  const winUnpackedDirRe = /^win(?:-[a-z0-9]+)?-unpacked$/i;
+  const winUnpackedDirRe = /^win(?:-[a-z0-9]+)?-unpacked(?:\.tmp)?$/i;
   const winArtifactFileRe = /-win-[^.]+\.(?:exe|msi|zip|7z)$/i;
 
   for (const entry of fs.readdirSync(outDir, { withFileTypes: true })) {
@@ -601,7 +576,7 @@ function cleanupWindowsPackOutput() {
   }
 
   if (removed.length > 0) {
-    console.log(`🧹 Cleaned stale Windows outputs: ${removed.join(', ')}`);
+    console.log(`🧹 已清理过期 Windows 输出：${removed.join(', ')}`);
   }
 }
 
@@ -671,7 +646,7 @@ if (archArgs.length > 1) {
   // Multiple unique architectures specified - let electron-builder handle it
   multiArch = true;
   targetArch = archArgs[0]; // Use first arch for webpack build
-  console.log(`🔨 Multi-architecture build detected: ${archArgs.join(', ')}`);
+  console.log(`🔨 检测到多架构构建：${archArgs.join(', ')}`);
 } else if (args[0] === 'auto') {
   if (archArgs.length === 1) {
     targetArch = archArgs[0];
@@ -690,12 +665,12 @@ if (archArgs.length > 1) {
   targetArch = archArgs[0] || buildMachineArch;
 }
 
-console.log(`🔨 Building for architecture: ${targetArch}`);
-console.log(`📋 Builder arguments: ${builderArgs || '(none)'}`);
-if (skipVite) console.log('⚡ --skip-vite: Will skip Vite compilation if output exists');
-if (skipNative) console.log('⚡ --skip-native: Will skip native module rebuilding');
-if (packOnly) console.log('⚡ --pack-only: Will skip electron-builder distributable creation');
-if (forceBuild) console.log('⚡ --force: Force full rebuild');
+console.log(`🔨 构建目标架构：${targetArch}`);
+console.log(`📋 构建器参数：${builderArgs || '（无）'}`);
+if (skipVite) console.log('⚡ --skip-vite：输出存在时跳过 Vite 编译');
+if (skipNative) console.log('⚡ --skip-native：跳过原生模块重建');
+if (packOnly) console.log('⚡ --pack-only：跳过 electron-builder 分发包生成');
+if (forceBuild) console.log('⚡ --force：强制完整重建');
 
 const packageJsonPath = path.resolve(__dirname, '../package.json');
 let restorePackageVersionOverride = () => {};
@@ -716,7 +691,7 @@ try {
 
   if (!skipViteBuild) {
     // Run electron-vite to build all bundles (main + preload + renderer)
-    console.log(`📦 Building ${targetArch}...`);
+    console.log(`📦 正在构建 ${targetArch}……`);
     execSync(`bunx electron-vite build --config packages/desktop/electron.vite.config.ts`, {
       stdio: 'inherit',
       shell: process.platform === 'win32',
@@ -729,7 +704,7 @@ try {
     // Save hash after successful build
     saveCurrentHash(computeSourceHash());
   } else {
-    console.log('📦 Using cached Vite build output');
+    console.log('📦 正在使用缓存的 Vite 构建输出');
   }
 
   // Re-bundle builtin MCP server as a fully self-contained CJS bundle so it can
@@ -738,7 +713,7 @@ try {
   // which the standalone node process cannot resolve from inside app.asar.unpacked.
   // Uses a dedicated script (build-mcp-servers.js) to avoid shell-quoting issues
   // with special characters in esbuild --define values.
-  console.log('📦 Bundling builtin MCP servers (self-contained)...');
+  console.log('📦 正在打包自包含的内置 MCP 服务……');
   execSync(`node "${path.join(__dirname, 'build-mcp-servers.js')}"`, {
     stdio: 'inherit',
     shell: process.platform === 'win32',
@@ -747,111 +722,94 @@ try {
   // 3. Verify electron-vite output
   const outDir = path.resolve(__dirname, '../out');
   if (!fs.existsSync(outDir)) {
-    throw new Error('electron-vite did not generate out/ directory');
+    throw new Error('electron-vite 未生成 out/ 目录');
   }
 
   // 4. Validate output structure. This must reject source-only renderer shells;
   // otherwise local fast builds can package a white-screen app.
   const viteOutputValidation = validateViteBuildOutput();
   if (!viteOutputValidation.valid) {
-    throw new Error(`Vite build output is incomplete:\n${viteOutputValidation.problems.join('\n')}`);
+    throw new Error(`Vite 构建输出不完整：\n${viteOutputValidation.problems.join('\n')}`);
   }
 
   // If --pack-only, skip electron-builder distributable creation
   if (packOnly) {
-    console.log('✅ Package completed! (skipped distributable creation)');
+    console.log('✅ 应用目录已生成（已跳过分发包创建）');
     return;
   }
 
-  // 5. Prepare aioncore binary (for packaged runtime usage)
-  const { prepareAioncore } = require('../packages/shared-scripts/src/prepare-aioncore.js');
-  const { resolveAioncoreVersion } = require('./resolveAioncoreVersion.js');
+  // 5. Prepare tjuaecore binary (for packaged runtime usage)
+  const { prepareTjuaeCore } = require('../packages/shared-scripts/src/prepare-tjuaecore.js');
+  const { resolveTjuaeCoreVersion } = require('./resolveTjuaeCoreVersion.js');
   const projectRoot = path.resolve(__dirname, '..');
-  writeGeneratedSentryDsnInclude(projectRoot);
-  prepareAioncore({
+  prepareTjuaeCore({
     projectRoot,
     platform: process.platform,
     arch: targetArch,
-    version: resolveAioncoreVersion(projectRoot),
+    version: resolveTjuaeCoreVersion(projectRoot),
   });
 
   // 6. Prepare hub resources (index.json + extension zips for offline fallback)
   execSync('node scripts/prepareHubResources.js', { stdio: 'inherit', env: process.env });
 
-  // 6. 运行 electron-builder 生成分发包（DMG/ZIP/EXE等）
-  // Run electron-builder to create distributables (DMG/ZIP/EXE, etc.)
-  // Always disable auto-publish to avoid electron-builder's implicit tag-based publishing
-  // Publishing is handled by a separate release job in CI
+  // 6. 运行 electron-builder 生成分发包；始终禁用隐式发布，发布由 CI 独立任务负责。
   const publishArg = '--publish=never';
 
-  // Set compression level based on environment
-  // 7za -mx accepts numeric values: 0 (store) to 9 (ultra)
-  // CI builds use 9 (maximum) for smallest size
-  // Local builds use 7 (normal) for 30-50% faster ASAR packing
+  // 按环境设置压缩级别：CI 使用 9，本地使用 7 以加快 ASAR 打包。
   const isCI = process.env.CI === 'true';
   if (!process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL) {
     process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL = isCI ? '9' : '7';
   }
-  console.log(
-    `📦 Compression level: ${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL} (${isCI ? 'CI build' : 'local build'})`
-  );
+  console.log(`📦 压缩级别：${process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL}（${isCI ? 'CI 构建' : '本地构建'}）`);
 
-  // 根据模式添加架构标志
-  // Add arch flags based on mode
+  // 根据模式添加架构标志。
   let archFlag = '';
   if (multiArch) {
-    // 多架构模式：将所有架构标志传递给 electron-builder
-    // Multi-arch mode: pass all arch flags to electron-builder
+    // 多架构模式：将全部架构标志传递给 electron-builder。
     archFlag = archArgs.map((arch) => `--${arch}`).join(' ');
-    console.log(`🚀 Packaging for multiple architectures: ${archArgs.join(', ')}...`);
+    console.log(`🚀 正在为多个架构打包：${archArgs.join(', ')}……`);
   } else {
-    // 单架构模式：使用确定的目标架构
-    // Single arch mode: use the determined target arch
+    // 单架构模式：使用已确定的目标架构。
     archFlag = `--${targetArch}`;
-    console.log(`🚀 Creating distributables for ${targetArch}...`);
+    console.log(`🚀 正在创建 ${targetArch} 分发包……`);
   }
 
-  // 为 Windows 构建添加架构检测脚本
-  // Add architecture detection scripts for Windows builds
-  // 使用 .onVerifyInstDir 避免与 electron-builder 冲突
-  // Use .onVerifyInstDir to avoid conflicts with electron-builder
+  // 为 Windows 构建添加架构检测脚本，使用 .onVerifyInstDir 避免冲突。
   let nsisInclude = '';
   if (builderArgs.includes('--win') || builderArgs.includes('--all')) {
     if (!multiArch) {
-      // 单架构构建：添加对应架构的检测脚本
-      // Single-arch build: Add architecture-specific detection script
+      // 单架构构建：添加对应架构的检测脚本。
       if (targetArch === 'arm64') {
         const arm64Script = 'resources/windows/windows-installer-arm64.nsh';
         if (fs.existsSync(path.resolve(__dirname, '..', arm64Script))) {
           nsisInclude += ` --config.nsis.include="${arm64Script}"`;
-          console.log(`📋 Including Windows ARM64 architecture check script`);
+          console.log('📋 正在加入 Windows ARM64 架构检查脚本');
         }
         nsisInclude += ' --config.nsis.useZip=true';
-        console.log('📋 Using ZIP payload for Windows ARM64 NSIS installer');
+        console.log('📋 Windows ARM64 NSIS 安装器使用 ZIP 载荷');
       } else if (targetArch === 'x64') {
         const x64Script = 'resources/windows/windows-installer-x64.nsh';
         if (fs.existsSync(path.resolve(__dirname, '..', x64Script))) {
           nsisInclude += ` --config.nsis.include="${x64Script}"`;
-          console.log(`📋 Including Windows x64 architecture check script`);
+          console.log('📋 正在加入 Windows x64 架构检查脚本');
         }
       }
     }
-    // 多架构构建：暂不支持架构检测脚本
-    // Multi-arch builds: Architecture detection not supported yet
+    // 多架构构建暂不支持架构检测脚本。
   }
 
   if (process.platform === 'win32' && builderArgs.includes('--win')) {
     const winUnpackedDir = path.join(outDir, 'win-unpacked');
     let cleaned = tryRemoveDir(winUnpackedDir);
     if (!cleaned) {
-      const aionRunning = isProcessRunningWindows('AionUi.exe');
+      const tjuaeRunning = isProcessRunningWindows('TjuaeUI.exe');
       const electronRunning = isProcessRunningWindows('electron.exe');
-      if (aionRunning || electronRunning) {
-        console.log('⚠️  Detected running AionUi/Electron process. Attempting to close...');
-        killWindowsProcesses(['AionUi.exe', 'electron.exe']);
+      if (tjuaeRunning || electronRunning) {
+        console.log('⚠️  检测到正在运行的 TjuaeUI/Electron 进程，正在尝试关闭……');
+        killWindowsProcesses(['TjuaeUI.exe', 'electron.exe']);
         cleaned = tryRemoveDir(winUnpackedDir);
         if (!cleaned) {
-          console.log('⚠️  Directory still locked. Please close any running AionUi/Electron processes and retry.');
+          console.log('⚠️  目录仍被锁定，请关闭所有 TjuaeUI/Electron 进程后重试。');
         }
       }
     }
@@ -867,7 +825,7 @@ try {
   try {
     buildWithDmgRetry(builderCommand, targetArch);
   } catch (error) {
-    const winExePath = path.join(outDir, 'win-unpacked', 'AionUi.exe');
+    const winExePath = path.join(outDir, 'win-unpacked', 'TjuaeUI.exe');
     const firstError = formatExecError(error);
     const canRetryWithoutExecutableEdit =
       process.platform === 'win32' && isWindowsBuild && process.env.CI !== 'true' && fs.existsSync(winExePath);
@@ -876,9 +834,9 @@ try {
       throw error;
     }
 
-    console.log('⚠️  Windows local build failed after AionUi.exe was produced.');
+    console.log('⚠️  已生成 TjuaeUI.exe，但 Windows 本地构建随后失败。');
     if (firstError) {
-      console.log('   First failure summary:');
+      console.log('   首次失败摘要：');
       console.log(
         firstError
           .split(/\r?\n/)
@@ -887,9 +845,9 @@ try {
           .join('\n')
       );
     }
-    console.log('   Retrying local build with win.signAndEditExecutable=false...');
-    console.log('   This fallback is intended for transient rcedit / file-lock failures on developer machines.');
-    killWindowsProcesses(['AionUi.exe', 'electron.exe']);
+    console.log('   正在使用 win.signAndEditExecutable=false 重试本地构建……');
+    console.log('   此回退用于开发机上的临时 rcedit 或文件锁问题。');
+    killWindowsProcesses(['TjuaeUI.exe', 'electron.exe']);
     cleanupWindowsPackOutput();
 
     try {
@@ -898,26 +856,26 @@ try {
       const retryFailure = formatExecError(retryError);
       throw new Error(
         [
-          'Windows local retry with win.signAndEditExecutable=false also failed.',
-          'First failure:',
+          '使用 win.signAndEditExecutable=false 的 Windows 本地重试仍然失败。',
+          '首次失败：',
           firstError || String(error),
-          'Retry failure:',
+          '重试失败：',
           retryFailure || String(retryError),
         ].join('\n')
       );
     }
   }
 
-  console.log('✅ Build completed!');
+  console.log('✅ 构建完成！');
 } catch (error) {
   buildFailed = true;
-  console.error('❌ Build failed:', error.message);
+  console.error('❌ 构建失败：', error.message);
   process.exitCode = 1;
 } finally {
   try {
     restorePackageVersionOverride();
   } catch (restoreError) {
-    console.error('❌ Failed to restore package.json version:', restoreError.message);
+    console.error('❌ 无法恢复 package.json 版本：', restoreError.message);
     if (!buildFailed) {
       process.exitCode = 1;
     }

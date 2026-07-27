@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -31,7 +31,7 @@ export type LegacyDatabaseMigrationResult = {
 };
 
 export function resolveLegacyDatabasePath(dataDir = getDataPath()): string {
-  return path.join(dataDir, 'aionui.db');
+  return path.join(dataDir, 'tjuaeui.db');
 }
 
 function ensureSystemUser(db: ISqliteDriver): void {

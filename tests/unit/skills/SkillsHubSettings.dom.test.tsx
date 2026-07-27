@@ -1,7 +1,7 @@
 import React from 'react';
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
  * Unit tests for SkillsHubSettings component (SK3 in N4a).
@@ -335,9 +335,9 @@ describe('SkillsHubSettings', () => {
         source: 'builtin',
       },
       {
-        name: 'officecli',
+        name: 'document-tools',
         description: 'Official builtin skill.',
-        location: '/tmp/builtin-skills/officecli/SKILL.md',
+        location: '/tmp/builtin-skills/document-tools/SKILL.md',
         is_auto_inject: false,
         is_custom: false,
         source: 'builtin',
@@ -363,11 +363,11 @@ describe('SkillsHubSettings', () => {
     // Custom tab is active by default: shows the imported skill, not the builtin/auto ones.
     await waitFor(() => expect(screen.getByTestId('my-skill-card-sample-single')).toBeInTheDocument());
     expect(screen.queryByTestId('auto-skills-section')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('official-skill-card-officecli')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('official-skill-card-document-tools')).not.toBeInTheDocument();
 
     // Switch to the Official tab: official builtin list + auto-injected section appear.
     fireEvent.click(screen.getByTestId('settings-tab-official'));
-    expect(screen.getByTestId('official-skill-card-officecli')).toBeInTheDocument();
+    expect(screen.getByTestId('official-skill-card-document-tools')).toBeInTheDocument();
     expect(screen.getByTestId('auto-skills-section')).toBeInTheDocument();
     expect(screen.getByText('cron')).toBeInTheDocument();
     // cron-source skills are never listed.
@@ -379,9 +379,9 @@ describe('SkillsHubSettings', () => {
   it('renders the auto-injected skills hint without an Arco popup trigger', async () => {
     mocks.listAvailableSkills.mockResolvedValue([
       {
-        name: 'officecli',
-        description: 'Create, analyze, proofread, and modify Office documents.',
-        location: '/tmp/builtin-skills/auto-inject/officecli/SKILL.md',
+        name: 'document-tools',
+        description: 'Create, analyze, proofread, and modify documents.',
+        location: '/tmp/builtin-skills/auto-inject/document-tools/SKILL.md',
         is_auto_inject: true,
         is_custom: false,
         source: 'builtin',

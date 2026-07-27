@@ -1,119 +1,73 @@
-# Theme System 主题系统
+# 主题系统
 
-## Architecture Overview 架构概览
+## 架构概览
 
-The theme system separates light/dark mode from color schemes for better extensibility.
-主题系统将明暗模式与配色方案分离，以提供更好的扩展性。
+主题系统把明暗模式与配色变量分开，便于在不改变组件结构的前提下统一调整视觉风格。
 
-### Two Dimensions 两个维度
+当前实现包含两个维度：
 
-1. **Light/Dark Mode 明暗模式** (`theme`)
-   - Controlled by `useTheme` hook
-   - Values: `'light'` | `'dark'`
-   - Controls: `[data-theme]` attribute on `<html>` and `arco-theme` attribute on `<body>`
-   - 由 `useTheme` Hook 控制
-   - 取值：`'light'` | `'dark'`
-   - 控制：`<html>` 的 `[data-theme]` 属性和 `<body>` 的 `arco-theme` 属性
+1. **明暗模式**：由 `useTheme` 和 `ThemeContext` 管理，取值为 `'light'` 或 `'dark'`。运行时通过 `<html>` 的 `data-theme` 属性和 `<body>` 的 `arco-theme` 属性驱动自定义样式与 Arco Design 主题。
+2. **配色方案**：当前仅实现 `default`，由 `<html>` 的 `data-color-scheme="default"` 选择。项目目前没有面向用户的配色方案切换器。
 
-2. **Color Scheme 配色方案** (`colorScheme`)
-   - Controlled by `useColorScheme` hook
-   - Values: `'default'`
-   - Controls: `[data-color-scheme]` attribute on `<html>`
-   - 由 `useColorScheme` Hook 控制
-   - 取值：`'default'`
-   - 控制：`<html>` 的 `[data-color-scheme]` 属性
+## 文件结构
 
-### File Structure 文件结构
-
-```
+```text
 styles/themes/
-├── index.css                 # Entry point 入口文件
-├── base.css                  # Theme-independent base styles 主题无关的基础样式
-└── color-schemes/            # Color scheme definitions 配色方案定义
-    └── default.css           # Default color scheme (AOU brand) 默认配色方案
+├── index.css                    # 统一入口
+├── base.css                     # 与配色无关的布局、动画和全局修正
+└── default-color-scheme.css     # 默认配色的明暗变量
 ```
 
-## How to Add a New Color Scheme 如何添加新配色方案
+`index.css` 由全局样式入口引入，业务组件应优先使用 UnoCSS 语义类或这里定义的 CSS 变量。
 
-When you need to add a new color scheme in the future, follow these steps:
-当需要添加新配色方案时，请遵循以下步骤：
+## CSS 变量命名
 
-1. Create a new CSS file in `color-schemes/` directory (e.g., `blue.css`)
-   在 `color-schemes/` 目录下创建新的 CSS 文件（如 `blue.css`）
+### 品牌色阶
 
-2. Define CSS variables for both light and dark modes, following the structure in `default.css`
-   定义明暗两种模式的 CSS 变量，参考 `default.css` 的结构
+- `--aou-1` ～ `--aou-10`：由浅到深的品牌色阶。该命名已在大量样式中使用，迁移时必须统一替换，不能只改变量定义。
 
-3. Import the new file in `index.css`
-   在 `index.css` 中导入新文件
+### 背景色
 
-4. Update the `ColorScheme` type in `hooks/useColorScheme.ts`
-   更新 `hooks/useColorScheme.ts` 中的 `ColorScheme` 类型
+- `--bg-base`：主背景。
+- `--bg-1`、`--bg-2`、`--bg-3`：由浅到深的层级背景与分隔色。
+- `--bg-hover`：悬停状态。
+- `--bg-active`：激活或按下状态。
 
-5. Add UI selector option and translations
-   添加 UI 选择器选项和翻译
+### 文字色
 
-## CSS Variable Naming Convention CSS 变量命名规范
+- `--text-primary`：主要文字。
+- `--text-secondary`：次要文字。
+- `--text-disabled`：禁用文字。
 
-### Brand Colors 品牌色
+### 语义色
 
-- `--aou-1` to `--aou-10`: Brand color palette (1=lightest, 10=darkest)
-- `--aou-1` 到 `--aou-10`：品牌色调色板（1=最浅，10=最深）
+- `--primary`：主要操作。
+- `--success`：成功状态。
+- `--warning`：警告状态。
+- `--danger`：危险状态。
 
-### Background Colors 背景色
+### 品牌与组件色
 
-- `--bg-base`: Main background 主背景
-- `--bg-1`: Secondary background 次级背景
-- `--bg-2`: Tertiary background 三级背景
-- `--bg-3`: Border/divider 边框/分隔线
-- `--bg-hover`: Hover state 悬停状态
-- `--bg-active`: Active/pressed state 激活/按下状态
+- `--brand`、`--brand-light`、`--brand-hover`：品牌主色及交互状态。
+- `--message-user-bg`：用户消息背景。
+- `--message-tips-bg`：提示消息背景。
+- `--workspace-btn-bg`：工作区按钮背景。
 
-### Text Colors 文字色
+## 新增配色方案
 
-- `--text-primary`: Primary text 主要文字
-- `--text-secondary`: Secondary text 次要文字
-- `--text-disabled`: Disabled text 禁用文字
+当前没有动态配色选择器。若后续确需增加方案，应作为完整功能实现：
 
-### Semantic Colors 语义色
+1. 新建配色 CSS 文件，并同时定义浅色与暗色变量。
+2. 在 `index.css` 中导入该文件。
+3. 增加配色方案类型、持久化状态和 `<html data-color-scheme>` 同步逻辑。
+4. 增加设置界面选项及全部语言文案。
+5. 验证明暗模式、重启持久化和关键页面可读性。
 
-- `--primary`: Primary action color 主要操作色
-- `--success`: Success state 成功状态
-- `--warning`: Warning state 警告状态
-- `--danger`: Danger state 危险状态
+## 维护原则
 
-### Brand-specific Colors 品牌专用色
-
-- `--brand`: Main brand color 主品牌色
-- `--brand-light`: Light brand background 浅色品牌背景
-- `--brand-hover`: Brand hover state 品牌悬停状态
-
-### Component-specific Colors 组件专用色
-
-- `--message-user-bg`: User message background 用户消息背景
-- `--message-tips-bg`: Tips message background 提示消息背景
-- `--workspace-btn-bg`: Workspace button background 工作区按钮背景
-
-## Best Practices 最佳实践
-
-1. **Always define both light and dark variants** for each color scheme
-   每个配色方案都要定义浅色和暗色两个变体
-
-2. **Maintain consistent lightness progression** in brand color scales (1→10)
-   保持品牌色阶的明度递进一致性（1→10）
-
-3. **Test in both light and dark modes** before finalizing
-   在确定前测试浅色和暗色两种模式
-
-4. **Use semantic names** for component-specific colors
-   组件专用色使用语义化命名
-
-5. **Keep background colors neutral** (grays) to maintain readability
-   保持背景色中性（灰色系）以维持可读性
-
-## Current Status 当前状态
-
-- ✅ Infrastructure ready 基础架构就绪
-- ✅ Default color scheme implemented 默认配色方案已实现
-- ⏸️ Additional color schemes pending designer input 其他配色方案等待设计师输入
-- 💡 UI selector commented out, ready to enable 界面选择器已注释，可随时启用
+1. 每个配色方案必须同时提供浅色和暗色变量。
+2. 色阶应保持一致的明度递进。
+3. 组件优先使用语义化 UnoCSS 类；普通 CSS 使用 CSS 变量。
+4. 仅在样式值必须由运行时计算时使用 JSX 内联样式。
+5. 新增组件专用色时使用描述用途的语义名称。
+6. 改动后至少检查首页、会话、设置、弹窗及预览面板的明暗模式。

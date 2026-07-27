@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -186,10 +186,10 @@ describe('useGuidSend', () => {
     expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['todo-tracker']);
   });
 
-  it('forwards local skill overrides for generated Aion CLI assistants through assistant conversation overrides', async () => {
+  it('forwards local skill overrides for generated Tjuae CLI assistants through assistant conversation overrides', async () => {
     const deps = createDeps();
-    deps.selectedAssistantId = 'bare:aionrs';
-    deps.selectedAssistantBackend = 'aionrs';
+    deps.selectedAssistantId = 'bare:tjuaecli';
+    deps.selectedAssistantBackend = 'tjuaecli';
     deps.current_model = { provider_id: 'openai', model: 'gemini-2.5-pro', use_model: 'gemini-2.5-pro' } as never;
     deps.guidEnabledSkills = ['pdf-reader'];
     deps.guidDisabledBuiltinSkills = ['todo-tracker'];
@@ -203,16 +203,16 @@ describe('useGuidSend', () => {
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.type).toBeUndefined();
     expect(payload.model).toBe(deps.current_model);
-    expect(payload.assistant?.id).toBe('bare:aionrs');
+    expect(payload.assistant?.id).toBe('bare:tjuaecli');
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['pdf-reader']);
     expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['todo-tracker']);
     expect(payload.extra.session_mode).toBeUndefined();
   });
 
-  it('does not write legacy preset_assistant_id for generated Aion CLI assistant conversations', async () => {
+  it('does not write legacy preset_assistant_id for generated Tjuae CLI assistant conversations', async () => {
     const deps = createDeps();
-    deps.selectedAssistantId = 'bare:aionrs';
-    deps.selectedAssistantBackend = 'aionrs';
+    deps.selectedAssistantId = 'bare:tjuaecli';
+    deps.selectedAssistantBackend = 'tjuaecli';
     deps.current_model = { provider_id: 'openai', model: 'gemini-2.5-pro', use_model: 'gemini-2.5-pro' } as never;
 
     const { result } = renderHook(() => useGuidSend(deps));
@@ -222,7 +222,7 @@ describe('useGuidSend', () => {
     });
 
     const payload = createConversationInvokeMock.mock.calls[0][0];
-    expect(payload.assistant?.id).toBe('bare:aionrs');
+    expect(payload.assistant?.id).toBe('bare:tjuaecli');
     expect(payload.extra.preset_assistant_id).toBeUndefined();
   });
 

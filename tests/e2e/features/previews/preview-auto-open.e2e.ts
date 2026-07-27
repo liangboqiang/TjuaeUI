@@ -8,9 +8,8 @@
  *   4. renderer receives `workspaceOfficeWatch.fileAdded`
  *   5. PreviewPanel opens the matching tab automatically
  *
- * We assert tab creation only. The embedded office preview may still render an
- * install hint when `officecli` is unavailable, but the auto-open behavior must
- * still work.
+ * We assert tab creation only. The tab uses the safe document fallback while
+ * the toolbar provides the explicit system-open and download actions.
  */
 import fs from 'fs';
 import os from 'os';
@@ -232,7 +231,7 @@ test.describe('Preview auto-open for Office files', () => {
     test(`new .${ext} file auto-opens a preview tab`, async ({ page }) => {
       test.setTimeout(120_000);
 
-      const workspace = fs.mkdtempSync(path.join(os.tmpdir(), `aionui-e2e-office-auto-${ext}-`));
+      const workspace = fs.mkdtempSync(path.join(os.tmpdir(), `tjuaeui-e2e-office-auto-${ext}-`));
       const browserLogs: string[] = [];
       fs.writeFileSync(path.join(workspace, 'seed.txt'), 'seed');
       let conversationId: string | null = null;

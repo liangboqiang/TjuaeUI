@@ -60,7 +60,11 @@ describe('TeamChatEmptyState', () => {
     usePresetAssistantInfoMock.mockReturnValue({ info: null });
 
     render(
-      <TeamChatEmptyState conversation_id='conv-1' assistant_name='Assistant Runtime Name' assistant_backend='aionrs' />
+      <TeamChatEmptyState
+        conversation_id='conv-1'
+        assistant_name='Assistant Runtime Name'
+        assistant_backend='tjuaecli'
+      />
     );
 
     expect(screen.getByText('Assistant Runtime Name')).toBeInTheDocument();

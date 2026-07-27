@@ -1,6 +1,6 @@
 # 团队运行体验优化 · 技术设计
 
-配套 PRD：`team-runtime-experience.md`。本文面向实现，给出现状调研结论、架构决策、模块设计、关键代码骨架与分阶段落地。全部为渲染层改动，不改 aioncore 与团队数据结构；持久化走 `localStorage`。
+配套 PRD：`team-runtime-experience.md`。本文面向实现，给出现状调研结论、架构决策、模块设计、关键代码骨架与分阶段落地。全部为渲染层改动，不改 tjuaecore 与团队数据结构；持久化走 `localStorage`。
 
 代码位置基准：`packages/desktop/src/renderer/`（下称 `@renderer`）。
 
@@ -52,7 +52,7 @@ TeamTabsProvider (已存在，每团队一实例)
 ### 2.1 色板（`teamMemberColors.ts`）
 
 ```ts
-// 低饱和 slate 邻近色，取自 AionUi 品牌基调。每色给 accent(主) + soft(浅底) 两档，
+// 低饱和 slate 邻近色，取自 TjuaeUI 品牌基调。每色给 accent(主) + soft(浅底) 两档，
 // 浅底用 color-mix 在运行时算，故此处只存 accent（CSS 变量或 hex）。
 export const TEAM_MEMBER_PALETTE = [
   'var(--brand)', // 0 = Leader 固定

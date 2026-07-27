@@ -1,201 +1,110 @@
-# AionUi WebUI Mode - Startup Guide
+# TjuaeUI WebUI 启动指南
 
-AionUi supports WebUI mode, allowing you to access the application through a web browser. This guide covers how to start WebUI mode on all supported platforms.
+WebUI 允许通过现代浏览器使用 TjuaeUI。可以只监听本机，也可以显式开启局域网访问；服务器部署见[无头服务器部署指南](deploy-server.md)。
 
-## Table of Contents
+## 运行方式
 
-- [What is WebUI Mode?](#what-is-webui-mode)
-- [Windows](#windows)
-- [macOS](#macos)
-- [Linux](#linux)
-- [Android (Termux)](#android-termux)
-- [Remote Access](#remote-access)
-- [Troubleshooting](#troubleshooting)
+TjuaeUI 提供三种 WebUI 入口：
 
----
+| 入口                            | 适用场景                             | 是否依赖 Electron |
+| ------------------------------- | ------------------------------------ | ----------------- |
+| 桌面应用中的 WebUI 开关         | 已安装桌面应用，希望同时从浏览器访问 | 是                |
+| `TjuaeUI --webui`               | 使用打包后的桌面可执行文件启动 WebUI | 是                |
+| `tjuaeui-web` / `bun run webui` | 服务器、容器或源码开发环境           | 否                |
 
-## What is WebUI Mode?
+默认端口：
 
-WebUI mode starts AionUi with an embedded web server, allowing you to:
+- 生产构建：`25808`
+- 开发环境：`25809`
+- 多实例开发的第二实例：`25810`
 
-- Access the application through any modern web browser
-- Use AionUi from remote devices on the same network (with `--remote` flag)
-- Run the application headless on servers
+实际端口以启动日志为准。
 
-Default access URL: `http://localhost:3000` (port may vary, check the application output)
+## 桌面应用内启用
 
----
+1. 打开 TjuaeUI 设置中的 WebUI 配置
+2. 选择监听端口
+3. 仅在确有局域网访问需求时启用远程访问
+4. 启动 WebUI，并复制界面显示的本地或局域网 URL
 
-## Windows
+设置会保存在 TjuaeCore 的客户端设置中，并在下次启动时恢复。认证用户与密码以 TjuaeCore 的 SQLite 用户表为唯一事实来源。
 
-### Method 1: Command Line (Recommended)
+## 使用打包后的桌面应用
 
-Open **Command Prompt** or **PowerShell** and run:
+### Windows
+
+在 Command Prompt 或 PowerShell 中运行：
 
 ```cmd
-# Using full path
-"C:\Program Files\AionUi\AionUi.exe" --webui
-
-# Or if AionUi is in your PATH
-AionUi.exe --webui
+"C:\Program Files\TjuaeUI\TjuaeUI.exe" --webui
 ```
 
-### Method 2: Create a Desktop Shortcut
+允许局域网访问：
 
-1. Right-click on desktop → **New** → **Shortcut**
-2. Enter target location:
-   ```
-   "C:\Program Files\AionUi\AionUi.exe" --webui
-   ```
-3. Name it **AionUi WebUI**
-4. Click **Finish**
-5. Double-click the shortcut to launch
+```cmd
+"C:\Program Files\TjuaeUI\TjuaeUI.exe" --webui --remote
+```
 
-### Method 3: Create a Batch File
+指定端口：
 
-Create `start-aionui-webui.bat`:
+```cmd
+"C:\Program Files\TjuaeUI\TjuaeUI.exe" --webui --port 8080
+```
+
+也可以创建 `start-tjuaeui-webui.bat`：
 
 ```batch
 @echo off
-"C:\Program Files\AionUi\AionUi.exe" --webui
+"C:\Program Files\TjuaeUI\TjuaeUI.exe" --webui
 pause
 ```
 
-Double-click the batch file to start WebUI mode.
-
----
-
-## macOS
-
-### Method 1: Terminal Command (Recommended)
-
-Open **Terminal** and run:
+### macOS
 
 ```bash
-# Using full path
-/Applications/AionUi.app/Contents/MacOS/AionUi --webui
+/Applications/TjuaeUI.app/Contents/MacOS/TjuaeUI --webui
 
-# Or using open command
-open -a AionUi --args --webui
+# 或
+open -a TjuaeUI --args --webui
 ```
 
-### Method 2: Create Shell Script
-
-Create `start-aionui-webui.sh`:
+局域网访问：
 
 ```bash
-#!/bin/bash
-/Applications/AionUi.app/Contents/MacOS/AionUi --webui
+/Applications/TjuaeUI.app/Contents/MacOS/TjuaeUI --webui --remote
 ```
 
-Make it executable and run:
+### Linux
+
+`.deb` 安装：
 
 ```bash
-chmod +x start-aionui-webui.sh
-./start-aionui-webui.sh
+tjuaeui --webui
+
+# 或
+/opt/TjuaeUI/tjuaeui --webui
 ```
 
-### Method 3: Create Automator Application
-
-1. Open **Automator**
-2. Choose **Application**
-3. Add **Run Shell Script** action
-4. Enter:
-   ```bash
-   /Applications/AionUi.app/Contents/MacOS/AionUi --webui
-   ```
-5. Save as **AionUi WebUI.app**
-6. Double-click to launch
-
-### Method 4: Add to Dock
-
-1. Create an Automator app (Method 3)
-2. Drag **AionUi WebUI.app** to your Dock
-3. Click the Dock icon to start WebUI mode anytime
-
----
-
-## Linux
-
-### Method 1: Command Line (Recommended)
-
-#### For .deb Installation
+AppImage：
 
 ```bash
-# Using system path
-aionui --webui
-
-# Or using full path
-/opt/AionUi/aionui --webui
+chmod +x TjuaeUI-*.AppImage
+./TjuaeUI-*.AppImage --webui
 ```
 
-#### For AppImage
+### Linux systemd 服务
 
-```bash
-# Make AppImage executable (first time only)
-chmod +x AionUi-*.AppImage
-
-# Run with --webui flag
-./AionUi-*.AppImage --webui
-```
-
-### Method 2: Create Desktop Entry
-
-Create `~/.local/share/applications/aionui-webui.desktop`:
-
-```ini
-[Desktop Entry]
-Name=AionUi WebUI
-Comment=Start AionUi in WebUI mode
-Exec=/opt/AionUi/aionui --webui
-Icon=aionui
-Terminal=false
-Type=Application
-Categories=Utility;Office;
-```
-
-Make it executable:
-
-```bash
-chmod +x ~/.local/share/applications/aionui-webui.desktop
-```
-
-The launcher will appear in your application menu.
-
-### Method 3: Create Shell Script
-
-Create `~/bin/start-aionui-webui.sh`:
-
-```bash
-#!/bin/bash
-/opt/AionUi/aionui --webui
-```
-
-Make it executable:
-
-```bash
-chmod +x ~/bin/start-aionui-webui.sh
-```
-
-Run it:
-
-```bash
-start-aionui-webui.sh
-```
-
-### Method 4: Systemd Service (Background)
-
-Create `/etc/systemd/system/aionui-webui.service`:
+需要后台运行时，创建 `/etc/systemd/system/tjuaeui-webui.service`：
 
 ```ini
 [Unit]
-Description=AionUi WebUI Service
+Description=TjuaeUI WebUI Service
 After=network.target
 
 [Service]
 Type=simple
 User=YOUR_USERNAME
-ExecStart=/opt/AionUi/aionui --webui --remote
+ExecStart=/opt/TjuaeUI/tjuaeui --webui
 Restart=on-failure
 RestartSec=10
 
@@ -203,497 +112,260 @@ RestartSec=10
 WantedBy=multi-user.target
 ```
 
-Enable and start the service:
-
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable aionui-webui.service
-sudo systemctl start aionui-webui.service
-
-# Check status
-sudo systemctl status aionui-webui.service
+sudo systemctl enable --now tjuaeui-webui.service
+sudo systemctl status tjuaeui-webui.service
 ```
 
----
+只有需要从其他设备连接时，才在 `ExecStart` 中增加 `--remote`。公网部署应配合 TLS 反向代理和外围访问控制。
 
-## Android (Termux)
+## 无 Electron 的独立 WebUI
 
-**Important Note**: Electron desktop mode is **not supported** on Android. However, you can run AionUi in WebUI mode using Termux with a prooted Linux environment.
+### 源码开发
 
-> **Community Contribution**: This guide is contributed by [@Manamama](https://github.com/Manamama). Special thanks for making AionUi accessible on Android devices! 🙏
->
-> **Original Tutorial**: [Running AionUi WebUI on Android via Termux + Proot Ubuntu](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
->
-> **Related Issues**: [#217 - Android Support Discussion](https://github.com/iOfficeAI/AionUi/issues/217)
-
-### Prerequisites
-
-- **Termux** from [F-Droid](https://f-droid.org/en/packages/com.termux/) (Google Play version is outdated and not recommended)
-- **~5 GB free storage**
-- **Internet connection**
-- **Android 7.0+** (tested on Android 14)
-
-### Installation Steps
-
-#### 1. Install Termux and Update Packages
+TjuaeCore 的 `tjuaecore` 必须已位于 `PATH`，或通过环境变量指定。
 
 ```bash
-# Update package list
-pkg update -y
-
-# Install proot-distro
-pkg install proot-distro -y
+bun install
+bun run webui
 ```
 
-#### 2. Install Ubuntu via Proot
+该命令会先运行 `bun run package` 刷新 renderer，再启动后端、静态服务器与认证层。快速迭代脚本本身时可以跳过重新构建：
 
 ```bash
-# Install Ubuntu rootfs
-proot-distro install ubuntu
-
-# Login to Ubuntu environment
-proot-distro login ubuntu
+bun run webui -- --no-build
 ```
 
-#### 3. Install System Dependencies
+生产模式：
 
 ```bash
-# Update Ubuntu package list
-apt update
-
-# Install required dependencies
-apt install -y \
-    wget \
-    libgtk-3-0 \
-    libnss3 \
-    libasound2 \
-    libgbm1 \
-    libxshmfence1 \
-    ca-certificates
-
-# Optional: Install additional libraries if needed
-apt install -y \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libatk1.0-0 \
-    libcups2
+bun run webui:prod
 ```
 
-#### 4. Download and Install AionUi
+允许局域网访问：
 
 ```bash
-# Download the ARM64 .deb package (replace VERSION with the actual version)
-# Check latest version at: https://github.com/iOfficeAI/AionUi/releases
-wget https://github.com/iOfficeAI/AionUi/releases/download/vVERSION/AionUi_VERSION_arm64.deb
-
-# Example (replace VERSION with the release tag, e.g. v1.5.2):
-wget https://github.com/iOfficeAI/AionUi/releases/download/vVERSION/AionUi_VERSION_arm64.deb
-
-# Install the package
-apt install -y ./AionUi_*.deb
-
-# Verify installation
-which AionUi
+bun run webui:remote
+bun run webui:prod:remote
 ```
 
-#### 5. Launch AionUi WebUI
+### 独立 CLI
+
+如果安装包提供 `tjuaeui-web`：
 
 ```bash
-# Start AionUi in WebUI mode with no-sandbox flag
-AionUi --no-sandbox --webui
+tjuaeui-web start
+tjuaeui-web start --port 8080
+tjuaeui-web start --remote
+tjuaeui-web help
 ```
 
-**Important**: The `--no-sandbox` flag is required in Termux/proot environments.
+常用参数：
 
-#### 6. Access the WebUI
+| 参数                   | 说明                           |
+| ---------------------- | ------------------------------ |
+| `--port <n>`           | 监听端口                       |
+| `--remote`             | 绑定 `0.0.0.0`，允许局域网访问 |
+| `--open`               | 强制打开本机浏览器             |
+| `--no-open`            | 禁止自动打开浏览器             |
+| `--data-dir <path>`    | 覆盖数据目录                   |
+| `--log-dir <path>`     | 覆盖日志目录                   |
+| `--static-dir <path>`  | 使用指定的 renderer 静态资源   |
+| `--backend-bin <path>` | 指定 `tjuaecore` 可执行文件    |
 
-Once started, open your browser and navigate to:
+### 独立模式数据目录
 
-```
-http://localhost:25808
-```
+为避免与 Electron 的 userData 和符号链接发生冲突，独立 WebUI 默认使用：
 
-**Note**: The default port is 25808. Check the terminal output if a different port is used.
+| 模式               | 默认数据目录           |
+| ------------------ | ---------------------- |
+| 生产               | `~/.tjuaeui-web`       |
+| 开发               | `~/.tjuaeui-web-dev`   |
+| 多实例开发第二实例 | `~/.tjuaeui-web-dev-2` |
 
-### Expected Warnings (Non-Fatal)
+只有明确需要共享数据时，才通过 `--data-dir` 或 `TJUAEUI_DATA_DIR` 指向桌面应用的数据目录。不要让两个后端进程同时打开同一个 SQLite 数据库。
 
-You may see the following warnings in the terminal - these are normal and can be ignored:
+## 环境变量
 
-```
-[WARNING] Could not connect to session bus: Using X11 for dbus-daemon autolaunch was disabled at compile time
-[ERROR] Failed to connect to the bus: Failed to connect to socket: No such file or directory
-[WARNING] Multiple instances of the app detected, but not running on display server
-```
+| 环境变量                      | 说明                                                |
+| ----------------------------- | --------------------------------------------------- |
+| `TJUAEUI_PORT`                | WebUI 监听端口                                      |
+| `TJUAEUI_HOST`                | host 提示；`0.0.0.0`、`::` 会启用远程访问           |
+| `TJUAEUI_ALLOW_REMOTE`        | `1`/`true` 时允许局域网访问                         |
+| `TJUAEUI_DATA_DIR`            | 独立模式数据目录                                    |
+| `TJUAEUI_LOG_DIR`             | 日志目录，默认 `<data-dir>/logs`                    |
+| `TJUAEUI_STATIC_DIR`          | renderer 静态资源目录                               |
+| `TJUAEUI_BACKEND_BIN`         | `tjuaecore` 的绝对路径                              |
+| `TJUAEUI_BACKEND_BUNDLED_DIR` | 包含 `bundled-tjuaecore/<platform-arch>/` 的目录    |
+| `TJUAEUI_OPEN_BROWSER`        | `1`/`true` 强制打开浏览器；`0`/`false` 禁止自动打开 |
+| `TJUAEUI_NO_BUILD`            | 源码 WebUI 中跳过 `bun run package`                 |
 
-These errors are related to D-Bus and X server, which are not needed for WebUI mode.
-
-### Remote Access on LAN
-
-To access AionUi from other devices on your local network:
+示例：
 
 ```bash
-# Start with --remote flag
-AionUi --no-sandbox --webui --remote
-
-# Find your Android device's IP address
-# In Termux (outside proot):
-# ifconfig or ip addr show
+export TJUAEUI_PORT=8080
+export TJUAEUI_ALLOW_REMOTE=true
+export TJUAEUI_BACKEND_BIN=/opt/tjuae/bin/tjuaecore
+bun run webui:prod
 ```
 
-Access from other devices: `http://YOUR_ANDROID_IP:25808`
+## 远程访问
 
-### Troubleshooting
+`--remote` 会将服务从 `127.0.0.1` 改为监听 `0.0.0.0`。这意味着同一网络中的设备可能访问该端口。
 
-#### Port Already in Use
+### 查找局域网地址
 
-If port 25808 is occupied:
-
-```bash
-# Specify a different port
-AionUi --no-sandbox --webui --port 8080
-```
-
-#### Permission Denied Errors
-
-```bash
-# Ensure the binary has execute permissions
-chmod +x /opt/AionUi/aionui
-```
-
-#### Out of Memory
-
-AionUi requires sufficient RAM. Close other apps if you encounter memory issues.
-
-#### Cannot Access from Browser
-
-1. Check if AionUi is running: look for "Server started" message
-2. Try using Termux's built-in browser or Chrome
-3. Clear browser cache
-
-### Performance Tips
-
-1. **Use a lightweight browser** - Chrome or Firefox Focus recommended
-2. **Close background apps** - Free up RAM for better performance
-3. **Use WiFi** - More stable than mobile data for remote access
-4. **Keep device charged** - Running AionUi consumes battery
-
-### Tested Environment
-
-- **Device**: Android 14
-- **Termux Version**: 0.118.0
-- **AionUi Version**: Latest release (e.g. 1.5.2)
-- **Proot-distro**: Ubuntu (latest)
-
-### Creating a Startup Script
-
-For convenience, create a script to launch AionUi quickly:
-
-```bash
-# Create script in Ubuntu (proot)
-cat > ~/start-aionui.sh << 'EOF'
-#!/bin/bash
-echo "Starting AionUi WebUI..."
-AionUi --no-sandbox --webui --remote
-EOF
-
-# Make executable
-chmod +x ~/start-aionui.sh
-
-# Run anytime
-./start-aionui.sh
-```
-
-### Quick Start Command (One-liner)
-
-From Termux main shell:
-
-```bash
-proot-distro login ubuntu -- bash -c "AionUi --no-sandbox --webui --remote"
-```
-
-### Feedback and Improvements
-
-If you encounter issues or have suggestions for improving Android support:
-
-1. Check the [original community guide](https://gist.github.com/Manamama/b4f903c279b5e73bdad4c2c0a58d5ddd)
-2. Report issues at [GitHub Issues #217](https://github.com/iOfficeAI/AionUi/issues/217)
-3. Share your experience to help other Android users!
-
----
-
-## Remote Access
-
-To allow access from other devices on your network, use the `--remote` flag:
-
-### Windows
-
-```cmd
-AionUi.exe --webui --remote
-```
-
-### macOS
-
-```bash
-/Applications/AionUi.app/Contents/MacOS/AionUi --webui --remote
-```
-
-### Linux
-
-```bash
-aionui --webui --remote
-```
-
-**Security Note**: Remote mode allows network access. Use only on trusted networks. Consider setting up authentication and firewall rules for production use.
-
-### Finding Your Local IP Address
-
-**Windows:**
+Windows：
 
 ```cmd
 ipconfig
 ```
 
-Look for "IPv4 Address" under your active network adapter.
-
-**macOS/Linux:**
+macOS：
 
 ```bash
-ifconfig
-# or
-ip addr show
+ipconfig getifaddr en0
 ```
 
-Look for `inet` address (e.g., `192.168.1.100`).
+Linux：
 
-Access from other devices: `http://YOUR_IP_ADDRESS:3000`
+```bash
+hostname -I
+```
 
----
+其他设备访问：
 
-## Troubleshooting
+```text
+http://YOUR_LAN_IP:25808
+```
 
-### Port Already in Use
+### 安全建议
 
-If port 3000 is already in use, the application will automatically try the next available port. Check the console output for the actual port number.
+- 首次启动后立即修改初始密码
+- 公网访问使用 TLS 反向代理，不要长期暴露明文 HTTP
+- 配置主机防火墙、安全组、VPN 或零信任网关
+- 不需要远程访问时，不要使用 `--remote`
+- 不要将 WebUI 与其他服务共用弱口令
 
-### Cannot Access from Browser
+## 重置管理员密码
 
-1. **Check if the application started successfully**
-   - Look for "Server started on port XXXX" message in the console
+重置会生成随机新密码，并使现有会话失效。
 
-2. **Try a different browser**
-   - Chrome, Firefox, Safari, or Edge
+### 打包后的桌面可执行文件
 
-3. **Clear browser cache**
-   - Press `Ctrl+Shift+Delete` (Windows/Linux) or `Cmd+Shift+Delete` (macOS)
-
-### Firewall Blocking Access
-
-**Windows:**
+Windows：
 
 ```cmd
-# Allow through Windows Firewall
-netsh advfirewall firewall add rule name="AionUi WebUI" dir=in action=allow protocol=TCP localport=3000
+"C:\Program Files\TjuaeUI\TjuaeUI.exe" --resetpass
 ```
 
-**Linux (UFW):**
+macOS：
 
 ```bash
-sudo ufw allow 3000/tcp
+/Applications/TjuaeUI.app/Contents/MacOS/TjuaeUI --resetpass
 ```
 
-**macOS:**
-Go to **System Preferences** → **Security & Privacy** → **Firewall** → **Firewall Options** → Add AionUi
-
-### Application Not Found
-
-**Find application location:**
-
-**Windows:**
-
-```cmd
-where AionUi.exe
-```
-
-**macOS:**
+Linux：
 
 ```bash
-mdfind -name "AionUi.app"
+tjuaeui --resetpass
 ```
 
-**Linux:**
+### 独立 WebUI
+
+源码环境：
 
 ```bash
-which aionui
-# or
-find /opt -name "aionui" 2>/dev/null
+bun run resetpass
+
+# 自定义数据目录或端口
+bun run resetpass -- --data-dir /path/to/data --port 8080
 ```
 
-### View Logs
-
-**Windows (PowerShell):**
-
-```powershell
-& "C:\Program Files\AionUi\AionUi.exe" --webui 2>&1 | Tee-Object -FilePath aionui.log
-```
-
-**macOS/Linux:**
+独立 CLI：
 
 ```bash
-/path/to/aionui --webui 2>&1 | tee aionui.log
+tjuaeui-web resetpass
+tjuaeui-web resetpass --data-dir /path/to/data
 ```
 
----
+如果对应端口已有 WebUI 正在运行，命令会复用其 API；否则会临时启动 TjuaeCore 完成重置后退出。终端显示新密码后应立即保存并在下次登录后修改。
 
-## Environment Variables
+## Android（Termux，实验性）
 
-You can customize WebUI behavior with environment variables:
+Electron 桌面模式不支持 Android。通过 Termux + proot 运行 Linux ARM64 包属于实验性方案，不在正式支持矩阵中；升级 Android、Termux、Ubuntu rootfs 或 Electron 后都可能失效。
+
+基本流程：
 
 ```bash
-# Override the listening port
-export AIONUI_PORT=8080
-
-# Allow remote access without passing --remote
-export AIONUI_ALLOW_REMOTE=true
-
-# Optional host hint (0.0.0.0 behaves the same as AIONUI_ALLOW_REMOTE=true)
-export AIONUI_HOST=0.0.0.0
-
-# Then start the application
-aionui --webui
-
-# You can also pass the port directly via CLI
-aionui --webui --port 8080
+pkg update -y
+pkg install proot-distro -y
+proot-distro install ubuntu
+proot-distro login ubuntu
 ```
 
----
-
-## User Configuration File
-
-From v1.5.0+, you can store persistent WebUI preferences in `webui.config.json` located in your Electron user-data folder:
-
-| Platform | Location                                                 |
-| -------- | -------------------------------------------------------- |
-| Windows  | `%APPDATA%/AionUi/webui.config.json`                     |
-| macOS    | `~/Library/Application Support/AionUi/webui.config.json` |
-| Linux    | `~/.config/AionUi/webui.config.json`                     |
-
-Example file:
-
-```json
-{
-  "port": 8080,
-  "allowRemote": true
-}
-```
-
-Settings from CLI flags take priority, followed by environment variables, then the user config file.
-
----
-
-## Command Line Options Summary
-
-| Option             | Description                 |
-| ------------------ | --------------------------- |
-| `--webui`          | Start in WebUI mode         |
-| `--remote`         | Allow remote network access |
-| `--webui --remote` | Combine both flags          |
-
----
-
-## Reset Admin Password
-
-If you forgot your admin password in WebUI mode, you can reset it using the `--resetpass` command.
-
-### Using --resetpass Command
-
-**IMPORTANT:** The --resetpass command resets the password and generates a new random one. All existing JWT tokens will be invalidated.
-
-**Windows:**
-
-```cmd
-# Using full path
-"C:\Program Files\AionUi\AionUi.exe" --resetpass
-
-# Or for a specific user
-"C:\Program Files\AionUi\AionUi.exe" --resetpass username
-```
-
-**macOS:**
+在 proot Ubuntu 中安装必要库与 ARM64 `.deb`，然后使用：
 
 ```bash
-# Using full path
-/Applications/AionUi.app/Contents/MacOS/AionUi --resetpass
-
-# Or for a specific user
-/Applications/AionUi.app/Contents/MacOS/AionUi --resetpass username
+TjuaeUI --no-sandbox --webui
 ```
 
-**Linux:**
+`--no-sandbox` 会降低隔离能力，只应在受控的 proot 环境中使用。遇到问题时请附上 Android、Termux、rootfs、架构、TjuaeUI 版本和完整日志。
+
+## 故障排查
+
+### 端口已占用
+
+指定其他端口：
 
 ```bash
-# Using system path
-aionui --resetpass
+tjuaeui-web start --port 8080
 
-# Or for a specific user
-aionui --resetpass username
-
-# Or using full path
-/opt/AionUi/aionui --resetpass
+# 或
+bun run webui -- --port 8080
 ```
 
-### What happens when you run --resetpass:
+先用系统工具定位占用进程，确认后再停止，不要盲目终止不明进程。
 
-1. The command connects to the database
-2. Finds the specified user (default: `admin`)
-3. Generates a new random 12-character password
-4. Updates the password hash in the database
-5. Rotates the JWT secret (invalidating all previous tokens)
-6. Displays the new password in the terminal
+### 浏览器无法访问
 
-### After running --resetpass:
+1. 查看启动日志中的实际 URL 与端口
+2. 本机模式使用 `127.0.0.1` 或 `localhost`
+3. 跨设备访问确认已启用 `--remote`
+4. 检查防火墙、安全组、容器端口映射和反向代理
+5. 确认 WebSocket 也被代理
 
-1. The command will display your new password - **copy it immediately**
-2. Refresh your browser (Cmd+R or Ctrl+R)
-3. You will be redirected to the login page
-4. Login with the new password shown in the terminal
-
-### Development Environment Only
-
-If you're in a development environment with Node.js, you can also use:
+### 找不到 `tjuaecore`
 
 ```bash
-# In the project directory
-npm run resetpass
+# macOS / Linux
+which tjuaecore
 
-# Or for a specific user
-npm run resetpass -- username
+# Windows
+where.exe tjuaecore
 ```
 
----
+将其加入 `PATH`，或设置 `TJUAEUI_BACKEND_BIN`/`--backend-bin`。
 
-## Additional Resources
+### 找不到 renderer 资源
 
-- [Main README](../readme.md)
-- [中文说明](./readme/readme_ch.md)
-- [日本語ドキュメント](./readme/readme_jp.md)
-- [GitHub Issues](https://github.com/iOfficeAI/AionUi/issues)
+源码模式先运行：
 
----
+```bash
+bun run package
+```
 
-## Support
+也可以通过 `TJUAEUI_STATIC_DIR` 或 `--static-dir` 指定已经构建的 `out/renderer`。
 
-If you encounter any issues:
+### 密码重置到了错误的数据目录
 
-1. Check the [Troubleshooting](#troubleshooting) section
-2. Search [existing issues](https://github.com/iOfficeAI/AionUi/issues)
-3. Create a [new issue](https://github.com/iOfficeAI/AionUi/issues/new) with:
-   - Your OS and version
-   - AionUi version
-   - Steps to reproduce
-   - Error messages or logs
+确保 WebUI 与重置命令使用相同的 `--data-dir`、`TJUAEUI_DATA_DIR` 和 `NODE_ENV`。开发与生产默认目录不同。
 
----
+## 相关文档
 
-**Happy using AionUi in WebUI mode!** 🚀
+- [TjuaeUI 主 README](../../readme.md)
+- [无头服务器部署](deploy-server.md)
+- [开发环境](../contributing/development.md)
+- [架构总览](../architecture/overview.md)
+- [GitHub Issues](https://github.com/liangboqiang/TjuaeUI/issues)

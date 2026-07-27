@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -59,13 +59,10 @@ interface AutoUpdateCheckParams {
   includePrerelease?: boolean;
 }
 
-const DEFAULT_REPO = 'iOfficeAI/AionUi';
-const DEFAULT_USER_AGENT = 'AionUi';
+const DEFAULT_REPO = 'liangboqiang/TjuaeUI';
+const DEFAULT_USER_AGENT = 'TjuaeUI';
 const ALLOWED_ASSET_EXTS = new Set(['.exe', '.msi', '.dmg', '.zip', '.deb', '.rpm']);
-const CDN_HOST = 'static.aionui.com';
-const CDN_BASE_URL = `https://${CDN_HOST}/releases`;
 const ALLOWED_DOWNLOAD_HOSTS = new Set<string>([
-  CDN_HOST,
   'github.com',
   'objects.githubusercontent.com',
   'github-releases.githubusercontent.com',
@@ -86,19 +83,9 @@ const normalizeTagToSemver = (tag: string): string | null => {
   return semver.valid(withoutV);
 };
 
-/**
- * Rewrite a GitHub release asset URL to the CDN URL for faster download.
- * The CDN path follows the fixed convention `{base}/{version}/{original-filename}`,
- * matching electron-builder's artifactName output, so no name conversion is needed.
- */
-const rewriteAssetUrlToCDN = (assetName: string, version: string): string => {
-  return `${CDN_BASE_URL}/${version}/${assetName}`;
-};
-
-const mapAsset = (asset: GitHubReleaseApiAsset, version: string): GitHubReleaseAsset => ({
+const mapAsset = (asset: GitHubReleaseApiAsset): GitHubReleaseAsset => ({
   name: asset.name,
-  url: rewriteAssetUrlToCDN(asset.name, version),
-  fallbackUrl: asset.browser_download_url,
+  url: asset.browser_download_url,
   size: asset.size,
   contentType: asset.content_type,
 });
@@ -198,7 +185,7 @@ export const pickRecommendedAsset = (
 };
 
 const resolveRepo = (requestRepo?: string): string => {
-  const envRepo = process.env.AIONUI_GITHUB_REPO?.trim();
+  const envRepo = process.env.TJUAEUI_GITHUB_REPO?.trim();
   const repo = (requestRepo || envRepo || DEFAULT_REPO).trim();
   return repo || DEFAULT_REPO;
 };
@@ -290,7 +277,7 @@ const mapRelease = (rel: GitHubReleaseApi): UpdateReleaseInfo | null => {
   const assets = (rel.assets || [])
     .filter((asset) => asset && asset.name && asset.browser_download_url)
     .filter((asset) => isAllowedAssetName(asset.name))
-    .map((asset) => mapAsset(asset, version));
+    .map(mapAsset);
 
   return {
     tagName: rel.tag_name,
@@ -325,7 +312,7 @@ const sanitizeFileName = (name: string): string => {
   // Keep only base name and trim weird whitespace.
   const base = path.basename(name).trim();
   // Avoid empty names.
-  return base || `AionUi-update-${Date.now()}`;
+  return base || `TjuaeUI-update-${Date.now()}`;
 };
 
 const ensureUniquePath = (target: string): string => {
@@ -340,10 +327,8 @@ const ensureUniquePath = (target: string): string => {
   return path.join(dir, `${base}-${Date.now()}${ext}`);
 };
 
-const buildManualDownloadKey = (url: string, fallbackUrl: string | undefined, fileName: string): string => {
-  const primary = new URL(url).toString();
-  const fallback = fallbackUrl ? new URL(fallbackUrl).toString() : '';
-  return [primary, fallback, fileName].join('\n');
+const buildManualDownloadKey = (url: string, fileName: string): string => {
+  return [new URL(url).toString(), fileName].join('\n');
 };
 
 const emitProgress = (evt: UpdateDownloadProgressEvent) => {
@@ -486,28 +471,9 @@ const startDownloadInBackground = async (
   downloadId: string,
   url: string,
   file_path: string,
-  abortController: AbortController,
-  fallbackUrl?: string
+  abortController: AbortController
 ) => {
-  const runWithFallback = async (): Promise<DownloadAttempt> => {
-    const primary = await attemptDownload(downloadId, url, file_path, abortController);
-    if (primary.ok) return primary;
-    if (primary.isAbort) return primary;
-    if (!fallbackUrl || fallbackUrl === url) return primary;
-
-    try {
-      await assertAllowedUrl(fallbackUrl);
-    } catch (err) {
-      // Fallback URL itself is invalid — keep the primary failure result.
-      log.warn('[update-download] Fallback URL rejected by allowlist:', err);
-      return primary;
-    }
-
-    log.warn(`[update-download] Primary download failed (${primary.message}). Retrying with fallback URL.`);
-    return attemptDownload(downloadId, fallbackUrl, file_path, abortController);
-  };
-
-  const finalResult = await runWithFallback();
+  const finalResult = await attemptDownload(downloadId, url, file_path, abortController);
 
   try {
     if (cancelledManualDownloadIds.has(downloadId)) {
@@ -628,13 +594,10 @@ export function initUpdateBridge(): void {
         }
 
         // Defense-in-depth: do not allow arbitrary downloads from renderer.
-        // EN: Only allowlisted hosts (CDN + GitHub release hosts) are permitted;
+        // EN: Only allowlisted GitHub release hosts are permitted;
         // each redirect hop is re-validated against the allowlist.
-        // 中文：仅允许白名单内的域名（CDN + GitHub release 相关），并手动处理重定向，每一跳都校验白名单。
+        // 中文：仅允许白名单内的 GitHub release 相关域名，并手动处理重定向，每一跳都校验白名单。
         await assertAllowedUrl(params.url);
-        if (params.fallbackUrl) {
-          await assertAllowedUrl(params.fallbackUrl);
-        }
 
         const downloadId = params.downloadId || uuid();
         const abortController = new AbortController();
@@ -643,7 +606,7 @@ export function initUpdateBridge(): void {
         const urlObj = new URL(params.url);
         const urlName = path.basename(urlObj.pathname);
         const baseName = sanitizeFileName(params.file_name || urlName);
-        const activeKey = buildManualDownloadKey(params.url, params.fallbackUrl, baseName);
+        const activeKey = buildManualDownloadKey(params.url, baseName);
         const activeDownload = activeManualDownloads.get(activeKey);
         if (activeDownload) {
           return Promise.resolve({ success: true, data: activeDownload });
@@ -655,7 +618,7 @@ export function initUpdateBridge(): void {
         manualDownloadKeysById.set(downloadId, activeKey);
 
         // Start background download, but return immediately so the UI stays responsive.
-        void startDownloadInBackground(downloadId, params.url, targetPath, abortController, params.fallbackUrl);
+        void startDownloadInBackground(downloadId, params.url, targetPath, abortController);
 
         return Promise.resolve({ success: true, data: { downloadId, file_path: targetPath } });
       } catch (err: unknown) {

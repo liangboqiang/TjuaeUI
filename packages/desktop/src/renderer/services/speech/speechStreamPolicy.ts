@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,7 +9,7 @@ import { DEEPGRAM_SPEECH_MODEL_PRESETS, OPENAI_SPEECH_MODEL_PRESETS } from './sp
 
 export type StreamCapability = 'supported' | 'unsupported' | 'unknown';
 
-const STORAGE_KEY = 'aionui.sttStreamUnsupported';
+const STORAGE_KEY = 'tjuaeui.sttStreamUnsupported';
 
 // ---------------------------------------------------------------------------
 // Capability matrix

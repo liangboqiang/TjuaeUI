@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -22,7 +22,7 @@ import type { FileOrFolderItem } from '@/renderer/utils/file/fileTypes';
 
 interface UseWorkspaceFileOpsOptions {
   workspace: string;
-  eventPrefix: 'acp' | 'codex' | 'aionrs';
+  eventPrefix: 'acp' | 'codex' | 'tjuaecli';
   messageApi: MessageApi;
   t: (key: string) => string;
 

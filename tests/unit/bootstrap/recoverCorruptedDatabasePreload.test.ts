@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@sentry/electron/preload', () => ({}));
-
 const invoke = vi.fn();
 const send = vi.fn();
 const on = vi.fn();

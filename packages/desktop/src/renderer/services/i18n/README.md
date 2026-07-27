@@ -1,98 +1,109 @@
-# 多语言支持 (i18n)
+# 多语言支持（i18n）
 
-本项目使用 i18next 和 react-i18next 实现多语言支持。
+TjuaeUI 使用 i18next 与 react-i18next 提供多语言界面。
 
-## 支持的语言
+## 唯一事实来源
 
-- 中文 (zh-CN) - 默认语言
-- 英文 (en-US)
+支持语言、参考语言和翻译模块统一由以下文件定义：
+
+```text
+packages/desktop/src/common/config/i18n-config.json
+```
+
+不得在文档或代码中维护另一份固定语言清单。新增翻译前应先读取该配置。
 
 ## 文件结构
 
-```
-src/renderer/i18n/
-├── index.ts              # i18next 配置文件
-├── locales/
-│   ├── zh-CN.json        # 中文语言包
-│   └── en-US.json        # 英文语言包
-└── README.md             # 说明文档
+```text
+packages/desktop/src/renderer/services/i18n/
+├── index.ts                 # i18next 配置
+├── i18n-keys.d.ts           # 自动生成的键类型，严禁手动编辑
+└── locales/
+    ├── <language>/
+    │   ├── index.ts         # 当前语言的模块聚合
+    │   ├── common.json
+    │   ├── conversation.json
+    │   └── ...
+    └── ...
 ```
 
-## 使用方法
-
-### 在组件中使用翻译
+## 在组件中使用
 
 ```tsx
+import { Typography } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
 
 const MyComponent = () => {
   const { t } = useTranslation();
 
   return (
-    <div>
-      <h1>{t('common.title')}</h1>
-      <p>{t('common.description')}</p>
-    </div>
+    <Typography>
+      <Typography.Title>{t('common.title')}</Typography.Title>
+      <Typography.Paragraph>{t('common.description')}</Typography.Paragraph>
+    </Typography>
   );
 };
 ```
 
-### 切换语言
+## 切换语言
 
 ```tsx
+import { Select } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';
 
 const LanguageSwitcher = () => {
   const { i18n } = useTranslation();
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
-
   return (
-    <div>
-      <button onClick={() => changeLanguage('zh-CN')}>中文</button>
-      <button onClick={() => changeLanguage('en-US')}>English</button>
-    </div>
+    <Select
+      value={i18n.language}
+      options={[
+        { label: '简体中文', value: 'zh-CN' },
+        { label: 'English', value: 'en-US' },
+      ]}
+      onChange={(language) => void i18n.changeLanguage(language)}
+    />
   );
 };
 ```
 
-## 添加新的翻译
+产品中的语言选项应由统一配置和既有 UI 数据生成，不要复制上面的示例数组。
 
-1. 在 `src/renderer/i18n/locales/zh-CN.json` 中添加中文翻译
-2. 在 `src/renderer/i18n/locales/en-US.json` 中添加对应的英文翻译
-3. 在组件中使用 `t('key')` 来获取翻译
+## 新增翻译
 
-### 翻译键的命名规范
+1. 读取 `packages/desktop/src/common/config/i18n-config.json`
+2. 在参考语言中搜索可复用键
+3. 选择正确模块，并向 `supportedLanguages` 的每个语言目录添加同一个键
+4. 在代码中使用 `t('module.key')`
+5. 依次运行：
 
-- 使用点号分隔的层级结构
-- 使用小写字母和下划线
-- 按功能模块分组
+```bash
+bun run i18n:types
+node scripts/check-i18n.js
+```
 
-例如：
+## 键命名
+
+- 代码中使用 `module.key` 或 `module.group.key`
+- JSON 内部键使用 camelCase
+- save、cancel、delete 等通用文本放入 `common.json`
+- 功能专用文本放入对应模块
+
+示例：
 
 ```json
 {
-  "common": {
-    "send": "发送",
-    "cancel": "取消"
-  },
-  "conversation": {
-    "welcome": {
-      "title": "今天有什么安排？"
-    }
+  "send": "发送",
+  "welcome": {
+    "title": "今天有什么安排？"
   }
 }
 ```
 
-## 语言切换器
-
-项目在顶部导航栏中集成了语言切换器，用户可以随时切换界面语言。语言选择会保存在 localStorage 中，下次访问时会自动应用上次选择的语言。
-
 ## 注意事项
 
-1. 所有用户可见的文本都应该使用翻译函数
-2. 翻译键应该具有描述性，便于维护
-3. 新增翻译时，确保中英文都有对应的翻译
-4. 避免在代码中硬编码文本内容
+1. 所有用户可见文本都必须使用翻译函数
+2. 新键必须覆盖配置中列出的全部语言
+3. 不得手动修改 `i18n-keys.d.ts`
+4. 避免在 JSX 中硬编码用户文本
+5. 完整规则见 [i18n 技能](../../../../../../.claude/skills/i18n/SKILL.md)

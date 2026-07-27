@@ -1,12 +1,12 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { ipcBridge } from '@/common';
 import { addRecentWorkspace, getRecentWorkspaces } from '@/renderer/components/workspace';
-import { AionInlineSearchInput } from '@/renderer/components/base';
+import { TjuaeInlineSearchInput } from '@/renderer/components/base';
 import { Tooltip } from '@arco-design/web-react';
 import { Close, Down } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -145,7 +145,7 @@ const GuidWorkspaceFootnote: React.FC<GuidWorkspaceFootnoteProps> = ({
     ? createPortal(
         <div ref={dropdownRef} className={styles.wsDropdown} style={dropdownStyle}>
           <div className='mb-8px'>
-            <AionInlineSearchInput
+            <TjuaeInlineSearchInput
               className='w-full'
               ref={searchRef}
               value={searchQuery}

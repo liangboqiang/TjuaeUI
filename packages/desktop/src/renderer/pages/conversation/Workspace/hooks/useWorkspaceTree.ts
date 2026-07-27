@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -16,7 +16,7 @@ import { getWorkspaceTreeSnapshot, setWorkspaceTreeSnapshot } from '../utils/wor
 interface UseWorkspaceTreeOptions {
   workspace: string;
   conversation_id: string;
-  eventPrefix: 'acp' | 'codex' | 'aionrs';
+  eventPrefix: 'acp' | 'codex' | 'tjuaecli';
 }
 
 /**

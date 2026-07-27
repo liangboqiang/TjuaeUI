@@ -143,7 +143,7 @@ function parseArgs(): { startup: boolean } {
 // ── Run vitest bench ────────────────────────────────────────────────────────
 
 function runBenchmarks(): string {
-  console.log('\n  Running performance benchmarks...\n');
+  console.log('\n  正在运行性能基准测试……\n');
 
   try {
     const output = execSync('npx vitest bench', {
@@ -156,7 +156,7 @@ function runBenchmarks(): string {
   } catch (e) {
     const err = e as { stdout?: string; status?: number };
     if (err.stdout) return err.stdout;
-    console.error('  Benchmark run failed.');
+    console.error('  基准测试运行失败。');
     process.exit(1);
   }
 }
@@ -168,9 +168,8 @@ function bytesToMb(bytes: number): number {
   return Math.round((bytes / 1024 / 1024) * 10) / 10;
 }
 
-// Collapse the bytes-per-iteration distribution from benchmark-startup.ts into
-// the MB-valued snapshots the renderers expect. We take the median of each
-// metric so a single slow run doesn't distort the report.
+// 把 benchmark-startup.ts 每次迭代的字节分布转换为渲染器所需的 MB 快照。
+// 各指标取中位数，避免单次慢启动扭曲报告。
 function adaptMemorySummary(raw: MemorySummaryRaw | null | undefined): StartupMemory | undefined {
   if (!raw) return undefined;
   return {
@@ -191,14 +190,13 @@ function adaptMemorySummary(raw: MemorySummaryRaw | null | undefined): StartupMe
 }
 
 function runStartupBenchmark(reportDir: string): StartupBenchReport | undefined {
-  console.log('\n  Running Electron cold-startup benchmark (this may take a few minutes)...\n');
+  console.log('\n  正在运行 Electron 冷启动基准测试（可能需要几分钟）……\n');
 
   const outputPath = path.join(reportDir, 'startup-latest.json');
   if (fs.existsSync(outputPath)) fs.rmSync(outputPath, { force: true });
 
-  // --with-memory enables idle / afterConversation / afterClose memory
-  // sampling in benchmark-startup.ts. Without it, memorySummary stays null
-  // and bench:full produces no memory report.
+  // --with-memory 会在 benchmark-startup.ts 中采集空闲、打开会话后和关闭后的内存。
+  // 若不启用，memorySummary 将保持为空，bench:full 不会生成内存报告。
   const result = spawnSync('bunx', ['tsx', 'scripts/benchmark-startup.ts', '--with-memory', '--output', outputPath], {
     cwd: process.cwd(),
     encoding: 'utf-8',
@@ -208,15 +206,15 @@ function runStartupBenchmark(reportDir: string): StartupBenchReport | undefined 
   });
 
   if (result.error) {
-    console.error(`  Startup bench could not launch: ${result.error.message}`);
+    console.error(`  无法启动冷启动基准测试：${result.error.message}`);
     return undefined;
   }
   if (result.status !== 0) {
-    console.warn(`  Startup bench exited with status ${result.status}; trying to read partial report.`);
+    console.warn(`  冷启动基准测试退出状态为 ${result.status}；正在尝试读取不完整报告。`);
   }
 
   if (!fs.existsSync(outputPath)) {
-    console.warn('  Startup bench did not produce a JSON report.');
+    console.warn('  冷启动基准测试未生成 JSON 报告。');
     return undefined;
   }
 
@@ -232,7 +230,7 @@ function runStartupBenchmark(reportDir: string): StartupBenchReport | undefined 
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.warn(`  Startup bench report was not valid JSON: ${msg}`);
+    console.warn(`  冷启动基准测试报告不是有效的 JSON：${msg}`);
     return undefined;
   }
 }
@@ -240,7 +238,7 @@ function runStartupBenchmark(reportDir: string): StartupBenchReport | undefined 
 // ── Run DB bench (bun test) ────────────────────────────────────────────────
 
 function runDbBench(): BenchResult[] {
-  console.log('\n  Running DB large-dataset benchmark (bun:sqlite)...\n');
+  console.log('\n  正在运行数据库大数据集基准测试（bun:sqlite）……\n');
 
   const resultFile = path.resolve('scripts/benchmark-results/db-bench-latest.json');
   if (fs.existsSync(resultFile)) fs.rmSync(resultFile);
@@ -253,11 +251,11 @@ function runDbBench(): BenchResult[] {
       stdio: 'inherit',
     });
   } catch {
-    console.warn('  DB bench failed to run.');
+    console.warn('  数据库基准测试运行失败。');
   }
 
   if (!fs.existsSync(resultFile)) {
-    console.warn('  DB bench did not produce results.');
+    console.warn('  数据库基准测试未生成结果。');
     return [];
   }
 
@@ -283,7 +281,7 @@ function runDbBench(): BenchResult[] {
       rme: '-',
     }));
   } catch {
-    console.warn('  Failed to parse DB bench results.');
+    console.warn('  无法解析数据库基准测试结果。');
     return [];
   }
 }
@@ -291,7 +289,7 @@ function runDbBench(): BenchResult[] {
 // ── Bundle size check ──────────────────────────────────────────────────────
 
 function checkBundleSize(): BundleSizeReport | undefined {
-  // Try current directory first, then main repo root (worktrees don't have build output)
+  // 先检查当前目录，再检查主仓库根目录（工作树通常没有构建输出）。
   let rendererDir = path.resolve('out/renderer');
   if (!fs.existsSync(rendererDir)) {
     try {
@@ -299,13 +297,13 @@ function checkBundleSize(): BundleSizeReport | undefined {
       const mainRoot = path.resolve(commonDir, '..');
       rendererDir = path.join(mainRoot, 'out/renderer');
     } catch {
-      // not in a git repo or no common dir
+      // 当前不在 Git 仓库中，或没有公共目录。
     }
   }
   const assetsDir = path.join(rendererDir, 'assets');
 
   if (!fs.existsSync(rendererDir)) {
-    console.log('  out/renderer/ not found — run `bun run package` first to check bundle size.\n');
+    console.log('  未找到 out/renderer/；请先运行 `bun run package` 再检查包体积。\n');
     return undefined;
   }
 
@@ -410,11 +408,11 @@ function parseOutput(output: string): BenchResult[] {
 
 function printTerminalReport(report: BenchReport): void {
   console.log('\n  ╔══════════════════════════════════════════════════════════════╗');
-  console.log('  ║              AionUi Performance Benchmark Report            ║');
+  console.log('  ║                  TjuaeUI 性能基准测试报告                    ║');
   console.log('  ╚══════════════════════════════════════════════════════════════╝');
-  console.log(`  Git: ${report.gitRef}`);
-  console.log(`  Time: ${report.timestamp}`);
-  console.log(`  Benchmarks: ${report.results.length}\n`);
+  console.log(`  Git：${report.gitRef}`);
+  console.log(`  时间：${report.timestamp}`);
+  console.log(`  基准项：${report.results.length}\n`);
 
   let lastSuite = '';
   for (const r of report.results) {
@@ -438,11 +436,11 @@ function printTerminalReport(report: BenchReport): void {
 }
 
 function printBundleSizeSection(bundle: BundleSizeReport): void {
-  console.log('  ── Bundle Size ' + '─'.repeat(48));
-  console.log(`    Renderer total:       ${bundle.rendererTotalMb} MB`);
-  console.log(`    JS total:             ${bundle.jsTotalMb} MB  (${bundle.jsChunkCount} chunks)`);
-  console.log(`    CSS total:            ${bundle.cssTotalMb} MB`);
-  console.log(`    Largest chunk:        ${bundle.largestChunk.name}  (${bundle.largestChunk.sizeMb} MB)`);
+  console.log('  ── 包体积 ' + '─'.repeat(52));
+  console.log(`    渲染进程总计：        ${bundle.rendererTotalMb} MB`);
+  console.log(`    JS 总计：              ${bundle.jsTotalMb} MB（${bundle.jsChunkCount} 个分块）`);
+  console.log(`    CSS 总计：             ${bundle.cssTotalMb} MB`);
+  console.log(`    最大分块：             ${bundle.largestChunk.name}（${bundle.largestChunk.sizeMb} MB）`);
   if (bundle.warnings.length > 0) {
     console.log('');
     for (const w of bundle.warnings) {
@@ -453,10 +451,10 @@ function printBundleSizeSection(bundle: BundleSizeReport): void {
 }
 
 function printStartupSection(startup: StartupBenchReport): void {
-  console.log('  ── Startup Performance ' + '─'.repeat(40));
-  console.log(`  Iterations: ${startup.iterations} (successful: ${startup.successful}, failed: ${startup.failed})\n`);
+  console.log('  ── 启动性能 ' + '─'.repeat(48));
+  console.log(`  迭代次数：${startup.iterations}（成功：${startup.successful}，失败：${startup.failed}）\n`);
   console.log(
-    `    ${'Phase'.padEnd(30)} ${'Mean'.padStart(10)} ${'Median'.padStart(10)} ${'P95'.padStart(10)} ${'Min'.padStart(10)} ${'Max'.padStart(10)}`
+    `    ${'阶段'.padEnd(30)} ${'平均值'.padStart(10)} ${'中位数'.padStart(10)} ${'P95'.padStart(10)} ${'最小值'.padStart(10)} ${'最大值'.padStart(10)}`
   );
   console.log(`    ${'─'.repeat(82)}`);
 
@@ -475,14 +473,14 @@ function printStartupSection(startup: StartupBenchReport): void {
 }
 
 function printMemorySection(memory: StartupMemory): void {
-  console.log('  ── Memory Profiling ' + '─'.repeat(43));
-  console.log(`    ${'Stage'.padEnd(26)} ${'Main RSS'.padStart(14)} ${'Renderer Heap'.padStart(18)}`);
+  console.log('  ── 内存分析 ' + '─'.repeat(48));
+  console.log(`    ${'阶段'.padEnd(26)} ${'主进程 RSS'.padStart(14)} ${'渲染进程堆'.padStart(18)}`);
   console.log(`    ${'─'.repeat(60)}`);
 
   const stages: Array<[string, MemorySnapshot | undefined, boolean]> = [
-    ['Idle', memory.idle, true],
-    ['After conversation', memory.afterConversation, false],
-    ['After close', memory.afterClose, false],
+    ['空闲', memory.idle, true],
+    ['打开会话后', memory.afterConversation, false],
+    ['关闭后', memory.afterClose, false],
   ];
 
   for (const [label, snap, isIdle] of stages) {
@@ -497,7 +495,7 @@ function printMemorySection(memory: StartupMemory): void {
   if (memory.leakEstimateMb !== undefined) {
     const leakOver =
       memory.leakEstimateMb > THRESHOLDS.leakAfterCloseMb ? `  !! > ${THRESHOLDS.leakAfterCloseMb}MB` : '';
-    console.log(`    ${'Leak estimate'.padEnd(26)} ${(memory.leakEstimateMb + 'MB').padStart(14)}${leakOver}`);
+    console.log(`    ${'泄漏估算'.padEnd(26)} ${(memory.leakEstimateMb + 'MB').padStart(14)}${leakOver}`);
   }
   console.log('');
 }
@@ -630,7 +628,7 @@ function generateHtmlReport(report: BenchReport): string {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>AionUi Benchmark Report - ${report.timestamp}</title>
+<title>TjuaeUI Benchmark Report - ${report.timestamp}</title>
 <style>
   :root { --bg: #0d1117; --fg: #c9d1d9; --border: #30363d; --accent: #58a6ff; --green: #3fb950; --red: #f85149; --card: #161b22; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -651,7 +649,7 @@ function generateHtmlReport(report: BenchReport): string {
 </style>
 </head>
 <body>
-<h1>AionUi Performance Benchmark Report</h1>
+<h1>TjuaeUI Performance Benchmark Report</h1>
 <div class="meta">
   Git: ${esc(report.gitRef)} | ${esc(report.timestamp)} | <span class="count">${report.results.length} benchmarks</span>${report.startup ? ` | <span class="count">startup (${report.startup.iterations} iter)</span>` : ''}
 </div>
@@ -671,18 +669,18 @@ function main() {
   const results = parseOutput(output);
 
   if (results.length === 0) {
-    console.error('  No benchmark results parsed. Raw output:');
+    console.error('  未解析到基准测试结果。原始输出：');
     console.error(output.slice(0, 2000));
     process.exit(1);
   }
 
-  let gitRef = 'unknown';
+  let gitRef = '未知';
   try {
     gitRef = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
     const branch = execSync('git branch --show-current', { encoding: 'utf-8' }).trim();
     gitRef = `${branch}@${gitRef}`;
   } catch {
-    // not in a git repo
+    // 当前不在 Git 仓库中。
   }
 
   const reportDir = path.resolve('scripts/benchmark-results');
@@ -708,11 +706,11 @@ function main() {
 
   const htmlPath = path.join(reportDir, `bench-${Date.now()}.html`);
   fs.writeFileSync(htmlPath, generateHtmlReport(report));
-  console.log(`  HTML report: ${htmlPath}`);
+  console.log(`  HTML 报告：${htmlPath}`);
 
   const jsonPath = path.join(reportDir, 'latest.json');
   fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
-  console.log(`  JSON baseline: ${jsonPath}\n`);
+  console.log(`  JSON 基线：${jsonPath}\n`);
 }
 
 main();

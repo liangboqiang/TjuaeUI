@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,7 +10,7 @@ import { Dropdown, Menu, Tooltip } from '@arco-design/web-react';
 import { Down, Plus, Refresh } from '@icon-park/react';
 import React from 'react';
 import UploadProgressBar from '@/renderer/components/media/UploadProgressBar';
-import { AionSearchInput } from '@/renderer/components/base';
+import { TjuaeSearchInput } from '@/renderer/components/base';
 import type { TFunction } from 'i18next';
 
 type WorkspaceToolbarProps = {
@@ -75,7 +75,7 @@ const WorkspaceToolbar: React.FC<WorkspaceToolbarProps> = ({
       {/* Search Input */}
       {(showSearch || searchText) && (
         <div className='py-8px workspace-toolbar-search'>
-          <AionSearchInput
+          <TjuaeSearchInput
             className='w-full workspace-search-input'
             ref={searchInputRef}
             placeholder={t('conversation.workspace.searchPlaceholder')}

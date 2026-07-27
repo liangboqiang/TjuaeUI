@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -9,7 +9,7 @@ import { useAddOrUpdateMessage } from '@/renderer/pages/conversation/Messages/ho
 import React, { useEffect } from 'react';
 
 const STREAM_TICK_MS = 35;
-const ENABLED_CONVERSATION_KEY = 'aionui:e2e-message-stream-conversation-id';
+const ENABLED_CONVERSATION_KEY = 'tjuaeui:e2e-message-stream-conversation-id';
 
 type RunScenarioOptions = {
   historyPairs?: number;
@@ -32,7 +32,7 @@ type StreamRegistry = {
 
 declare global {
   interface Window {
-    __AIONUI_E2E_MESSAGE_STREAM__?: StreamRegistry;
+    __TJUAEUI_E2E_MESSAGE_STREAM__?: StreamRegistry;
   }
 }
 
@@ -99,7 +99,7 @@ const AcpE2EStreamInjector: React.FC<{ conversationId: string }> = ({ conversati
       return;
     }
 
-    const registry = (window.__AIONUI_E2E_MESSAGE_STREAM__ ??= { controllers: {} });
+    const registry = (window.__TJUAEUI_E2E_MESSAGE_STREAM__ ??= { controllers: {} });
 
     registry.controllers[conversationId] = {
       runScenario: async (options?: RunScenarioOptions) => {
@@ -293,8 +293,8 @@ const AcpE2EStreamInjector: React.FC<{ conversationId: string }> = ({ conversati
     };
 
     return () => {
-      if (window.__AIONUI_E2E_MESSAGE_STREAM__) {
-        delete window.__AIONUI_E2E_MESSAGE_STREAM__.controllers[conversationId];
+      if (window.__TJUAEUI_E2E_MESSAGE_STREAM__) {
+        delete window.__TJUAEUI_E2E_MESSAGE_STREAM__.controllers[conversationId];
       }
     };
   }, [addOrUpdateMessage, conversationId]);

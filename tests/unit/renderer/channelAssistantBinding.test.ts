@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,13 +40,13 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
 
 describe('channel assistant binding helpers', () => {
   const assistants = [
-    assistant({ id: 'bare-aionrs', name: 'Aion CLI', source: 'generated', preset_agent_type: 'aionrs' }),
+    assistant({ id: 'bare-tjuaecli', name: 'Tjuae CLI', source: 'generated', preset_agent_type: 'tjuaecli' }),
     assistant({ id: 'bare-claude', name: 'Claude', source: 'generated', preset_agent_type: 'claude' }),
     assistant({ id: 'user-writer', name: 'Writer', source: 'user', preset_agent_type: 'claude' }),
   ];
 
-  it('prefers the generated aionrs assistant as the default selection', () => {
-    expect(getDefaultChannelAssistant(assistants)?.id).toBe('bare-aionrs');
+  it('prefers the generated tjuaecli assistant as the default selection', () => {
+    expect(getDefaultChannelAssistant(assistants)?.id).toBe('bare-tjuaecli');
   });
 
   it('resolves explicit assistant ids from new channel bindings', () => {
@@ -54,7 +54,7 @@ describe('channel assistant binding helpers', () => {
   });
 
   it('falls back to the default assistant only when no binding was saved', () => {
-    expect(resolveChannelAssistantId(undefined, assistants)).toBe('bare-aionrs');
+    expect(resolveChannelAssistantId(undefined, assistants)).toBe('bare-tjuaecli');
   });
 
   it('marks unresolved saved bindings instead of silently selecting a default assistant', () => {

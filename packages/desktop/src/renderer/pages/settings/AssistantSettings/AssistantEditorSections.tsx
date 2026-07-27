@@ -139,7 +139,7 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
     [currentAgentRuntimeCatalog]
   );
   const modelOptions = useMemo(() => {
-    if (editAgentRuntimeKey === 'aionrs') {
+    if (editAgentRuntimeKey === 'tjuaecli') {
       return providerModelOptions;
     }
 

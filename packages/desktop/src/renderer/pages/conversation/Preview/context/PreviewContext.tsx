@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -92,9 +92,9 @@ export interface PreviewContextValue {
 const PreviewContext = createContext<PreviewContextValue | null>(null);
 
 // 持久化 key / Persistence keys
-const PREVIEW_TABS_KEY = 'aionui_preview_tabs';
-const PREVIEW_ACTIVE_TAB_ID_KEY = 'aionui_preview_active_tab_id';
-const LEGACY_PREVIEW_STATE_KEY = 'aionui_preview_state';
+const PREVIEW_TABS_KEY = 'tjuaeui_preview_tabs';
+const PREVIEW_ACTIVE_TAB_ID_KEY = 'tjuaeui_preview_active_tab_id';
+const LEGACY_PREVIEW_STATE_KEY = 'tjuaeui_preview_state';
 
 // 仅持久化小体积文本预览，避免大文本导致 localStorage 写入卡顿
 // Persist only lightweight text previews to avoid localStorage jank on large files

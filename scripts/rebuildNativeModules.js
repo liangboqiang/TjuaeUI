@@ -1,59 +1,39 @@
 /**
- * Unified native module rebuild utility
- * Handles rebuilding native modules for different platforms and architectures
+ * 原生模块统一重建工具。
  *
- * Supports vx toolchain management:
- * - Uses 'vx --with msvc' on Windows to ensure MSVC compiler is available
- * - Falls back to standard bunx if vx is not available
+ * 所有构建工具均从项目依赖和锁文件解析，禁止在发布过程中临时下载工具。
  */
 
-const { execSync, execFileSync, spawnSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { parseArgs } = require('util');
 
 /**
- * Check if vx is available in the system
+ * 从项目依赖中解析固定版本的命令行入口。
  */
-function isVxAvailable() {
+function resolveToolEntry(projectRoot, toolName) {
   try {
-    const result = spawnSync('vx', ['--version'], { stdio: 'ignore' });
-    return result.status === 0;
-  } catch {
-    return false;
+    if (toolName === 'prebuild-install') {
+      return require.resolve('prebuild-install/bin.js', { paths: [projectRoot] });
+    }
+    if (toolName === 'electron-rebuild') {
+      const mainEntry = require.resolve('@electron/rebuild', { paths: [projectRoot] });
+      const cliEntry = path.join(path.dirname(mainEntry), 'cli.js');
+      if (fs.existsSync(cliEntry)) {
+        return cliEntry;
+      }
+    }
+  } catch (error) {
+    throw new Error(
+      `缺少锁定的原生构建工具 ${toolName}。请先运行 bun install --frozen-lockfile。原始错误：${error.message}`
+    );
   }
+  throw new Error(`无法从项目依赖中解析原生构建工具 ${toolName}`);
 }
 
 /**
- * Get bunx command for the current platform
- * Windows requires bunx.cmd, others use bunx
- * Note: does NOT add 'vx' prefix here — the caller's cmdPrefix (e.g. 'vx --with msvc')
- * already provides the vx entry point, so we must not nest another 'vx' call.
- */
-function getBunxCommand() {
-  return process.platform === 'win32' ? 'bun x' : 'bun x';
-}
-
-/**
- * Get command prefix for native compilation with proper toolchain.
- * On Windows, returns 'vx --with msvc' so MSVC env vars are injected into
- * the subprocess environment before bunx/node-gyp runs.
- * On other platforms returns 'vx' to ensure the correct bun version is used.
- * Returns '' when vx is not available.
- */
-function getCommandPrefix(platform, useVx = true) {
-  if (!useVx || !isVxAvailable()) {
-    return '';
-  }
-  if (platform === 'win32' || platform === 'windows') {
-    // 'vx --with msvc <cmd>' injects VCINSTALLDIR and related env vars so
-    // node-gyp can locate the MSVC compiler without a separate choco install.
-    return 'vx --with msvc';
-  }
-  return 'vx';
-}
-
-/**
- * Normalize architecture names
+ * 规范化架构名称。
  */
 function normalizeArch(arch) {
   const archMap = {
@@ -66,23 +46,21 @@ function normalizeArch(arch) {
 }
 
 /**
- * Get modules to rebuild based on platform
+ * 根据目标平台确定需要重建的模块。
  */
 function getModulesToRebuild(platform) {
-  // Windows: Skip node-pty (cross-compilation fails with missing conpty API types)
-  // Linux: Skip node-pty (no ARM64 prebuilds available, cross-compilation requires ARM64 toolchain)
-  // macOS: Skip node-pty (cross-compilation from ARM64→x64 fails, use @lydell/node-pty-* prebuilts)
+  // 各平台均使用项目自带的 @lydell/node-pty-* 预构建文件，仅重建 better-sqlite3。
   if (platform === 'win32' || platform === 'windows') {
     return ['better-sqlite3'];
   } else if (platform === 'linux') {
     return ['better-sqlite3'];
   }
-  // macOS: only rebuild better-sqlite3, skip node-pty
+  // macOS 同样只重建 better-sqlite3。
   return ['better-sqlite3'];
 }
 
 /**
- * Build environment variables for native module compilation
+ * 构造原生模块编译环境变量。
  */
 function buildEnvironment(platform, targetArch, electronVersion) {
   const env = {
@@ -95,7 +73,7 @@ function buildEnvironment(platform, targetArch, electronVersion) {
     npm_config_target: electronVersion,
   };
 
-  // Windows-specific environment
+  // Windows 编译环境。
   if (platform === 'win32' || platform === 'windows') {
     env.MSVS_VERSION = '2022';
     env.GYP_MSVS_VERSION = '2022';
@@ -107,14 +85,14 @@ function buildEnvironment(platform, targetArch, electronVersion) {
 }
 
 /**
- * Rebuild native modules using electron-rebuild
+ * 使用锁文件内的 electron-rebuild 重建原生模块。
  *
  * @param {Object} options
- * @param {string} options.platform - Platform name (win32, darwin, linux)
- * @param {string} options.arch - Target architecture (x64, arm64, etc.)
- * @param {string} options.electronVersion - Electron version
- * @param {string} options.cwd - Working directory (default: project root)
- * @param {string[]} [options.modules] - Modules to rebuild (default: auto-detect by platform)
+ * @param {string} options.platform - 平台名称（win32、darwin、linux）
+ * @param {string} options.arch - 目标架构
+ * @param {string} options.electronVersion - Electron 版本
+ * @param {string} options.cwd - 项目根目录
+ * @param {string[]} [options.modules] - 需要重建的模块
  */
 function rebuildWithElectronRebuild(options) {
   const {
@@ -128,10 +106,19 @@ function rebuildWithElectronRebuild(options) {
   const targetArch = normalizeArch(arch);
   const env = buildEnvironment(platform, targetArch, electronVersion);
 
-  const bunxCmd = getBunxCommand();
-  const rebuildCmd = `${bunxCmd} electron-rebuild --only ${modules.join(',')} --force --arch ${targetArch} --electron-version ${electronVersion}`;
-
-  execSync(rebuildCmd, {
+  const rebuildCli = resolveToolEntry(cwd, 'electron-rebuild');
+  const rebuildArgs = [
+    rebuildCli,
+    '--only',
+    modules.join(','),
+    '--force',
+    '--arch',
+    targetArch,
+    '--version',
+    electronVersion,
+  ];
+  console.log(`正在运行锁定工具：${process.execPath} ${rebuildArgs.join(' ')}`);
+  execFileSync(process.execPath, rebuildArgs, {
     stdio: 'inherit',
     cwd,
     env,
@@ -139,37 +126,35 @@ function rebuildWithElectronRebuild(options) {
 }
 
 /**
- * Check if cross-compilation from source is supported
+ * 判断是否支持从源码跨架构编译。
  */
 function canCrossCompileFromSource(buildArch, targetArch, platform) {
-  // macOS can cross-compile between x64 and arm64
+  // macOS 可在 x64 与 arm64 之间交叉编译。
   if (platform === 'darwin') {
     return true;
   }
 
-  // Windows x64 can cross-compile to arm64 with proper toolchain
+  // Windows x64 在本机工具链完整时可编译 arm64。
   if (platform === 'win32' && buildArch === 'x64' && targetArch === 'arm64') {
     return true;
   }
 
-  // Linux cannot reliably cross-compile without ARM64 toolchain
-  // Must use prebuild-install for cross-arch builds
+  // Linux 缺少目标工具链时不能可靠地从源码跨架构编译。
   return buildArch === targetArch;
 }
 
 /**
- * Rebuild a single module using prebuild-install (faster for prebuilt binaries)
- * Falls back to electron-rebuild if prebuild-install fails
+ * 优先用锁定的 prebuild-install 安装预构建文件，失败后回退到 electron-rebuild。
  *
  * @param {Object} options
- * @param {string} options.moduleName - Module name (e.g., 'better-sqlite3')
- * @param {string} options.moduleRoot - Path to module directory
- * @param {string} options.platform - Platform name
- * @param {string} options.arch - Target architecture
- * @param {string} options.electronVersion - Electron version
- * @param {string} [options.projectRoot] - Project root for fallback rebuild
- * @param {boolean} [options.forceRebuild] - Force rebuild from source (skip prebuild-install)
- * @param {string} [options.buildArch] - Build machine architecture (for cross-compilation detection)
+ * @param {string} options.moduleName - 模块名
+ * @param {string} options.moduleRoot - 模块目录
+ * @param {string} options.platform - 目标平台
+ * @param {string} options.arch - 目标架构
+ * @param {string} options.electronVersion - Electron 版本
+ * @param {string} [options.projectRoot] - 项目根目录
+ * @param {boolean} [options.forceRebuild] - 是否跳过预构建并强制源码编译
+ * @param {string} [options.buildArch] - 构建机架构
  */
 function rebuildSingleModule(options) {
   const {
@@ -191,36 +176,30 @@ function rebuildSingleModule(options) {
   env.npm_config_platform = platform;
   env.npm_config_target_platform = platform;
 
-  const bunxCmd = getBunxCommand();
-  const cmdPrefix = getCommandPrefix(platform);
-  const useShell = cmdPrefix.length > 0; // Need shell for vx prefix
-
-  // For Linux cross-compilation, ALWAYS use prebuild-install
-  // because electron-rebuild cannot cross-compile without ARM64 toolchain
+  // Linux 跨架构构建必须使用预构建文件。
   const mustUsePrebuild = platform === 'linux' && isCrossCompile;
 
   if (mustUsePrebuild) {
-    console.log(`     Linux cross-compilation detected (${normalizedBuildArch} → ${targetArch})`);
+    console.log(`     检测到 Linux 跨架构编译（${normalizedBuildArch} → ${targetArch}）`);
 
-    // Check if module already has prebuilds
+    // 优先复用模块已有的目标架构预构建文件。
     const prebuildsDir = path.join(moduleRoot, 'prebuilds', `${platform}-${targetArch}`);
     if (fs.existsSync(prebuildsDir)) {
       const files = fs.readdirSync(prebuildsDir);
       const hasNodeFile = files.some((f) => f.endsWith('.node'));
       if (hasNodeFile) {
-        console.log(`     ✓ Found existing prebuilds in ${prebuildsDir}, skipping rebuild`);
+        console.log(`     ✓ 已在 ${prebuildsDir} 找到预构建文件，跳过重建`);
 
-        // Delete build/ and bin/ to prevent node-gyp-build from loading wrong architecture
-        // node-gyp-build search order: bin/ -> build/Release/ -> prebuilds/
+        // 删除 build/ 与 bin/，防止 node-gyp-build 误加载其他架构文件。
         const buildDir = path.join(moduleRoot, 'build');
         if (fs.existsSync(buildDir)) {
-          console.log(`     Removing build/ directory to force use of prebuilds/`);
+          console.log('     正在删除 build/，强制使用 prebuilds/');
           fs.rmSync(buildDir, { recursive: true, force: true });
         }
 
         const binDir = path.join(moduleRoot, 'bin');
         if (fs.existsSync(binDir)) {
-          console.log(`     Removing bin/ directory to force use of prebuilds/`);
+          console.log('     正在删除 bin/，强制使用 prebuilds/');
           fs.rmSync(binDir, { recursive: true, force: true });
         }
 
@@ -228,16 +207,16 @@ function rebuildSingleModule(options) {
       }
     }
 
-    console.log(`     No existing prebuilds found, trying prebuild-install...`);
+    console.log('     未找到现有预构建文件，正在尝试 prebuild-install……');
   }
 
-  // Try prebuild-install first (required for Linux cross-compile)
+  // 优先尝试固定版本的 prebuild-install。
   if (!forceRebuild || mustUsePrebuild) {
     try {
       env.npm_config_build_from_source = 'false';
+      const prebuildCli = resolveToolEntry(projectRoot, 'prebuild-install');
       const prebuildArgs = [
-        '--yes',
-        'prebuild-install',
+        prebuildCli,
         '--runtime=electron',
         `--target=${electronVersion}`,
         `--platform=${platform}`,
@@ -245,88 +224,60 @@ function rebuildSingleModule(options) {
         '--force',
       ];
 
-      const fullCmd = cmdPrefix
-        ? `${cmdPrefix} ${bunxCmd} ${prebuildArgs.join(' ')}`
-        : `${bunxCmd} ${prebuildArgs.join(' ')}`;
-      console.log(`     Running: ${fullCmd}`);
+      console.log(`     正在运行锁定工具：${process.execPath} ${prebuildArgs.join(' ')}`);
+      execFileSync(process.execPath, prebuildArgs, {
+        cwd: moduleRoot,
+        env,
+        stdio: 'inherit',
+      });
 
-      if (useShell) {
-        execSync(fullCmd, {
-          cwd: moduleRoot,
-          env,
-          stdio: 'inherit',
-          shell: true,
-        });
-      } else {
-        execFileSync(bunxCmd, prebuildArgs, {
-          cwd: moduleRoot,
-          env,
-          stdio: 'inherit',
-          shell: true,
-        });
-      }
-
-      console.log(`     ✓ prebuild-install succeeded`);
+      console.log('     ✓ prebuild-install 成功');
       return true;
     } catch (error) {
       if (mustUsePrebuild) {
-        // For Linux cross-compile, prebuild-install MUST succeed
-        console.error(`     ✗ prebuild-install failed and cross-compilation from source not supported`);
-        console.error(`     Error: ${error.message}`);
+        // Linux 跨架构时预构建失败即终止，禁止悄悄改走不可用的源码路径。
+        console.error('     ✗ prebuild-install 失败，且不支持从源码跨架构编译');
+        console.error(`     错误：${error.message}`);
         return false;
       }
-      // For other cases, fall back to rebuild
-      console.log(`     prebuild-install failed, falling back to electron-rebuild...`);
+      // 同架构构建可回退到源码重建。
+      console.log('     prebuild-install 失败，正在回退到 electron-rebuild……');
     }
   }
 
-  // Use electron-rebuild to build from source
+  // 使用锁定版本的 electron-rebuild 从源码重建。
   if (!canCrossCompileFromSource(normalizedBuildArch, targetArch, platform)) {
-    console.error(`     ✗ Cross-compilation from ${normalizedBuildArch} to ${targetArch} not supported on ${platform}`);
+    console.error(`     ✗ ${platform} 不支持从 ${normalizedBuildArch} 跨架构编译到 ${targetArch}`);
     return false;
   }
 
   try {
     env.npm_config_build_from_source = 'true';
+    const rebuildCli = resolveToolEntry(projectRoot, 'electron-rebuild');
     const rebuildArgs = [
-      '--yes',
-      'electron-rebuild',
+      rebuildCli,
       '--only',
       moduleName,
       '--force',
-      `--platform=${platform}`,
       `--arch=${targetArch}`,
+      `--version=${electronVersion}`,
     ];
 
-    const fullCmd = cmdPrefix
-      ? `${cmdPrefix} ${bunxCmd} ${rebuildArgs.join(' ')}`
-      : `${bunxCmd} ${rebuildArgs.join(' ')}`;
-    console.log(`     Running: ${fullCmd}`);
-
-    if (useShell) {
-      execSync(fullCmd, {
-        cwd: projectRoot,
-        env,
-        stdio: 'inherit',
-        shell: true,
-      });
-    } else {
-      execFileSync(bunxCmd, rebuildArgs, {
-        cwd: projectRoot,
-        env,
-        stdio: 'inherit',
-        shell: true,
-      });
-    }
+    console.log(`     正在运行锁定工具：${process.execPath} ${rebuildArgs.join(' ')}`);
+    execFileSync(process.execPath, rebuildArgs, {
+      cwd: projectRoot,
+      env,
+      stdio: 'inherit',
+    });
     return true;
   } catch (error) {
-    console.error(`❌ Failed to rebuild ${moduleName}:`, error.message);
+    console.error(`❌ 无法重建 ${moduleName}：`, error.message);
     return false;
   }
 }
 
 /**
- * Recursively search for .node files in a directory
+ * 递归搜索目录中的 .node 文件。
  */
 function findNodeFiles(dir, maxDepth = 3, currentDepth = 0) {
   if (currentDepth >= maxDepth || !fs.existsSync(dir)) {
@@ -345,14 +296,14 @@ function findNodeFiles(dir, maxDepth = 3, currentDepth = 0) {
       }
     }
   } catch (error) {
-    // Ignore permission errors
+    // 权限错误不影响后续的统一校验。
   }
 
   return results;
 }
 
 /**
- * Verify native module binary exists
+ * 验证原生模块二进制文件是否存在。
  */
 function verifyModuleBinary(moduleRoot, moduleName) {
   const binaryPathsToCheck = {
@@ -366,25 +317,75 @@ function verifyModuleBinary(moduleRoot, moduleName) {
 
   const pathsToCheck = binaryPathsToCheck[moduleName] || [];
 
-  // First check known paths
+  // 先检查约定路径。
   for (const binaryPath of pathsToCheck) {
     if (fs.existsSync(binaryPath)) {
-      console.log(`     Debug: Found binary at ${binaryPath}`);
+      console.log(`     调试：已在 ${binaryPath} 找到二进制文件`);
       return true;
     }
   }
 
-  // If not found, search recursively
-  console.log(`     Debug: Binary not found in expected locations, searching recursively...`);
+  // 约定路径不存在时再递归搜索。
+  console.log('     调试：预期位置没有二进制文件，正在递归搜索……');
   const foundFiles = findNodeFiles(moduleRoot);
   if (foundFiles.length > 0) {
-    console.log(`     Debug: Found .node files:`);
+    console.log('     调试：找到以下 .node 文件：');
     foundFiles.forEach((f) => console.log(`       - ${f}`));
     return true;
   }
 
-  console.log(`     Debug: No .node files found in ${moduleRoot}`);
+  console.log(`     调试：${moduleRoot} 中未找到 .node 文件`);
   return false;
+}
+
+/**
+ * 提供给 CI 与本地任务使用的确定性命令行入口。
+ */
+function runCli(argv = process.argv.slice(2)) {
+  const { values } = parseArgs({
+    args: argv,
+    options: {
+      module: { type: 'string' },
+      'module-root': { type: 'string' },
+      platform: { type: 'string' },
+      arch: { type: 'string' },
+      'electron-version': { type: 'string' },
+      'project-root': { type: 'string', default: path.resolve(__dirname, '..') },
+      'force-rebuild': { type: 'boolean', default: false },
+    },
+    strict: true,
+  });
+
+  const required = ['module', 'module-root', 'platform', 'arch', 'electron-version'];
+  const missing = required.filter((name) => !values[name]);
+  if (missing.length > 0) {
+    console.error(`缺少原生模块重建参数：${missing.join('、')}`);
+    return 2;
+  }
+
+  const projectRoot = path.resolve(values['project-root']);
+  const moduleRoot = path.resolve(projectRoot, values['module-root']);
+  const moduleName = values.module;
+  const success = rebuildSingleModule({
+    moduleName,
+    moduleRoot,
+    platform: values.platform,
+    arch: values.arch,
+    electronVersion: values['electron-version'],
+    projectRoot,
+    forceRebuild: values['force-rebuild'],
+  });
+
+  if (!success || !verifyModuleBinary(moduleRoot, moduleName)) {
+    console.error(`原生模块 ${moduleName} 重建或校验失败`);
+    return 1;
+  }
+  console.log(`原生模块 ${moduleName} 重建并校验通过`);
+  return 0;
+}
+
+if (require.main === module) {
+  process.exitCode = runCli();
 }
 
 module.exports = {
@@ -395,7 +396,6 @@ module.exports = {
   rebuildSingleModule,
   verifyModuleBinary,
   canCrossCompileFromSource,
-  isVxAvailable,
-  getBunxCommand,
-  getCommandPrefix,
+  resolveToolEntry,
+  runCli,
 };

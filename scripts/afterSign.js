@@ -7,35 +7,35 @@ exports.default = async function afterSign(context) {
     return;
   }
 
-  // Lazy-load notarize because @electron/notarize is ESM-only
+  // @electron/notarize 仅提供 ESM，因此延迟加载。
   const { notarize } = await import('@electron/notarize');
 
   const appName = context.packager.appInfo.productFilename;
   const appBundleId = context.packager.appInfo.id;
   const appPath = `${appOutDir}/${appName}.app`;
 
-  // Check if app is actually signed before attempting notarization
+  // 公证前先确认应用确实已签名。
   try {
     execSync(`codesign --verify --verbose "${appPath}"`, { stdio: 'pipe' });
-    console.log(`App ${appName} is properly code signed`);
+    console.log(`应用 ${appName} 已正确完成代码签名`);
   } catch (error) {
-    console.log(`App ${appName} is not code signed, applying ad-hoc signature...`);
+    console.log(`应用 ${appName} 尚未签名，正在应用临时签名……`);
     try {
       execSync(`codesign --force --deep --sign - "${appPath}"`, { stdio: 'inherit' });
-      console.log(`Ad-hoc signature applied successfully to ${appName}`);
+      console.log(`已成功为 ${appName} 应用临时签名`);
     } catch (adHocError) {
-      console.error('Ad-hoc signing failed:', adHocError.message);
+      console.error('临时签名失败：', adHocError.message);
     }
     return;
   }
 
-  // Skip notarization if credentials are not provided
+  // 未提供凭据时跳过公证。
   if (!process.env.appleId || !process.env.appleIdPassword) {
-    console.log('Skipping notarization - missing Apple ID credentials');
+    console.log('缺少 Apple ID 凭据，已跳过公证');
     return;
   }
 
-  console.log(`Starting notarization for ${appName} (${appBundleId})...`);
+  console.log(`正在公证 ${appName}（${appBundleId}）……`);
 
   try {
     await notarize({
@@ -46,9 +46,9 @@ exports.default = async function afterSign(context) {
       appleIdPassword: process.env.appleIdPassword,
       teamId: process.env.teamId,
     });
-    console.log('Notarization completed successfully');
+    console.log('公证已成功完成');
   } catch (error) {
-    console.error('Notarization failed:', error);
+    console.error('公证失败：', error);
     throw error;
   }
 };

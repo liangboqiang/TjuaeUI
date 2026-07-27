@@ -2,7 +2,7 @@
  * Assistant Settings Migration — phase-1 governance E2E coverage.
  *
  * These tests exercise a real upgrade path:
- * 1. seed a legacy `aionui.db` using the pre-unification assistants schema
+ * 1. seed a legacy `tjuaeui.db` using the pre-unification assistants schema
  * 2. start the current backend against that data dir
  * 3. verify phase-1 assistant fields and overlays are materialized correctly
  */
@@ -70,9 +70,9 @@ type AssistantDetail = {
 function resolveBackendBinary(): string {
   const projectRoot = process.cwd();
   const candidates = [
-    process.env.AIONUI_BACKEND_BINARY,
-    path.join(projectRoot, '../aionCore/target/debug/aioncore'),
-    path.join(os.homedir(), '.cargo', 'bin', 'aioncore'),
+    process.env.TJUAEUI_BACKEND_BINARY,
+    path.join(projectRoot, '../tjuaeCore/target/debug/tjuaecore'),
+    path.join(os.homedir(), '.cargo', 'bin', 'tjuaecore'),
   ].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {
@@ -81,20 +81,20 @@ function resolveBackendBinary(): string {
     }
   }
 
-  throw new Error('aioncore binary not found for migration e2e');
+  throw new Error('tjuaecore binary not found for migration e2e');
 }
 
 function schemaPath(): string {
-  return path.join(process.cwd(), '../aionCore/crates/aionui-db/migrations/001_initial_schema.sql');
+  return path.join(process.cwd(), '../tjuaeCore/crates/tjuaeui-db/migrations/001_initial_schema.sql');
 }
 
 function querySqliteValue(dataDir: string, sql: string): string {
-  const dbPath = path.join(dataDir, 'aionui-backend.db');
+  const dbPath = path.join(dataDir, 'tjuaeui-backend.db');
   return execFileSync('sqlite3', ['-readonly', dbPath, sql], { encoding: 'utf8' }).trim();
 }
 
 function seedLegacyDatabase(dataDir: string): void {
-  const legacyDbPath = path.join(dataDir, 'aionui.db');
+  const legacyDbPath = path.join(dataDir, 'tjuaeui.db');
   const schemaSql = fs.readFileSync(schemaPath(), 'utf8');
   execFileSync('sqlite3', [legacyDbPath], { input: schemaSql, encoding: 'utf8' });
 
@@ -109,8 +109,8 @@ function seedLegacyDatabase(dataDir: string): void {
       'Legacy Writer',
       'Migrated from legacy schema',
       '✍️',
-      'aionrs',
-      '["officecli-data-dashboard","officecli"]',
+      'tjuaecli',
+      '["document-tools","file-analysis"]',
       '[]',
       '["cron"]',
       '["${LEGACY_PROMPT}"]',
@@ -198,7 +198,7 @@ test.describe('Assistant Settings Migration', () => {
       env: {
         ...process.env,
         RUST_LOG: 'warn',
-        AIONUI_EXTENSIONS_PATH: path.join(process.cwd(), 'examples'),
+        TJUAE_EXTENSIONS_PATH: path.join(process.cwd(), 'examples'),
       },
     });
     try {
@@ -210,7 +210,7 @@ test.describe('Assistant Settings Migration', () => {
   }
 
   test.beforeEach(async () => {
-    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aionui-assistant-migration-'));
+    dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tjuaeui-assistant-migration-'));
     seedLegacyDatabase(dataDir);
     await startBackend();
   });
@@ -231,23 +231,23 @@ test.describe('Assistant Settings Migration', () => {
     expect(migrated?.description).toBe('Migrated from legacy schema');
     expect(migrated?.enabled).toBe(false);
     expect(migrated?.sort_order).toBe(7);
-    expect(migrated?.preset_agent_type).toBe('aionrs');
+    expect(migrated?.preset_agent_type).toBe('tjuaecli');
 
     const detail = await httpJson<AssistantDetail>(baseUrl, 'GET', `/api/assistants/${LEGACY_USER_ID}?locale=en-US`);
     expect(detail.profile.name).toBe('Legacy Writer');
     expect(detail.profile.description).toBe('Migrated from legacy schema');
     expect(detail.state.enabled).toBe(false);
     expect(detail.state.sort_order).toBe(7);
-    expect(detail.engine.agent_backend).toBe('aionrs');
+    expect(detail.engine.agent_backend).toBe('tjuaecli');
     expect(detail.rules.content).toBe(LEGACY_RULE);
     expect(detail.prompts.recommended).toEqual([LEGACY_PROMPT]);
     expect(detail.defaults.model.mode).toBe('auto');
     expect(detail.defaults.permission.mode).toBe('auto');
     expect(detail.defaults.skills.mode).toBe('fixed');
-    expect(detail.defaults.skills.value).toEqual(['officecli-data-dashboard', 'officecli']);
+    expect(detail.defaults.skills.value).toEqual(['document-tools', 'file-analysis']);
     expect(detail.defaults.mcps.mode).toBe('auto');
     expect(detail.defaults.mcps.value ?? []).toEqual([]);
-    expect(detail.capabilities.default_skill_ids).toEqual(['officecli-data-dashboard', 'officecli']);
+    expect(detail.capabilities.default_skill_ids).toEqual(['document-tools', 'file-analysis']);
     expect(detail.capabilities.default_disabled_builtin_skill_ids).toEqual(['cron']);
     expect(detail.preferences.last_skill_ids ?? []).toEqual([]);
     expect(detail.preferences.last_mcp_ids ?? []).toEqual([]);

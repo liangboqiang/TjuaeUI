@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -84,11 +84,11 @@ export interface IConfigStorageRefer {
 }
 
 /**
- * Legacy config keys that may still exist on disk from the pre-aionCore era.
+ * Legacy config keys that may still exist on disk from the pre-tjuaeCore era.
  *
  * New business truth must not be added here. Keep this surface migration-only:
  * renderer/process code may read these keys during one-shot imports into the
- * backend, but all current writes should go through aionCore-owned storage.
+ * backend, but all current writes should go through tjuaeCore-owned storage.
  */
 export interface ILegacyConfigStorageRefer extends IConfigStorageRefer {
   'google.config'?: {
@@ -109,7 +109,7 @@ export interface ILegacyConfigStorageRefer extends IConfigStorageRefer {
 }
 
 export interface IEnvStorageRefer {
-  'aionui.dir': {
+  'tjuaeui.dir': {
     workDir: string;
     cacheDir: string;
     logDir?: string;
@@ -120,7 +120,7 @@ export interface IEnvStorageRefer {
  * Conversation source type - identifies where the conversation was created
  * 会话来源类型 - 标识会话创建的来源
  */
-export type ConversationSource = 'aionui' | 'telegram' | 'lark' | 'dingtalk' | 'weixin' | 'wecom' | (string & {});
+export type ConversationSource = 'tjuaeui' | 'telegram' | 'lark' | 'dingtalk' | 'weixin' | 'wecom' | (string & {});
 
 export type TChatConversationStatus = 'pending' | 'running' | 'finished';
 export type TConversationRuntimeStateKind = 'idle' | 'starting' | 'running' | 'cancelling' | 'waiting_confirmation';
@@ -154,7 +154,7 @@ interface IChatConversation<T, Extra> {
   model: TProviderWithModel;
   status?: TChatConversationStatus | undefined;
   runtime?: TConversationRuntimeSummary;
-  /** 会话来源，默认为 aionui / Conversation source, defaults to aionui */
+  /** 会话来源，默认为 tjuaeui / Conversation source, defaults to tjuaeui */
   source?: ConversationSource;
   /** Channel chat isolation ID (e.g. user:xxx, group:xxx) */
   channel_chat_id?: string;
@@ -302,7 +302,7 @@ export type TChatConversation =
   // open historical rows with type='gemini' (message history is served
   // by the shared messages table). The backend factory rejects any
   // attempt to resume this conversation — see
-  // AionCore/crates/aionui-common/src/enums.rs and factory.rs.
+  // TjuaeCore/crates/tjuaeui-common/src/enums.rs and factory.rs.
   // Every field is optional because legacy rows shape-varies across
   // several older Gemini-runtime versions.
   | Omit<
@@ -375,7 +375,7 @@ export type TChatConversation =
       'model'
     >
   | IChatConversation<
-      'aionrs',
+      'tjuaecli',
       {
         workspace: string;
         custom_workspace?: boolean;
@@ -563,7 +563,7 @@ export interface IMcpServer {
   created_at: number;
   updated_at: number;
   original_json: string; // 存储原始JSON配置，用于编辑时的准确显示
-  /** Built-in MCP server managed by AionUi (hide edit/delete in UI) */
+  /** Built-in MCP server managed by TjuaeUI (hide edit/delete in UI) */
   builtin?: boolean;
 }
 
@@ -580,8 +580,8 @@ export interface IConversationMcpStatus {
 
 /** Stable ID for the built-in image generation MCP server */
 export const BUILTIN_IMAGE_GEN_ID = 'builtin-image-gen';
-export const BUILTIN_IMAGE_GEN_NAME = 'aionui-image-generation';
-export const BUILTIN_IMAGE_GEN_LEGACY_NAMES = ['AionUi Image Generation', BUILTIN_IMAGE_GEN_ID] as const;
+export const BUILTIN_IMAGE_GEN_NAME = 'tjuaeui-image-generation';
+export const BUILTIN_IMAGE_GEN_LEGACY_NAMES = ['TjuaeUI Image Generation', BUILTIN_IMAGE_GEN_ID] as const;
 
 export interface IMcpTool {
   name: string;

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -24,10 +24,10 @@ import {
   recordAutoUpdateQuitAndInstall,
   recordAutoUpdateStatus,
 } from './autoUpdateDiagnostics';
-import { buildCdnFeedOptions } from './updateFeed';
+import { buildGitHubFeedOptions } from './githubUpdateFeed';
 
-const FORCE_DEV_AUTO_UPDATE_ENV = 'AIONUI_FORCE_DEV_AUTO_UPDATE';
-const DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV = 'AIONUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION';
+const FORCE_DEV_AUTO_UPDATE_ENV = 'TJUAEUI_FORCE_DEV_AUTO_UPDATE';
+const DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV = 'TJUAEUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION';
 const MAC_NATIVE_INSTALL_READY_TIMEOUT_MS = 60_000;
 
 /**
@@ -131,7 +131,7 @@ class AutoUpdaterService extends EventEmitter {
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
     this.configureDevAutoUpdateDebug();
-    const cdnFeedOptions = buildCdnFeedOptions();
+    const githubFeedOptions = buildGitHubFeedOptions();
 
     // Set the correct update channel based on platform and architecture before
     // any update checks are performed
@@ -140,11 +140,12 @@ class AutoUpdaterService extends EventEmitter {
       autoUpdater.channel = channel;
       log.info(`Update channel set to: ${channel}`);
     }
-    autoUpdater.setFeedURL(cdnFeedOptions);
-    log.info('Update feed set to CDN provider');
-    log.debug('[auto-update] CDN feed configured', {
-      provider: cdnFeedOptions.provider,
-      url: cdnFeedOptions.url,
+    autoUpdater.setFeedURL(githubFeedOptions);
+    log.info('Update feed set to GitHub Releases');
+    log.debug('[auto-update] GitHub feed configured', {
+      provider: githubFeedOptions.provider,
+      owner: githubFeedOptions.owner,
+      repo: githubFeedOptions.repo,
       channel: channel ?? 'latest',
       platform: process.platform,
       arch: process.arch,
@@ -194,11 +195,12 @@ class AutoUpdaterService extends EventEmitter {
    */
   private ensureDevUpdateConfig(): void {
     try {
-      const cdnFeedOptions = buildCdnFeedOptions();
+      const githubFeedOptions = buildGitHubFeedOptions();
       const devConfig = [
-        'provider: generic',
-        `url: ${cdnFeedOptions.url}`,
-        'updaterCacheDirName: com.aionui.app',
+        `provider: ${githubFeedOptions.provider}`,
+        `owner: ${githubFeedOptions.owner}`,
+        `repo: ${githubFeedOptions.repo}`,
+        'updaterCacheDirName: com.tjuae.desktop',
         '',
       ].join('\n');
       const configPath = path.join(app.getPath('userData'), 'dev-app-update.yml');
@@ -216,7 +218,7 @@ class AutoUpdaterService extends EventEmitter {
     }
 
     try {
-      const safeCwd = path.join(app.getPath('temp'), 'aionui-updater-cwd');
+      const safeCwd = path.join(app.getPath('temp'), 'tjuaeui-updater-cwd');
       fs.mkdirSync(safeCwd, { recursive: true });
       process.chdir(safeCwd);
       log.info('[auto-update] Moved process cwd before Windows installer handoff', { cwd: safeCwd });
@@ -458,7 +460,7 @@ class AutoUpdaterService extends EventEmitter {
 
   /**
    * In dev mode the running shell is the stock Electron bundle (com.github.Electron),
-   * while the downloaded archive contains the packaged app (com.aionui.app). Squirrel.Mac
+   * while the downloaded archive contains the packaged app (com.tjuae.desktop). Squirrel.Mac
    * looks for a bundle matching the *running* id, fails to find it, and reports
    * "Could not locate update bundle". This is expected in dev and cannot be reproduced
    * without a packaged build, so surface a clearer message instead of the raw error.
@@ -617,7 +619,7 @@ class AutoUpdaterService extends EventEmitter {
 
       if (this._allowPrerelease) {
         log.info('Skipping electron-updater check for prerelease manual mode');
-        log.debug('[auto-update] CDN stable feed skipped because prerelease mode is handled by GitHub API');
+        log.debug('[auto-update] stable feed skipped because prerelease mode is handled by GitHub API');
         return { success: true };
       }
 
@@ -631,12 +633,12 @@ class AutoUpdaterService extends EventEmitter {
       // When isUpdateAvailable is false, updateInfoAndProvider is NOT set internally,
       // so a subsequent downloadUpdate() call would fail with "Please check update first".
       if (!result.isUpdateAvailable) {
-        log.debug('[auto-update] no update available from CDN feed', {
+        log.debug('[auto-update] no update available from GitHub Releases', {
           version: result.updateInfo.version,
         });
         return { success: true };
       }
-      log.debug('[auto-update] update available from CDN feed', {
+      log.debug('[auto-update] update available from GitHub Releases', {
         version: result.updateInfo.version,
         releaseDate: result.updateInfo.releaseDate,
       });

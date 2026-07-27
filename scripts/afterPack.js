@@ -8,33 +8,35 @@ const {
   verifyModuleBinary,
   getModulesToRebuild,
 } = require('./rebuildNativeModules');
-const { verifyBundledAioncoreResources } = require('../packages/shared-scripts/src/verify-bundled-aioncore-resources');
+const {
+  verifyBundledTjuaeCoreResources,
+} = require('../packages/shared-scripts/src/verify-bundled-tjuaecore-resources');
 
 /**
- * afterPack hook for electron-builder
- * Rebuilds native modules for cross-architecture builds
+ * electron-builder 的 afterPack 钩子。
+ * 为跨架构构建重新编译原生模块。
  */
 
 function resolveResourcesDir(electronPlatformName, appOutDir, packager) {
   if (electronPlatformName !== 'darwin') return path.join(appOutDir, 'resources');
 
-  const appName = packager?.appInfo?.productFilename || 'AionUi';
+  const appName = packager?.appInfo?.productFilename || 'TjuaeUI';
   return path.join(appOutDir, `${appName}.app`, 'Contents', 'Resources');
 }
 
 function verifyBundledResources(resourcesDir, electronPlatformName, targetArch) {
-  const result = verifyBundledAioncoreResources({
+  const result = verifyBundledTjuaeCoreResources({
     resourcesDir,
     electronPlatformName,
     targetArch,
   });
 
   if (result.missing.length > 0) {
-    console.error(`   Missing bundled resources: ${result.missing.join(', ')}`);
-    throw new Error(`Packaged app is missing required bundled resource(s): ${result.missing.join(', ')}`);
+    console.error(`   缺少内置资源：${result.missing.join(', ')}`);
+    throw new Error(`打包后的应用缺少必要内置资源：${result.missing.join(', ')}`);
   }
 
-  console.log(`   ✓ Bundled resources verified for ${result.runtimeKey} (${result.checked.length} checks)`);
+  console.log(`   ✓ ${result.runtimeKey} 的内置资源验证通过（${result.checked.length} 项检查）`);
 }
 
 module.exports = async function afterPack(context) {
@@ -42,61 +44,59 @@ module.exports = async function afterPack(context) {
   const targetArch = normalizeArch(typeof arch === 'string' ? arch : Arch[arch] || process.arch);
   const buildArch = normalizeArch(os.arch());
 
-  console.log(`\n🔧 afterPack hook started`);
-  console.log(`   Platform: ${electronPlatformName}, Build arch: ${buildArch}, Target arch: ${targetArch}`);
+  console.log('\n🔧 afterPack 钩子已启动');
+  console.log(`   平台：${electronPlatformName}，构建架构：${buildArch}，目标架构：${targetArch}`);
 
   const isCrossCompile = buildArch !== targetArch;
   const forceRebuild = process.env.FORCE_NATIVE_REBUILD === 'true';
-  const needsSameArchRebuild = electronPlatformName === 'win32'; // 只有 Windows 需要同架构重建以匹配 Electron ABI | Only Windows needs same-arch rebuild to match Electron ABI
-  // Linux 使用预编译二进制，避免 GLIBC 版本依赖 | Linux uses prebuilt binaries which are GLIBC-independent
+  const needsSameArchRebuild = electronPlatformName === 'win32'; // Windows 需同架构重建以匹配 Electron ABI。
+  // Linux 使用预编译二进制文件，避免引入 GLIBC 构建机依赖。
 
   const resourcesDir = resolveResourcesDir(electronPlatformName, appOutDir, packager);
-  console.log(`   Checking resources directory: ${resourcesDir}`);
+  console.log(`   正在检查资源目录：${resourcesDir}`);
   if (fs.existsSync(resourcesDir)) {
     const resourcesContents = fs.readdirSync(resourcesDir);
-    console.log(`   Contents: ${resourcesContents.join(', ')}`);
+    console.log(`   目录内容：${resourcesContents.join(', ')}`);
 
     const unpackedDir = path.join(resourcesDir, 'app.asar.unpacked');
     if (fs.existsSync(unpackedDir)) {
       const unpackedContents = fs.readdirSync(unpackedDir);
-      console.log(`   app.asar.unpacked contents: ${unpackedContents.join(', ')}`);
+      console.log(`   app.asar.unpacked 内容：${unpackedContents.join(', ')}`);
 
       const nodeModulesDir = path.join(unpackedDir, 'node_modules');
       if (fs.existsSync(nodeModulesDir)) {
         const modulesContents = fs.readdirSync(nodeModulesDir);
-        console.log(`   node_modules contents: ${modulesContents.slice(0, 10).join(', ')}...`);
+        console.log(`   node_modules 内容：${modulesContents.slice(0, 10).join(', ')}……`);
       } else {
-        console.warn(`   ⚠️  node_modules not found in app.asar.unpacked`);
+        console.warn('   ⚠️  app.asar.unpacked 中未找到 node_modules');
       }
     } else {
-      console.warn(`   ⚠️  app.asar.unpacked not found`);
+      console.warn('   ⚠️  未找到 app.asar.unpacked');
     }
 
     verifyBundledResources(resourcesDir, electronPlatformName, targetArch);
   } else {
-    throw new Error(`resources directory not found: ${resourcesDir}`);
+    throw new Error(`未找到资源目录：${resourcesDir}`);
   }
 
   if (!isCrossCompile && !needsSameArchRebuild && !forceRebuild) {
-    console.log(`   ✓ Same architecture, rebuild skipped (set FORCE_NATIVE_REBUILD=true to override)\n`);
+    console.log('   ✓ 架构相同，已跳过重建（设置 FORCE_NATIVE_REBUILD=true 可强制执行）\n');
     return;
   }
 
-  // Note: Previously there was an optimization to skip macOS cross-compilation,
-  // but this caused incorrect architecture binaries (arm64) to be included in x64 builds.
-  // Now we always rebuild native modules for cross-compilation to ensure correctness.
-  // The rebuild process uses prebuild-install first (fast), falling back to source compilation only when needed.
+  // 跨架构构建必须重建原生模块，避免把 arm64 二进制误装入 x64 包。
+  // 优先使用 prebuild-install，仅在必要时回退到源码编译。
 
   if (isCrossCompile) {
-    console.log(`   ⚠️  Cross-compilation detected (${buildArch} → ${targetArch}), will rebuild native modules`);
+    console.log(`   ⚠️  检测到跨架构构建（${buildArch} → ${targetArch}），将重建原生模块`);
     if (electronPlatformName === 'darwin') {
-      console.log(`   💡 Using prebuild-install for faster cross-architecture build`);
+      console.log('   💡 使用 prebuild-install 加速跨架构构建');
     }
   } else if (needsSameArchRebuild || forceRebuild) {
-    console.log(`   ℹ️  Rebuilding native modules for platform requirements (force=${forceRebuild})`);
+    console.log(`   ℹ️  正在按平台要求重建原生模块（强制=${forceRebuild}）`);
   }
 
-  console.log(`\n🔧 Checking native modules (${electronPlatformName}-${targetArch})...`);
+  console.log(`\n🔧 正在检查原生模块（${electronPlatformName}-${targetArch}）……`);
   console.log(`   appOutDir: ${appOutDir}`);
 
   const electronVersion =
@@ -106,45 +106,42 @@ module.exports = async function afterPack(context) {
 
   const nodeModulesDir = path.join(resourcesDir, 'app.asar.unpacked', 'node_modules');
 
-  // Modules that need to be rebuilt for cross-compilation
-  // Use platform-specific module list (Windows skips node-pty due to cross-compilation issues)
+  // 使用平台专属模块列表；Windows 因跨编译限制跳过 node-pty。
   const modulesToRebuild = getModulesToRebuild(electronPlatformName);
-  console.log(`   Modules to rebuild: ${modulesToRebuild.join(', ')}`);
+  console.log(`   待重建模块：${modulesToRebuild.join(', ')}`);
 
-  // For cross-compilation, clean up build artifacts from the wrong architecture
-  // This prevents node-gyp-build from loading incorrect binaries
+  // 跨架构构建前清理错误架构产物，防止 node-gyp-build 加载错误二进制文件。
   if (isCrossCompile) {
-    console.log(`\n🧹 Cleaning up wrong-architecture build artifacts...`);
+    console.log('\n🧹 正在清理错误架构的构建产物……');
     for (const moduleName of modulesToRebuild) {
       const moduleRoot = path.join(nodeModulesDir, moduleName);
       if (!fs.existsSync(moduleRoot)) continue;
 
-      // Remove build/ directory (contains wrong-arch compiled binaries)
+      // 删除包含错误架构二进制文件的 build/。
       const buildDir = path.join(moduleRoot, 'build');
       if (fs.existsSync(buildDir)) {
         fs.rmSync(buildDir, { recursive: true, force: true });
-        console.log(`   ✓ Removed ${moduleName}/build/`);
+        console.log(`   ✓ 已删除 ${moduleName}/build/`);
       }
 
-      // Remove bin/ directory (might contain wrong-arch binaries)
+      // 删除可能包含错误架构二进制文件的 bin/。
       const binDir = path.join(moduleRoot, 'bin');
       if (fs.existsSync(binDir)) {
         fs.rmSync(binDir, { recursive: true, force: true });
-        console.log(`   ✓ Removed ${moduleName}/bin/`);
+        console.log(`   ✓ 已删除 ${moduleName}/bin/`);
       }
     }
 
-    // Also clean up architecture-specific packages that shouldn't be included
-    // Remove packages for the opposite architecture of the target
+    // 同时删除与目标架构相反的可选依赖包。
     const wrongArchSuffix = targetArch === 'arm64' ? 'x64' : 'arm64';
-    console.log(`\n🧹 Removing ${wrongArchSuffix}-specific optional dependencies (target: ${targetArch})...`);
+    console.log(`\n🧹 正在删除 ${wrongArchSuffix} 专属可选依赖（目标：${targetArch}）……`);
 
     if (fs.existsSync(nodeModulesDir)) {
       const allModules = fs.readdirSync(nodeModulesDir);
       for (const module of allModules) {
         const modulePath = path.join(nodeModulesDir, module);
 
-        // Handle scoped packages (e.g., @lydell, @napi-rs)
+        // 处理作用域包（例如 @lydell、@napi-rs）。
         if (module.startsWith('@') && fs.existsSync(modulePath) && fs.statSync(modulePath).isDirectory()) {
           const scopedPackages = fs.readdirSync(modulePath);
           for (const pkg of scopedPackages) {
@@ -152,19 +149,19 @@ module.exports = async function afterPack(context) {
               const pkgPath = path.join(modulePath, pkg);
               if (fs.existsSync(pkgPath) && fs.statSync(pkgPath).isDirectory()) {
                 fs.rmSync(pkgPath, { recursive: true, force: true });
-                console.log(`   ✓ Removed ${module}/${pkg}`);
+                console.log(`   ✓ 已删除 ${module}/${pkg}`);
               }
             }
           }
         }
-        // Handle regular packages
+        // 处理普通包。
         else if (
           module.includes(`-${wrongArchSuffix}`) ||
           module.includes(`-${electronPlatformName}-${wrongArchSuffix}`)
         ) {
           if (fs.existsSync(modulePath) && fs.statSync(modulePath).isDirectory()) {
             fs.rmSync(modulePath, { recursive: true, force: true });
-            console.log(`   ✓ Removed ${module}`);
+            console.log(`   ✓ 已删除 ${module}`);
           }
         }
       }
@@ -177,16 +174,14 @@ module.exports = async function afterPack(context) {
     const moduleRoot = path.join(nodeModulesDir, moduleName);
 
     if (!fs.existsSync(moduleRoot)) {
-      console.warn(`   ⚠️  ${moduleName} not found, skipping`);
+      console.warn(`   ⚠️  未找到 ${moduleName}，已跳过`);
       continue;
     }
 
-    console.log(`   ✓ Found ${moduleName}, rebuilding for ${targetArch}...`);
+    console.log(`   ✓ 已找到 ${moduleName}，正在为 ${targetArch} 重建……`);
 
-    // For Windows, prefer prebuild-install first (faster and more reliable in CI)
-    // electron-rebuild can hang on "Searching dependency tree" in some CI environments
-    // prebuild-install will fall back to electron-rebuild internally if no prebuilt binary exists
-    const forceRebuildFromSource = false; // Always try prebuild-install first
+    // Windows 优先使用更快且在 CI 中更稳定的 prebuild-install。
+    const forceRebuildFromSource = false;
 
     const success = rebuildSingleModule({
       moduleName,
@@ -195,32 +190,32 @@ module.exports = async function afterPack(context) {
       arch: targetArch,
       electronVersion,
       projectRoot: path.resolve(__dirname, '..'),
-      buildArch: buildArch, // Pass build architecture for cross-compile detection
-      forceRebuild: forceRebuildFromSource, // Always try prebuild-install first, fallback to rebuild
+      buildArch: buildArch,
+      forceRebuild: forceRebuildFromSource,
     });
 
     if (success) {
-      console.log(`     ✓ Rebuild completed`);
+      console.log('     ✓ 重建完成');
     } else {
-      console.error(`     ✗ Rebuild failed`);
+      console.error('     ✗ 重建失败');
       failedModules.push(moduleName);
       continue;
     }
 
     const verified = verifyModuleBinary(moduleRoot, moduleName);
     if (verified) {
-      console.log(`     ✓ Binary verification passed`);
+      console.log('     ✓ 二进制文件验证通过');
     } else {
-      console.error(`     ✗ Binary verification failed`);
+      console.error('     ✗ 二进制文件验证失败');
       failedModules.push(moduleName);
     }
 
-    console.log(''); // Empty line between modules
+    console.log(''); // 模块之间保留空行。
   }
 
   if (failedModules.length > 0) {
-    throw new Error(`Failed to rebuild modules for ${electronPlatformName}-${targetArch}: ${failedModules.join(', ')}`);
+    throw new Error(`无法为 ${electronPlatformName}-${targetArch} 重建模块：${failedModules.join(', ')}`);
   }
 
-  console.log(`✅ All native modules rebuilt successfully for ${targetArch}\n`);
+  console.log(`✅ ${targetArch} 的全部原生模块均已成功重建\n`);
 };

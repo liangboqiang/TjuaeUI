@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { TChatConversation } from '@/common/config/storage';
-import AionModal from '@/renderer/components/base/AionModal';
+import TjuaeModal from '@/renderer/components/base/TjuaeModal';
 import DirectorySelectionModal from '@/renderer/components/settings/DirectorySelectionModal';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useCronJobsMap } from '@/renderer/pages/cron';
@@ -412,8 +412,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
         </div>
       )}
 
-      {/* 移除项目确认弹窗 — 使用项目自家 AionModal + 圆角线框按钮（红色危险态） */}
-      <AionModal
+      {/* 移除项目确认弹窗 — 使用项目自家 TjuaeModal + 圆角线框按钮（红色危险态） */}
+      <TjuaeModal
         visible={removeProjectTarget !== null}
         style={{ width: '400px' }}
         header={{
@@ -477,7 +477,7 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
             count: removeProjectTarget?.conversations.length ?? 0,
           })}
         </div>
-      </AionModal>
+      </TjuaeModal>
 
       <div>
         {/* L1: Pinned section */}

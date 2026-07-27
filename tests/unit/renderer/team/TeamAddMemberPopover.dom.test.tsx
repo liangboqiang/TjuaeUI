@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -56,7 +56,7 @@ vi.mock('@/renderer/pages/team/hooks/useTeamAssistantOptions', () => ({
         team_selectable: false,
         team_block_reason: 'blocked',
       },
-      { id: 'unchecked', name: 'Unchecked', backend: 'aionrs', team_selectable: true },
+      { id: 'unchecked', name: 'Unchecked', backend: 'tjuaecli', team_selectable: true },
     ],
     loading: false,
     error: undefined,

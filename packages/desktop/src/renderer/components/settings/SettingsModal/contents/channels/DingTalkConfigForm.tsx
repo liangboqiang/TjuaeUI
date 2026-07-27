@@ -1,12 +1,12 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { IChannelPairingRequest, IChannelPluginStatus, IChannelUser } from '@/common/types/channel/channel';
 import { assistants, channel } from '@/common/adapter/ipcBridge';
-import { isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
+import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import { resolveLocaleKey } from '@/common/utils';
 import { openExternalUrl } from '@/renderer/utils/platform';
 import { resolveAssistantName } from '@/renderer/utils/model/assistantDisplay';
@@ -63,7 +63,7 @@ interface DingTalkConfigFormProps {
   onStatusChange: (status: IChannelPluginStatus | null) => void;
 }
 
-const DINGTALK_DEV_DOCS_URL = 'https://github.com/iOfficeAI/AionUi/wiki/DingTalk-Bot-Setup-Guide';
+const DINGTALK_DEV_DOCS_URL = 'https://github.com/liangboqiang/TjuaeUI/tree/main/docs/prds/remote/channels';
 
 const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, modelSelection, onStatusChange }) => {
   const { t, i18n } = useTranslation();
@@ -310,7 +310,7 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
   };
 
   const hasExistingUsers = authorizedUsers.length > 0;
-  const showModelSelector = isAionrsAssistant(selectedAssistant);
+  const showModelSelector = isTjuaeCliAssistant(selectedAssistant);
   const assistantOptions = availableAssistants;
   const selectedAssistantName = selectedAssistant
     ? resolveAssistantName(selectedAssistant, localeKey, selectedAssistant.name)
@@ -491,7 +491,7 @@ const DingTalkConfigForm: React.FC<DingTalkConfigFormProps> = ({ pluginStatus, m
                         setSelectedAssistant(assistant);
                         void persistSelectedAssistant(assistant);
 
-                        if (isAionrsAssistant(assistant)) {
+                        if (isTjuaeCliAssistant(assistant)) {
                           const providers = modelSelection.providers;
                           const savedProviderExists =
                             modelSelection.current_model?.id &&

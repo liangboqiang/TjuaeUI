@@ -70,30 +70,14 @@
     "emptySnapshot": "Snapshot content is empty"
   },
   "office": {
-    "installLinkText": "Open officecli install guide",
-    "errors": {
-      "officecliNotFound": "officecli is not installed.",
-      "installFailed": "Failed to install officecli automatically. Check backend logs and retry.",
-      "portTimeout": "Preview service started but did not become ready in time. Retry.",
-      "startFailed": "Failed to start the Office preview service.",
-      "outsideSandbox": "This file is outside the current project sandbox."
-    },
-    "serverInstall": {
-      "hint": "AionUi is running on a server. Install the preview component on that server, then retry:",
-      "icuNote": "If it still fails to start, install the ICU library on the server (Debian/Ubuntu: apt-get install -y libicu-dev)."
-    }
+    "previewUnavailable": "In-app preview is unavailable for this file type.",
+    "openOrDownloadHint": "Use the toolbar to open the original file in a system app or download a copy."
   },
   "word": {
     "title": "Word Document",
     "loading": "Loading Word document...",
     "invalid": "Please confirm the file is a valid Word document",
-    "loadFailed": "Failed to load Word document",
-    "watch": {
-      "loading": "Loading Word document...",
-      "installing": "Installing officecli...",
-      "startFailed": "Failed to start Word preview",
-      "installHint": "Requires officecli. It will be installed automatically."
-    }
+    "loadFailed": "Failed to load Word document"
   },
   "excel": {
     "title": "Excel Spreadsheet",
@@ -104,13 +88,7 @@
     "convertFailed": "Excel conversion failed",
     "loadFailed": "Failed to load Excel workbook",
     "emptySheet": "This worksheet has no data",
-    "emptySheetHint": "Check whether the sheet contains data or images",
-    "watch": {
-      "loading": "Loading Excel file...",
-      "installing": "Installing officecli...",
-      "startFailed": "Failed to start Excel preview",
-      "installHint": "Requires officecli. It will be installed automatically."
-    }
+    "emptySheetHint": "Check whether the sheet contains data or images"
   },
   "pdf": {
     "title": "PDF Document",
@@ -133,11 +111,5 @@
     "inspectElement": "Inspect element",
     "inspectElementEnable": "Enable element inspector",
     "inspectElementDisable": "Disable element inspector"
-  },
-  "ppt": {
-    "loading": "Starting PPT preview...",
-    "installing": "Installing preview component...",
-    "startFailed": "Failed to start PPT preview",
-    "installHint": "Install OfficeCLI from the official iOfficeAI/OfficeCLI releases page"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Resolve the aioncore binary path.
+ * Resolve the tjuaecore binary path.
  *
  * Search order:
  *  1. Bundled with app (production)
@@ -10,7 +10,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 
-const BINARY_NAME = 'aioncore';
+const BINARY_NAME = 'tjuaecore';
 const MAX_DIR_ENTRIES = 20;
 const MAX_LOOKUP_TEXT_LENGTH = 1000;
 
@@ -61,7 +61,7 @@ function trimLookupText(text: string): string {
 }
 
 /**
- * Resolve the aioncore binary path.
+ * Resolve the tjuaecore binary path.
  * Returns the absolute path to the binary, or throws if not found.
  */
 export function resolveBinaryPath(): string {
@@ -87,7 +87,7 @@ export function resolveBinaryPath(): string {
 
 /**
  * Check bundled binary in resources directory.
- * Layout: bundled-aioncore/{platform}-{arch}/aioncore[.exe]
+ * Layout: bundled-tjuaecore/{platform}-{arch}/tjuaecore[.exe]
  */
 function bundledPath(
   runtimeKey: string,
@@ -98,7 +98,7 @@ function bundledPath(
   if (!resourcesPath) return null;
   diagnostics.resourcesPath = resourcesPath;
 
-  const bundledDir = join(resourcesPath, 'bundled-aioncore');
+  const bundledDir = join(resourcesPath, 'bundled-tjuaecore');
   const runtimeDir = join(bundledDir, runtimeKey);
   const candidate = join(runtimeDir, binaryName);
   diagnostics.checkedBundledPath = candidate;

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -59,14 +59,14 @@ describe('AssistantSelectionArea', () => {
   it('keeps the assistant picker visible after an assistant is selected', () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={assistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
       />
     );
 
-    expect(screen.getByTestId('preset-pill-bare-aionrs')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
     expect(screen.queryByTestId('btn-add-preset')).not.toBeInTheDocument();
     expect(screen.queryByText('Select an assistant to start a task')).not.toBeInTheDocument();
     expect(screen.queryByText('Try these example prompts:')).not.toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('AssistantSelectionArea', () => {
   it('moves overflow assistants into a more dropdown', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
@@ -84,9 +84,9 @@ describe('AssistantSelectionArea', () => {
     );
 
     // Selection lists group by source: CLI (generated) → user → official
-    // (builtin). So the top row is [bare-aionrs, user-research, user-review,
+    // (builtin). So the top row is [bare-tjuaecli, user-research, user-review,
     // user-translate] and the official Writer + trailing user-finance overflow.
-    expect(screen.getByTestId('preset-pill-bare-aionrs')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-research')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-review')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-translate')).toBeInTheDocument();
@@ -96,14 +96,14 @@ describe('AssistantSelectionArea', () => {
 
     expect(await screen.findByTestId('assistant-overflow-user-finance')).toBeInTheDocument();
     expect(screen.getByTestId('assistant-overflow-builtin-writer')).toBeInTheDocument();
-    expect(screen.queryByTestId('assistant-overflow-bare-aionrs')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('assistant-overflow-bare-tjuaecli')).not.toBeInTheDocument();
     expect(screen.queryByTestId('assistant-overflow-user-research')).not.toBeInTheDocument();
   });
 
   it('lays out the overflow dropdown as a grid matching the visible pill count', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
@@ -122,7 +122,7 @@ describe('AssistantSelectionArea', () => {
   it('narrows the overflow grid together with the visible pill count', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         maxVisibleAssistants={2}
@@ -141,7 +141,7 @@ describe('AssistantSelectionArea', () => {
   it('hides the overflow search until the list exceeds five rows', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
@@ -162,7 +162,7 @@ describe('AssistantSelectionArea', () => {
 
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={[...manyAssistants(), ...bulk]}
         localeKey='en-US'
         maxVisibleAssistants={1}
@@ -180,7 +180,7 @@ describe('AssistantSelectionArea', () => {
   it('limits the top assistant row when a smaller visible count is provided', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         maxVisibleAssistants={1}
@@ -188,7 +188,7 @@ describe('AssistantSelectionArea', () => {
       />
     );
 
-    expect(screen.getByTestId('preset-pill-bare-aionrs')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
     expect(screen.queryByTestId('preset-pill-user-research')).not.toBeInTheDocument();
     expect(screen.queryByTestId('preset-pill-user-review')).not.toBeInTheDocument();
 
@@ -203,7 +203,7 @@ describe('AssistantSelectionArea', () => {
 
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={assistants()}
         localeKey='en-US'
         onSelectAssistant={onSelectAssistant}
@@ -218,7 +218,7 @@ describe('AssistantSelectionArea', () => {
   it('orders assistant pills by group then sort_order before applying overflow', () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-aionrs'
+        selectedAssistantId='bare-tjuaecli'
         assistants={[
           mkAssistant('late', 'Late', 'user', 'claude', 90),
           mkAssistant('early', 'Early', 'user', 'claude', 5),
@@ -237,7 +237,7 @@ describe('AssistantSelectionArea', () => {
         .getAllByRole('button')
         .slice(0, 4)
         .map((node) => node.textContent?.trim())
-    ).toEqual(['Aion CLI', 'Early', 'Mid', 'Late']);
+    ).toEqual(['Tjuae CLI', 'Early', 'Mid', 'Late']);
   });
 
   it('keeps a selected overflow assistant visible in the top pill row', () => {
@@ -268,7 +268,7 @@ describe('AssistantSelectionArea', () => {
     );
 
     expect(screen.getAllByTestId(/^preset-pill-/).map((node) => node.getAttribute('data-assistant-id'))).toEqual([
-      'bare-aionrs',
+      'bare-tjuaecli',
       'user-finance',
     ]);
     expect(screen.queryByTestId('preset-pill-user-research')).not.toBeInTheDocument();
@@ -287,7 +287,7 @@ describe('AssistantSelectionArea', () => {
     expect(() =>
       rerender(
         <AssistantSelectionArea
-          selectedAssistantId='bare-aionrs'
+          selectedAssistantId='bare-tjuaecli'
           assistants={assistants()}
           localeKey='en-US'
           onSelectAssistant={vi.fn()}
@@ -295,21 +295,21 @@ describe('AssistantSelectionArea', () => {
       )
     ).not.toThrow();
 
-    expect(screen.getByTestId('preset-pill-bare-aionrs')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
   });
 });
 
 function assistants(): Assistant[] {
   return [
     {
-      id: 'bare-aionrs',
+      id: 'bare-tjuaecli',
       source: 'generated',
-      name: 'Aion CLI',
+      name: 'Tjuae CLI',
       name_i18n: {},
       description_i18n: {},
       enabled: true,
       sort_order: 10,
-      preset_agent_type: 'aionrs',
+      preset_agent_type: 'tjuaecli',
       enabled_skills: [],
       custom_skill_names: [],
       disabled_builtin_skills: [],

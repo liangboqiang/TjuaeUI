@@ -16,7 +16,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useModeModeList from '@renderer/hooks/agent/useModeModeList';
 import useProtocolDetection from '@renderer/hooks/system/useProtocolDetection';
-import AionModal from '@/renderer/components/base/AionModal';
+import TjuaeModal from '@/renderer/components/base/TjuaeModal';
 import {
   DEFAULT_PLATFORM_VALUE,
   MODEL_PLATFORMS,
@@ -321,7 +321,7 @@ const AddPlatformModal = ModalHOC<{
       setOpenAiApiMode('auto');
       setIsFullUrl(false);
 
-      // Pre-fill from deep link data (aionui:// protocol)
+      // Pre-fill from deep link data (tjuae:// protocol)
       if (deepLinkData?.base_url || deepLinkData?.api_key) {
         // Default to new-api platform for deep links (typical one-api/new-api usage)
         form.setFieldValue('platform', deepLinkData.platform || 'new-api');
@@ -412,7 +412,7 @@ const AddPlatformModal = ModalHOC<{
   };
 
   return (
-    <AionModal
+    <TjuaeModal
       variant='standard'
       visible={modalProps.visible}
       onCancel={modalCtrl.close}
@@ -771,7 +771,7 @@ const AddPlatformModal = ModalHOC<{
           )}
         </Form>
       </div>
-    </AionModal>
+    </TjuaeModal>
   );
 });
 

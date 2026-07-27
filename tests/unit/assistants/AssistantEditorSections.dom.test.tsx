@@ -455,7 +455,7 @@ describe('AssistantEditorSections', () => {
     expect(within(defaultsCard).getByText('User MCP、Disabled MCP、Builtin MCP')).toBeInTheDocument();
   });
 
-  it('uses provider-backed models for aionrs even when detected agent metadata exposes model options', () => {
+  it('uses provider-backed models for tjuaecli even when detected agent metadata exposes model options', () => {
     mockUseModelProviderList.mockReturnValue({
       providers: [{ id: 'provider-a', name: 'Provider A', model: ['provider-model'], enabled: true }],
       getAvailableModels: () => ['provider-model'],
@@ -465,13 +465,13 @@ describe('AssistantEditorSections', () => {
       <AssistantEditorSections
         editor={createEditor({
           agent: {
-            value: 'agent-aionrs',
+            value: 'agent-tjuaecli',
             setValue: vi.fn(),
             availableBackends: [
               {
-                id: 'agent-aionrs',
-                name: 'Aionrs',
-                runtimeKey: 'aionrs',
+                id: 'agent-tjuaecli',
+                name: 'TjuaeCli',
+                runtimeKey: 'tjuaecli',
                 isExtension: false,
                 modelOptions: [{ value: 'handshake-model', label: 'Handshake Model' }],
               },
@@ -652,10 +652,10 @@ describe('AssistantEditorSections', () => {
     );
   });
 
-  it('uses aionrs runtime catalog for default permission options', async () => {
+  it('uses tjuaecli runtime catalog for default permission options', async () => {
     mockManagedAgentRuntimeCatalog = [
       {
-        id: 'agent-aionrs',
+        id: 'agent-tjuaecli',
         available_modes: {
           current_mode_id: 'default',
           available_modes: [
@@ -686,9 +686,9 @@ describe('AssistantEditorSections', () => {
       <AssistantEditorSections
         editor={createEditor({
           agent: {
-            value: 'agent-aionrs',
+            value: 'agent-tjuaecli',
             setValue: vi.fn(),
-            availableBackends: [backendOption('agent-aionrs', 'aionrs', 'Aion CLI')],
+            availableBackends: [backendOption('agent-tjuaecli', 'tjuaecli', 'Tjuae CLI')],
           },
         })}
         activeAssistant={null}

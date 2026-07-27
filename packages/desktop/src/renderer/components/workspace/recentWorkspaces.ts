@@ -1,10 +1,10 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const DEFAULT_RECENT_WS_KEY = 'aionui:recent-workspaces';
+export const DEFAULT_RECENT_WS_KEY = 'tjuaeui:recent-workspaces';
 const MAX_RECENT_WORKSPACES = 5;
 
 export const getRecentWorkspaces = (storageKey: string = DEFAULT_RECENT_WS_KEY): string[] => {

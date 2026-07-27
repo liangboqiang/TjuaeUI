@@ -70,30 +70,14 @@
     "emptySnapshot": "Schnappschuss-Inhalt ist leer"
   },
   "office": {
-    "installLinkText": "officecli-Installationsanleitung öffnen",
-    "errors": {
-      "officecliNotFound": "officecli ist nicht installiert.",
-      "installFailed": "Automatische Installation von officecli fehlgeschlagen. Überprüfe Backend-Logs und versuche es erneut.",
-      "portTimeout": "Vorschau-Dienst gestartet, wurde aber nicht rechtzeitig bereit. Versuche es erneut.",
-      "startFailed": "Office-Vorschau-Dienst konnte nicht gestartet werden.",
-      "outsideSandbox": "Diese Datei befindet sich außerhalb der aktuellen Projekt-Sandbox."
-    },
-    "serverInstall": {
-      "hint": "AionUi läuft auf einem Server. Installiere die Vorschau-Komponente auf diesem Server und versuche es erneut:",
-      "icuNote": "Falls es immer noch nicht startet, installiere die ICU-Bibliothek auf dem Server (Debian/Ubuntu: apt-get install -y libicu-dev)."
-    }
+    "previewUnavailable": "Für diesen Dateityp ist keine Vorschau in der App verfügbar.",
+    "openOrDownloadHint": "Öffne die Originaldatei über die Symbolleiste in einer System-App oder lade eine Kopie herunter."
   },
   "word": {
     "title": "Word-Dokument",
     "loading": "Word-Dokument wird geladen...",
     "invalid": "Bitte bestätige, dass die Datei ein gültiges Word-Dokument ist",
-    "loadFailed": "Word-Dokument konnte nicht geladen werden",
-    "watch": {
-      "loading": "Word-Dokument wird geladen...",
-      "installing": "officecli wird installiert...",
-      "startFailed": "Word-Vorschau konnte nicht gestartet werden",
-      "installHint": "Erfordert officecli. Wird automatisch installiert."
-    }
+    "loadFailed": "Word-Dokument konnte nicht geladen werden"
   },
   "excel": {
     "title": "Excel-Tabelle",
@@ -104,13 +88,7 @@
     "convertFailed": "Excel-Konvertierung fehlgeschlagen",
     "loadFailed": "Excel-Arbeitsmappe konnte nicht geladen werden",
     "emptySheet": "Dieses Arbeitsblatt enthält keine Daten",
-    "emptySheetHint": "Prüfe ob das Blatt Daten oder Bilder enthält",
-    "watch": {
-      "loading": "Excel-Datei wird geladen...",
-      "installing": "officecli wird installiert...",
-      "startFailed": "Excel-Vorschau konnte nicht gestartet werden",
-      "installHint": "Erfordert officecli. Wird automatisch installiert."
-    }
+    "emptySheetHint": "Prüfe ob das Blatt Daten oder Bilder enthält"
   },
   "pdf": {
     "title": "PDF-Dokument",
@@ -133,11 +111,5 @@
     "inspectElement": "Element inspizieren",
     "inspectElementEnable": "Element-Inspektor aktivieren",
     "inspectElementDisable": "Element-Inspektor deaktivieren"
-  },
-  "ppt": {
-    "loading": "PPT-Vorschau wird gestartet...",
-    "installing": "Vorschau-Komponente wird installiert...",
-    "startFailed": "PPT-Vorschau konnte nicht gestartet werden",
-    "installHint": "Installiere OfficeCLI über die offizielle iOfficeAI/OfficeCLI releases-Seite"
   }
 }

@@ -12,10 +12,9 @@
     "clearWorkspace": "Remover projeto",
     "openFolder": "Abrir Pasta",
     "none": "Nenhum",
-    "quickActionsTitle": "O que o AionUi pode fazer?",
-    "quickActionFeedback": "Reportar Problema",
-    "quickActionStar": "Gostou? Nos dê uma estrela!",
-    "skillsMarket": "Mercado de Habilidades AionUi",
+    "quickActionsTitle": "O que o TjuaeUI pode fazer?",
+    "quickActionRepository": "Repositório",
+    "skillsMarket": "Mercado de Habilidades TjuaeUI",
     "skillsMarketDesc": "Pesquise e ative as Habilidades da comunidade sob demanda. Configure uma vez, disponível para todos os agentes.",
     "skillsMarketDetails": "Ver Mais >>"
   },
@@ -125,32 +124,32 @@
       "check_provider_base_url": "Verifique a URL Base do provedor de modelos, o caminho da API, o proxy e a compatibilidade da API.",
       "change_model": "Escolha um modelo disponível para a conta atual e que suporte esta solicitação.",
       "reduce_context": "Reduza o conteúdo da mensagem, os arquivos referenciados ou o tamanho do contexto e tente novamente.",
-      "send_feedback": "Envie feedback com logs para que a equipe possa investigar."
+      "send_feedback": "Relate o problema pelo GitHub Issues; os dados locais não são enviados automaticamente."
     },
     "ownership": {
-      "aionui": "Aplicativo",
+      "tjuaeui": "Aplicativo",
       "user_agent": "Agente",
       "user_llm_provider": "Provedor de modelo",
       "unknown_upstream": "Upstream"
     },
     "codes": {
-      "AIONUI_STREAM_BROKEN": {
+      "TJUAEUI_STREAM_BROKEN": {
         "title": "O fluxo de resposta foi interrompido",
-        "body": "O aplicativo aceitou sua mensagem, mas o fluxo de resposta terminou inesperadamente. Tente novamente; se acontecer de novo, envie feedback."
+        "body": "O aplicativo aceitou sua mensagem, mas o fluxo de resposta terminou inesperadamente. Tente novamente."
       },
-      "AIONUI_STATE_INCONSISTENT": {
+      "TJUAEUI_STATE_INCONSISTENT": {
         "title": "O estado da conversa está fora de sincronia",
         "body": "O estado da conversa está fora de sincronia. Reinicie este chat ou recarregue o aplicativo antes de tentar novamente."
       },
-      "AIONUI_PERMISSION_ERROR": {
+      "TJUAEUI_PERMISSION_ERROR": {
         "title": "Não foi possível acessar o recurso solicitado",
         "body": "Falhou uma verificação local de permissões ou do sistema de arquivos. Verifique o caminho do projeto e as permissões do aplicativo e tente novamente."
       },
-      "AIONUI_INTERNAL_ERROR": {
+      "TJUAEUI_INTERNAL_ERROR": {
         "title": "A solicitação falhou no aplicativo",
-        "body": "A solicitação falhou enquanto o aplicativo a estava processando. Tente novamente uma vez; se se repetir, envie feedback."
+        "body": "A solicitação falhou enquanto o aplicativo a processava. Tente novamente uma vez."
       },
-      "AIONUI_CONVERSATION_BUSY": {
+      "TJUAE_CONVERSATION_BUSY": {
         "title": "A conversa está ocupada",
         "body": "Ainda há outra resposta em execução. Espere ela terminar antes de enviar uma nova mensagem."
       },
@@ -301,8 +300,8 @@
       },
       "WORKSPACE_PATH_CONTAINS_WHITESPACE_RUNTIME_UNSUPPORTED": {
         "title": "Este caminho de projeto não é mais compatível com execução",
-        "body": "Esta conversa ou tarefa existente usa um caminho de projeto cujos nomes de diretório contêm espaços ou outros caracteres de espaço em branco. O AionUi não oferece mais suporte ao envio de mensagens em caminhos desse tipo. Crie uma nova conversa ou tarefa com um caminho de projeto sem espaços em branco.",
-        "bodyWithPath": "O caminho de projeto existente \"{{workspacePath}}\" contém espaços ou outros caracteres de espaço em branco. O AionUi não oferece mais suporte ao envio de mensagens em conversas ou tarefas que usam esse caminho. Crie uma nova conversa ou tarefa com um caminho de projeto sem espaços em branco."
+        "body": "Esta conversa ou tarefa existente usa um caminho de projeto cujos nomes de diretório contêm espaços ou outros caracteres de espaço em branco. O TjuaeUI não oferece mais suporte ao envio de mensagens em caminhos desse tipo. Crie uma nova conversa ou tarefa com um caminho de projeto sem espaços em branco.",
+        "bodyWithPath": "O caminho de projeto existente \"{{workspacePath}}\" contém espaços ou outros caracteres de espaço em branco. O TjuaeUI não oferece mais suporte ao envio de mensagens em conversas ou tarefas que usam esse caminho. Crie uma nova conversa ou tarefa com um caminho de projeto sem espaços em branco."
       },
       "UNKNOWN_UPSTREAM_ERROR": {
         "title": "O agente ou provedor upstream falhou",
@@ -310,7 +309,7 @@
       },
       "MCP_HTTP_RESPONSE_READ_FAILED": {
         "title": "Failed to read the team helper response",
-        "body": "AionUi could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
+        "body": "TjuaeUI could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
       },
       "MCP_TOOL_REMOTE_ERROR": {
         "title": "The local team helper rejected the request",
@@ -318,11 +317,11 @@
       },
       "MCP_TOOL_RESPONSE_UNEXPECTED": {
         "title": "The team helper returned an unexpected response",
-        "body": "AionUi received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
+        "body": "TjuaeUI received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
       },
       "MCP_TCP_READ_FAILED": {
         "title": "Failed to read from the local team helper",
-        "body": "AionUi could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
+        "body": "TjuaeUI could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
       },
       "TEAM_SERVICE_UNAVAILABLE": {
         "title": "Team service is not ready yet",

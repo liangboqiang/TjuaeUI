@@ -12,10 +12,9 @@
     "clearWorkspace": "移除项目",
     "openFolder": "打开文件夹",
     "none": "无",
-    "quickActionsTitle": "AionUi 能做什么？",
-    "quickActionFeedback": "反馈问题",
-    "quickActionStar": "喜欢我们？点个星吧",
-    "skillsMarket": "AionUi Skills Market",
+    "quickActionsTitle": "TjuaeUI 能做什么？",
+    "quickActionRepository": "代码仓库",
+    "skillsMarket": "TjuaeUI 技能市场",
     "skillsMarketDesc": "按需搜索并调用社区 Skills，一次配置，所有Agent通用。",
     "skillsMarketDetails": "详情 >>"
   },
@@ -88,7 +87,7 @@
     "untitled": "未命名会话"
   },
   "dropdown": {
-    "cliAgents": "CLI Agents",
+    "cliAgents": "CLI 智能体",
     "presetAssistants": "预设助手"
   },
   "noAgentsAvailable": "没有可用的 Agent",
@@ -124,32 +123,32 @@
       "check_provider_base_url": "请检查模型服务商的 Base URL、接口路径、代理和 API 兼容性。",
       "change_model": "请选择当前账号可用且支持该请求的模型。",
       "reduce_context": "请减少消息内容、引用文件或上下文大小后重试。",
-      "send_feedback": "请提交反馈并附带日志，方便团队排查。"
+      "send_feedback": "请通过 GitHub Issues 报告问题；本地数据不会自动上传。"
     },
     "ownership": {
-      "aionui": "应用",
-      "user_agent": "Agent",
+      "tjuaeui": "应用",
+      "user_agent": "智能体",
       "user_llm_provider": "模型服务商",
       "unknown_upstream": "上游"
     },
     "codes": {
-      "AIONUI_STREAM_BROKEN": {
+      "TJUAEUI_STREAM_BROKEN": {
         "title": "响应流异常中断",
-        "body": "消息已发送，但响应流异常结束。请先重试；如果反复出现，可以提交反馈。"
+        "body": "应用已接收你的消息，但响应流意外中断。请重试。"
       },
-      "AIONUI_STATE_INCONSISTENT": {
+      "TJUAEUI_STATE_INCONSISTENT": {
         "title": "会话状态不一致",
         "body": "当前对话状态和后台记录不同步。请重新打开应用或新建会话后再试。"
       },
-      "AIONUI_PERMISSION_ERROR": {
+      "TJUAEUI_PERMISSION_ERROR": {
         "title": "无法访问所需资源",
         "body": "本地权限或文件访问检查失败。请确认项目路径和应用权限后重试。"
       },
-      "AIONUI_INTERNAL_ERROR": {
+      "TJUAEUI_INTERNAL_ERROR": {
         "title": "应用处理失败",
-        "body": "本次请求在应用处理过程中失败。请先重试一次；如果仍然出现，可以提交反馈。"
+        "body": "应用处理请求时失败。请重试一次。"
       },
-      "AIONUI_CONVERSATION_BUSY": {
+      "TJUAE_CONVERSATION_BUSY": {
         "title": "会话正在处理上一条消息",
         "body": "当前会话还有回复未结束。请等待本次回复完成后再发送新的消息。"
       },
@@ -304,7 +303,7 @@
       },
       "MCP_HTTP_RESPONSE_READ_FAILED": {
         "title": "读取团队辅助进程响应失败",
-        "body": "AionUi 无法读取本地团队辅助进程的响应。请先重试一次，如果持续出现，再重启应用。"
+        "body": "TjuaeUI 无法读取本地团队辅助进程的响应。请先重试一次，如果持续出现，再重启应用。"
       },
       "MCP_TOOL_REMOTE_ERROR": {
         "title": "本地团队辅助进程拒绝了这次请求",
@@ -312,11 +311,11 @@
       },
       "MCP_TOOL_RESPONSE_UNEXPECTED": {
         "title": "团队辅助进程返回了异常响应",
-        "body": "AionUi 收到了本地团队辅助进程的异常响应。请先重试一次，如果持续出现再反馈问题。"
+        "body": "TjuaeUI 收到了本地团队辅助进程的异常响应。请先重试一次，如果持续出现再反馈问题。"
       },
       "MCP_TCP_READ_FAILED": {
         "title": "读取本地团队辅助进程失败",
-        "body": "AionUi 无法读取本地团队辅助进程的 TCP 响应。请先重试一次，如仍失败可重启应用。"
+        "body": "TjuaeUI 无法读取本地团队辅助进程的 TCP 响应。请先重试一次，如仍失败可重启应用。"
       },
       "TEAM_SERVICE_UNAVAILABLE": {
         "title": "团队服务尚未就绪",

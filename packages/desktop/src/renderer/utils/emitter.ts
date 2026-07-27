@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -17,10 +17,10 @@ export type ReplyQuote = {
 };
 
 interface EventTypes {
-  'aionrs.selected.file': [Array<string | FileOrFolderItem>];
-  'aionrs.selected.file.append': [Array<string | FileOrFolderItem>];
-  'aionrs.selected.file.clear': void;
-  'aionrs.workspace.refresh': void;
+  'tjuaecli.selected.file': [Array<string | FileOrFolderItem>];
+  'tjuaecli.selected.file.append': [Array<string | FileOrFolderItem>];
+  'tjuaecli.selected.file.clear': void;
+  'tjuaecli.workspace.refresh': void;
   'acp.selected.file': [Array<string | FileOrFolderItem>];
   'acp.selected.file.append': [Array<string | FileOrFolderItem>];
   'acp.selected.file.clear': void;

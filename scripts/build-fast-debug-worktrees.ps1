@@ -1,8 +1,7 @@
 param(
   [string[]]$Versions = @(),
-  [string]$SentryDsnFile = '',
   [string]$OutputDir = (Join-Path $PSScriptRoot '..\out-fast-builds'),
-  [string]$WorktreeRoot = (Join-Path $PSScriptRoot '..\..\aionui-build-worktrees'),
+  [string]$WorktreeRoot = (Join-Path $PSScriptRoot '..\..\tjuaeui-build-worktrees'),
   [int]$TimeoutSeconds = 1800,
   [switch]$Sequential
 )
@@ -17,27 +16,9 @@ function Get-PackageVersion([string]$RepoRoot) {
   $packageJsonPath = Join-Path $RepoRoot 'package.json'
   $packageJson = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
   if (-not $packageJson.version) {
-    throw "package.json is missing version: $packageJsonPath"
+    throw "package.json 缺少 version 字段：$packageJsonPath"
   }
   return [string]$packageJson.version
-}
-
-function Resolve-SentryDsn([string]$Path) {
-  if ($env:SENTRY_DSN) {
-    Write-Host 'Using SENTRY_DSN from the current environment.'
-    return $env:SENTRY_DSN.Trim()
-  }
-
-  if ($Path) {
-    if (-not (Test-Path -LiteralPath $Path)) {
-      throw "SENTRY_DSN file not found: $Path"
-    }
-    Write-Host "Using SENTRY_DSN from file: $Path"
-    return (Get-Content -LiteralPath $Path -Raw).Trim()
-  }
-
-  Write-Warning 'SENTRY_DSN is not set. Building without installer/app Sentry reporting.'
-  return ''
 }
 
 function ConvertTo-ProcessArgument([string]$Value) {
@@ -63,7 +44,7 @@ function Invoke-Git([string]$RepoRoot, [string[]]$GitArgs) {
   $process.WaitForExit()
   $output = ($stdout + $stderr).Trim()
   if ($process.ExitCode -ne 0) {
-    throw "git $($GitArgs -join ' ') failed:`n$output"
+    throw "git $($GitArgs -join ' ') 执行失败：`n$output"
   }
   return $output
 }
@@ -82,7 +63,7 @@ function Remove-LongPathTree([string]$Path) {
     try {
       Start-Process -FilePath 'cmd.exe' -ArgumentList ('/c rmdir "' + $item.FullName + '"') -WindowStyle Hidden -Wait -ErrorAction SilentlyContinue
     } catch {
-      Write-Warning "Failed to remove reparse point $($item.FullName): $($_.Exception.Message)"
+      Write-Warning "无法移除重解析点 $($item.FullName)：$($_.Exception.Message)"
     }
   }
 
@@ -90,24 +71,22 @@ function Remove-LongPathTree([string]$Path) {
   $longPath = if ($fullPath.StartsWith('\\')) { '\\?\UNC\' + $fullPath.TrimStart('\') } else { '\\?\' + $fullPath }
   $process = Start-Process -FilePath 'cmd.exe' -ArgumentList ('/c rmdir /s /q "' + $longPath + '"') -WindowStyle Hidden -Wait -PassThru
   if ($process.ExitCode -ne 0 -and (Test-Path -LiteralPath $Path)) {
-    throw "cmd rmdir failed with exit code $($process.ExitCode): $Path"
+    throw "cmd rmdir 失败，退出码 $($process.ExitCode)：$Path"
   }
 }
 
-function New-BuildCommandFile([string]$WorktreePath, [string]$Version, [string]$Dsn, [string]$LocalAioncoreBinary, [string]$LocalAioncoreBundleDir) {
+function New-BuildCommandFile([string]$WorktreePath, [string]$Version, [string]$LocalTjuaeCoreBinary, [string]$LocalTjuaeCoreBundleDir) {
   $scriptPath = Join-Path $WorktreePath "build-$Version.ps1"
-  $dsnBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Dsn))
   $lines = @(
     '$ErrorActionPreference = ''Stop''',
     '$buildTemp = Join-Path $PSScriptRoot ''.tmp''',
     'New-Item -ItemType Directory -Force -Path $buildTemp | Out-Null',
     '$env:TEMP = $buildTemp',
     '$env:TMP = $buildTemp',
-    '$env:SENTRY_DSN = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(''' + $dsnBase64 + '''))',
-    '$env:AIONUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION = ''' + $Version + '''',
+    '$env:TJUAEUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION = ''' + $Version + '''',
     '$env:ELECTRON_BUILDER_COMPRESSION_LEVEL = ''1''',
-    '$env:AIONUI_BACKEND_LOCAL_BINARY = ''' + ($LocalAioncoreBinary -replace "'", "''") + '''',
-    '$env:AIONUI_BACKEND_LOCAL_BUNDLE_DIR = ''' + ($LocalAioncoreBundleDir -replace "'", "''") + '''',
+    '$env:TJUAEUI_BACKEND_LOCAL_BINARY = ''' + ($LocalTjuaeCoreBinary -replace "'", "''") + '''',
+    '$env:TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR = ''' + ($LocalTjuaeCoreBundleDir -replace "'", "''") + '''',
     '$env:ELECTRON_CACHE = Join-Path $env:LOCALAPPDATA ''electron\Cache''',
     '& bun run build-win:x64:fast',
     'exit $LASTEXITCODE'
@@ -116,8 +95,8 @@ function New-BuildCommandFile([string]$WorktreePath, [string]$Version, [string]$
   return $scriptPath
 }
 
-function Start-BuildProcess([string]$WorktreePath, [string]$Version, [string]$Dsn, [string]$LogDir, [string]$LocalAioncoreBinary, [string]$LocalAioncoreBundleDir) {
-  $scriptPath = New-BuildCommandFile $WorktreePath $Version $Dsn $LocalAioncoreBinary $LocalAioncoreBundleDir
+function Start-BuildProcess([string]$WorktreePath, [string]$Version, [string]$LogDir, [string]$LocalTjuaeCoreBinary, [string]$LocalTjuaeCoreBundleDir) {
+  $scriptPath = New-BuildCommandFile $WorktreePath $Version $LocalTjuaeCoreBinary $LocalTjuaeCoreBundleDir
   $stdoutPath = Join-Path $LogDir "build-$Version.out.log"
   $stderrPath = Join-Path $LogDir "build-$Version.err.log"
   $process = Start-Process -FilePath 'powershell.exe' `
@@ -157,7 +136,7 @@ function Wait-BuildProcess($Build, [int]$TimeoutSeconds) {
   while (-not $Build.process.HasExited) {
     if ((Get-Date) -gt $deadline) {
       Stop-Process -Id $Build.process.Id -Force -ErrorAction SilentlyContinue
-      throw "build $($Build.version) timed out after $TimeoutSeconds seconds. Logs: $($Build.stdoutPath), $($Build.stderrPath)"
+      throw "构建 $($Build.version) 在 $TimeoutSeconds 秒后超时。日志：$($Build.stdoutPath)、$($Build.stderrPath)"
     }
     Start-Sleep -Seconds 5
     $Build.process.Refresh()
@@ -166,39 +145,39 @@ function Wait-BuildProcess($Build, [int]$TimeoutSeconds) {
   $Build.process.WaitForExit()
   $Build.process.Refresh()
   $exitCode = $Build.process.ExitCode
-  $source = Join-Path $Build.worktreePath "out\AionUi-$($Build.version)-win-x64.exe"
+  $source = Join-Path $Build.worktreePath "out\TjuaeUI-$($Build.version)-win-x64.exe"
   if (-not (Test-Path -LiteralPath $source)) {
     $tailParts = @()
     if (Test-Path -LiteralPath $Build.stderrPath) {
       $raw = Get-Content -LiteralPath $Build.stderrPath -Raw -ErrorAction SilentlyContinue
       if ($raw.Length -gt 12000) {
-        $tailParts += "stderr tail:`n" + $raw.Substring($raw.Length - 12000)
+        $tailParts += "标准错误末尾：`n" + $raw.Substring($raw.Length - 12000)
       } else {
-        $tailParts += "stderr tail:`n" + $raw
+        $tailParts += "标准错误末尾：`n" + $raw
       }
     }
     if (Test-Path -LiteralPath $Build.stdoutPath) {
       $raw = Get-Content -LiteralPath $Build.stdoutPath -Raw -ErrorAction SilentlyContinue
       if ($raw.Length -gt 12000) {
-        $tailParts += "stdout tail:`n" + $raw.Substring($raw.Length - 12000)
+        $tailParts += "标准输出末尾：`n" + $raw.Substring($raw.Length - 12000)
       } else {
-        $tailParts += "stdout tail:`n" + $raw
+        $tailParts += "标准输出末尾：`n" + $raw
       }
     }
     $tail = $tailParts -join "`n`n"
-    throw "build $($Build.version) failed with exit code $exitCode and did not produce $source. Logs: $($Build.stdoutPath), $($Build.stderrPath)`n$tail"
+    throw "构建 $($Build.version) 失败（退出码 $exitCode），且未生成 $source。日志：$($Build.stdoutPath)、$($Build.stderrPath)`n$tail"
   }
 
   if ($null -ne $exitCode -and $exitCode -ne 0) {
-    throw "build $($Build.version) produced an artifact but exited with code $exitCode. Logs: $($Build.stdoutPath), $($Build.stderrPath)"
+    throw "构建 $($Build.version) 已生成构件，但退出码为 $exitCode。日志：$($Build.stdoutPath)、$($Build.stderrPath)"
   }
 
   $sourceItem = Get-Item -LiteralPath $source
   if ($sourceItem.Length -lt 50MB) {
-    throw "build $($Build.version) produced an unexpectedly small installer ($($sourceItem.Length) bytes): $source. Logs: $($Build.stdoutPath), $($Build.stderrPath)"
+    throw "构建 $($Build.version) 生成的安装包异常小（$($sourceItem.Length) 字节）：$source。日志：$($Build.stdoutPath)、$($Build.stderrPath)"
   }
 
-  $target = Join-Path $script:OutputDirResolved "AionUi-$($Build.version)-win-x64.exe"
+  $target = Join-Path $script:OutputDirResolved "TjuaeUI-$($Build.version)-win-x64.exe"
   Copy-Item -LiteralPath $source -Destination $target -Force
   $item = Get-Item -LiteralPath $target
   $hash = (Get-FileHash -LiteralPath $target -Algorithm SHA512).Hash
@@ -213,7 +192,6 @@ function Wait-BuildProcess($Build, [int]$TimeoutSeconds) {
 }
 
 $repoRoot = Resolve-RepoRoot
-$dsn = Resolve-SentryDsn $SentryDsnFile
 $runId = Get-Date -Format 'yyyyMMdd-HHmmss'
 $runRoot = Join-Path $WorktreeRoot $runId
 $patchPath = Join-Path $runRoot 'current-worktree.patch'
@@ -230,34 +208,34 @@ $untracked = @(git -C $repoRoot ls-files --others --exclude-standard)
 $untrackedBuildInputs = @($untracked | Where-Object { ($_ -replace '\\', '/').StartsWith('resources/') })
 $untrackedIgnored = @($untracked | Where-Object { -not (($_ -replace '\\', '/').StartsWith('resources/')) })
 if ($untrackedBuildInputs.Count -gt 0) {
-  Write-Warning "Copying untracked build inputs into worktrees: $($untrackedBuildInputs -join ', ')"
+  Write-Warning "正在把未跟踪的构建输入复制到工作树：$($untrackedBuildInputs -join ', ')"
 }
 if ($untrackedIgnored.Count -gt 0) {
-  Write-Warning "Untracked files are not copied into build worktrees: $($untrackedIgnored -join ', ')"
+  Write-Warning "以下未跟踪文件不会复制到构建工作树：$($untrackedIgnored -join ', ')"
 }
 
 Invoke-Git $repoRoot @('diff', '--binary', 'HEAD', "--output=$patchPath") | Out-Null
 $hasPatch = (Get-Item -LiteralPath $patchPath).Length -gt 0
 $baseRef = (Invoke-Git $repoRoot @('rev-parse', 'HEAD')).Trim()
 $nodeModules = Join-Path $repoRoot 'node_modules'
-$localAioncoreBinary = Join-Path $repoRoot 'resources\bundled-aioncore\win32-x64\aioncore.exe'
-$localAioncoreBundleDir = Join-Path $repoRoot 'out\win-unpacked\resources\bundled-aioncore\win32-x64'
-if (-not (Test-Path -LiteralPath (Join-Path $localAioncoreBundleDir 'managed-resources') -PathType Container)) {
-  $localAioncoreBundleDir = Join-Path $env:LOCALAPPDATA 'Programs\AionUi\resources\bundled-aioncore\win32-x64'
+$localTjuaeCoreBinary = Join-Path $repoRoot 'resources\bundled-tjuaecore\win32-x64\tjuaecore.exe'
+$localTjuaeCoreBundleDir = Join-Path $repoRoot 'out\win-unpacked\resources\bundled-tjuaecore\win32-x64'
+if (-not (Test-Path -LiteralPath (Join-Path $localTjuaeCoreBundleDir 'managed-resources') -PathType Container)) {
+  $localTjuaeCoreBundleDir = Join-Path $env:LOCALAPPDATA 'Programs\TjuaeUI\resources\bundled-tjuaecore\win32-x64'
 }
-if (Test-Path -LiteralPath (Join-Path $localAioncoreBundleDir 'managed-resources') -PathType Container) {
-  $localAioncoreBundleDir = (Resolve-Path -LiteralPath $localAioncoreBundleDir).Path
-  Write-Host "=== using local aioncore bundle fallback: $localAioncoreBundleDir ==="
+if (Test-Path -LiteralPath (Join-Path $localTjuaeCoreBundleDir 'managed-resources') -PathType Container) {
+  $localTjuaeCoreBundleDir = (Resolve-Path -LiteralPath $localTjuaeCoreBundleDir).Path
+  Write-Host "=== 使用本地 tjuaecore 资源包作为后备：$localTjuaeCoreBundleDir ==="
 } else {
-  $localAioncoreBundleDir = ''
-  Write-Warning 'Local aioncore bundle fallback was not found; builds may need to prepare managed resources.'
+  $localTjuaeCoreBundleDir = ''
+  Write-Warning '未找到本地 tjuaecore 资源包后备；构建过程可能需要准备托管资源。'
 }
-if (Test-Path -LiteralPath $localAioncoreBinary -PathType Leaf) {
-  $localAioncoreBinary = (Resolve-Path -LiteralPath $localAioncoreBinary).Path
-  Write-Host "=== using local aioncore fallback: $localAioncoreBinary ==="
+if (Test-Path -LiteralPath $localTjuaeCoreBinary -PathType Leaf) {
+  $localTjuaeCoreBinary = (Resolve-Path -LiteralPath $localTjuaeCoreBinary).Path
+  Write-Host "=== 使用本地 tjuaecore 作为后备：$localTjuaeCoreBinary ==="
 } else {
-  $localAioncoreBinary = ''
-  Write-Warning 'Local aioncore fallback was not found; builds may need to download aioncore.'
+  $localTjuaeCoreBinary = ''
+  Write-Warning '未找到本地 tjuaecore 后备；构建过程可能需要下载 tjuaecore。'
 }
 $worktrees = @()
 $builds = @()
@@ -266,9 +244,9 @@ $completed = $false
 
 try {
   foreach ($version in $buildVersions) {
-    $worktreePath = Join-Path $runRoot "AionUi-$version"
+    $worktreePath = Join-Path $runRoot "TjuaeUI-$version"
     $worktrees += $worktreePath
-    Write-Host "=== prepare worktree ${version}: $worktreePath ==="
+    Write-Host "=== 准备工作树 ${version}：$worktreePath ==="
     Invoke-Git $repoRoot @('worktree', 'add', '--detach', $worktreePath, $baseRef) | Out-Null
 
     if ($hasPatch) {
@@ -282,13 +260,13 @@ try {
   }
 
   foreach ($version in $buildVersions) {
-    $worktreePath = Join-Path $runRoot "AionUi-$version"
-    Write-Host "=== build $version start: $(Get-Date -Format o) ==="
-    $build = Start-BuildProcess $worktreePath $version $dsn $runRoot $localAioncoreBinary $localAioncoreBundleDir
+    $worktreePath = Join-Path $runRoot "TjuaeUI-$version"
+    Write-Host "=== 开始构建 $version：$(Get-Date -Format o) ==="
+    $build = Start-BuildProcess $worktreePath $version $runRoot $localTjuaeCoreBinary $localTjuaeCoreBundleDir
     if ($Sequential) {
       $result = Wait-BuildProcess $build $TimeoutSeconds
       $results += $result
-      Write-Host "=== build $version done: $(Get-Date -Format o) size=$($result.size) sha512=$($result.sha512) ==="
+      Write-Host "=== 构建 $version 完成：$(Get-Date -Format o) 大小=$($result.size) sha512=$($result.sha512) ==="
     } else {
       $builds += $build
     }
@@ -298,7 +276,7 @@ try {
     foreach ($build in $builds) {
       $result = Wait-BuildProcess $build $TimeoutSeconds
       $results += $result
-      Write-Host "=== build $($build.version) done: $(Get-Date -Format o) size=$($result.size) sha512=$($result.sha512) ==="
+      Write-Host "=== 构建 $($build.version) 完成：$(Get-Date -Format o) 大小=$($result.size) sha512=$($result.sha512) ==="
     }
   }
 
@@ -316,16 +294,16 @@ try {
       try {
         Invoke-Git $repoRoot @('worktree', 'remove', '--force', $worktreePath) | Out-Null
       } catch {
-        Write-Warning "git worktree remove failed for $worktreePath; removing directory with long-path fallback. $($_.Exception.Message)"
+        Write-Warning "git worktree remove 无法移除 $worktreePath；改用长路径后备清理。$($_.Exception.Message)"
         try {
           Remove-LongPathTree $worktreePath
         } catch {
-          Write-Warning "long-path fallback cleanup failed for $worktreePath. $($_.Exception.Message)"
+          Write-Warning "长路径后备清理 $worktreePath 失败。$($_.Exception.Message)"
         }
         try {
           Invoke-Git $repoRoot @('worktree', 'prune') | Out-Null
         } catch {
-          Write-Warning "git worktree prune failed. $($_.Exception.Message)"
+          Write-Warning "git worktree prune 失败。$($_.Exception.Message)"
         }
       }
     }
@@ -333,9 +311,9 @@ try {
     try {
       Remove-LongPathTree $runRoot
     } catch {
-      Write-Warning "run root cleanup failed for $runRoot. $($_.Exception.Message)"
+      Write-Warning "运行目录 $runRoot 清理失败。$($_.Exception.Message)"
     }
   } else {
-    Write-Warning "Build failed; preserving worktrees and logs under $runRoot"
+    Write-Warning "构建失败；工作树和日志已保留在 $runRoot"
   }
 }

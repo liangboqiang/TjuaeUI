@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -39,7 +39,7 @@ const ChatSlider: React.FC<{
         messageApi={messageApi}
       ></ChatWorkspace>
     );
-  } else if (conversation?.type === 'aionrs' && conversation.extra?.workspace) {
+  } else if (conversation?.type === 'tjuaecli' && conversation.extra?.workspace) {
     workspaceNode = (
       <ChatWorkspace
         conversation_id={conversation.id}
@@ -47,7 +47,7 @@ const ChatSlider: React.FC<{
         isTemporaryWorkspace={
           (conversation.extra as { is_temporary_workspace?: boolean } | undefined)?.is_temporary_workspace
         }
-        eventPrefix='aionrs'
+        eventPrefix='tjuaecli'
         messageApi={messageApi}
       ></ChatWorkspace>
     );

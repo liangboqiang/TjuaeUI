@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,7 +40,7 @@ const assistantLabel = (assistant: Assistant, localeKey: string): string =>
 /**
  * Compact overlapping avatar stack shown on an agent list row to surface which
  * assistants depend on it. Caps at `max` avatars and renders a "+N" pill for
- * the remainder so a high-fan-out engine (e.g. aionrs) stays readable.
+ * the remainder so a high-fan-out engine (e.g. tjuaecli) stays readable.
  */
 export const BoundAssistantStack: React.FC<{ assistants: Assistant[]; max?: number }> = ({ assistants, max = 4 }) => {
   const { t, i18n } = useTranslation();

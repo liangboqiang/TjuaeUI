@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -16,7 +16,7 @@ const { navigateMock, requestPrefillMock, routeState } = vi.hoisted(() => ({
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) => (key === 'cron.status.defaultPrompt' ? 'Create with /cron in AionUi' : key),
+    t: (key: string) => (key === 'cron.status.defaultPrompt' ? 'Create with /cron in TjuaeUI' : key),
   }),
 }));
 
@@ -91,7 +91,7 @@ describe('create scheduled task conversation action', () => {
 
     act(() => result.current.handleCreateCronTask(makeConversation('current-conversation', 'acp')));
 
-    expect(requestPrefillMock).toHaveBeenCalledWith('current-conversation', 'Create with /cron in AionUi');
+    expect(requestPrefillMock).toHaveBeenCalledWith('current-conversation', 'Create with /cron in TjuaeUI');
     expect(navigateMock).not.toHaveBeenCalled();
   });
 
@@ -99,9 +99,9 @@ describe('create scheduled task conversation action', () => {
     const onSessionClick = vi.fn();
     const { result } = renderActions(onSessionClick);
 
-    act(() => result.current.handleCreateCronTask(makeConversation('background-conversation', 'aionrs')));
+    act(() => result.current.handleCreateCronTask(makeConversation('background-conversation', 'tjuaecli')));
 
-    expect(requestPrefillMock).toHaveBeenCalledWith('background-conversation', 'Create with /cron in AionUi');
+    expect(requestPrefillMock).toHaveBeenCalledWith('background-conversation', 'Create with /cron in TjuaeUI');
     expect(navigateMock).toHaveBeenCalledWith('/conversation/background-conversation');
     expect(requestPrefillMock.mock.invocationCallOrder[0]).toBeLessThan(navigateMock.mock.invocationCallOrder[0]);
     expect(onSessionClick).toHaveBeenCalledOnce();
@@ -117,7 +117,7 @@ describe('create scheduled task conversation action', () => {
       expect(requestPrefillMock).not.toHaveBeenCalled();
       expect(navigateMock).toHaveBeenCalledWith('/guid', {
         state: {
-          prefillPrompt: 'Create with /cron in AionUi',
+          prefillPrompt: 'Create with /cron in TjuaeUI',
           preservePrefillDraft: true,
           focusPrefill: true,
         },

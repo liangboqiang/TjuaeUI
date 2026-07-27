@@ -3,11 +3,12 @@
 set -euo pipefail
 
 OUTPUT_DIR="${1:-release-assets}"
+VERSION="${2:-$(node -p "require('./package.json').version")}"
 ERRORS=0
 
 for f in latest.yml latest-mac.yml latest-linux.yml latest-linux-arm64.yml; do
   if [ ! -f "$OUTPUT_DIR/$f" ]; then
-    echo "FAIL: missing canonical metadata: $f"
+    echo "失败：缺少规范元数据：$f"
     ERRORS=$((ERRORS + 1))
   fi
 done
@@ -31,24 +32,24 @@ assert_metadata_points_to_existing_file() {
   ref_file=$(extract_ref_file "$metadata_path")
 
   if [ -z "$ref_file" ]; then
-    echo "FAIL: $metadata_name has no path/url entry"
+    echo "失败：$metadata_name 没有 path/url 条目"
     ERRORS=$((ERRORS + 1))
     return
   fi
 
   if [[ ! "$ref_file" =~ $expected_pattern ]]; then
-    echo "FAIL: $metadata_name points to unexpected file: $ref_file"
+    echo "失败：$metadata_name 指向非预期文件：$ref_file"
     ERRORS=$((ERRORS + 1))
     return
   fi
 
   if [ ! -f "$OUTPUT_DIR/$ref_file" ]; then
-    echo "FAIL: $metadata_name references missing file: $ref_file"
+    echo "失败：$metadata_name 引用了缺失文件：$ref_file"
     ERRORS=$((ERRORS + 1))
     return
   fi
 
-  echo "PASS: $metadata_name -> $ref_file"
+  echo "通过：$metadata_name -> $ref_file"
 }
 
 assert_metadata_points_to_existing_file "latest.yml" "(win-x64|win32-x64|x64)"
@@ -58,46 +59,46 @@ assert_metadata_points_to_existing_file "latest-linux-arm64.yml" "(arm64|aarch64
 
 for f in latest-win-arm64.yml latest-arm64-mac.yml; do
   if [ ! -f "$OUTPUT_DIR/$f" ]; then
-    echo "FAIL: missing arch-specific updater metadata: $f"
+    echo "失败：缺少架构专属更新元数据：$f"
     ERRORS=$((ERRORS + 1))
   else
-    echo "PASS: $f exists"
+    echo "通过：$f 存在"
   fi
 done
 
-for f in AionUi-1.0.0-win-x64.exe AionUi-1.0.0-win-arm64.exe AionUi-1.0.0-mac-x64.dmg AionUi-1.0.0-mac-arm64.dmg AionUi-1.0.0.deb AionUi-1.0.0-arm64.deb; do
+for f in TjuaeUI-${VERSION}-win-x64.exe TjuaeUI-${VERSION}-win-arm64.exe TjuaeUI-${VERSION}-mac-x64.dmg TjuaeUI-${VERSION}-mac-arm64.dmg TjuaeUI-${VERSION}-linux-x64.deb TjuaeUI-${VERSION}-linux-arm64.deb; do
   if [ ! -f "$OUTPUT_DIR/$f" ]; then
-    echo "FAIL: missing distributable: $f"
+    echo "失败：缺少分发包：$f"
     ERRORS=$((ERRORS + 1))
   else
-    echo "PASS: $f exists"
+    echo "通过：$f 存在"
   fi
 done
 
-# Web-CLI tarballs + checksums
+# Web CLI 压缩包与校验和。
 for plat in darwin-arm64 darwin-x86_64 linux-arm64 linux-x86_64 win-x86_64; do
-  tarball="aionui-web-1.0.0-${plat}.tar.gz"
+  tarball="tjuaeui-web-${VERSION}-${plat}.tar.gz"
   for f in "$tarball" "${tarball}.sha256"; do
     if [ ! -f "$OUTPUT_DIR/$f" ]; then
-      echo "FAIL: missing web-cli asset: $f"
+      echo "失败：缺少 Web CLI 资产：$f"
       ERRORS=$((ERRORS + 1))
     else
-      echo "PASS: $f exists"
+      echo "通过：$f 存在"
     fi
   done
 done
 
 if [ ! -f "$OUTPUT_DIR/install-web.sh" ]; then
-  echo "FAIL: missing install-web.sh"
+  echo "失败：缺少 install-web.sh"
   ERRORS=$((ERRORS + 1))
 else
-  echo "PASS: install-web.sh exists"
+  echo "通过：install-web.sh 存在"
 fi
 
 echo ""
 if [ "$ERRORS" -gt 0 ]; then
-  echo "FAILED: $ERRORS errors found"
+  echo "验证失败：发现 $ERRORS 个错误"
   exit 1
 fi
 
-echo "ALL CHECKS PASSED"
+echo "全部检查通过"

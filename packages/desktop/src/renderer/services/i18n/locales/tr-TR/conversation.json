@@ -12,10 +12,9 @@
     "clearWorkspace": "Projeyi kaldır",
     "openFolder": "Klasör Aç",
     "none": "Hiçbiri",
-    "quickActionsTitle": "AionUi neler yapabilir?",
-    "quickActionFeedback": "Sorun Bildir",
-    "quickActionStar": "Bizi beğendiniz mi? Yıldız verin!",
-    "skillsMarket": "AionUi Skills Market",
+    "quickActionsTitle": "TjuaeUI neler yapabilir?",
+    "quickActionRepository": "Depo",
+    "skillsMarket": "TjuaeUI Skills Market",
     "skillsMarketDesc": "Topluluk Skills'lerini ihtiyaç duyduğunuzda arayın ve etkinleştirin. Bir kez yapılandırın, tüm Agent'larda kullanılabilir.",
     "skillsMarketDetails": "Ayrıntılar >>"
   },
@@ -107,32 +106,32 @@
       "check_provider_base_url": "Model sağlayıcının Base URL, API yolu, proxy ve API uyumluluğunu kontrol edin.",
       "change_model": "Geçerli hesapta kullanılabilen ve bu isteği destekleyen bir model seçin.",
       "reduce_context": "Mesaj içeriğini, başvurulan dosyaları veya bağlam boyutunu azaltıp yeniden deneyin.",
-      "send_feedback": "Ekibin inceleyebilmesi için günlüklerle birlikte geri bildirim gönderin."
+      "send_feedback": "Sorunu GitHub Issues üzerinden bildirin; yerel veriler otomatik olarak yüklenmez."
     },
     "ownership": {
-      "aionui": "Uygulama",
+      "tjuaeui": "Uygulama",
       "user_agent": "Ajan",
       "user_llm_provider": "Model sağlayıcı",
       "unknown_upstream": "Üst hizmet"
     },
     "codes": {
-      "AIONUI_STREAM_BROKEN": {
+      "TJUAEUI_STREAM_BROKEN": {
         "title": "Yanıt akışı kesildi",
-        "body": "Uygulama mesajınızı aldı ancak yanıt akışı beklenmedik şekilde sona erdi. Yeniden deneyin; tekrarlanırsa geri bildirim gönderin."
+        "body": "Uygulama mesajınızı kabul etti ancak yanıt akışı beklenmedik şekilde sona erdi. Yeniden deneyin."
       },
-      "AIONUI_STATE_INCONSISTENT": {
+      "TJUAEUI_STATE_INCONSISTENT": {
         "title": "Konuşma durumu eşitlenmemiş",
         "body": "Konuşma durumu eşitlenmemiş. Yeniden denemeden önce bu sohbeti yeniden başlatın veya uygulamayı yenileyin."
       },
-      "AIONUI_PERMISSION_ERROR": {
+      "TJUAEUI_PERMISSION_ERROR": {
         "title": "İstenen kaynağa erişilemedi",
         "body": "Yerel izin veya dosya sistemi denetimi başarısız oldu. Proje yolunu ve uygulama izinlerini kontrol edip yeniden deneyin."
       },
-      "AIONUI_INTERNAL_ERROR": {
+      "TJUAEUI_INTERNAL_ERROR": {
         "title": "İstek uygulamada başarısız oldu",
-        "body": "Uygulama isteği işlerken hata oluştu. Bir kez yeniden deneyin; tekrarlanırsa geri bildirim gönderin."
+        "body": "Uygulama isteği işlerken hata oluştu. Bir kez daha deneyin."
       },
-      "AIONUI_CONVERSATION_BUSY": {
+      "TJUAE_CONVERSATION_BUSY": {
         "title": "Konuşma meşgul",
         "body": "Başka bir yanıt hâlâ çalışıyor. Yeni mesaj göndermeden önce bitmesini bekleyin."
       },
@@ -287,7 +286,7 @@
       },
       "MCP_HTTP_RESPONSE_READ_FAILED": {
         "title": "Failed to read the team helper response",
-        "body": "AionUi could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
+        "body": "TjuaeUI could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
       },
       "MCP_TOOL_REMOTE_ERROR": {
         "title": "The local team helper rejected the request",
@@ -295,11 +294,11 @@
       },
       "MCP_TOOL_RESPONSE_UNEXPECTED": {
         "title": "The team helper returned an unexpected response",
-        "body": "AionUi received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
+        "body": "TjuaeUI received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
       },
       "MCP_TCP_READ_FAILED": {
         "title": "Failed to read from the local team helper",
-        "body": "AionUi could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
+        "body": "TjuaeUI could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
       },
       "TEAM_SERVICE_UNAVAILABLE": {
         "title": "Team service is not ready yet",

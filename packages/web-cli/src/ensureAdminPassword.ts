@@ -1,21 +1,17 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
- * On first tarball launch, the aioncore's SQLite `users` table holds the
- * seeded `system_default_user` row with an empty password_hash. We probe
- * /api/auth/status; if `needs_setup === true`, ask the backend to generate and
- * persist a random password via POST /api/webui/reset-password and print it to
- * stdout so the user can log in.
+ * 压缩包首次启动时，tjuaecore 的 SQLite `users` 表包含 password_hash 为空的
+ * `system_default_user`。本模块探测 /api/auth/status；当
+ * `needs_setup === true` 时，调用 /api/webui/reset-password 生成并保存随机密码，
+ * 再输出到标准输出供用户登录。
  *
- * Mirrors Electron's maybeSeedInitialPassword in
- * packages/desktop/src/process/bridge/webuiBridge.ts:52-77 and the Bun dev
- * helper in scripts/webui.ts — when either changes, keep this in sync.
+ * 此流程与 Electron 的 maybeSeedInitialPassword 及 scripts/webui.ts 中的 Bun
+ * 开发辅助流程保持一致，修改其中任一处时必须同步更新。
  *
- * The printed format is load-bearing: scripts/smoke-test-web-cli.sh greps for
- * "Generated initial admin password: <pw>". Do not change it without updating
- * that script.
+ * 输出格式由 scripts/smoke-test-web-cli.sh 解析；修改时必须同步更新该脚本。
  */
 
 export type EnsureAdminPasswordDeps = {
@@ -27,16 +23,15 @@ export type EnsureAdminPasswordDeps = {
 };
 
 export type EnsureAdminPasswordOptions = {
-  /** 127.0.0.1 port where aioncore listens (from WebHostHandle.backendPort). */
+  /** tjuaecore 在 127.0.0.1 上监听的端口。 */
   backendPort: number;
-  /** Total wait budget for /api/auth/status coming up. Default: 15s. */
+  /** 等待 /api/auth/status 就绪的总时限，默认 15 秒。 */
   statusTimeoutMs?: number;
-  /** Poll interval between /api/auth/status attempts. Default: 500ms. */
+  /** /api/auth/status 探测间隔，默认 500 毫秒。 */
   statusPollIntervalMs?: number;
   /**
-   * Command to show in fallback hints ("Forgot the password? Run ..."). Varies
-   * by launch context — packaged tarball = `aionui-web resetpass`, in-repo dev
-   * = `bun run resetpass`. Defaults to the packaged form.
+   * 失败提示中显示的重置命令。发布压缩包使用 `tjuaeui-web resetpass`，仓库内
+   * 开发使用 `bun run resetpass`；默认使用发布形式。
    */
   resetCommand?: string;
 };
@@ -69,13 +64,13 @@ async function waitForStatus(
       if (res.ok) {
         return (await res.json()) as AuthStatus;
       }
-      lastErr = new Error(`/api/auth/status returned ${res.status}`);
+      lastErr = new Error(`/api/auth/status 返回状态码 ${res.status}`);
     } catch (err) {
       lastErr = err;
     }
     await deps.sleep(intervalMs);
   }
-  throw lastErr instanceof Error ? lastErr : new Error('/api/auth/status did not come up in time');
+  throw lastErr instanceof Error ? lastErr : new Error('/api/auth/status 未在限定时间内就绪');
 }
 
 async function fetchAdminUsername(deps: EnsureAdminPasswordDeps, backendPort: number): Promise<string> {
@@ -90,10 +85,8 @@ async function fetchAdminUsername(deps: EnsureAdminPasswordDeps, backendPort: nu
 }
 
 /**
- * Probe backend auth state. On fresh install, POST reset-password and print the
- * generated credentials. Never throws — any failure is warned and the caller
- * continues starting the server (user can still see the login page, they just
- * need to run resetpass manually).
+ * 探测后端认证状态。首次安装时调用 reset-password 并输出凭据。该函数不抛出
+ * 异常；失败时记录警告并继续启动，用户仍可手动执行 resetpass。
  */
 export async function ensureAdminPassword(
   opts: EnsureAdminPasswordOptions,
@@ -101,14 +94,14 @@ export async function ensureAdminPassword(
 ): Promise<void> {
   const timeoutMs = opts.statusTimeoutMs ?? 15_000;
   const intervalMs = opts.statusPollIntervalMs ?? 500;
-  const resetCmd = opts.resetCommand ?? 'aionui-web resetpass';
+  const resetCmd = opts.resetCommand ?? 'tjuaeui-web resetpass';
   const base = `http://127.0.0.1:${opts.backendPort}`;
 
   let status: AuthStatus;
   try {
     status = await waitForStatus(deps, `${base}/api/auth/status`, timeoutMs, intervalMs);
   } catch (err) {
-    deps.warn(`[aionui-web] could not verify admin credentials: ${err instanceof Error ? err.message : String(err)}`);
+    deps.warn(`[tjuaeui-web] 无法验证管理员凭据：${err instanceof Error ? err.message : String(err)}`);
     return;
   }
 
@@ -116,28 +109,26 @@ export async function ensureAdminPassword(
 
   if (!needsSetup) {
     const username = await fetchAdminUsername(deps, opts.backendPort);
-    deps.log(`[aionui-web] Log in with username "${username}". Forgot the password? Run \`${resetCmd}\`.`);
+    deps.log(`[tjuaeui-web] 请使用用户名“${username}”登录；忘记密码时运行 \`${resetCmd}\`。`);
     return;
   }
 
   try {
     const resetRes = await deps.fetch(`${base}/api/webui/reset-password`, { method: 'POST' });
     if (!resetRes.ok) {
-      deps.warn(`[aionui-web] /api/webui/reset-password returned ${resetRes.status} — run \`${resetCmd}\``);
+      deps.warn(`[tjuaeui-web] /api/webui/reset-password 返回状态码 ${resetRes.status}；请运行 \`${resetCmd}\``);
       return;
     }
     const payload = (await resetRes.json()) as ResetPasswordResponse;
     const newPassword = payload.data?.new_password ?? payload.new_password;
     if (!newPassword) {
-      deps.warn(`[aionui-web] /api/webui/reset-password returned no new_password — run \`${resetCmd}\``);
+      deps.warn(`[tjuaeui-web] /api/webui/reset-password 未返回 new_password；请运行 \`${resetCmd}\``);
       return;
     }
     const username = await fetchAdminUsername(deps, opts.backendPort);
-    deps.log(`[aionui-web] Generated initial admin password: ${newPassword}`);
-    deps.log(`[aionui-web] Log in with username "${username}" and change it from the UI.`);
+    deps.log(`[tjuaeui-web] 已生成初始管理员密码：${newPassword}`);
+    deps.log(`[tjuaeui-web] 请使用用户名“${username}”登录，并在界面中修改密码。`);
   } catch (err) {
-    deps.warn(
-      `[aionui-web] failed to seed initial admin password: ${err instanceof Error ? err.message : String(err)}`
-    );
+    deps.warn(`[tjuaeui-web] 无法生成初始管理员密码：${err instanceof Error ? err.message : String(err)}`);
   }
 }

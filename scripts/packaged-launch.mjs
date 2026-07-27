@@ -30,7 +30,7 @@ function resolvePackagedApp(projectRoot) {
 
   if (process.platform === 'win32') {
     for (const dir of ['win-unpacked', 'win-x64-unpacked', 'win-arm64-unpacked']) {
-      const exe = path.join(outDir, dir, 'AionUi.exe');
+      const exe = path.join(outDir, dir, 'TjuaeUI.exe');
       if (fs.existsSync(exe)) return { executablePath: exe, cwd: path.join(outDir, dir) };
     }
   } else if (process.platform === 'darwin') {
@@ -39,14 +39,14 @@ function resolvePackagedApp(projectRoot) {
       if (!fs.existsSync(macDir)) continue;
       const appBundle = fs.readdirSync(macDir).find((f) => f.endsWith('.app'));
       if (!appBundle) continue;
-      const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', 'AionUi');
+      const exe = path.join(macDir, appBundle, 'Contents', 'MacOS', 'TjuaeUI');
       if (fs.existsSync(exe)) return { executablePath: exe, cwd: macDir };
     }
   } else {
     for (const dir of ['linux-unpacked', 'linux-x64-unpacked', 'linux-arm64-unpacked']) {
       const dirPath = path.join(outDir, dir);
       if (!fs.existsSync(dirPath)) continue;
-      for (const name of ['aionui', 'AionUi']) {
+      for (const name of ['tjuaeui', 'TjuaeUI']) {
         const exe = path.join(dirPath, name);
         if (fs.existsSync(exe)) return { executablePath: exe, cwd: dirPath };
       }
@@ -65,25 +65,25 @@ async function main() {
 
   const packaged = resolvePackagedApp(projectRoot);
   if (!packaged) {
-    console.error('[packaged-launch] No unpacked app found under out/. Run `just build-package` first.');
+    console.error('[打包启动] out/ 下没有可直接运行的应用，请先执行 `just build-package`。');
     process.exit(1);
   }
 
   if (shouldClean) {
-    await killProcessByName('AionUi.exe');
-    await killProcessByName('AionUi');
+    await killProcessByName('TjuaeUI.exe');
+    await killProcessByName('TjuaeUI');
     await killProcessByName('electron.exe');
     await killProcessByName('electron');
   }
 
   const env = {
     ...process.env,
-    AIONUI_EXTENSIONS_PATH: path.join(projectRoot, 'examples'),
+    TJUAE_EXTENSIONS_PATH: path.join(projectRoot, 'examples'),
   };
 
-  console.log(`[packaged-launch] executable: ${packaged.executablePath}`);
-  console.log(`[packaged-launch] cwd: ${packaged.cwd}`);
-  console.log(`[packaged-launch] AIONUI_EXTENSIONS_PATH: ${env.AIONUI_EXTENSIONS_PATH}`);
+  console.log(`[打包启动] 可执行文件：${packaged.executablePath}`);
+  console.log(`[打包启动] 工作目录：${packaged.cwd}`);
+  console.log(`[打包启动] TJUAE_EXTENSIONS_PATH：${env.TJUAE_EXTENSIONS_PATH}`);
 
   if (dryRun) return;
 
@@ -104,6 +104,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('[packaged-launch] Failed:', error);
+  console.error('[打包启动] 启动失败：', error);
   process.exit(1);
 });

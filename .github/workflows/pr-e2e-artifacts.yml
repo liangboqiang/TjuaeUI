@@ -1,4 +1,4 @@
-name: '✓PR E2E Artifacts'
+name: '✓ PR E2E 产物'
 
 on:
   workflow_dispatch:
@@ -15,47 +15,47 @@ env:
 
 jobs:
   e2e-artifacts:
-    name: E2E Artifacts (Linux)
+    name: E2E 产物（Linux）
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Setup bun
+      - name: 配置 bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Setup just
+      - name: 配置 just
         uses: extractions/setup-just@v2
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: bun install --frozen-lockfile
 
-      - name: Run postinstall
-        run: npm run postinstall || true
+      - name: 运行 postinstall
+        run: bun run postinstall
 
-      - name: Install Linux display dependencies (E2E)
+      - name: 安装 Linux 显示依赖（E2E）
         run: |
           sudo apt-get update
           sudo apt-get install -y libgbm-dev xvfb
 
-      - name: Run E2E tests (with screenshots)
+      - name: 运行 E2E 测试（含截图）
         run: xvfb-run --auto-servernum just e2e-test
         env:
           CI: true
           E2E_DEV: '1'
           E2E_SCREENSHOTS: '1'
-          AIONUI_EXTENSIONS_PATH: ${{ github.workspace }}/examples
+          TJUAE_EXTENSIONS_PATH: ${{ github.workspace }}/examples
 
-      - name: Upload E2E report (self-contained with screenshots & traces)
+      - name: 上传 E2E 报告（包含截图与跟踪）
         if: always()
         uses: actions/upload-artifact@v6
         with:

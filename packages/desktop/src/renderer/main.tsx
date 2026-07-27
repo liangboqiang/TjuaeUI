@@ -1,36 +1,8 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
-
-// Sentry must be initialized first
-// Use electron-specific renderer package only inside Electron; fall back to the
-// browser SDK when running as a web server (no window.electronAPI).
-if ((window as { electronAPI?: unknown }).electronAPI) {
-  // Dynamic import avoids bundling sentry-ipc:// protocol code into the web build
-  import('@sentry/electron/renderer')
-    .then((Sentry) =>
-      Sentry.init({
-        beforeSend(event) {
-          if (!(window as { __backendStartupFailed?: boolean }).__backendStartupFailed) {
-            return event;
-          }
-          const haystacks: string[] = [];
-          if (event.message) haystacks.push(event.message);
-          const exceptions = event.exception?.values ?? [];
-          for (const ex of exceptions) {
-            if (ex.value) haystacks.push(ex.value);
-          }
-          if (haystacks.some((h) => /Failed to fetch|window\.__backendPort|__backendPort unset/.test(h))) {
-            return null;
-          }
-          return event;
-        },
-      })
-    )
-    .catch(() => {});
-}
 
 // Runtime patches must be imported early
 import './utils/ui/runtimePatches';
@@ -46,7 +18,6 @@ import type { TFunction } from 'i18next';
 
 // Context providers
 import { AuthProvider } from './hooks/context/AuthContext';
-import { FeedbackProvider } from './hooks/context/FeedbackContext';
 import { ThemeProvider } from './hooks/context/ThemeContext';
 import { PreviewProvider } from './pages/conversation/Preview/context/PreviewContext';
 
@@ -96,7 +67,6 @@ import type { IRuntimeStatusEvent, RuntimeFailureKind } from '@/common/adapter/i
 import {
   InstallationIntegrityContent,
   InstallationIntegrityModalHost,
-  type InstallationIntegrityDiagnostics,
   getBackendStartupInstallationDescription,
   getDownloadLatestModalActionProps,
   getRuntimeComponentInstallationDescription,
@@ -141,43 +111,6 @@ function isInstallationIntegrityFailure(kind: RuntimeFailureKind | undefined): b
   return INSTALLATION_INTEGRITY_FAILURES.has(kind ?? 'unknown');
 }
 
-function captureRuntimeInstallationIntegrityFailure(event: IRuntimeStatusEvent): void {
-  if (!isInstallationIntegrityFailure(event.failure_kind)) {
-    return;
-  }
-
-  void import('@sentry/electron/renderer')
-    .then((Sentry) => {
-      Sentry.withScope((scope) => {
-        scope.setTag('aionui.installation_integrity', event.failure_kind ?? 'unknown');
-        scope.setTag('aionui.runtime_resource', event.resource);
-        scope.setTag('aionui.runtime_resource_id', event.resource_id ?? '');
-        scope.setTag('aionui.runtime_scope', event.scope.kind);
-        Sentry.captureMessage('runtime-installation-integrity-failure', 'error');
-      });
-    })
-    .catch(() => {});
-}
-
-function buildRuntimeInstallationDiagnostics(
-  event: IRuntimeStatusEvent,
-  description: string
-): InstallationIntegrityDiagnostics {
-  return {
-    source: 'runtime_status',
-    description,
-    runtime: {
-      failureKind: event.failure_kind,
-      message: event.message,
-      phase: event.phase,
-      resource: event.resource,
-      resourceId: event.resource_id,
-      scopeId: event.scope.id,
-      scopeKind: event.scope.kind,
-    },
-  };
-}
-
 function resolveRuntimeResourceLabel(event: IRuntimeStatusEvent, t: TFunction): string {
   if (event.resource === 'node') {
     return t('settings.runtimeResource.node');
@@ -220,8 +153,7 @@ const RuntimeFailureDialogs: React.FC = () => {
         ? getRuntimeComponentInstallationDescription(t, resource)
         : t('settings.runtimeStatus.failedUnknown', { resource });
       if (installationIntegrityFailure) {
-        captureRuntimeInstallationIntegrityFailure(event);
-        showInstallationIntegrityModal(modal, t, description, buildRuntimeInstallationDiagnostics(event, description));
+        showInstallationIntegrityModal(modal, t, description);
         return;
       }
 
@@ -248,11 +180,7 @@ const AppProviders: React.FC<PropsWithChildren> = ({ children }) =>
       React.createElement(
         PreviewProvider,
         null,
-        React.createElement(
-          FeedbackProvider,
-          null,
-          React.createElement(React.Fragment, null, React.createElement(RuntimeFailureDialogs, null), children)
-        )
+        React.createElement(React.Fragment, null, React.createElement(RuntimeFailureDialogs, null), children)
       )
     )
   );
@@ -347,11 +275,6 @@ const BackendStartupFailureDialog: React.FC<{ failure: BackendStartupFailureInfo
                       ? 'data_migration'
                       : 'incomplete_installation'
           }
-          diagnostics={{
-            source: 'backend_startup_failure',
-            description,
-            backendStartupFailure: failure as unknown as Record<string, unknown>,
-          }}
         />
       </div>
     );

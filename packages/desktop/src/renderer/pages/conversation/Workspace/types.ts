@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -24,7 +24,7 @@ export interface WorkspaceProps {
    * Renamed here to camelCase per the frontend prop convention.
    */
   isTemporaryWorkspace?: boolean;
-  eventPrefix?: 'acp' | 'codex' | 'aionrs';
+  eventPrefix?: 'acp' | 'codex' | 'tjuaecli';
   messageApi?: MessageApi;
 }
 

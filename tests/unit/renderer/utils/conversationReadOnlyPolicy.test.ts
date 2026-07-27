@@ -5,7 +5,7 @@ import { isLegacyReadOnlyConversationType } from '@/renderer/pages/conversation/
 describe('conversation read-only policy', () => {
   it('marks deprecated runtime conversations as read-only', () => {
     expect(isLegacyReadOnlyConversationType('acp')).toBe(false);
-    expect(isLegacyReadOnlyConversationType('aionrs')).toBe(false);
+    expect(isLegacyReadOnlyConversationType('tjuaecli')).toBe(false);
 
     expect(isLegacyReadOnlyConversationType('codex')).toBe(true);
     expect(isLegacyReadOnlyConversationType('openclaw-gateway')).toBe(true);

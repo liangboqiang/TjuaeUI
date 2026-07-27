@@ -4,7 +4,6 @@ import { Check, CloseSmall, Info, LoadingOne, Refresh, Write, DeleteFour, Settin
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { McpOAuthStatus } from '@/renderer/hooks/mcp/useMcpOAuth';
-import FeedbackButton from '@/renderer/components/base/FeedbackButton';
 import { iconColors } from '@/renderer/styles/colors';
 
 interface McpServerHeaderProps {
@@ -176,7 +175,6 @@ const McpServerHeader: React.FC<McpServerHeaderProps> = ({
             <span className='flex items-center cursor-default'>{statusIcon}</span>
           </Tooltip>
         )}
-        {isError && <FeedbackButton module='mcp-tools' />}
         {!isReadOnly && needsLogin && onOAuthLogin && (
           <Button
             size='mini'

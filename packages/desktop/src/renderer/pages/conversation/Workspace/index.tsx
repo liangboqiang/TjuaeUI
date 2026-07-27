@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -149,7 +149,7 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
 
   // Authoritative source: `conversation.extra.is_temporary_workspace` is
   // derived by the backend on every response (see
-  // aionui-conversation::convert::row_to_response). We never inspect the
+  // tjuaeui-conversation::convert::row_to_response). We never inspect the
   // directory path shape — the backend's temp-workspace layout is not a
   // public contract. Default to false when the prop is unavailable (e.g.
   // tests that render the panel outside a conversation).

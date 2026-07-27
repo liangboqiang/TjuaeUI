@@ -1,6 +1,6 @@
 /**
  * HTTP/WS bridge factory — drop-in replacement for bridge.buildProvider / bridge.buildEmitter
- * that routes calls to aioncore via REST API and WebSocket.
+ * that routes calls to tjuaecore via REST API and WebSocket.
  *
  * Exported helpers produce objects with the same shape as the local IPC bridge,
  * so existing renderer code works without changes.
@@ -145,7 +145,7 @@ export function isBackendHttpError(error: unknown): error is BackendHttpError {
  *
  * `silentStatuses` lets known-soft failures (e.g. a runtime-scoped lookup
  * returning 404 before the agent has attached) skip the noisy `console.error`
- * and the Sentry breadcrumb that comes with it. The error is still thrown so
+ * and duplicate diagnostic noise. The error is still thrown so
  * the caller's existing try/catch keeps working.
  */
 export type HttpRequestOptions = {

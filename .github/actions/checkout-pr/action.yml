@@ -1,17 +1,17 @@
-name: '🔍 Resolve PR Context'
-description: 'Resolve the correct ref and base branch for pull_request and workflow_dispatch triggers. Must be called after actions/checkout.'
+name: '🔍 解析 PR 上下文'
+description: '为 pull_request 和 workflow_dispatch 触发方式解析正确的 ref 与基础分支；必须在 actions/checkout 之后调用。'
 inputs:
   pr_number:
-    description: 'PR number (only used when triggered via workflow_dispatch)'
+    description: 'PR 编号（仅用于 workflow_dispatch 手动触发）'
     required: false
     default: ''
   github_token:
-    description: 'GitHub token for gh API calls'
+    description: '调用 gh API 所需的 GitHub Token'
     required: true
 runs:
   using: 'composite'
   steps:
-    - name: Resolve PR context
+    - name: 解析 PR 上下文
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.github_token }}

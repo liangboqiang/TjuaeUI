@@ -4,8 +4,8 @@ import os from 'os';
 import path from 'path';
 import { getChannelPluginStatus, goToSettings, invokeBridge, settingsSiderItemById } from '../helpers';
 
-const emptyExtensionsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aionui-e2e-no-extensions-'));
-const stateSandboxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aionui-e2e-no-extensions-state-'));
+const emptyExtensionsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tjuaeui-e2e-no-extensions-'));
+const stateSandboxDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tjuaeui-e2e-no-extensions-state-'));
 const extensionStatesFile = path.join(stateSandboxDir, 'extension-states.json');
 
 function isDevToolsWindow(page: Page): boolean {
@@ -43,12 +43,12 @@ async function launchAppWithoutExtensions(): Promise<ElectronApplication> {
     cwd: projectRoot,
     env: {
       ...process.env,
-      AIONUI_EXTENSIONS_PATH: emptyExtensionsDir,
-      AIONUI_EXTENSION_STATES_FILE: extensionStatesFile,
-      AIONUI_DISABLE_AUTO_UPDATE: '1',
-      AIONUI_DISABLE_DEVTOOLS: '1',
-      AIONUI_E2E_TEST: '1',
-      AIONUI_CDP_PORT: '0',
+      TJUAE_EXTENSIONS_PATH: emptyExtensionsDir,
+      TJUAE_EXTENSION_STATES_FILE: extensionStatesFile,
+      TJUAEUI_DISABLE_AUTO_UPDATE: '1',
+      TJUAEUI_DISABLE_DEVTOOLS: '1',
+      TJUAEUI_E2E_TEST: '1',
+      TJUAEUI_CDP_PORT: '0',
       NODE_ENV: 'development',
     },
     timeout: 60_000,

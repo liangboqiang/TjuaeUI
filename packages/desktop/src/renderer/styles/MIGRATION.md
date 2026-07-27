@@ -1,4 +1,4 @@
-# Theme Color Migration Guide
+# 主题颜色迁移指南
 
 ## 🎨 使用方式
 
@@ -25,14 +25,17 @@
 <div className="hover:bg-brand-hover"> // 品牌色悬停
 ```
 
-### 2. 内联样式（CSS 变量）
+### 2. 普通 CSS（CSS 变量）
 
-```tsx
-<div style={{ backgroundColor: 'var(--bg-base)' }}>
-<div style={{ color: 'var(--text-primary)' }}>
-<div style={{ borderColor: 'var(--border-base)' }}>
-<div style={{ backgroundColor: 'var(--brand)' }}>
+```css
+.example {
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  border-color: var(--border-base);
+}
 ```
+
+仅当样式值必须在运行时动态计算时，才在 JSX 中使用 `style`。
 
 ## 📋 常见颜色映射表
 
@@ -58,7 +61,7 @@
 
 ## 💡 迁移示例
 
-### Before (硬编码):
+### 迁移前（硬编码）
 
 ```tsx
 <div className='bg-#EFF0F6 hover:bg-#E5E7F0'>
@@ -67,7 +70,7 @@
 </div>
 ```
 
-### After (主题变量):
+### 迁移后（主题变量）
 
 ```tsx
 <div className='bg-aou-1 hover:bg-aou-2'>
@@ -76,7 +79,7 @@
 </div>
 ```
 
-### 常见模式:
+### 常见模式
 
 ```tsx
 // ❌ 不推荐
@@ -93,4 +96,4 @@
 - **边框**: `border-b-base`, `border-b-light`
 - **品牌**: `bg-brand`, `bg-brand-light`, `bg-brand-hover`
 - **状态**: `bg-primary`, `bg-success`, `bg-warning`, `bg-danger`
-- **AOU色板**: `bg-aou-1` ~ `bg-aou-10`
+- **AOU 色板**：`bg-aou-1` ～ `bg-aou-10`

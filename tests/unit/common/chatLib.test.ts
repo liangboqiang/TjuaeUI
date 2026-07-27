@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -193,7 +193,7 @@ describe('normalizeAgentStreamError', () => {
     expect(
       normalizeAgentStreamError({
         message: 'Something went wrong, please try again.',
-        code: 'AIONUI_INTERNAL_ERROR',
+        code: 'TJUAEUI_INTERNAL_ERROR',
         rawError: {
           name: 'Error',
           message: 'connect ECONNREFUSED',
@@ -204,7 +204,7 @@ describe('normalizeAgentStreamError', () => {
       })
     ).toEqual({
       message: 'Something went wrong, please try again.',
-      code: 'AIONUI_INTERNAL_ERROR',
+      code: 'TJUAEUI_INTERNAL_ERROR',
       rawError: {
         name: 'Error',
         message: 'connect ECONNREFUSED',
@@ -219,7 +219,7 @@ describe('normalizeAgentStreamError', () => {
     expect(
       normalizeAgentStreamError({
         message: 'Something went wrong, please try again.',
-        code: 'AIONUI_INTERNAL_ERROR',
+        code: 'TJUAEUI_INTERNAL_ERROR',
         rawError: {
           name: 'Error',
           message: 42,
@@ -229,7 +229,7 @@ describe('normalizeAgentStreamError', () => {
       })
     ).toEqual({
       message: 'Something went wrong, please try again.',
-      code: 'AIONUI_INTERNAL_ERROR',
+      code: 'TJUAEUI_INTERNAL_ERROR',
       rawError: {
         name: 'Error',
       },
@@ -240,12 +240,12 @@ describe('normalizeAgentStreamError', () => {
     expect(
       normalizeAgentStreamError({
         message: 'Something went wrong, please try again.',
-        code: 'AIONUI_INTERNAL_ERROR',
+        code: 'TJUAEUI_INTERNAL_ERROR',
         rawError: { unrelated: true },
       })
     ).toEqual({
       message: 'Something went wrong, please try again.',
-      code: 'AIONUI_INTERNAL_ERROR',
+      code: 'TJUAEUI_INTERNAL_ERROR',
     });
   });
 });
@@ -450,14 +450,14 @@ describe('transformMessage', () => {
     const message: IResponseMessage = {
       type: 'tips',
       data: {
-        content: 'AionUI failed while sending the message',
+        content: 'TjuaeUI failed while sending the message',
         type: 'error',
         source: 'send_failed',
         code: 'INTERNAL_ERROR',
         error: {
-          message: 'AionUI failed while sending the message',
-          code: 'AIONUI_INTERNAL_ERROR',
-          ownership: 'aionui',
+          message: 'TjuaeUI failed while sending the message',
+          code: 'TJUAEUI_INTERNAL_ERROR',
+          ownership: 'tjuaeui',
           detail: 'Failed to write Codex sandbox config',
           retryable: true,
           feedback_recommended: true,
@@ -475,9 +475,9 @@ describe('transformMessage', () => {
 
     expect(transformed.type).toBe('tips');
     expect(transformed.content.error).toEqual({
-      message: 'AionUI failed while sending the message',
-      code: 'AIONUI_INTERNAL_ERROR',
-      ownership: 'aionui',
+      message: 'TjuaeUI failed while sending the message',
+      code: 'TJUAEUI_INTERNAL_ERROR',
+      ownership: 'tjuaeui',
       detail: 'Failed to write Codex sandbox config',
       retryable: true,
       feedback_recommended: true,

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -21,7 +21,6 @@ import GuidActionRow from './components/GuidActionRow';
 import GuidInputCard from './components/GuidInputCard';
 import GuidModelSelector from './components/GuidModelSelector';
 import QuickActionButtons from './components/QuickActionButtons';
-import FeedbackReportModal from '@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal';
 import { useGuidAssistantSelection } from './hooks/useGuidAssistantSelection';
 import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
@@ -60,7 +59,6 @@ const GuidPage: React.FC = () => {
   const { activeBorderColor, inactiveBorderColor, activeShadow } = useInputFocusRing();
 
   const localeKey = resolveLocaleKey(i18n.language);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // Open external link
   const openLink = useCallback(async (url: string) => {
@@ -129,9 +127,9 @@ const GuidPage: React.FC = () => {
   }, []);
 
   // --- Hooks ---
-  // Only aionrs uses this provider-based model picker now (Gemini runs as a
+  // Only tjuaecli uses this provider-based model picker now (Gemini runs as a
   // regular ACP backend with its own model selector).
-  const modelSelection = useGuidModelSelection('aionrs');
+  const modelSelection = useGuidModelSelection('tjuaecli');
 
   const navState = location.state as GuidNavigationState | null;
   const resetAssistantRequested = navState?.resetAssistant === true;
@@ -379,7 +377,7 @@ const GuidPage: React.FC = () => {
       },
       availableModels: {
         acp: agentSelection.currentAcpCachedModelInfo?.available_models.map((model) => model.id) ?? [],
-        aionrs: modelSelection.modelList.map((provider) => ({
+        tjuaecli: modelSelection.modelList.map((provider) => ({
           id: provider.id,
           models: provider.models,
         })),
@@ -398,7 +396,7 @@ const GuidPage: React.FC = () => {
       const shouldApplyDefaultModel = manualModelSelectionAssistantRef.current !== selectedAssistantId;
       const shouldApplyDefaultThoughtLevel = manualThoughtLevelSelectionAssistantRef.current !== selectedAssistantId;
 
-      if (shouldApplyDefaultModel && effectiveBackend === 'aionrs') {
+      if (shouldApplyDefaultModel && effectiveBackend === 'tjuaecli') {
         if (resolvedDefaults.modelId) {
           const matchedProvider = modelSelection.modelList.find((provider) =>
             provider.models.includes(resolvedDefaults.modelId!)
@@ -579,8 +577,8 @@ const GuidPage: React.FC = () => {
   }, [resetAssistantRequested, preselectAssistantId, location.pathname, location.search, location.hash, navigate]);
 
   // Agents that use configured model providers instead of ACP probe-based models.
-  // Only aionrs now — Gemini runs as a regular ACP backend with ACP-cached models.
-  const PROVIDER_BASED_AGENTS = new Set(['aionrs']);
+  // Only tjuaecli now — Gemini runs as a regular ACP backend with ACP-cached models.
+  const PROVIDER_BASED_AGENTS = new Set(['tjuaecli']);
   const isGeminiMode = PROVIDER_BASED_AGENTS.has(agentSelection.selectedAssistantBackend);
 
   // Build the mention dropdown node
@@ -733,11 +731,9 @@ const GuidPage: React.FC = () => {
 
         <QuickActionButtons
           onOpenLink={openLink}
-          onOpenBugReport={() => setShowFeedbackModal(true)}
           inactiveBorderColor={inactiveBorderColor}
           activeShadow={activeShadow}
         />
-        <FeedbackReportModal visible={showFeedbackModal} onCancel={() => setShowFeedbackModal(false)} />
       </div>
     </ConfigProvider>
   );

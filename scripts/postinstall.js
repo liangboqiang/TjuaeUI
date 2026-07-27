@@ -1,29 +1,27 @@
 /**
- * Postinstall script for AionUi
- * Handles native module installation for different environments
+ * TjuaeUI 安装后处理脚本。
+ * 按运行环境安装或准备原生模块。
  */
 
 const { execSync } = require('child_process');
 
-// Note: web-tree-sitter is now a direct dependency in package.json
-// No need for symlinks or copying - npm will install it directly to node_modules
+// web-tree-sitter 已是 package.json 的直接依赖，无需再创建符号链接或复制文件。
 
 function runPostInstall() {
   try {
-    // Check if we're in a CI environment
+    // 判断当前是否为持续集成环境。
     const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
     const electronVersion = require('../package.json').devDependencies.electron.replace(/^[~^]/, '');
 
-    console.log(`Environment: CI=${isCI}, Electron=${electronVersion}`);
+    console.log(`运行环境：CI=${isCI}，Electron=${electronVersion}`);
 
     if (isCI) {
-      // In CI, skip rebuilding to use prebuilt binaries for better compatibility
-      // 在 CI 中跳过重建，使用预编译的二进制文件以获得更好的兼容性
-      console.log('CI environment detected, skipping rebuild to use prebuilt binaries');
-      console.log('Native modules will be handled by electron-forge during packaging');
+      // CI 使用预编译二进制；打包阶段会负责处理原生模块。
+      console.log('检测到 CI 环境，跳过本地重建并使用预编译二进制');
+      console.log('原生模块将在打包阶段统一处理');
     } else {
-      // In local environment, use electron-builder to install dependencies
-      console.log('Local environment, installing app deps');
+      // 本地开发环境使用 electron-builder 安装应用依赖。
+      console.log('检测到本地环境，正在安装应用依赖');
       execSync('bunx electron-builder install-app-deps', {
         stdio: 'inherit',
         env: {
@@ -33,12 +31,12 @@ function runPostInstall() {
       });
     }
   } catch (e) {
-    console.error('Postinstall failed:', e.message);
-    // Don't exit with error code to avoid breaking installation
+    console.error('安装后处理失败：', e.message);
+    throw e;
   }
 }
 
-// Only run if this script is executed directly
+// 仅在直接执行本文件时运行。
 if (require.main === module) {
   runPostInstall();
 }

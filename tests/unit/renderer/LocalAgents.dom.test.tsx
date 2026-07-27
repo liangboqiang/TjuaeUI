@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
  * Render test for the LocalAgents settings surface. Its purpose is to lock in
@@ -88,7 +88,7 @@ vi.mock('@renderer/utils/platform', async () => {
 });
 
 // Keep the test focused on LocalAgents' own logic — stub heavy children.
-vi.mock('@/renderer/components/base/AionModal', () => ({ default: () => null }));
+vi.mock('@/renderer/components/base/TjuaeModal', () => ({ default: () => null }));
 vi.mock('@renderer/pages/settings/AgentSettings/InlineAgentEditor', () => ({ default: () => null }));
 vi.mock('@renderer/pages/settings/AgentSettings/AgentHubModal', () => ({ AgentHubModal: () => null }));
 
@@ -102,11 +102,11 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
 
 const makeAgents = () => [
   {
-    id: 'aionrs',
-    name: 'Aion CLI',
-    agent_type: 'aionrs',
+    id: 'tjuaecli',
+    name: 'Tjuae CLI',
+    agent_type: 'tjuaecli',
     agent_source: 'internal',
-    backend: 'aionrs',
+    backend: 'tjuaecli',
     enabled: true,
     available: true,
     installed: true,
@@ -161,7 +161,7 @@ describe('LocalAgents', () => {
     fireEvent.click(screen.getAllByText('settings.agentManagement.testConnection')[0]);
 
     await waitFor(() => {
-      expect(ipcBridge.acpConversation.checkManagedAgentHealthById.invoke).toHaveBeenCalledWith({ id: 'aionrs' });
+      expect(ipcBridge.acpConversation.checkManagedAgentHealthById.invoke).toHaveBeenCalledWith({ id: 'tjuaecli' });
     });
     await waitFor(() => {
       expect(refreshCatalog).toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe('LocalAgents', () => {
 
     // Proves L30 (useManagedAgents) ran and fed the derived lists.
     expect(useManagedAgents).toHaveBeenCalled();
-    expect(screen.getByText('Aion CLI')).toBeTruthy();
+    expect(screen.getByText('Tjuae CLI')).toBeTruthy();
     expect(screen.getByText('Claude Code')).toBeTruthy();
     expect(screen.getByText('My Agent')).toBeTruthy();
   });
@@ -244,7 +244,7 @@ describe('LocalAgents', () => {
     render(<LocalAgents />);
 
     expect(screen.getByText('settings.agentManagement.refreshingStatuses')).toBeInTheDocument();
-    expect(screen.getByText('Aion CLI')).toBeInTheDocument();
+    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
   });
 
   it('renders official agents as diagnostics cards and filters out deprecated types', () => {
@@ -257,7 +257,7 @@ describe('LocalAgents', () => {
     render(<LocalAgents />);
 
     // Agent names render
-    expect(screen.getByText('Aion CLI')).toBeInTheDocument();
+    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
     expect(screen.getByText('Claude Code')).toBeInTheDocument();
     // Deprecated openclaw-gateway agent is filtered out
     expect(screen.queryByText('OpenClaw Gateway')).toBeNull();
@@ -290,11 +290,13 @@ describe('LocalAgents', () => {
 
     fireEvent.click(screen.getByText('settings.agentManagement.localAgentsSetupLink'));
 
-    expect(openExternalUrl).toHaveBeenCalledWith('https://github.com/iOfficeAI/AionUi/wiki/ACP-Setup');
+    expect(openExternalUrl).toHaveBeenCalledWith(
+      'https://github.com/liangboqiang/TjuaeUI/tree/main/docs/prds/conversations/acp'
+    );
   });
 
   it('binds assistants to managed agents by agent_id instead of runtime backend', () => {
-    const [aionrsAgent, claudeAgent] = makeAgents();
+    const [tjuaecliAgent, claudeAgent] = makeAgents();
     const assistants: Assistant[] = [
       {
         id: 'assistant-on-claude-runtime',
@@ -343,10 +345,10 @@ describe('LocalAgents', () => {
     expect(getBoundAssistants(claudeAgent, assistants).map((assistant) => assistant.id)).toEqual([
       'assistant-on-claude-agent',
     ]);
-    expect(getBoundAssistants(aionrsAgent, assistants)).toEqual([]);
+    expect(getBoundAssistants(tjuaecliAgent, assistants)).toEqual([]);
   });
 
-  it('pins Kimi right after the aionrs agent in the official list', () => {
+  it('keeps the internal agent first and sorts other built-in agents by name', () => {
     useManagedAgents.mockReturnValue({
       agents: [
         ...makeAgents(),
@@ -368,13 +370,13 @@ describe('LocalAgents', () => {
 
     render(<LocalAgents />);
 
-    // Alphabetically Claude Code < Kimi, so this order proves the pin rule:
-    // aionrs stays first, Kimi jumps ahead of the localeCompare ordering.
-    const aion = screen.getByText('Aion CLI');
+    // The internal CLI stays first; no third-party provider receives a
+    // promotional position ahead of the ordinary name ordering.
+    const tjuae = screen.getByText('Tjuae CLI');
     const kimi = screen.getByText('Kimi');
     const claude = screen.getByText('Claude Code');
-    expect(kimi.compareDocumentPosition(aion) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    expect(claude.compareDocumentPosition(kimi) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(claude.compareDocumentPosition(tjuae) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(kimi.compareDocumentPosition(claude) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
   it('renders agent management as a single diagnostics page without local/remote tabs', () => {
@@ -392,7 +394,7 @@ describe('LocalAgents', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Aion CLI')).toBeInTheDocument();
+    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
     expect(screen.queryByText('settings.agentManagement.localAgents')).toBeNull();
   });
 
@@ -436,18 +438,18 @@ describe('LocalAgents', () => {
     const unavailableTab = screen.getByTestId('settings-tab-unavailable');
     expect(allTab.tagName).toBe('BUTTON');
 
-    // Default "all": both official agents visible (Aion CLI online, Claude Code missing).
-    expect(screen.getByText('Aion CLI')).toBeInTheDocument();
+    // Default "all": both official agents visible (Tjuae CLI online, Claude Code missing).
+    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
     expect(screen.getByText('Claude Code')).toBeInTheDocument();
 
     // "available" keeps only the online agent.
     fireEvent.click(availableTab);
-    expect(screen.getByText('Aion CLI')).toBeInTheDocument();
+    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
     expect(screen.queryByText('Claude Code')).toBeNull();
 
     // "unavailable" keeps only the non-online agent.
     fireEvent.click(unavailableTab);
-    expect(screen.queryByText('Aion CLI')).toBeNull();
+    expect(screen.queryByText('Tjuae CLI')).toBeNull();
     expect(screen.getByText('Claude Code')).toBeInTheDocument();
   });
 });

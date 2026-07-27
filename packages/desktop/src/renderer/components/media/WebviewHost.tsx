@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -194,7 +194,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
           return;
         }
 
-        if (event.message.includes('__AIONUI_WEBVIEW_ZOOM__')) {
+        if (event.message.includes('__TJUAEUI_WEBVIEW_ZOOM__')) {
           const match = event.message.match(/"deltaY":(-?\d+(\.\d+)?)/);
           if (match && match[1]) {
             const deltaY = Number(match[1]);
@@ -207,7 +207,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
           return;
         }
 
-        if (event.message.includes('__AIONUI_WEBVIEW_ZOOM_RESET__')) {
+        if (event.message.includes('__TJUAEUI_WEBVIEW_ZOOM_RESET__')) {
           setZoomFactor(1);
         }
       } catch {
@@ -264,18 +264,18 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
           .executeJavaScript(
             `
           (function() {
-            if (window.__aionuiZoomInjected) return true;
-            window.__aionuiZoomInjected = true;
+            if (window.__tjuaeuiZoomInjected) return true;
+            window.__tjuaeuiZoomInjected = true;
             window.addEventListener('wheel', function(e) {
               if (!(e.ctrlKey || e.metaKey)) return;
               e.preventDefault();
-              console.log('__AIONUI_WEBVIEW_ZOOM__', JSON.stringify({ deltaY: e.deltaY }));
+              console.log('__TJUAEUI_WEBVIEW_ZOOM__', JSON.stringify({ deltaY: e.deltaY }));
             }, { passive: false, capture: true });
             window.addEventListener('keydown', function(e) {
               if (!(e.ctrlKey || e.metaKey)) return;
               if (e.key === '0') {
                 e.preventDefault();
-                console.log('__AIONUI_WEBVIEW_ZOOM_RESET__');
+                console.log('__TJUAEUI_WEBVIEW_ZOOM_RESET__');
               }
             }, { capture: true });
             return true;
@@ -486,7 +486,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       {showNavBar && (
         <style>
           {`
-            .aion-url-viewer-toolbar {
+            .tjuae-url-viewer-toolbar {
               --viewer-border: var(--color-border-2);
               --viewer-border-hover: var(--color-border-3);
               --viewer-bg: var(--color-bg-3);
@@ -494,7 +494,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
               --viewer-text: var(--color-text-2);
               --viewer-text-muted: var(--color-text-3);
             }
-            .aion-url-viewer-toolbar .toolbar-btn {
+            .tjuae-url-viewer-toolbar .toolbar-btn {
               -webkit-appearance: none;
               appearance: none;
               display: inline-flex;
@@ -512,30 +512,30 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
               transition: all 150ms ease;
               cursor: pointer;
             }
-            .aion-url-viewer-toolbar .toolbar-btn.icon-btn {
+            .tjuae-url-viewer-toolbar .toolbar-btn.icon-btn {
               width: 30px;
               min-width: 30px;
               padding: 0;
             }
-            .aion-url-viewer-toolbar .toolbar-btn:hover:not(:disabled) {
+            .tjuae-url-viewer-toolbar .toolbar-btn:hover:not(:disabled) {
               background: var(--viewer-bg-hover);
               border-color: var(--viewer-border-hover);
             }
-            .aion-url-viewer-toolbar .toolbar-btn:active:not(:disabled) {
+            .tjuae-url-viewer-toolbar .toolbar-btn:active:not(:disabled) {
               transform: translateY(0.5px);
             }
-            .aion-url-viewer-toolbar .toolbar-btn:focus-visible {
+            .tjuae-url-viewer-toolbar .toolbar-btn:focus-visible {
               outline: none;
               border-color: rgb(var(--primary-6));
               box-shadow: 0 0 0 2px rgba(var(--primary-6), 0.12);
             }
-            .aion-url-viewer-toolbar .toolbar-btn:disabled {
+            .tjuae-url-viewer-toolbar .toolbar-btn:disabled {
               opacity: 0.55;
               cursor: not-allowed;
               color: var(--viewer-text-muted);
               background: var(--color-bg-2);
             }
-            .aion-url-viewer-toolbar .toolbar-chip {
+            .tjuae-url-viewer-toolbar .toolbar-chip {
               display: inline-flex;
               align-items: center;
               justify-content: center;
@@ -549,7 +549,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
               font-size: 11px;
               line-height: 1;
             }
-            .aion-url-viewer-toolbar .toolbar-input {
+            .tjuae-url-viewer-toolbar .toolbar-input {
               -webkit-appearance: none;
               appearance: none;
               width: 100%;
@@ -563,10 +563,10 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
               line-height: 30px;
               transition: all 150ms ease;
             }
-            .aion-url-viewer-toolbar .toolbar-input:hover {
+            .tjuae-url-viewer-toolbar .toolbar-input:hover {
               border-color: var(--viewer-border-hover);
             }
-            .aion-url-viewer-toolbar .toolbar-input:focus {
+            .tjuae-url-viewer-toolbar .toolbar-input:focus {
               outline: none;
               border-color: rgb(var(--primary-6));
               box-shadow: 0 0 0 2px rgba(var(--primary-6), 0.12);
@@ -576,7 +576,7 @@ const WebviewHost: React.FC<WebviewHostProps> = ({
       )}
       {/* Navigation bar (optional) */}
       {showNavBar && (
-        <div className='aion-url-viewer-toolbar flex items-center gap-6px h-40px px-10px bg-bg-2 border-b border-border-1 flex-shrink-0'>
+        <div className='tjuae-url-viewer-toolbar flex items-center gap-6px h-40px px-10px bg-bg-2 border-b border-border-1 flex-shrink-0'>
           <button onClick={handleGoBack} disabled={!canGoBack} className='toolbar-btn icon-btn' title='Back'>
             <Left theme='outline' size={16} />
           </button>

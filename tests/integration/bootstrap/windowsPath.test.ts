@@ -21,9 +21,9 @@ HKEY_CURRENT_USER\\Environment
 
     expect(
       parseWindowsRegistryPathOutput(output, {
-        USERPROFILE: 'C:\\Users\\zhoukai',
+        USERPROFILE: 'C:\\Users\\developer',
       })
-    ).toEqual(['D:\\AgentBin', 'C:\\Users\\zhoukai\\AppData\\Roaming\\npm']);
+    ).toEqual(['D:\\AgentBin', 'C:\\Users\\developer\\AppData\\Roaming\\npm']);
   });
 
   it('returns an empty list when reg.exe does not return a Path value', () => {
@@ -46,9 +46,9 @@ $env:PATH = "$env:USERPROFILE\\.local\\bin;$env:PATH"
 
     expect(
       parseWindowsProfilePathEntries(content, {
-        USERPROFILE: 'C:\\Users\\zhoukai',
+        USERPROFILE: 'C:\\Users\\developer',
       })
-    ).toEqual(['D:\\Portable\\opencode\\bin', 'C:\\Users\\zhoukai\\.local\\bin']);
+    ).toEqual(['D:\\Portable\\opencode\\bin', 'C:\\Users\\developer\\.local\\bin']);
   });
 
   it('extracts PATH additions from Git Bash profile snippets', () => {
@@ -58,16 +58,16 @@ export PATH="$HOME/.bun/bin:/d/AgentBin:$PATH"
 
     expect(
       parseWindowsProfilePathEntries(content, {
-        HOME: 'C:\\Users\\zhoukai',
+        HOME: 'C:\\Users\\developer',
       })
-    ).toEqual(['C:\\Users\\zhoukai\\.bun\\bin', 'D:\\AgentBin']);
+    ).toEqual(['C:\\Users\\developer\\.bun\\bin', 'D:\\AgentBin']);
   });
 });
 
 describe('buildWindowsHydratedPath', () => {
   it('merges missing user and machine registry paths into the current process PATH', () => {
     const hydrated = buildWindowsHydratedPath({
-      currentPath: 'C:\\Windows\\System32;C:\\Users\\zhoukai\\AppData\\Roaming\\npm',
+      currentPath: 'C:\\Windows\\System32;C:\\Users\\developer\\AppData\\Roaming\\npm',
       userRegistryOutput: `
 
 HKEY_CURRENT_USER\\Environment
@@ -81,12 +81,12 @@ HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environ
       profileContents: [],
       fallbackPathEntries: [],
       env: {
-        USERPROFILE: 'C:\\Users\\zhoukai',
+        USERPROFILE: 'C:\\Users\\developer',
       },
     });
 
     expect(hydrated).toBe(
-      'C:\\Program Files\\Git\\cmd;C:\\Windows\\System32;D:\\AgentBin;C:\\Users\\zhoukai\\AppData\\Roaming\\npm'
+      'C:\\Program Files\\Git\\cmd;C:\\Windows\\System32;D:\\AgentBin;C:\\Users\\developer\\AppData\\Roaming\\npm'
     );
   });
 
@@ -96,19 +96,19 @@ HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environ
       userRegistryOutput: '',
       machineRegistryOutput: '',
       profileContents: [`$env:Path += ';D:\\Portable\\opencode\\bin'`],
-      fallbackPathEntries: ['C:\\Users\\zhoukai\\AppData\\Roaming\\npm', 'D:\\Portable\\opencode\\bin'],
+      fallbackPathEntries: ['C:\\Users\\developer\\AppData\\Roaming\\npm', 'D:\\Portable\\opencode\\bin'],
       env: {
-        USERPROFILE: 'C:\\Users\\zhoukai',
+        USERPROFILE: 'C:\\Users\\developer',
       },
     });
 
     expect(hydrated).toBe(
-      'D:\\Portable\\opencode\\bin;C:\\Users\\zhoukai\\AppData\\Roaming\\npm;C:\\Windows\\System32'
+      'D:\\Portable\\opencode\\bin;C:\\Users\\developer\\AppData\\Roaming\\npm;C:\\Windows\\System32'
     );
   });
 
   windowsOnlyIt('hydrates PATH from real Windows profile files and existing fallback directories', () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'aionui-windows-path-'));
+    const root = mkdtempSync(path.join(tmpdir(), 'tjuaeui-windows-path-'));
     const userProfile = path.join(root, 'User');
     const appData = path.join(userProfile, 'AppData', 'Roaming');
     const localAppData = path.join(userProfile, 'AppData', 'Local');

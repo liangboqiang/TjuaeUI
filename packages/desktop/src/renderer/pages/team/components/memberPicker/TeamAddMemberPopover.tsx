@@ -12,7 +12,12 @@ import { resolveDefaultTeamAgentModel } from '../teamCreateModelResolver';
 import TeamAssistantPickerDropdown from './TeamAssistantPickerDropdown';
 
 const useAcpDraft = getSendBoxDraftHook('acp', { _type: 'acp', atPath: [], content: '', uploadFile: [] });
-const useAionrsDraft = getSendBoxDraftHook('aionrs', { _type: 'aionrs', atPath: [], content: '', uploadFile: [] });
+const useTjuaeCliDraft = getSendBoxDraftHook('tjuaecli', {
+  _type: 'tjuaecli',
+  atPath: [],
+  content: '',
+  uploadFile: [],
+});
 
 type Props = {
   children: React.ReactElement;
@@ -27,11 +32,11 @@ const TeamAddMemberPopover: React.FC<Props> = ({ children, disabled = false }) =
   const [pendingAssistantId, setPendingAssistantId] = useState<string | undefined>();
 
   // Leader 会话草稿：用于「告诉 Leader」预填提示词。Hook 必须无条件调用，
-  // 未知 Leader 会话时传空串（不写入）。按 Leader 后端选 acp/aionrs 草稿。
+  // 未知 Leader 会话时传空串（不写入）。按 Leader 后端选 acp/tjuaecli 草稿。
   const leader = teamMembers.find((m) => m.role === 'leader');
   const leaderConversationId = leader?.conversation_id ?? '';
   const acpDraft = useAcpDraft(leaderConversationId);
-  const aionrsDraft = useAionrsDraft(leaderConversationId);
+  const tjuaecliDraft = useTjuaeCliDraft(leaderConversationId);
 
   useEffect(() => {
     if (disabled) setVisible(false);
@@ -43,13 +48,13 @@ const TeamAddMemberPopover: React.FC<Props> = ({ children, disabled = false }) =
     const text = t('team.addMember.tellLeaderPrefill', {
       defaultValue: 'Help me add a member good at ___ to the team',
     });
-    if (leader.assistant_backend === 'aionrs') {
-      aionrsDraft.mutate((prev) => ({ ...prev, content: text }));
+    if (leader.assistant_backend === 'tjuaecli') {
+      tjuaecliDraft.mutate((prev) => ({ ...prev, content: text }));
     } else {
       acpDraft.mutate((prev) => ({ ...prev, content: text }));
     }
     setVisible(false);
-  }, [leader?.slot_id, leader?.assistant_backend, leaderConversationId, switchTab, t, acpDraft, aionrsDraft]);
+  }, [leader?.slot_id, leader?.assistant_backend, leaderConversationId, switchTab, t, acpDraft, tjuaecliDraft]);
 
   const handleSelect = async (assistant: TeamAssistantOption) => {
     if (disabled || !addAssistant || pendingAssistantId) return;

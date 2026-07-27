@@ -1,118 +1,118 @@
-# Main Process & Shared Layer
+# 主进程与共享层
 
-## `packages/desktop/src/process/` Structure
+## `packages/desktop/src/process/` 结构
 
-```
+```text
 packages/desktop/src/process/
-├── bridge/        # IPC handlers — one file per domain
-│   ├── index.ts   # Registers all bridges
-│   └── *Bridge.ts # Individual bridge files
-├── services/      # Business logic services
-│   ├── cron/      # Complex service → subdirectory
+├── bridge/        # IPC handler，每个业务域一个文件
+│   ├── index.ts   # 注册全部 bridge
+│   └── *Bridge.ts # 各业务域 bridge
+├── services/      # 业务逻辑 service
+│   ├── cron/      # 复杂 service 使用子目录
 │   └── mcp-services/
-├── database/      # SQLite layer — schema, migrations, repositories
-├── task/          # Agent/task management — managers, factories
-├── utils/         # Main-process-only utilities
-└── i18n/          # Main-process i18n
+├── database/      # SQLite 层：Schema、迁移、Repository
+├── task/          # 智能体/任务管理：Manager、Factory
+├── utils/         # 仅主进程使用的工具
+└── i18n/          # 主进程国际化
 ```
 
-## Naming Conventions
+## 命名规范
 
-| Type              | Pattern                         | Examples                          |
-| ----------------- | ------------------------------- | --------------------------------- |
-| Bridge            | `<domain>Bridge.ts` (camelCase) | `cronBridge.ts`, `webuiBridge.ts` |
-| Service           | `<Name>Service.ts` (PascalCase) | `CronService.ts`, `McpService.ts` |
-| Service interface | `I<Name>Service.ts`             | `IConversationService.ts`         |
-| Repository        | `<Name>Repository.ts`           | `SqliteConversationRepository.ts` |
-| Agent Manager     | `<Platform>AgentManager.ts`     | `AcpAgentManager.ts`              |
+| 类型          | 模式                             | 示例                              |
+| ------------- | -------------------------------- | --------------------------------- |
+| Bridge        | `<domain>Bridge.ts`（camelCase） | `cronBridge.ts`、`webuiBridge.ts` |
+| Service       | `<Name>Service.ts`（PascalCase） | `CronService.ts`、`McpService.ts` |
+| Service 接口  | `I<Name>Service.ts`              | `IConversationService.ts`         |
+| Repository    | `<Name>Repository.ts`            | `SqliteConversationRepository.ts` |
+| Agent Manager | `<Platform>AgentManager.ts`      | `AcpAgentManager.ts`              |
 
-All directories use lowercase (Node.js convention):
+全部目录使用 lowercase（Node.js 约定）：
 
-```
+```text
 packages/desktop/src/process/
 ├── bridge/           # lowercase
 ├── services/         # lowercase
 │   ├── cron/         # lowercase
-│   └── mcp-services/ # lowercase (kebab-case for multi-word)
+│   └── mcp-services/ # 多单词使用 kebab-case
 ├── database/         # lowercase
 └── task/             # lowercase
 ```
 
-## Adding a New IPC Bridge
+## 新增 IPC Bridge
 
-1. Create `packages/desktop/src/process/bridge/<domain>Bridge.ts`
-2. Register in `packages/desktop/src/process/bridge/index.ts`
-3. Expose channel in `packages/desktop/src/preload/`
-4. Add renderer-side types if needed
+1. 创建 `packages/desktop/src/process/bridge/<domain>Bridge.ts`
+2. 在 `packages/desktop/src/process/bridge/index.ts` 注册
+3. 在 `packages/desktop/src/preload/` 暴露 channel
+4. 按需补充渲染进程侧类型
 
-## Adding a New Service
+## 新增 Service
 
-- Simple → single file in `packages/desktop/src/process/services/`
-- Complex (multiple files) → subdirectory: `packages/desktop/src/process/services/<name>/`
+- 简单 Service：在 `packages/desktop/src/process/services/` 放置单文件
+- 复杂 Service（多个文件）：建立 `packages/desktop/src/process/services/<name>/` 子目录
 
-## Service Testability Rules
+## Service 可测试性规则
 
-### Pure Logic vs IO Separation
+### 分离纯逻辑与 IO
 
-- **Pure logic** (transformation, validation, formatting) → standalone functions, no `fs`/`db`/`net`
-- **IO operations** (file read, DB query, HTTP call) → thin wrappers in service class or repository
-- Service methods should receive IO results as parameters
+- **纯逻辑**（转换、校验、格式化）：独立函数，不得导入 `fs`、`db`、`net`
+- **IO 操作**（读文件、查数据库、HTTP 调用）：Service 类或 Repository 中的薄封装
+- Service 方法应尽量接收 IO 结果作为参数，而不是在内部直接读取
 
-### Dependency Injection
+### 依赖注入
 
 ```typescript
-// ❌ Hard to test
+// ❌ 难以测试
 import { db } from '@process/database';
 function getConversation(id: string) {
   return db.query('SELECT * FROM conversations WHERE id = ?', id);
 }
 
-// ✅ Easy to test
+// ✅ 易于测试
 function getConversation(repo: IConversationRepository, id: string) {
   return repo.findById(id);
 }
 ```
 
-For existing code using direct imports, `vi.mock()` is acceptable. For new code, prefer parameter injection.
+既有代码使用直接导入时可以采用 `vi.mock()`；新代码优先使用参数注入。
 
 ---
 
-## Shared Layer
+## 共享层
 
-### Preload (`packages/desktop/src/preload/`)
+### Preload（`packages/desktop/src/preload/`）
 
-IPC bridge between main and renderer. Uses `contextBridge` to expose safe APIs.
+主进程与渲染进程之间的 IPC 桥接，通过 `contextBridge` 暴露安全 API。
 
-- All main ↔ renderer communication goes through this file
-- Only `contextBridge` and `ipcRenderer` APIs allowed
-- No DOM manipulation, no Node.js `fs`
+- 所有主进程 ↔ 渲染进程通信都必须经过此层
+- 只允许使用 `contextBridge` 与 `ipcRenderer`
+- 不得操作 DOM，不得直接使用 Node.js `fs`
 
-### Common (`packages/desktop/src/common/`)
+### Common（`packages/desktop/src/common/`）
 
-Code imported by **both** main and renderer processes.
+供主进程和渲染进程**共同导入**的代码。
 
-- **Belongs**: shared types, API adapters, protocol converters, storage keys
-- **Does NOT belong**: React components → `renderer/`, Node.js-specific → `process/`
+- **应放入**：共享类型、API adapter、协议转换器、存储键
+- **不得放入**：React 组件应归入 `renderer/`；Node.js 专用实现应归入 `process/`
 
-### Agent (`packages/desktop/src/process/agent/`)
+### Agent（`packages/desktop/src/process/agent/`）
 
-One directory per AI platform (lowercase): `acp/`, `codex/`, `gemini/`, `nanobot/`, `openclaw/`. Each has `index.ts` entry. Runs in main or worker process.
+每个 AI 平台使用一个 lowercase 目录，例如 `acp/`、`codex/`、`gemini/`、`nanobot/`、`openclaw/`。每个目录提供 `index.ts` 入口，并在主进程或 Worker 中运行。
 
-### Worker (`packages/desktop/src/process/worker/`)
+### Worker（`packages/desktop/src/process/worker/`）
 
-```
+```text
 packages/desktop/src/process/worker/
-├── fork/              # Fork management
-├── <platform>.ts      # One file per agent platform (lowercase)
-├── WorkerProtocol.ts  # Protocol definition (PascalCase — it's a class)
+├── fork/              # fork 管理
+├── <platform>.ts      # 每个智能体平台一个文件，使用 lowercase
+├── WorkerProtocol.ts  # 协议定义；类文件使用 PascalCase
 └── index.ts
 ```
 
-### Other Modules
+### 其他模块
 
-| Module     | Location                                   | Purpose                                            |
-| ---------- | ------------------------------------------ | -------------------------------------------------- |
-| Channels   | `packages/desktop/src/process/channels/`   | Multi-channel messaging (Lark, DingTalk, Telegram) |
-| Extensions | `packages/desktop/src/process/extensions/` | Plugin loading, resolvers, sandbox                 |
-| WebServer  | `packages/desktop/src/process/webserver/`  | Express + WebSocket for WebUI                      |
-| Adapter    | `packages/desktop/src/common/adapter/`     | Platform adapters (browser vs main environment)    |
+| 模块       | 位置                                       | 用途                                   |
+| ---------- | ------------------------------------------ | -------------------------------------- |
+| Channels   | `packages/desktop/src/process/channels/`   | 多渠道消息（Lark、DingTalk、Telegram） |
+| Extensions | `packages/desktop/src/process/extensions/` | 插件加载、resolver、沙箱               |
+| WebServer  | `packages/desktop/src/process/webserver/`  | 为 WebUI 提供 HTTP 与 WebSocket        |
+| Adapter    | `packages/desktop/src/common/adapter/`     | 平台适配（浏览器环境与桌面环境）       |

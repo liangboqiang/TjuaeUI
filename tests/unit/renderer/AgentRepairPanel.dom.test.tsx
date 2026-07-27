@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -205,7 +205,7 @@ describe('AgentRepairPanel', () => {
     expect(screen.queryByText('settings.repair.pathLabel')).toBeNull();
   });
 
-  it('does not expose override editing for the internal Aion CLI agent', async () => {
+  it('does not expose override editing for the internal Tjuae CLI agent', async () => {
     vi.mocked(acpConversation.getAgentOverrides.invoke).mockResolvedValue({
       command_override: '/bad/path',
       env_override: [{ name: 'ANTHROPIC_API_KEY', value: 'sk-x' }],
@@ -216,8 +216,8 @@ describe('AgentRepairPanel', () => {
         agent={{
           ...mockAgent,
           id: '632f31d2',
-          name: 'Aion CLI',
-          agent_type: 'aionrs',
+          name: 'Tjuae CLI',
+          agent_type: 'tjuaecli',
           agent_source: 'internal',
           status: 'online',
         }}

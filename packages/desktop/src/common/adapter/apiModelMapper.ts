@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -39,7 +39,7 @@ export function toApiModelOptional(m?: TProviderWithModel): ApiProviderWithModel
 
 /** Minimal shape of a create-conversation request consumed by the body builder. */
 export type CreateConversationBodyInput = {
-  type?: 'acp' | 'aionrs';
+  type?: 'acp' | 'tjuaecli';
   id?: string;
   name?: string;
   model?: TProviderWithModel;
@@ -50,7 +50,7 @@ export type CreateConversationBodyInput = {
 /**
  * Build the HTTP body for `POST /api/conversations`.
  *
- * Top-level `model` is aionrs-only on the backend (spec 2026-05-12); other
+ * Top-level `model` is tjuaecli-only on the backend (spec 2026-05-12); other
  * agent types carry model info via `extra`.
  */
 export function buildCreateConversationBody(p: CreateConversationBodyInput): Record<string, unknown> {

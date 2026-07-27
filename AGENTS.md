@@ -1,154 +1,153 @@
-# AionUi - Project Guide
+# TjuaeUI 项目指南
 
-All contributors (human and AI) must follow [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR. ([Chinese version](CONTRIBUTING.zh.md))
+所有贡献者（包括人工开发者与 AI 智能体）在提交 PR 前，都必须遵循 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-## Code Conventions
+## 代码规范
 
-### File & Directory Structure
+### 文件与目录结构
 
-- **Directory size limit**: Prefer ≤ **10** direct children per directory; new or substantially reorganized directories must satisfy this.
+- **目录规模上限**：每个目录原则上不超过 **10** 个直接子项；新建或大幅重组的目录必须满足此要求。
 
-See [docs/contributing/file-structure.md](docs/contributing/file-structure.md) for complete rules. Agents must also follow the `architecture` skill (`.claude/skills/architecture/SKILL.md`) when creating files or modules.
+完整规则见 [docs/contributing/file-structure.md](docs/contributing/file-structure.md)。创建文件或模块时，智能体还必须遵循 `architecture` 技能（`.claude/skills/architecture/SKILL.md`）。
 
-### Naming
+### 命名
 
-- **Components**: PascalCase (`Button.tsx`, `Modal.tsx`)
-- **Utilities**: camelCase (`formatDate.ts`)
-- **Hooks**: camelCase with `use` prefix (`useTheme.ts`)
-- **Constants files**: camelCase (`constants.ts`) — values inside use UPPER_SNAKE_CASE
-- **Type files**: camelCase (`types.ts`)
-- **Style files**: kebab-case or `ComponentName.module.css`
-- **Unused params**: prefix with `_`
+- **组件**：PascalCase（`Button.tsx`、`Modal.tsx`）
+- **工具函数**：camelCase（`formatDate.ts`）
+- **Hooks**：带 `use` 前缀的 camelCase（`useTheme.ts`）
+- **常量文件**：camelCase（`constants.ts`），文件内的常量值使用 UPPER_SNAKE_CASE
+- **类型文件**：camelCase（`types.ts`）
+- **样式文件**：kebab-case 或 `ComponentName.module.css`
+- **未使用参数**：添加 `_` 前缀
 
-### UI Library & Icons
+### UI 组件库与图标
 
-- **Components**: `@arco-design/web-react` — no raw interactive HTML (`<button>`, `<input>`, `<select>`, etc.)
-- **Icons**: `@icon-park/react`
+- **组件**：使用 `@arco-design/web-react`，不得用原生交互式 HTML（`<button>`、`<input>`、`<select>` 等）
+- **图标**：使用 `@icon-park/react`
 
 ### CSS
 
-- Prefer **UnoCSS utility classes**; complex styles use **CSS Modules** (`ComponentName.module.css`)
-- Colors must use **semantic tokens** from `uno.config.ts` or CSS variables — no hardcoded values
-- Arco theme overrides go in `packages/desktop/src/renderer/styles/arco-override.css`; component-scoped Arco overrides use CSS Module with `:global()`
-- Global styles only in `packages/desktop/src/renderer/styles/`
+- 优先使用 **UnoCSS 工具类**；复杂样式使用 **CSS Modules**（`ComponentName.module.css`）
+- 颜色必须使用 `uno.config.ts` 中的**语义化令牌**或 CSS 变量，不得硬编码
+- Arco 主题覆盖统一放在 `packages/desktop/src/renderer/styles/arco-override.css`；组件级 Arco 覆盖在 CSS Module 中使用 `:global()`
+- 全局样式只能放在 `packages/desktop/src/renderer/styles/`
 
-Formatting rules (Oxfmt, Prettier-compatible):
+格式规则（Oxfmt，与 Prettier 兼容）：
 
-- Single-element arrays that fit on one line → inline: `[{ id: 'a', value: 'b' }]`
-- Trailing commas required in multi-line arrays/objects
-- Single quotes for strings
+- 能放在一行的单元素数组应保持行内形式：`[{ id: 'a', value: 'b' }]`
+- 多行数组和对象必须保留尾随逗号
+- 字符串使用单引号
 
 ### TypeScript
 
-- Strict mode enabled — no `any`, no implicit returns
-- Use path aliases: `@/*`, `@process/*`, `@renderer/*`
-- Prefer `type` over `interface` (per Oxlint config)
-- English for code comments; JSDoc for public functions
+- 已启用严格模式：禁止 `any`，禁止隐式返回
+- 使用路径别名：`@/*`、`@process/*`、`@renderer/*`
+- 按 Oxlint 配置优先使用 `type` 而非 `interface`
+- 代码注释和公共函数 JSDoc 使用中文；协议名、API 名与代码标识符保持原样
 
-### Internationalization (i18n)
+### 国际化（i18n）
 
-New or changed user-facing text must use i18n keys; do not introduce hardcoded strings. Languages and modules are defined in `packages/desktop/src/common/config/i18n-config.json`.
+新增或修改的用户可见文本必须使用 i18n 键，不得引入硬编码字符串。语言和模块以 `packages/desktop/src/common/config/i18n-config.json` 为准。
 
-See the `i18n` skill (`.claude/skills/i18n/SKILL.md`) for complete workflow, key naming, and validation steps.
+完整流程、键命名和校验步骤见 `i18n` 技能（`.claude/skills/i18n/SKILL.md`）。
 
-## Architecture
+## 架构
 
-Two process types — never mix their APIs:
+项目包含两类进程，严禁混用其 API：
 
-| Process  | Path                             | Restriction     |
-| -------- | -------------------------------- | --------------- |
-| Main     | `packages/desktop/src/process/`  | No DOM APIs     |
-| Renderer | `packages/desktop/src/renderer/` | No Node.js APIs |
+| 进程     | 路径                             | 限制                 |
+| -------- | -------------------------------- | -------------------- |
+| 主进程   | `packages/desktop/src/process/`  | 不得使用 DOM API     |
+| 渲染进程 | `packages/desktop/src/renderer/` | 不得使用 Node.js API |
 
-Cross-process communication must go through the IPC bridge (`packages/desktop/src/preload/`).
-See [docs/architecture/overview.md](docs/architecture/overview.md) for details.
+跨进程通信必须通过 IPC 桥接（`packages/desktop/src/preload/`）。详细说明见 [docs/architecture/overview.md](docs/architecture/overview.md)。
 
-## Testing
+## 测试
 
-**Framework**: Vitest 4 (`vitest.config.ts`). Project coverage target is ≥ 80%; ordinary changes should add focused tests for changed behavior.
-
-```bash
-bun run test              # run all tests
-bun run test:coverage     # with coverage report
-```
-
-See the `testing` skill (`.claude/skills/testing/SKILL.md`) for complete workflow and quality rules.
-
-## Workflow
-
-### Scope & Enforcement
-
-- **Hard blockers**: process boundary violations, TypeScript errors, failing tests, unsafe IPC usage, missing i18n for new or changed user-facing text, and raw interactive HTML in new UI.
-- **Current-change requirements**: naming, CSS, file placement, tests, docs, directory size, and single-file-directory rules apply to files created or meaningfully modified by the current change.
-- **Ratchet rules**: existing directory size or single-file-directory violations do not require cleanup during ordinary feature work or bugfixes, but the current change must not make them worse.
-- **No scope expansion**: implementation plans and reviews must not create extra tasks, phases, or acceptance criteria for cleanup unless the user asks for that scope.
-- **Ignored working docs**: `docs/superpowers/` is intentionally gitignored for local Superpowers specs and plans. Do not force-add or otherwise commit files from this directory.
-
-### During Development
-
-Auto-fix as you edit:
+**框架**：Vitest 4（`vitest.config.ts`）。项目覆盖率目标为 ≥ 80%；一般变更应为修改过的行为补充聚焦测试。
 
 ```bash
-bun run lint:fix       # auto-fix lint issues (oxlint)
-bun run format         # auto-format all files (oxfmt)
-bunx tsc --noEmit      # verify no type errors
+bun run test              # 运行全部测试
+bun run test:coverage     # 运行测试并生成覆盖率报告
 ```
 
-If your changes touch `packages/desktop/src/renderer/`, `locales/`, or `packages/desktop/src/common/config/i18n`, also run:
+完整测试流程和质量规则见 `testing` 技能（`.claude/skills/testing/SKILL.md`）。
+
+## 工作流程
+
+### 范围与门禁
+
+- **硬性阻断项**：违反进程边界、TypeScript 报错、测试失败、不安全的 IPC 用法、新增或修改的用户可见文本缺少 i18n，以及新 UI 使用原生交互式 HTML。
+- **当前变更要求**：命名、CSS、文件位置、测试、文档、目录规模和单文件目录规则，适用于本次新建或实质修改的文件。
+- **渐进收紧规则**：普通功能或缺陷修复不要求顺带清理既有的目录规模或单文件目录问题，但本次变更不得使问题恶化。
+- **不得扩张范围**：除非用户明确要求，否则实施计划和代码审查不得额外增加清理任务、阶段或验收条件。
+- **忽略的工作文档**：`docs/superpowers/` 专用于本地 Superpowers 规格与计划，已被 gitignore；不得强制添加或提交其中的文件。
+
+### 开发过程中
+
+编辑时及时自动修复：
+
+```bash
+bun run lint:fix       # 自动修复 lint 问题（oxlint）
+bun run format         # 自动格式化全部文件（oxfmt）
+bunx tsc --noEmit      # 确认没有类型错误
+```
+
+如果变更涉及 `packages/desktop/src/renderer/`、`locales/` 或 `packages/desktop/src/common/config/i18n`，还必须运行：
 
 ```bash
 bun run i18n:types
 node scripts/check-i18n.js
 ```
 
-### Before Pushing
+### 推送前
 
-AI agents must not push unless explicitly asked. When pushing, use `just push`, never `git push`:
+除非用户明确要求，否则 AI 智能体不得推送代码。需要推送时必须使用 `just push`，不得直接使用 `git push`：
 
 ```bash
 just push                          # lint → format-check → typecheck → test → git push
-just push -u origin feat/branch    # same checks, with extra git push args
+just push -u origin feat/branch    # 执行相同检查，并附加 git push 参数
 ```
 
-Any step that fails aborts the push. Fix the issue, commit, then retry.
+任一步骤失败都会中止推送。修复问题并提交后再重试。
 
-> **Note for AI agents**: `just push` uses `--quiet` for lint — only errors cause failure. The project has many pre-existing lint _warnings_ which do NOT indicate failure. Judge success by exit code, not by output volume.
+> **AI 智能体注意事项**：`just push` 会为 lint 添加 `--quiet`；只有错误才会导致失败。项目中存在较多既有 lint _warning_，它们不代表命令失败。应根据退出码判断结果，而不是根据输出量判断。
 
-### Before PR (optional stricter check)
+### PR 前可选的严格检查
 
-`prek` replicates the **exact CI pipeline** (includes end-of-file, trailing whitespace checks on all file types):
+`prek` 会复刻**完整 CI 流程**，包括对全部文件类型执行文件末尾和尾随空白检查：
 
 ```bash
-# One-time setup
+# 首次安装
 npm install -g @j178/prek
 
-# Run
+# 运行
 prek run --from-ref origin/main --to-ref HEAD
 ```
 
-> `prek` is read-only — it reports but does not fix. If it reports issues, run the auto-fix commands above, commit, then re-run.
+> `prek` 只读，不会自动修复。若发现问题，先运行上面的自动修复命令，提交后再重新执行。
 
-### Commit & PR Format
+### Commit 与 PR 格式
 
-Commits and PR titles must follow the Conventional Commit format defined in [CONTRIBUTING.md](CONTRIBUTING.md):
+Commit 和 PR 标题必须遵循 [CONTRIBUTING.md](CONTRIBUTING.md) 规定的 Conventional Commit 格式；类型与范围使用约定的英文标识，主题使用简体中文：
 
 ```text
 <type>(<scope>): <subject>
 ```
 
-Allowed types: `feat`, `fix`, `perf`, `refactor`, `docs`, `style`, `chore`, `test`, `ci`, `build`.
+允许的类型：`feat`、`fix`、`perf`、`refactor`、`docs`、`style`、`chore`、`test`、`ci`、`build`。
 
-When opening a PR, fill in the PR body using [.github/pull_request_template.md](.github/pull_request_template.md) and complete its checklists honestly (only check items you actually ran or verified).
+创建 PR 时，使用 [.github/pull_request_template.md](.github/pull_request_template.md) 填写正文，并如实完成检查清单；只勾选实际运行或验证过的项目。
 
-**NEVER add AI signatures** (Co-Authored-By, Generated with, etc.).
+**严禁添加 AI 署名**（如 `Co-Authored-By`、`Generated with` 等）。
 
-## Skills Index
+## 技能索引
 
-| Skill            | Purpose                                                                     | Triggers                                                                                               |
-| ---------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **architecture** | File & directory structure conventions for all process types                | Creating files, adding modules, architectural decisions                                                |
-| **i18n**         | Internationalization workflow and standards                                 | Adding or changing user-facing text, modifying `locales/` or `packages/desktop/src/common/config/i18n` |
-| **testing**      | Testing workflow and quality standards                                      | Writing tests, changing runtime behavior, fixing bugs, or claiming behavior is verified                |
-| **bump-version** | Version bump workflow: update package.json, checks, branch, PR, tag release | Bumping version, `/bump-version`                                                                       |
+| 技能             | 用途                                                         | 触发场景                                                                             |
+| ---------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| **architecture** | 约束所有进程类型的文件与目录结构                             | 创建文件、添加模块、作出架构决策                                                     |
+| **i18n**         | 国际化流程与标准                                             | 新增或修改用户可见文本，修改 `locales/` 或 `packages/desktop/src/common/config/i18n` |
+| **testing**      | 测试流程与质量标准                                           | 编写测试、修改运行时行为、修复缺陷，或声称某项行为已验证                             |
+| **bump-version** | 版本升级流程：更新 `package.json`、检查、分支、PR 与发布标签 | 升级版本、执行 `/bump-version`                                                       |
 
-> Skills are located in `.claude/skills/` and contain project conventions that apply to **all** agents and contributors.
+> 技能位于 `.claude/skills/`，其中的项目规范适用于**所有**智能体和贡献者。

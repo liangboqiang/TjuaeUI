@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,7 +12,7 @@ import { assistantRuntimeKey, type AssistantDetail } from '@/common/types/agent/
  *
  * Backend `service.rs` consumes `input.model` verbatim with no default, so an
  * empty or backend-name-only value (e.g. "gemini") ends up persisted as
- * `use_model: null`. Downstream, GeminiSendBox / AionrsSendBox gate the
+ * `use_model: null`. Downstream, GeminiSendBox / TjuaeCliSendBox gate the
  * textarea on `current_model?.useModel` and render disabled. See mnemo #297.
  *
  * This resolver reads assistant-owned defaults first and then falls back to
@@ -70,8 +70,8 @@ function resolveBackendDefaultModel(assistant_backend?: string): Promise<string>
     return resolveGeminiDefaultModel();
   }
 
-  if (assistant_backend === 'aionrs') {
-    return resolveAionrsDefaultModel();
+  if (assistant_backend === 'tjuaecli') {
+    return resolveTjuaeCliDefaultModel();
   }
 
   return resolveAcpDefaultModel(assistant_backend ?? 'acp');
@@ -87,6 +87,6 @@ async function resolveGeminiDefaultModel(): Promise<string> {
   return 'auto';
 }
 
-async function resolveAionrsDefaultModel(): Promise<string> {
+async function resolveTjuaeCliDefaultModel(): Promise<string> {
   return 'default';
 }

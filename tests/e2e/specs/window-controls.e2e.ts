@@ -7,7 +7,7 @@
  * Regression coverage for v2.1.36: zero-arg invokes send `data: undefined`,
  * which JSON serialization drops from the IPC payload. The bridge's subscribe
  * guard rejected requests without a `data` key, so all window-control clicks
- * were silently ignored (Sentry ELECTRON-3JZ).
+ * were silently ignored.
  */
 import { test, expect } from '../fixtures';
 import { invokeBridge } from '../helpers/bridge';

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -72,7 +72,7 @@ const OfficialAssistantsGrid: React.FC<OfficialAssistantsGridProps> = ({
           />
           <span className='truncate'>
             {t('settings.officialAssistantsHintShort', {
-              defaultValue: 'Maintained by AionUi · enable to use, duplicate to customize',
+              defaultValue: 'Maintained by TjuaeUI · enable to use, duplicate to customize',
             })}
           </span>
         </span>

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -69,8 +69,8 @@ describe('ensureAdminPassword', () => {
     expect(calls[0].url).toBe('http://127.0.0.1:25808/api/auth/status');
     expect(calls[1].url).toBe('http://127.0.0.1:25808/api/webui/reset-password');
     expect(calls[1].init?.method).toBe('POST');
-    expect(logs).toContain('[aionui-web] Generated initial admin password: SuperSecret123');
-    expect(logs.some((m) => m.includes('Log in with username "admin"'))).toBe(true);
+    expect(logs).toContain('[tjuaeui-web] 已生成初始管理员密码：SuperSecret123');
+    expect(logs.some((m) => m.includes('请使用用户名“admin”登录'))).toBe(true);
     expect(warns).toEqual([]);
   });
 
@@ -85,7 +85,7 @@ describe('ensureAdminPassword', () => {
 
     await ensureAdminPassword({ backendPort: 25808 }, deps);
 
-    expect(logs).toContain('[aionui-web] Generated initial admin password: FromTopLevel');
+    expect(logs).toContain('[tjuaeui-web] 已生成初始管理员密码：FromTopLevel');
   });
 
   it('reads needs_setup from nested data field', async () => {
@@ -116,7 +116,7 @@ describe('ensureAdminPassword', () => {
     expect(calls).toHaveLength(2);
     expect(calls[1].url).toBe('http://127.0.0.1:25808/api/auth/internal/users/system');
     expect(logs.some((m) => m.includes('resetpass'))).toBe(true);
-    expect(logs.every((m) => !m.includes('Generated initial admin password'))).toBe(true);
+    expect(logs.every((m) => !m.includes('已生成初始管理员密码'))).toBe(true);
     expect(warns).toEqual([]);
   });
 
@@ -146,7 +146,7 @@ describe('ensureAdminPassword', () => {
 
     expect(statusAttempts).toBe(3);
     expect(sleeps.length).toBeGreaterThanOrEqual(2);
-    expect(logs.some((m) => m.includes('Generated initial admin password'))).toBe(true);
+    expect(logs.some((m) => m.includes('已生成初始管理员密码'))).toBe(true);
   });
 
   it('warns (not throws) when status never comes up within budget', async () => {
@@ -156,7 +156,7 @@ describe('ensureAdminPassword', () => {
 
     await ensureAdminPassword({ backendPort: 25808, statusTimeoutMs: 1_000, statusPollIntervalMs: 250 }, deps);
 
-    expect(warns.some((w) => w.includes('could not verify admin credentials'))).toBe(true);
+    expect(warns.some((w) => w.includes('无法验证管理员凭据'))).toBe(true);
     expect(logs).toEqual([]);
   });
 
@@ -167,7 +167,7 @@ describe('ensureAdminPassword', () => {
 
     await ensureAdminPassword({ backendPort: 25808 }, deps);
 
-    expect(warns.some((w) => w.includes('/api/webui/reset-password returned 500'))).toBe(true);
+    expect(warns.some((w) => w.includes('/api/webui/reset-password 返回状态码 500'))).toBe(true);
     expect(logs).toEqual([]);
   });
 
@@ -178,7 +178,7 @@ describe('ensureAdminPassword', () => {
 
     await ensureAdminPassword({ backendPort: 25808 }, deps);
 
-    expect(warns.some((w) => w.includes('returned no new_password'))).toBe(true);
+    expect(warns.some((w) => w.includes('未返回 new_password'))).toBe(true);
     expect(logs).toEqual([]);
   });
 
@@ -193,7 +193,7 @@ describe('ensureAdminPassword', () => {
 
     await ensureAdminPassword({ backendPort: 25808 }, deps);
 
-    expect(logs.some((m) => m.includes('Log in with username "admin"'))).toBe(true);
+    expect(logs.some((m) => m.includes('请使用用户名“admin”登录'))).toBe(true);
   });
 
   it('uses caller-supplied resetCommand in the "Forgot the password" hint', async () => {
@@ -207,10 +207,10 @@ describe('ensureAdminPassword', () => {
     await ensureAdminPassword({ backendPort: 25808, resetCommand: 'bun run resetpass' }, deps);
 
     expect(logs.some((m) => m.includes('bun run resetpass'))).toBe(true);
-    expect(logs.every((m) => !m.includes('aionui-web resetpass'))).toBe(true);
+    expect(logs.every((m) => !m.includes('tjuaeui-web resetpass'))).toBe(true);
   });
 
-  it('defaults to `aionui-web resetpass` when resetCommand is not provided', async () => {
+  it('defaults to `tjuaeui-web resetpass` when resetCommand is not provided', async () => {
     const { deps, logs } = makeDeps({
       handlers: [
         () => mockResponse(200, { needs_setup: false }),
@@ -220,7 +220,7 @@ describe('ensureAdminPassword', () => {
 
     await ensureAdminPassword({ backendPort: 25808 }, deps);
 
-    expect(logs.some((m) => m.includes('aionui-web resetpass'))).toBe(true);
+    expect(logs.some((m) => m.includes('tjuaeui-web resetpass'))).toBe(true);
   });
 
   it('propagates resetCommand into warn messages when reset-password fails', async () => {

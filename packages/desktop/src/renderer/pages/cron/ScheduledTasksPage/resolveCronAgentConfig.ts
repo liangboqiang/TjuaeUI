@@ -1,14 +1,14 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { ICronAgentConfigWrite } from '@/common/adapter/ipcBridge';
-import { isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
+import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import { resolveAssistantName } from '@renderer/utils/model/assistantDisplay';
 
-type SelectedAionrsProvider = {
+type SelectedTjuaeCliProvider = {
   id?: string;
   name?: string;
 };
@@ -16,13 +16,13 @@ type SelectedAionrsProvider = {
 type ResolveCronAgentConfigInput = {
   agentValue: string;
   presetAssistants: Assistant[];
-  selectedAionrsProvider?: SelectedAionrsProvider;
+  selectedTjuaeCliProvider?: SelectedTjuaeCliProvider;
   model_id?: string;
   config_options?: Record<string, string>;
   workspace?: string;
   localeKey?: string;
   getMode: (assistant: Assistant) => string | undefined;
-  aionrsModelRequiredMessage: string;
+  tjuaecliModelRequiredMessage: string;
 };
 
 type ResolveCronAgentConfigResult = {
@@ -33,13 +33,13 @@ export function resolveCronAgentConfig(input: ResolveCronAgentConfigInput): Reso
   const {
     agentValue,
     presetAssistants,
-    selectedAionrsProvider,
+    selectedTjuaeCliProvider,
     model_id,
     config_options,
     workspace,
     localeKey = 'en-US',
     getMode,
-    aionrsModelRequiredMessage,
+    tjuaecliModelRequiredMessage,
   } = input;
 
   const colonIdx = agentValue.indexOf(':');
@@ -55,9 +55,9 @@ export function resolveCronAgentConfig(input: ResolveCronAgentConfigInput): Reso
   const assistantName = resolveAssistantName(assistant, localeKey, assistant.name);
   const mode = getMode(assistant);
 
-  if (isAionrsAssistant(assistant)) {
-    if (!selectedAionrsProvider?.id || !model_id) {
-      throw new Error(aionrsModelRequiredMessage);
+  if (isTjuaeCliAssistant(assistant)) {
+    if (!selectedTjuaeCliProvider?.id || !model_id) {
+      throw new Error(tjuaecliModelRequiredMessage);
     }
     agent_config = {
       name: assistantName,
@@ -65,7 +65,7 @@ export function resolveCronAgentConfig(input: ResolveCronAgentConfigInput): Reso
       mode,
       model_id,
       model: {
-        provider_id: selectedAionrsProvider.id,
+        provider_id: selectedTjuaeCliProvider.id,
         model: model_id,
         use_model: model_id,
       },

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -129,7 +129,7 @@ export type IMessageText = IMessage<
   }
 >;
 
-export type AgentErrorOwnership = 'aionui' | 'user_agent' | 'user_llm_provider' | 'unknown_upstream';
+export type AgentErrorOwnership = 'tjuaeui' | 'user_agent' | 'user_llm_provider' | 'unknown_upstream';
 
 export type AgentErrorResolutionKind =
   | 'retry'
@@ -154,7 +154,7 @@ export type AgentErrorResolution = {
   target?: AgentErrorResolutionTarget;
 };
 
-/** Redacted, size-bounded summary of the original error, for telemetry only. */
+/** Redacted, size-bounded summary of the original error for local error context. */
 export type AgentStreamRawErrorSummary = {
   name?: string;
   message?: string;
@@ -174,7 +174,7 @@ export type AgentStreamErrorInfo = {
   resolution?: AgentErrorResolution;
   /**
    * Diagnostic summary of the original underlying error, preserved on
-   * unclassified ("internal") failures so they can be located in telemetry.
+   * unclassified ("internal") failures so local troubleshooting retains context.
    * Redacted of secrets/PII before it reaches here.
    */
   rawError?: AgentStreamRawErrorSummary;
@@ -496,7 +496,7 @@ export const normalizeTextMessageContent = (
 };
 
 const AGENT_ERROR_OWNERSHIPS = new Set<AgentErrorOwnership>([
-  'aionui',
+  'tjuaeui',
   'user_agent',
   'user_llm_provider',
   'unknown_upstream',

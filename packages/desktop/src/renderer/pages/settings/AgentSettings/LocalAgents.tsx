@@ -1,14 +1,14 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { ipcBridge } from '@/common';
 import { parseError } from '@/common/utils';
 import { formatManagedAgentDiagnosticMessage, type ManagedAgent } from '@/renderer/utils/model/agentTypes';
-import AionModal from '@/renderer/components/base/AionModal';
-import { AionSearchInput } from '@/renderer/components/base';
+import TjuaeModal from '@/renderer/components/base/TjuaeModal';
+import { TjuaeSearchInput } from '@/renderer/components/base';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useManagedAgents } from '@/renderer/hooks/agent/useManagedAgents';
 import { openExternalUrl } from '@/renderer/utils/platform';
@@ -28,7 +28,7 @@ import {
   type AgentAvailabilityFilter,
 } from './agentFilters';
 
-const LOCAL_AGENT_SETUP_GUIDE_URL = 'https://github.com/iOfficeAI/AionUi/wiki/ACP-Setup';
+const LOCAL_AGENT_SETUP_GUIDE_URL = 'https://github.com/liangboqiang/TjuaeUI/tree/main/docs/prds/conversations/acp';
 
 const LocalAgents: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -134,16 +134,10 @@ const LocalAgents: React.FC = () => {
   const sortedOfficialAgents = useMemo(
     () =>
       officialAgents.toSorted((left, right) => {
-        const leftIsAionrs = left.agent_type === 'aionrs' || left.backend === 'aionrs';
-        const rightIsAionrs = right.agent_type === 'aionrs' || right.backend === 'aionrs';
-        if (leftIsAionrs !== rightIsAionrs) {
-          return leftIsAionrs ? -1 : 1;
-        }
-        // Strategic partner: pin Kimi right after the builtin aionrs agent.
-        const leftIsKimi = left.backend === 'kimi';
-        const rightIsKimi = right.backend === 'kimi';
-        if (leftIsKimi !== rightIsKimi) {
-          return leftIsKimi ? -1 : 1;
+        const leftIsTjuaeCli = left.agent_type === 'tjuaecli' || left.backend === 'tjuaecli';
+        const rightIsTjuaeCli = right.agent_type === 'tjuaecli' || right.backend === 'tjuaecli';
+        if (leftIsTjuaeCli !== rightIsTjuaeCli) {
+          return leftIsTjuaeCli ? -1 : 1;
         }
         return left.name.localeCompare(right.name);
       }),
@@ -231,7 +225,7 @@ const LocalAgents: React.FC = () => {
         actions={
           <>
             {!isMobile && (
-              <AionSearchInput
+              <TjuaeSearchInput
                 className='shrink-0 w-[200px] hidden md:flex'
                 data-testid='input-search-agents'
                 placeholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: 'Search agents...' })}
@@ -310,7 +304,7 @@ const LocalAgents: React.FC = () => {
         </Typography.Text>
       </div>
 
-      <AionModal
+      <TjuaeModal
         visible={editorVisible}
         onCancel={() => {
           setEditorVisible(false);
@@ -347,7 +341,7 @@ const LocalAgents: React.FC = () => {
             }}
           />
         )}
-      </AionModal>
+      </TjuaeModal>
 
       <div data-testid='agent-management-custom-section'>
         <div className='flex flex-col gap-8px rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>

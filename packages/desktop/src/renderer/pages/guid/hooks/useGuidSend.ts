@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -65,7 +65,7 @@ export type GuidSendResult = {
 };
 
 /**
- * Hook that manages the send logic for ACP and Aion CLI conversations.
+ * Hook that manages the send logic for ACP and Tjuae CLI conversations.
  */
 export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
   const {
@@ -150,7 +150,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       mcp_ids: assistantOverrideMcpIds,
     };
 
-    if (assistantBackend === 'aionrs') {
+    if (assistantBackend === 'tjuaecli') {
       if (!current_model) {
         Message.warning(t('conversation.noModelConfigured'));
         return;
@@ -195,11 +195,11 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
           input,
           files: files.length > 0 ? files : undefined,
         };
-        sessionStorage.setItem(`aionrs_initial_message_${conversation.id}`, JSON.stringify(initialMessage));
+        sessionStorage.setItem(`tjuaecli_initial_message_${conversation.id}`, JSON.stringify(initialMessage));
 
         await navigate(`/conversation/${conversation.id}`);
       } catch (error: unknown) {
-        console.error('Failed to create Aion CLI conversation:', error);
+        console.error('Failed to create Tjuae CLI conversation:', error);
         throw error;
       }
       return;

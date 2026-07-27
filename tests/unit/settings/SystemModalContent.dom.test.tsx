@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -37,12 +37,8 @@ vi.mock('@/renderer/utils/platform', () => ({
   isElectronDesktop: () => true,
 }));
 
-vi.mock('@/renderer/components/base/AionScrollArea', () => ({
+vi.mock('@/renderer/components/base/TjuaeScrollArea', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock('@/renderer/components/base/FeedbackButton', () => ({
-  default: () => <button type='button'>settings.oneClickFeedback</button>,
 }));
 
 vi.mock('@/renderer/components/settings/LanguageSwitcher', () => ({
@@ -204,7 +200,7 @@ describe('SystemModalContent directory settings', () => {
     await screen.findByText('/work');
     const workDirItem = screen.getByText('settings.workDir').closest('.arco-form-item');
     expect(workDirItem).not.toBeNull();
-    const fieldBody = (workDirItem as HTMLElement).querySelector('.aion-dir-input');
+    const fieldBody = (workDirItem as HTMLElement).querySelector('.tjuae-dir-input');
     expect(fieldBody).not.toBeNull();
 
     await user.click(fieldBody as HTMLElement);

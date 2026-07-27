@@ -38,18 +38,18 @@ describe('resolveBinaryPath', () => {
     setResourcesPath(originalResourcesPath);
   });
 
-  it('attaches bundled path diagnostics when aioncore cannot be resolved', () => {
+  it('attaches bundled path diagnostics when tjuaecore cannot be resolved', () => {
     const resourcesPath = '/app/resources';
     const runtimeKey = `${process.platform}-${process.arch}`;
-    const binaryName = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
-    const bundledDir = join(resourcesPath, 'bundled-aioncore');
+    const binaryName = process.platform === 'win32' ? 'tjuaecore.exe' : 'tjuaecore';
+    const bundledDir = join(resourcesPath, 'bundled-tjuaecore');
     const runtimeDir = join(bundledDir, runtimeKey);
     const checkedBundledPath = join(runtimeDir, binaryName);
 
     setResourcesPath(resourcesPath);
     vi.mocked(existsSync).mockReturnValue(false);
     vi.mocked(readdirSync).mockImplementation((path) => {
-      if (path === resourcesPath) return [dirEntry('bundled-aioncore', true)];
+      if (path === resourcesPath) return [dirEntry('bundled-tjuaecore', true)];
       if (path === runtimeDir) return [dirEntry('manifest.json')];
       return [] as ReturnType<typeof readdirSync>;
     });
@@ -57,7 +57,7 @@ describe('resolveBinaryPath', () => {
       throw new Error('not found on PATH');
     });
 
-    expect(() => resolveBinaryPath()).toThrow('Cannot find "aioncore" binary');
+    expect(() => resolveBinaryPath()).toThrow('Cannot find "tjuaecore" binary');
 
     try {
       resolveBinaryPath();
@@ -71,9 +71,9 @@ describe('resolveBinaryPath', () => {
           checkedBundledPath,
           bundledDirExists: false,
           runtimeDirExists: false,
-          resourcesDirEntries: ['bundled-aioncore/'],
+          resourcesDirEntries: ['bundled-tjuaecore/'],
           runtimeDirEntries: ['manifest.json'],
-          pathLookupCommand: process.platform === 'win32' ? 'where aioncore' : 'which aioncore',
+          pathLookupCommand: process.platform === 'win32' ? 'where tjuaecore' : 'which tjuaecore',
           pathLookupError: expect.stringContaining('not found on PATH'),
         }),
       });

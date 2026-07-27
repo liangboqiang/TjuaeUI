@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { AcpConfigSetStatus, AcpDerivedOption } from '@/renderer/hooks/agent/useAcpConfigOptions';
-import AionInlineSearchInput from '@/renderer/components/base/AionInlineSearchInput';
+import TjuaeInlineSearchInput from '@/renderer/components/base/TjuaeInlineSearchInput';
 import { Menu, Tooltip } from '@arco-design/web-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -85,7 +85,7 @@ export const RuntimeSelectorSubMenuTitle: React.FC<{ label: string; value: strin
 /**
  * Model options with search + fixed-height scroll. Reused by:
  * - the direct dropdown (no thought level) and the model submenu — flat via `models`;
- * - the aionrs selector — provider-grouped via `groups`.
+ * - the tjuaecli selector — provider-grouped via `groups`.
  * Search box shows only when the total model count exceeds DROPDOWN_SEARCH_THRESHOLD;
  * filtering is client-side, case-insensitive on label/id, and spans all groups.
  */
@@ -145,7 +145,7 @@ export const RuntimeSelectorModelList: React.FC<{
     <>
       {showSearch ? (
         <div className='px-6px pt-4px pb-6px' style={{ background: 'var(--color-bg-popup)' }}>
-          <AionInlineSearchInput
+          <TjuaeInlineSearchInput
             value={query}
             onChange={setQuery}
             placeholder={t('agent.model.searchPlaceholder', { defaultValue: 'Search models' })}

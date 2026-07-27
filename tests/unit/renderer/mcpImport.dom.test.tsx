@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -34,7 +34,7 @@ vi.mock('@/renderer/hooks/agent/useManagedAgents', () => ({
   getManagedAgents: (...args: unknown[]) => getManagedAgents(...args),
 }));
 
-vi.mock('@/renderer/components/base/AionModal', () => ({
+vi.mock('@/renderer/components/base/TjuaeModal', () => ({
   default: ({
     visible,
     children,
@@ -52,7 +52,7 @@ vi.mock('@/renderer/components/base/AionModal', () => ({
     ) : null,
 }));
 
-vi.mock('@/renderer/components/base/AionSteps', () => {
+vi.mock('@/renderer/components/base/TjuaeSteps', () => {
   const Step = ({ title }: { title: React.ReactNode }) => <div>{title}</div>;
   const Steps = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
   Steps.Step = Step;

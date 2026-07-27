@@ -54,19 +54,67 @@
     "selectFolder": "Sélectionner un dossier",
     "recentLabel": "Récents",
     "chooseDifferentFolder": "Choisir un autre dossier",
-    "error": "Échec de la création de l'équipe"
+    "error": "Échec de la création de l'équipe",
+    "selectedMembers": "Membres sélectionnés",
+    "teamLeader": "Chef d'équipe",
+    "currentLeader": "Chef d'équipe actuel",
+    "setAsLeader": "Définir comme chef d'équipe",
+    "teammate": "Membre de l'équipe",
+    "selectAtLeastOneMember": "Sélectionnez au moins un assistant comme chef d'équipe.",
+    "selectOneLeader": "Sélectionnez un chef d'équipe",
+    "subtitle": "Faites collaborer plusieurs assistants IA en équipe. Nous vous conseillons de consacrer chaque équipe à un seul objectif et de créer des équipes distinctes pour les différentes tâches.",
+    "nameLabel": "Nom de l'équipe",
+    "workspaceLabel": "Espace de travail",
+    "allAssistantsWithCount": "Tous les assistants ({{count}})",
+    "selectedMembersWithCount": "Membres sélectionnés : {{count}} · ⚑ = chef d'équipe",
+    "selectedMembersTitleWithCount": "Membres sélectionnés : {{count}}",
+    "leaderLegend": "= chef d'équipe",
+    "membersHelper": "Choisissez les membres de l'équipe et désignez un chef d'équipe. Un même assistant peut être sélectionné plusieurs fois.",
+    "memberHint": "Vous ne trouvez aucun assistant adapté comme membre ? Après la création, demandez au chef d'équipe de créer des membres temporaires dans le chat."
   },
   "removeAgent": {
     "confirmTitle": "Retirer un membre de l'équipe",
-    "confirmContent": "Ce membre est actuellement actif. Forcer la suppression ?"
+    "confirmContent": "Ce membre est actuellement actif. Forcer la suppression ?",
+    "confirmContentActive": "Ce membre travaille actuellement. Voulez-vous quand même le retirer ? Son travail en cours sera interrompu."
   },
   "emptyState": {
     "subtitle": "Décrivez votre objectif et je mettrai l'équipe au travail",
     "suggestions": {
       "debate": "Organiser un débat avec des agents prenant des positions différentes",
       "interview": "Planifier une interview approfondie entre agents",
-      "expert_review": "Faire analyser le même problème par plusieurs experts"
-    }
+      "expert_review": "Faire analyser le même problème par plusieurs experts",
+      "add_member": "Aidez-moi à ajouter à l'équipe un membre spécialisé en ___"
+    },
+    "leaderGreeting": "Bonjour, je suis le chef d'équipe. Je comprends votre objectif et coordonne l'équipe : décrivez-moi ce que vous souhaitez et je m'occupe de l'organiser.",
+    "memberGreeting": "Bonjour, je suis membre de l'équipe. Je suis les directives du chef d'équipe et les vôtres."
+  },
+  "addMember": {
+    "title": "Ajouter un membre",
+    "subtitle": "Un même assistant peut être ajouté plusieurs fois",
+    "searchAssistants": "Rechercher des assistants...",
+    "addFailed": "Échec de l'ajout du membre",
+    "noSearchResults": "Aucun résultat trouvé",
+    "tellLeaderHint": "Aucun assistant ne convient ? Vous pouvez aussi demander au chef d'équipe de s'en charger.",
+    "tellLeaderCta": "Demander au chef d'équipe →",
+    "tellLeaderPrefill": "Aidez-moi à ajouter à l'équipe un membre spécialisé en ___"
+  },
+  "view": {
+    "label": "Vue",
+    "parallel": "Parallèle",
+    "single": "Individuelle"
+  },
+  "warmup": {
+    "title": "Réveil de l'équipe…",
+    "subtitle": "Préparation des membres",
+    "memberFailedTitle": "Le membre {{name}} n'a pas pu démarrer",
+    "leaderFailedTitle": "Le chef d'équipe {{name}} n'a pas pu démarrer",
+    "genericFailedTitle": "L'équipe n'a pas pu démarrer",
+    "multiFailedTitle": "{{count}} membres n'ont pas pu démarrer",
+    "leaderSuffix": " (chef d'équipe)",
+    "unknownError": "échec du démarrage",
+    "memberFailedHint": "Changez son modèle ci-dessus ou retirez-le de la barre supérieure, puis réessayez.",
+    "leaderFailedHint": "Changez son modèle ci-dessus, puis réessayez.",
+    "retry": "Réessayer"
   },
   "reorderMember": "Faites glisser pour réorganiser le membre"
 }

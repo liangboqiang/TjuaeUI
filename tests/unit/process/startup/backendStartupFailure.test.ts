@@ -1,13 +1,13 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, expect, it } from 'vitest';
 import { classifyBackendStartupFailure } from '@/process/startup/backendStartupFailure';
 
-// T-L3a — transient concurrent-startup classification (Sentry 135525166).
+// T-L3a — transient concurrent-startup classification.
 // A brief two-instance bootstrap race over the same data directory is
 // self-recoverable and must NOT be reported as local data corruption.
 describe('classifyBackendStartupFailure — transient concurrent startup', () => {
@@ -16,9 +16,9 @@ describe('classifyBackendStartupFailure — transient concurrent startup', () =>
       details: {
         backendBoundaryCode: 'BOOTSTRAP_PEER_ALREADY_RUNNING',
         backendBoundaryStage: 'instance_guard.acquire',
-        causeMessage: 'another aioncore already owns this data directory',
+        causeMessage: 'another tjuaecore already owns this data directory',
       },
-      message: 'aioncore exited before health check passed',
+      message: 'tjuaecore exited before health check passed',
       name: 'BackendStartupError',
     });
 
@@ -36,7 +36,7 @@ describe('classifyBackendStartupFailure — transient concurrent startup', () =>
         backendBoundaryStage: 'router.assistant.bootstrap.concurrency_contended',
         causeMessage: 'assistant storage bootstrap contended under concurrent startup',
       },
-      message: 'aioncore exited before health check passed',
+      message: 'tjuaecore exited before health check passed',
       name: 'BackendStartupError',
     });
 
@@ -59,7 +59,7 @@ describe('classifyBackendStartupFailure — transient concurrent startup', () =>
         backendBoundaryStage: 'router.assistant.bootstrap',
         causeMessage: 'failed to bootstrap assistant storage',
       },
-      message: 'aioncore exited before health check passed',
+      message: 'tjuaecore exited before health check passed',
       name: 'BackendStartupError',
     });
 
@@ -83,7 +83,7 @@ describe('classifyBackendStartupFailure — genuine data damage still severe', (
         stderrTail:
           'Failed to hydrate agent registry: Internal error: load agent_metadata: Database query failed: error occurred while decoding column "config_options": invalid utf-8 sequence of 1 bytes from index 793',
       },
-      message: 'aioncore exited before health check passed',
+      message: 'tjuaecore exited before health check passed',
       name: 'BackendStartupError',
     });
 
@@ -102,9 +102,9 @@ describe('classifyBackendStartupFailure — genuine data damage still severe', (
         backendBoundaryCode: 'BOOTSTRAP_DATA_INIT_FAILED',
         backendBoundaryStage: 'database.recoverable_corruption',
         stderrTail:
-          'BOOTSTRAP_DATA_INIT_FAILED stage=database.recoverable_corruption databasePath=/db/aionui-backend.db: failed to initialize application data',
+          'BOOTSTRAP_DATA_INIT_FAILED stage=database.recoverable_corruption databasePath=/db/tjuaeui-backend.db: failed to initialize application data',
       },
-      message: 'aioncore exited before health check passed',
+      message: 'tjuaecore exited before health check passed',
       name: 'BackendStartupError',
     });
 

@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { describe, expect, it } from 'vitest';
-import { processLocalCronResponse } from '@/renderer/pages/conversation/platforms/aionrs/localCronCommands';
+import { processLocalCronResponse } from '@/renderer/pages/conversation/platforms/tjuaecli/localCronCommands';
 
 describe('processLocalCronResponse', () => {
   it('keeps legacy cron command text visible instead of parsing it locally', async () => {

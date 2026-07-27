@@ -1,4 +1,4 @@
-import AionSelect from '@/renderer/components/base/AionSelect';
+import TjuaeSelect from '@/renderer/components/base/TjuaeSelect';
 import type { SelectHandle } from '@arco-design/web-react/es/Select/interface';
 import React, { useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,21 +29,21 @@ const LanguageSwitcher: React.FC = () => {
 
   return (
     <div className='flex items-center gap-8px'>
-      <AionSelect ref={selectRef} className='w-160px' value={i18n.language} onChange={handleLanguageChange}>
-        <AionSelect.Option value='zh-CN'>简体中文</AionSelect.Option>
-        <AionSelect.Option value='zh-TW'>繁體中文</AionSelect.Option>
-        <AionSelect.Option value='ja-JP'>日本語</AionSelect.Option>
-        <AionSelect.Option value='ko-KR'>한국어</AionSelect.Option>
-        <AionSelect.Option value='tr-TR'>Türkçe</AionSelect.Option>
-        <AionSelect.Option value='ru-RU'>Русский</AionSelect.Option>
-        <AionSelect.Option value='uk-UA'>Українська</AionSelect.Option>
-        <AionSelect.Option value='pt-BR'>Português (BR)</AionSelect.Option>
-        <AionSelect.Option value='de-DE'>Deutsch</AionSelect.Option>
-        <AionSelect.Option value='es-ES'>Español</AionSelect.Option>
-        <AionSelect.Option value='fr-FR'>Français</AionSelect.Option>
-        <AionSelect.Option value='fa-IR'>فارسی</AionSelect.Option>
-        <AionSelect.Option value='en-US'>English</AionSelect.Option>
-      </AionSelect>
+      <TjuaeSelect ref={selectRef} className='w-160px' value={i18n.language} onChange={handleLanguageChange}>
+        <TjuaeSelect.Option value='zh-CN'>简体中文</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='zh-TW'>繁體中文</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='ja-JP'>日本語</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='ko-KR'>한국어</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='tr-TR'>Türkçe</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='ru-RU'>Русский</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='uk-UA'>Українська</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='pt-BR'>Português (BR)</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='de-DE'>Deutsch</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='es-ES'>Español</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='fr-FR'>Français</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='fa-IR'>فارسی</TjuaeSelect.Option>
+        <TjuaeSelect.Option value='en-US'>English</TjuaeSelect.Option>
+      </TjuaeSelect>
     </div>
   );
 };

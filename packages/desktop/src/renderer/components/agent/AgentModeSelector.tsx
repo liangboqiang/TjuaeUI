@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -226,7 +226,7 @@ const AgentModeSelector: React.FC<AgentModeSelectorProps> = ({
             <div
               className='flex items-center gap-8px'
               data-mode-value={mode.value}
-              data-testid={`aionrs-mode-option-${mode.value}`}
+              data-testid={`tjuaecli-mode-option-${mode.value}`}
             >
               <span aria-hidden='true' className='w-16px shrink-0 text-primary'>
                 {current_mode === mode.value ? '✓' : ''}

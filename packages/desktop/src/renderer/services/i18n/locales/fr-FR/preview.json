@@ -70,30 +70,14 @@
     "emptySnapshot": "Le contenu de l'instantané est vide"
   },
   "office": {
-    "installLinkText": "Guide d'installation d'OfficeCli ouvert",
-    "errors": {
-      "officecliNotFound": "officecli n'est pas installé.",
-      "installFailed": "Échec de l'installation automatique d'officecli. Vérifiez les journaux backend et réessayez.",
-      "portTimeout": "Le service de prévisualisation a démarré mais n’est pas prêt à temps. Réessayez.",
-      "startFailed": "Échec du démarrage du service de prévisualisation d'Office.",
-      "outsideSandbox": "Ce fichier se trouve en dehors du bac à sable du projet actuel."
-    },
-    "serverInstall": {
-      "hint": "AionUi fonctionne sur un serveur. Installez le composant d'aperçu sur ce serveur, puis réessayez :",
-      "icuNote": "S'il ne démarre toujours pas, installez la bibliothèque ICU sur le serveur (Debian/Ubuntu : apt-get install -y libicu-dev)."
-    }
+    "previewUnavailable": "L’aperçu de ce type de fichier n’est pas disponible dans l’application.",
+    "openOrDownloadHint": "Utilisez la barre d’outils pour ouvrir le fichier original dans une application système ou télécharger une copie."
   },
   "word": {
     "title": "Document Word",
     "loading": "Chargement du document Word...",
     "invalid": "Veuillez confirmer que le fichier est un document Word valide",
-    "loadFailed": "Échec du chargement du document Word",
-    "watch": {
-      "loading": "Chargement du document Word...",
-      "installing": "Installation d'officecli...",
-      "startFailed": "Échec du démarrage de l'aperçu Word",
-      "installHint": "Nécessite officecli. Il sera installé automatiquement."
-    }
+    "loadFailed": "Échec du chargement du document Word"
   },
   "excel": {
     "title": "Feuille de calcul Excel",
@@ -104,13 +88,7 @@
     "convertFailed": "Échec de la conversion Excel",
     "loadFailed": "Échec du chargement du classeur Excel",
     "emptySheet": "Cette feuille de calcul ne contient pas de données",
-    "emptySheetHint": "Vérifiez si la feuille contient des données ou des images",
-    "watch": {
-      "loading": "Chargement du fichier Excel...",
-      "installing": "Installation d'officecli...",
-      "startFailed": "Échec du démarrage de l'aperçu Excel",
-      "installHint": "Nécessite officecli. Il sera installé automatiquement."
-    }
+    "emptySheetHint": "Vérifiez si la feuille contient des données ou des images"
   },
   "pdf": {
     "title": "Document PDF",
@@ -133,11 +111,5 @@
     "inspectElement": "Inspecter l'élément",
     "inspectElementEnable": "Activer l'inspecteur d'éléments",
     "inspectElementDisable": "Désactiver l'inspecteur d'éléments"
-  },
-  "ppt": {
-    "loading": "Démarrage de l'aperçu PPT...",
-    "installing": "Installation du composant d'aperçu...",
-    "startFailed": "Échec du démarrage de l'aperçu PPT",
-    "installHint": "Assurez-vous qu'officecli est installé : npm run postinstall"
   }
 }

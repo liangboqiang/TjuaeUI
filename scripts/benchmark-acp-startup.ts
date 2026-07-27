@@ -86,9 +86,9 @@ function agentPillByBackend(backend: string) {
 
 function getLogFilePath(): string {
   const today = new Date().toISOString().slice(0, 10);
-  // Dev mode uses "AionUi-Dev", production uses "AionUi"
-  const devPath = path.join(os.homedir(), 'Library', 'Logs', 'AionUi-Dev', `${today}.log`);
-  const prodPath = path.join(os.homedir(), 'Library', 'Logs', 'AionUi', `${today}.log`);
+  // Dev mode uses "TjuaeUI-Dev", production uses "TjuaeUI"
+  const devPath = path.join(os.homedir(), 'Library', 'Logs', 'TjuaeUI-Dev', `${today}.log`);
+  const prodPath = path.join(os.homedir(), 'Library', 'Logs', 'TjuaeUI', `${today}.log`);
   return fs.existsSync(devPath) ? devPath : prodPath;
 }
 
@@ -193,7 +193,7 @@ function parsePerfLines(lines: string[]): Partial<SessionTiming> {
 
 async function launchApp(): Promise<ElectronApplication> {
   const projectRoot = path.resolve(__dirname, '..');
-  console.log(`[benchmark] Launching Electron app from: ${projectRoot}`);
+  console.log(`[基准测试] 正在从以下目录启动 Electron 应用：${projectRoot}`);
 
   const launchArgs = ['.'];
   const electronApp = await electron.launch({
@@ -202,10 +202,10 @@ async function launchApp(): Promise<ElectronApplication> {
     env: {
       ...process.env,
       ACP_PERF: '1',
-      AIONUI_DISABLE_AUTO_UPDATE: '1',
-      AIONUI_E2E_TEST: '1',
-      AIONUI_DISABLE_DEVTOOLS: '1',
-      AIONUI_CDP_PORT: '0',
+      TJUAEUI_DISABLE_AUTO_UPDATE: '1',
+      TJUAEUI_E2E_TEST: '1',
+      TJUAEUI_DISABLE_DEVTOOLS: '1',
+      TJUAEUI_CDP_PORT: '0',
       NODE_ENV: 'development',
     },
     timeout: 60_000,
@@ -229,7 +229,7 @@ async function resolveMainWindow(electronApp: ElectronApplication): Promise<Page
       return win;
     }
   }
-  throw new Error('Failed to resolve main window');
+  throw new Error('无法找到主窗口');
 }
 
 // ── Navigation helpers ──────────────────────────────────────────────────────
@@ -252,7 +252,7 @@ async function invokeBridge<T = unknown>(page: Page, key: string, data?: unknown
   return page.evaluate(
     async ({ requestKey, requestData, requestTimeoutMs }) => {
       const api = (window as unknown as { electronAPI?: { emit?: Function; on?: Function } }).electronAPI;
-      if (!api?.emit || !api?.on) throw new Error('electronAPI bridge unavailable');
+      if (!api?.emit || !api?.on) throw new Error('electronAPI 桥接不可用');
 
       const id = `bench_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
       const callbackEventName = `subscribe.callback-${requestKey}${id}`;
@@ -283,7 +283,7 @@ async function invokeBridge<T = unknown>(page: Page, key: string, data?: unknown
           if (settled) return;
           settled = true;
           off?.();
-          reject(new Error(`Bridge timeout: ${requestKey}`));
+          reject(new Error(`桥接请求超时：${requestKey}`));
         }, requestTimeoutMs);
 
         api.emit?.(requestEventName, { id, data: requestData });
@@ -308,7 +308,7 @@ async function selectModel(page: Page, modelLabel: string, slow: boolean): Promi
   try {
     await btn.waitFor({ state: 'visible', timeout: 15_000 });
   } catch {
-    console.log(`  [model] model selector button not visible — skipping model switch`);
+    console.log(`  [模型] 模型选择按钮不可见，跳过模型切换`);
     return false;
   }
 
@@ -328,7 +328,7 @@ async function selectModel(page: Page, modelLabel: string, slow: boolean): Promi
   } catch {
     // Close the dropdown before returning
     await page.keyboard.press('Escape');
-    console.log(`  [model] model "${modelLabel}" not found in dropdown`);
+    console.log(`  [模型] 下拉列表中未找到模型“${modelLabel}”`);
     return false;
   }
   await pause(300);
@@ -355,7 +355,7 @@ async function runBenchmark(
   for (const agent of agents) {
     for (const model of modelList) {
       const groupLabel = model === 'default' ? agent : `${agent}/${model}`;
-      console.log(`\n[benchmark] Starting ${sessionsPerAgent} sessions for "${groupLabel}"...\n`);
+      console.log(`\n[基准测试] 正在为“${groupLabel}”运行 ${sessionsPerAgent} 个会话……\n`);
 
       for (let i = 1; i <= sessionsPerAgent; i++) {
         const label = `[${groupLabel} #${i}/${sessionsPerAgent}]`;
@@ -373,7 +373,7 @@ async function runBenchmark(
           const pill = page.locator(agentPillByBackend(agent));
           const pillVisible = await pill.isVisible().catch(() => false);
           if (!pillVisible) {
-            console.log(`${label} SKIP — agent pill not found`);
+            console.log(`${label} 跳过：未找到智能体选项`);
             break;
           }
           await pill.click();
@@ -386,35 +386,35 @@ async function runBenchmark(
           if (model !== 'default') {
             const modelSelected = await selectModel(page, model, slow);
             if (!modelSelected) {
-              console.log(`${label} SKIP — model "${model}" not available`);
+              console.log(`${label} 跳过：模型“${model}”不可用`);
               break;
             }
-            console.log(`${label} model "${model}" selected`);
+            console.log(`${label} 已选择模型“${model}”`);
           }
 
           // 4. Send message
           const textarea = page.locator(GUID_INPUT);
           await textarea.waitFor({ state: 'visible', timeout: 8_000 });
           await pause(500);
-          await textarea.fill(`benchmark ${groupLabel} session ${i}`);
-          console.log(`${label} filled textarea, pressing Enter...`);
+          await textarea.fill(`基准测试 ${groupLabel} 会话 ${i}`);
+          console.log(`${label} 已填写输入框，正在按下回车键……`);
           await pause(1_000);
           const wallStart = Date.now();
           await textarea.press('Enter');
 
           // 5. Wait for conversation page
-          console.log(`${label} waiting for conversation page...`);
+          console.log(`${label} 正在等待会话页面……`);
           await page.waitForFunction(() => window.location.hash.includes('/conversation/'), {
             timeout: 15_000,
           });
           const hash = new URL(page.url()).hash;
           const conversationId = hash.split('/conversation/')[1];
-          console.log(`${label} conversation created: ${conversationId}`);
+          console.log(`${label} 会话已创建：${conversationId}`);
 
           // 6. Wait for ACP startup + response to complete by polling the log file.
           //    - [ACP-PERF] start: total — marks startup complete
           //    - [ACP-PERF] send: sendPrompt completed — marks the full turn done
-          console.log(`${label} waiting for [ACP-PERF] logs...`);
+          console.log(`${label} 正在等待 [ACP-PERF] 日志……`);
           const pollDeadline = Date.now() + 180_000;
           let startupDetected = false;
           let turnCompleted = false;
@@ -422,7 +422,7 @@ async function runBenchmark(
             const newLines = readNewLogLines(logPath, logOffset);
             if (!startupDetected && newLines.some((line) => /\[ACP-PERF\] start: total/.test(line))) {
               startupDetected = true;
-              console.log(`${label} startup detected, waiting for response to finish...`);
+              console.log(`${label} 已检测到启动完成，正在等待响应结束……`);
             }
             if (startupDetected && newLines.some((line) => /\[ACP-PERF\] send: sendPrompt completed/.test(line))) {
               turnCompleted = true;
@@ -434,9 +434,9 @@ async function runBenchmark(
           const wallClockMs = wallEnd - wallStart;
 
           if (!startupDetected) {
-            console.log(`${label} WARN: [ACP-PERF] start: total not found in log after 180s`);
+            console.log(`${label} 警告：180 秒后仍未在日志中找到 [ACP-PERF] start: total`);
           } else if (!turnCompleted) {
-            console.log(`${label} WARN: startup detected but response did not complete within timeout`);
+            console.log(`${label} 警告：已检测到启动完成，但响应未在超时时间内结束`);
           }
 
           // 7. Parse log lines (re-read to get final state)
@@ -469,17 +469,17 @@ async function runBenchmark(
           results.push(timing);
 
           console.log(
-            `${label} total=${timing.totalMs}ms firstChunk=${timing.firstChunkMs}ms wall=${wallClockMs}ms ` +
-              `(conn=${timing.connectionMs} auth=${timing.authenticationMs} ` +
-              `session=${timing.sessionCreatedMs} model=${timing.modelSetMs})` +
-              ` [connect: shellEnv=${timing.shellEnvMs} envPrep=${timing.envPreparedMs}` +
-              ` spawn=${timing.processSpawnMs} cli=${timing.cliStartupMs}` +
-              ` proto=${timing.protocolInitMs} total=${timing.connectTotalMs}]`
+            `${label} 总耗时=${timing.totalMs}ms 首个数据块=${timing.firstChunkMs}ms 实际耗时=${wallClockMs}ms ` +
+              `（连接=${timing.connectionMs} 身份验证=${timing.authenticationMs} ` +
+              `会话=${timing.sessionCreatedMs} 模型=${timing.modelSetMs}）` +
+              ` [连接明细：Shell环境=${timing.shellEnvMs} 环境准备=${timing.envPreparedMs}` +
+              ` 创建进程=${timing.processSpawnMs} CLI启动=${timing.cliStartupMs}` +
+              ` 协议初始化=${timing.protocolInitMs} 总计=${timing.connectTotalMs}]`
           );
 
-          // 8. Delete conversation to release resources (kill agent process + delete DB)
+          // 8. 删除会话并释放资源（终止智能体进程并删除数据库记录）。
           if (conversationId) {
-            console.log(`${label} deleting conversation ${conversationId}...`);
+            console.log(`${label} 正在删除会话 ${conversationId}……`);
             try {
               const deleted = await page.evaluate(async (convId) => {
                 const api = (window as any).electronAPI;
@@ -500,7 +500,7 @@ async function runBenchmark(
                   api.emit('subscribe-remove-conversation', { id: reqId, data: { id: convId } });
                 });
               }, conversationId);
-              console.log(`${label} delete result: ${deleted}`);
+              console.log(`${label} 删除结果：${deleted}`);
               if (deleted) {
                 await page
                   .waitForFunction(() => !window.location.hash.includes('/conversation/'), { timeout: 5_000 })
@@ -508,7 +508,7 @@ async function runBenchmark(
               }
             } catch (e: unknown) {
               const errMsg = e instanceof Error ? e.message : String(e);
-              console.warn(`${label} delete failed: ${errMsg}`);
+              console.warn(`${label} 删除失败：${errMsg}`);
             }
           }
 
@@ -516,7 +516,7 @@ async function runBenchmark(
           await new Promise((r) => setTimeout(r, 2_000));
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(`${label} FAILED: ${msg}`);
+          console.error(`${label} 失败：${msg}`);
           results.push({
             agent,
             model,
@@ -590,7 +590,7 @@ function printTerminalReport(results: SessionTiming[]) {
   const groups = getGroups(results);
 
   console.log('\n' + '═'.repeat(80));
-  console.log('  ACP Startup Latency Benchmark — Summary');
+  console.log('  ACP 启动延迟基准测试——摘要');
   console.log('═'.repeat(80));
 
   for (const { key, agent, model } of groups) {
@@ -601,7 +601,7 @@ function printTerminalReport(results: SessionTiming[]) {
     const connStats = computeStats(gr.map((r) => r.connectionMs));
     const authStats = computeStats(gr.map((r) => r.authenticationMs));
     const sessStats = computeStats(gr.map((r) => r.sessionCreatedMs));
-    // Connection sub-phases
+    // 连接子阶段。
     const shellEnvStats = computeStats(gr.map((r) => r.shellEnvMs));
     const envPrepStats = computeStats(gr.map((r) => r.envPreparedMs));
     const spawnStats = computeStats(gr.map((r) => r.processSpawnMs));
@@ -610,34 +610,34 @@ function printTerminalReport(results: SessionTiming[]) {
     const connTotalStats = computeStats(gr.map((r) => r.connectTotalMs));
 
     const pad = 24;
-    console.log(`\n  ${key.toUpperCase()} (${totalStats.count} successful sessions)`);
+    console.log(`\n  ${key.toUpperCase()}（${totalStats.count} 个成功会话）`);
     console.log('  ' + '─'.repeat(76));
     console.log(
-      `  ${'Phase'.padEnd(pad)} ${'Mean'.padStart(8)} ${'Median'.padStart(8)} ${'P95'.padStart(8)} ${'Min'.padStart(8)} ${'Max'.padStart(8)}`
+      `  ${'阶段'.padEnd(pad)} ${'平均值'.padStart(8)} ${'中位数'.padStart(8)} ${'P95'.padStart(8)} ${'最小值'.padStart(8)} ${'最大值'.padStart(8)}`
     );
     console.log('  ' + '─'.repeat(76));
 
     const rows: [string, ReturnType<typeof computeStats>][] = [
-      ['Total (log)', totalStats],
-      ['First chunk', firstChunkStats],
-      ['Wall clock', wallStats],
-      ['Connection', connStats],
-      ['  Shell env', shellEnvStats],
-      ['  Env prepared', envPrepStats],
-      ['  Process spawn', spawnStats],
-      ['  CLI startup', cliStartupStats],
-      ['  Protocol init', protoInitStats],
-      ['  Connect total', connTotalStats],
-      ['Authentication', authStats],
-      ['Session create', sessStats],
+      ['总耗时（日志）', totalStats],
+      ['首个数据块', firstChunkStats],
+      ['实际耗时', wallStats],
+      ['建立连接', connStats],
+      ['  Shell 环境', shellEnvStats],
+      ['  环境准备', envPrepStats],
+      ['  创建进程', spawnStats],
+      ['  CLI 启动', cliStartupStats],
+      ['  协议初始化', protoInitStats],
+      ['  连接总耗时', connTotalStats],
+      ['身份验证', authStats],
+      ['创建会话', sessStats],
     ];
 
-    // Add codex-specific rows if any data exists
+    // 存在数据时添加 Codex 专属行。
     const codexCacheStats = computeStats(gr.map((r) => r.codexCacheLookupMs));
     const codexDiagStats = computeStats(gr.map((r) => r.codexDiagnosticsMs));
     if (codexCacheStats.count > 0 || codexDiagStats.count > 0) {
-      rows.push(['  Codex cache lookup', codexCacheStats]);
-      rows.push(['  Codex diagnostics', codexDiagStats]);
+      rows.push(['  Codex 缓存查找', codexCacheStats]);
+      rows.push(['  Codex 诊断', codexDiagStats]);
     }
 
     for (const [label, stats] of rows) {
@@ -652,6 +652,15 @@ function printTerminalReport(results: SessionTiming[]) {
 
 // ── HTML report ─────────────────────────────────────────────────────────────
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 function generateHtmlReport(results: SessionTiming[]): string {
   const now = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const outputDir = path.join(__dirname, 'benchmark-results');
@@ -659,30 +668,44 @@ function generateHtmlReport(results: SessionTiming[]): string {
   const outputPath = path.join(outputDir, `acp-startup-${now}.html`);
 
   const groups = getGroups(results);
-  const dataJson = JSON.stringify(results, null, 2);
-  const groupsJson = JSON.stringify(groups);
-
   const statsRows = groups
     .map(({ key, agent, model }) => {
       const gr = filterGroup(results, agent, model);
       const metrics: [string, number[]][] = [
-        ['Startup total', gr.map((r) => r.totalMs)],
-        ['First chunk', gr.map((r) => r.firstChunkMs)],
-        ['Connection', gr.map((r) => r.connectionMs)],
-        ['  Shell env', gr.map((r) => r.shellEnvMs)],
-        ['  Env prepared', gr.map((r) => r.envPreparedMs)],
-        ['  Process spawn', gr.map((r) => r.processSpawnMs)],
-        ['  CLI startup', gr.map((r) => r.cliStartupMs)],
-        ['  Protocol init', gr.map((r) => r.protocolInitMs)],
-        ['Authentication', gr.map((r) => r.authenticationMs)],
-        ['Session create', gr.map((r) => r.sessionCreatedMs)],
+        ['启动总耗时', gr.map((r) => r.totalMs)],
+        ['首个数据块', gr.map((r) => r.firstChunkMs)],
+        ['建立连接', gr.map((r) => r.connectionMs)],
+        ['  Shell 环境', gr.map((r) => r.shellEnvMs)],
+        ['  环境准备', gr.map((r) => r.envPreparedMs)],
+        ['  创建进程', gr.map((r) => r.processSpawnMs)],
+        ['  CLI 启动', gr.map((r) => r.cliStartupMs)],
+        ['  协议初始化', gr.map((r) => r.protocolInitMs)],
+        ['身份验证', gr.map((r) => r.authenticationMs)],
+        ['创建会话', gr.map((r) => r.sessionCreatedMs)],
       ];
       return metrics
         .map(([label, vals]) => {
           const s = computeStats(vals);
-          return `<tr><td>${key}</td><td>${label}</td><td>${s.count}</td><td>${s.mean}ms</td><td>${s.median}ms</td><td>${s.p95}ms</td><td>${s.min}ms</td><td>${s.max}ms</td></tr>`;
+          return `<tr><td>${escapeHtml(key)}</td><td>${label}</td><td>${s.count}</td><td>${s.mean}ms</td><td>${s.median}ms</td><td>${s.p95}ms</td><td>${s.min}ms</td><td>${s.max}ms</td></tr>`;
         })
         .join('\n');
+    })
+    .join('\n');
+
+  const metricCards = groups
+    .map(({ key, agent, model }) => {
+      const successful = filterGroup(results, agent, model).filter((result) => !result.failed);
+      const totalMedian = computeStats(successful.map((result) => result.totalMs)).median;
+      const firstChunkMedian = computeStats(successful.map((result) => result.firstChunkMs)).median;
+      const maxValue = Math.max(totalMedian, firstChunkMedian, 1);
+      const totalWidth = Math.max((totalMedian / maxValue) * 100, 1);
+      const firstChunkWidth = Math.max((firstChunkMedian / maxValue) * 100, 1);
+      return `<section class="metric-card">
+        <h2>${escapeHtml(key)}</h2>
+        <div class="metric-row"><span>启动中位数</span><div class="bar-track"><i style="width:${totalWidth}%"></i></div><strong>${totalMedian} ms</strong></div>
+        <div class="metric-row"><span>首块中位数</span><div class="bar-track"><i class="first-chunk" style="width:${firstChunkWidth}%"></i></div><strong>${firstChunkMedian} ms</strong></div>
+        <p>成功会话：${successful.length}</p>
+      </section>`;
     })
     .join('\n');
 
@@ -690,150 +713,59 @@ function generateHtmlReport(results: SessionTiming[]): string {
     .map((r) => {
       const groupKey = r.model === 'default' ? r.agent : `${r.agent}/${r.model}`;
       return (
-        `<tr class="${r.failed ? 'failed' : ''}"><td>${r.sessionIndex}</td><td>${groupKey}</td>` +
+        `<tr class="${r.failed ? 'failed' : ''}"><td>${r.sessionIndex}</td><td>${escapeHtml(groupKey)}</td>` +
         `<td>${r.totalMs}</td><td>${r.firstChunkMs}</td><td>${r.connectionMs}</td>` +
         `<td>${r.shellEnvMs}</td><td>${r.envPreparedMs}</td><td>${r.processSpawnMs}</td>` +
         `<td>${r.cliStartupMs}</td><td>${r.protocolInitMs}</td>` +
         `<td>${r.authenticationMs}</td><td>${r.sessionCreatedMs}</td>` +
-        `<td>${r.wallClockMs}</td><td>${r.failed ? 'FAIL' : 'OK'}</td></tr>`
+        `<td>${r.wallClockMs}</td><td>${r.failed ? '失败' : '通过'}</td></tr>`
       );
     })
     .join('\n');
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>ACP Startup Latency Benchmark</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <title>ACP 启动延迟基准测试</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 32px; background: #f8f9fa; color: #333; }
     h1 { margin-bottom: 8px; }
     .meta { color: #666; margin-bottom: 24px; }
-    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-    .chart-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    canvas { width: 100% !important; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .metric-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .metric-card h2 { margin-bottom: 16px; font-size: 18px; }
+    .metric-card p { color: #666; font-size: 13px; margin-top: 12px; }
+    .metric-row { display: grid; grid-template-columns: 88px 1fr 72px; gap: 12px; align-items: center; margin: 10px 0; font-size: 13px; }
+    .metric-row strong { text-align: right; }
+    .bar-track { height: 10px; overflow: hidden; border-radius: 999px; background: #eef1f4; }
+    .bar-track i { display: block; height: 100%; border-radius: inherit; background: #4a90d9; }
+    .bar-track i.first-chunk { background: #50c878; }
     table { border-collapse: collapse; width: 100%; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom: 24px; }
     th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
     th { background: #f1f3f5; font-weight: 600; }
     tr.failed td { background: #fff5f5; color: #c92a2a; }
-    @media (max-width: 900px) { .charts { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { body { padding: 16px; } .metric-row { grid-template-columns: 80px 1fr 64px; } }
   </style>
 </head>
 <body>
-  <h1>ACP Startup Latency Benchmark</h1>
-  <p class="meta">Generated: ${new Date().toISOString()} &bull; Groups: ${groups.map((g) => g.key).join(', ')}</p>
+  <h1>ACP 启动延迟基准测试</h1>
+  <p class="meta">生成时间：${new Date().toISOString()} &bull; 分组：${groups.map((g) => escapeHtml(g.key)).join('、')}</p>
 
-  <div class="charts">
-    <div class="chart-card"><canvas id="firstChunkChart"></canvas></div>
-    <div class="chart-card"><canvas id="breakdownChart"></canvas></div>
-  </div>
+  <div class="metrics">${metricCards}</div>
 
-  <h2 style="margin-bottom:12px;">Summary</h2>
+  <h2 style="margin-bottom:12px;">统计摘要</h2>
   <table>
-    <thead><tr><th>Group</th><th>Metric</th><th>Sessions</th><th>Mean</th><th>Median</th><th>P95</th><th>Min</th><th>Max</th></tr></thead>
+    <thead><tr><th>分组</th><th>指标</th><th>会话数</th><th>平均值</th><th>中位数</th><th>P95</th><th>最小值</th><th>最大值</th></tr></thead>
     <tbody>${statsRows}</tbody>
   </table>
 
-  <h2 style="margin-bottom:12px;">Raw Data</h2>
+  <h2 style="margin-bottom:12px;">原始数据</h2>
   <table>
-    <thead><tr><th>#</th><th>Group</th><th>Total</th><th>1st Chunk</th><th>Connect</th><th>Shell Env</th><th>Env Prep</th><th>Spawn</th><th>CLI Boot</th><th>Proto Init</th><th>Auth</th><th>Session</th><th>Wall</th><th>Status</th></tr></thead>
+    <thead><tr><th>#</th><th>分组</th><th>总耗时</th><th>首个数据块</th><th>连接</th><th>Shell 环境</th><th>环境准备</th><th>创建进程</th><th>CLI 启动</th><th>协议初始化</th><th>身份验证</th><th>会话</th><th>实际耗时</th><th>状态</th></tr></thead>
     <tbody>${rawRows}</tbody>
   </table>
-
-  <script>
-    const data = ${dataJson};
-    const groups = ${groupsJson};
-    const palette = ['#4A90D9','#50C878','#E6A23C','#F56C6C','#909399','#B37FEB','#36CFC9','#FF85C0'];
-
-    // Derive group key for each record
-    function gk(r) { return r.model === 'default' ? r.agent : r.agent + '/' + r.model; }
-
-    // Chart 1: First chunk latency comparison (key metric)
-    const fcCtx = document.getElementById('firstChunkChart').getContext('2d');
-    const maxSession = Math.max(...data.map(d => d.sessionIndex));
-    const sessionLabels = Array.from({ length: maxSession }, (_, i) => i + 1);
-    new Chart(fcCtx, {
-      type: 'line',
-      data: {
-        labels: sessionLabels,
-        datasets: groups.flatMap((g, gi) => {
-          const c = palette[gi % palette.length];
-          const gd = data.filter(d => d.agent === g.agent && d.model === g.model);
-          return [
-            {
-              label: g.key + ' — first chunk',
-              data: gd.map(d => d.failed || !d.firstChunkMs ? null : d.firstChunkMs),
-              borderColor: c,
-              backgroundColor: c + '20',
-              tension: 0.3,
-              pointRadius: 4,
-              spanGaps: true,
-            },
-            {
-              label: g.key + ' — startup total',
-              data: gd.map(d => d.failed ? null : d.totalMs),
-              borderColor: c,
-              backgroundColor: c + '20',
-              borderDash: [6, 3],
-              tension: 0.3,
-              pointRadius: 3,
-              spanGaps: true,
-            },
-          ];
-        }),
-      },
-      options: {
-        responsive: true,
-        plugins: { title: { display: true, text: 'First Chunk & Startup Latency per Session' } },
-        scales: { x: { title: { display: true, text: 'Session #' } }, y: { title: { display: true, text: 'ms' }, beginAtZero: true } },
-      },
-    });
-
-    // Chart 2: Grouped bar — median metrics comparison across all groups
-    function median(arr) {
-      const s = arr.filter(v => v > 0).sort((a,b) => a - b);
-      return s.length ? s[Math.floor(s.length / 2)] : 0;
-    }
-    const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
-    const groupLabels = groups.map(g => g.key);
-    const groupData = groups.map(g => {
-      const gd = data.filter(d => d.agent === g.agent && d.model === g.model && !d.failed);
-      return {
-        total: median(gd.map(d => d.totalMs)),
-        firstChunk: median(gd.map(d => d.firstChunkMs)),
-        connection: median(gd.map(d => d.connectionMs)),
-        shellEnv: median(gd.map(d => d.shellEnvMs)),
-        envPrepared: median(gd.map(d => d.envPreparedMs)),
-        processSpawn: median(gd.map(d => d.processSpawnMs)),
-        cliStartup: median(gd.map(d => d.cliStartupMs)),
-        protoInit: median(gd.map(d => d.protocolInitMs)),
-        session: median(gd.map(d => d.sessionCreatedMs)),
-      };
-    });
-    new Chart(breakdownCtx, {
-      type: 'bar',
-      data: {
-        labels: groupLabels,
-        datasets: [
-          { label: 'Startup Total', data: groupData.map(d => d.total), backgroundColor: '#4A90D9' },
-          { label: 'First Chunk', data: groupData.map(d => d.firstChunk), backgroundColor: '#50C878' },
-          { label: 'Shell Env', data: groupData.map(d => d.shellEnv), backgroundColor: '#FF85C0' },
-          { label: 'Env Prepared', data: groupData.map(d => d.envPrepared), backgroundColor: '#B37FEB' },
-          { label: 'Process Spawn', data: groupData.map(d => d.processSpawn), backgroundColor: '#36CFC9' },
-          { label: 'CLI Startup', data: groupData.map(d => d.cliStartup), backgroundColor: '#E6A23C' },
-          { label: 'Protocol Init', data: groupData.map(d => d.protoInit), backgroundColor: '#F56C6C' },
-          { label: 'Session Create', data: groupData.map(d => d.session), backgroundColor: '#909399' },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: { title: { display: true, text: 'Median Latency Breakdown Across Groups' } },
-        scales: { y: { title: { display: true, text: 'ms' }, beginAtZero: true } },
-      },
-    });
-  </script>
 </body>
 </html>`;
 
@@ -845,24 +777,24 @@ function generateHtmlReport(results: SessionTiming[]): string {
 
 async function main() {
   const { agents, sessions, slow, models } = parseArgs();
-  const modelStr = models.length > 0 ? `, Models: ${models.join(', ')}` : '';
-  console.log(`[benchmark] Agents: ${agents.join(', ')}${modelStr}, Sessions: ${sessions}${slow ? ', SLOW mode' : ''}`);
+  const modelStr = models.length > 0 ? `，模型：${models.join('、')}` : '';
+  console.log(`[基准测试] 智能体：${agents.join('、')}${modelStr}，会话数：${sessions}${slow ? '，慢速模式' : ''}`);
 
   const electronApp = await launchApp();
   const page = await resolveMainWindow(electronApp);
-  console.log('[benchmark] App launched, main window resolved');
+  console.log('[基准测试] 应用已启动，主窗口已就绪');
 
   // Wait for initial load
   await page.waitForFunction(() => (document.body.textContent?.length ?? 0) > 50, { timeout: 30_000 });
   await goToGuid(page);
-  console.log('[benchmark] Guid page ready, starting benchmark...');
+  console.log('[基准测试] 引导页已就绪，开始基准测试……');
 
   const results = await runBenchmark(page, electronApp, agents, models, sessions, slow);
 
   // Report
   printTerminalReport(results);
   const reportPath = generateHtmlReport(results);
-  console.log(`[benchmark] HTML report: ${reportPath}`);
+  console.log(`[基准测试] HTML 报告：${reportPath}`);
 
   // Cleanup
   try {
@@ -871,10 +803,10 @@ async function main() {
     // ignore
   }
   await electronApp.close().catch(() => {});
-  console.log('[benchmark] Done');
+  console.log('[基准测试] 完成');
 }
 
 main().catch((err) => {
-  console.error('[benchmark] Fatal error:', err);
+  console.error('[基准测试] 致命错误：', err);
   process.exit(1);
 });

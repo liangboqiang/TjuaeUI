@@ -1,229 +1,234 @@
 ---
 name: bump-version
-description: Use when bumping the AionUi version: query AionCore release, verify artifacts, update package.json, generate CHANGELOG, branch, commit, push, create PR, auto-merge, tag release.
+description: 升级 TjuaeUI 版本时使用：查询 TjuaeCore Release、校验构建产物、更新 package.json、生成 CHANGELOG、创建分支与 PR、自动合并并发布标签。
 ---
 
-# Bump Version
+# 升级版本
 
-Automate the AionUi release preparation: query AionCore release → verify artifacts → update versions → generate CHANGELOG → branch → PR → tag.
+自动完成 TjuaeUI 发布准备：查询 TjuaeCore Release → 校验产物 → 更新版本 → 生成 CHANGELOG → 创建分支 → 创建 PR → 发布标签。
 
-**Usage:** `/bump-version [version] [flags]`
+**用法：**`/bump-version [version] [flags]`
 
-- `/bump-version` — auto patch + latest AionCore
-- `/bump-version 2.2.0` — explicit AionUi version + latest AionCore
-- `/bump-version 2.2.0 --core v0.1.12` — explicit both versions
-- `/bump-version --skip-core` — pure frontend release (don't touch aioncoreVersion)
+- `/bump-version`：自动将 patch 版本加 1，并使用最新 TjuaeCore
+- `/bump-version 3.0.1`：指定 TjuaeUI 版本，并使用最新 TjuaeCore
+- `/bump-version 3.0.1 --core v0.2.0`：同时指定两个版本
+- `/bump-version --skip-core`：仅发布前端，不修改 `tjuaeCoreVersion`
 
-## Workflow
+## 工作流程
 
-### Step 1: Pre-flight Checks
+### 第 1 步：前置检查
 
 ```bash
 git branch --show-current
 git status --short
 ```
 
-- **Not on `main`** → Stop: "Please switch to main before running bump-version."
-- **Dirty working tree** → Stop: "There are uncommitted changes. Please commit or stash them first."
+- **当前不在 `main`**：停止并提示“请切换到 main 后再运行 bump-version。”
+- **工作区不干净**：停止并提示“存在未提交的变更，请先提交或暂存。”
 
-### Step 2: Pull Latest
+### 第 2 步：拉取最新代码
 
 ```bash
 git pull --rebase origin main
 ```
 
-Fails → Stop: "Failed to pull latest code. Please resolve conflicts or network issues first."
+失败时停止并提示：“拉取最新代码失败，请先解决冲突或网络问题。”
 
-### Step 3: Determine AionUi Target Version
+### 第 3 步：确定 TjuaeUI 目标版本
 
-Read `package.json` → extract `version` field.
+读取 `package.json` 的 `version` 字段。
 
-- **Argument provided** → use as-is
-- **No argument** → parse `major.minor.patch`, increment `patch` by 1
+- **提供了版本参数**：直接使用
+- **未提供版本参数**：解析 `major.minor.patch`，将 `patch` 加 1
 
-Display: "Bumping AionUi: {current} → {target}"
+显示：“正在升级 TjuaeUI：{current} → {target}”
 
-### Step 4: Query AionCore Latest Release
+### 第 4 步：查询最新 TjuaeCore Release
 
-**Skip entirely if `--skip-core` is set.**
-
-```bash
-gh release view --repo iOfficeAI/AionCore --json tagName,body
-```
-
-- If `--core <version>` provided → use that tag instead of latest
-- Display the AionCore version and ask user to confirm before continuing
-- Also read current `aioncoreVersion` from `package.json` — if it already matches the queried version, warn the user and ask whether to proceed or use `--skip-core`
-
-### Step 5: Verify AionCore Artifacts
-
-**Skip if `--skip-core`.**
+设置 `--skip-core` 时完全跳过本步骤。
 
 ```bash
-gh release view <tag> --repo iOfficeAI/AionCore --json assets --jq '.assets[].name'
+gh release view --repo liangboqiang/TjuaeCore --json tagName,body
 ```
 
-Verify all 7 expected assets exist:
+- 提供 `--core <version>` 时，查询指定 tag，而不是最新版本
+- 显示 TjuaeCore 版本，并在继续前请求用户确认
+- 同时读取 `package.json` 当前的 `tjuaeCoreVersion`；若已经与查询结果一致，应警告用户并询问继续还是改用 `--skip-core`
 
-- `aioncore-<tag>-x86_64-unknown-linux-gnu.tar.gz`
-- `aioncore-<tag>-aarch64-unknown-linux-gnu.tar.gz`
-- `aioncore-<tag>-x86_64-apple-darwin.tar.gz`
-- `aioncore-<tag>-aarch64-apple-darwin.tar.gz`
-- `aioncore-<tag>-x86_64-pc-windows-msvc.zip`
-- `aioncore-<tag>-aarch64-pc-windows-msvc.zip`
-- `aioncore-checksums.txt`
+### 第 5 步：校验 TjuaeCore 构建产物
 
-Missing → Stop: "AionCore {tag} is missing artifacts: {list}. Wait for CI to complete or check for build failures."
+设置 `--skip-core` 时跳过。
 
-### Step 6: Update package.json
+```bash
+gh release view <tag> --repo liangboqiang/TjuaeCore --json assets --jq '.assets[].name'
+```
 
-Use Edit tool to replace:
+确认以下 7 个预期文件全部存在：
+
+- `tjuaecore-<tag>-x86_64-unknown-linux-gnu.tar.gz`
+- `tjuaecore-<tag>-aarch64-unknown-linux-gnu.tar.gz`
+- `tjuaecore-<tag>-x86_64-apple-darwin.tar.gz`
+- `tjuaecore-<tag>-aarch64-apple-darwin.tar.gz`
+- `tjuaecore-<tag>-x86_64-pc-windows-msvc.zip`
+- `tjuaecore-<tag>-aarch64-pc-windows-msvc.zip`
+- `tjuaecore-checksums.txt`
+
+有文件缺失时停止并提示：“TjuaeCore {tag} 缺少构建产物：{list}。请等待 CI 完成或检查构建失败原因。”
+
+### 第 6 步：更新 `package.json`
+
+使用编辑工具替换：
 
 - `"version": "{current}"` → `"version": "{target}"`
-- `"aioncoreVersion": "{old}"` → `"aioncoreVersion": "{new core tag}"` (skip if `--skip-core`)
+- `"tjuaeCoreVersion": "{old}"` → `"tjuaeCoreVersion": "{new core tag}"`；设置 `--skip-core` 时不修改
 
-### Step 7: Generate CHANGELOG Entry
+### 第 7 步：生成 CHANGELOG 条目
 
-#### 7a: Determine Previous Tag
+#### 7a：确定上一个 tag
 
 ```bash
 git describe --tags --abbrev=0
 ```
 
-This gives the most recent tag (e.g. `v2.1.2`).
+该命令返回最近的标签，例如 `v2.1.2`。
 
-#### 7b: Collect Frontend Changes
+#### 7b：收集前端变更
 
 ```bash
 git log v{previous}..HEAD --oneline --no-merges --format="%s"
 ```
 
-- Filter to conventional commit types: `feat`, `fix`, `refactor`, `perf`, `style`
-- Exclude commits matching `chore: bump version`
-- Group by type (Features, Bug Fixes, Refactoring, Performance, Styling)
-- Format each as: `- **scope:** description (#PR)`
+- 只保留约定式提交类型：`feat`、`fix`、`refactor`、`perf`、`style`
+- 排除匹配 `chore: bump version` 的提交
+- 按类型分组为“新功能”“问题修复”“重构”“性能优化”“样式调整”
+- 每项格式为：`- **范围：** 描述（#PR）`
 
-#### 7c: Collect AionCore Changes
+#### 7c：收集 TjuaeCore 变更
 
-From step 4's release body (already in conventional-changelog format from release-please). Parse into same grouped format.
+解析第 4 步取得的 GitHub Release 说明；发布说明由版本标签工作流直接生成。将其整理为相同分组。
 
-**Skip if `--skip-core`.**
+设置 `--skip-core` 时跳过。
 
-#### 7d: Compose and Write CHANGELOG.md
+#### 7d：组合并写入 `CHANGELOG.md`
 
-If `CHANGELOG.md` exists at repo root → read its current content.
-If not → start with empty string.
+如果根目录存在 `CHANGELOG.md`，先读取现有内容；否则从空内容开始。
 
-Prepend the new entry in this format:
+将以下格式的新条目插入文件顶部：
 
 ```markdown
-# Changelog
+# 变更日志
 
-## [{target}](https://github.com/iOfficeAI/AionUi/compare/v{previous}...v{target}) ({date YYYY-MM-DD})
+## [{target}](https://github.com/liangboqiang/TjuaeUI/compare/v{previous}...v{target}) ({date YYYY-MM-DD})
 
-### Desktop
+### 桌面端
 
-#### Bug Fixes
+#### 问题修复
 
-- **upload:** abort in-flight uploads when switching conversations (#3019)
+- **上传：** 切换会话时中止仍在进行的上传（#3019）
 
-#### Features
+#### 新功能
 
-- **thinking:** add streaming indicator (#3015)
+- **思考过程：** 添加流式输出指示器（#3015）
 
-### Core ([{core tag}](https://github.com/iOfficeAI/AionCore/releases/tag/{core tag}))
+### 核心服务（[{核心标签}](https://github.com/liangboqiang/TjuaeCore/releases/tag/{核心标签})）
 
-#### Bug Fixes
+#### 问题修复
 
-- **acp:** load user MCP servers and emit empty-finish diagnostic (#327)
+- **ACP：** 加载用户 MCP 服务，并为空结束事件输出诊断信息（#327）
 
 ---
 ```
 
-Rules:
+规则：
 
-- If `--skip-core`: omit the entire "### Core" section
-- If no frontend commits since last tag: show `_No frontend changes in this release._` under "### Desktop"
-- Date format: `YYYY-MM-DD`
-- Always keep the top-level `# Changelog` header exactly once
+- 设置 `--skip-core` 时省略整个“核心服务”区块
+- 自上一个标签以来没有桌面端提交时，在“桌面端”下写入 `_本次发布没有桌面端变更。_`
+- 日期格式为 `YYYY-MM-DD`
+- 顶级“变更日志”标题只能出现一次
 
-### Step 8: Quality Checks
+### 第 8 步：质量检查
 
 ```bash
+bun run identity:check
 bun run lint
-bun run format
+bun run format:check
 bunx tsc --noEmit
+bun run i18n:types
+node scripts/check-i18n.js
+git diff --exit-code
 ```
 
-- **lint fails** → Stop: "Lint errors found. Please fix them before bumping."
-- **format** → Auto-fixes silently.
-- **tsc fails** → Stop: "TypeScript errors found. Please fix them before bumping."
+- **身份契约失败**：停止并移除旧品牌、推广或退役黑盒残留
+- **lint 失败**：停止并提示“发现 lint 错误，请修复后再升级版本。”
+- **format 失败**：先执行 `bun run format`，复查变更后重新运行门禁
+- **tsc 失败**：停止并提示“发现 TypeScript 错误，请修复后再升级版本。”
+- **国际化失败**：补齐翻译或提交生成后的类型文件，再重新运行门禁
 
-### Step 9: Run Tests
+### 第 9 步：运行测试
 
 ```bash
 bunx vitest run
 ```
 
-Fails → Stop: "Tests failed. Please fix before bumping."
+失败时停止并提示：“测试失败，请修复后再升级版本。”
 
-### Step 10: Branch, Commit, Push
+### 第 10 步：创建分支、提交并推送
 
 ```bash
 git checkout -b chore/bump-version-{target}
 git add package.json CHANGELOG.md
-git commit -m "chore: bump version to {target} and aioncore to {core tag}"
+git commit -m "chore(release): 升级到 {target} 并固定 tjuaecore {core tag}"
 just push -u origin chore/bump-version-{target}
 ```
 
-If `--skip-core`:
+设置 `--skip-core` 时使用：
 
 ```bash
-git commit -m "chore: bump version to {target}"
+git commit -m "chore(release): 升级到 {target}"
 ```
 
-### Step 11: Create PR + Enable Auto-Merge
+### 第 11 步：创建 PR 并启用自动合并
 
 ```bash
 gh pr create --base main \
-  --title "chore: bump version to {target}" \
-  --body "<the CHANGELOG entry generated in Step 7>"
+  --title "chore(release): 升级到 {target}" \
+  --body "<第 7 步生成的 CHANGELOG 条目>"
 ```
 
-Capture the PR number from the output. Then enable auto-merge (squash):
+从输出中取得 PR 编号，然后启用 squash 自动合并：
 
 ```bash
 gh pr merge {PR_NUMBER} --auto --squash
 ```
 
-Display: "PR created: {URL}. Auto-merge enabled — will merge automatically once CI passes."
+显示：“PR 已创建：{URL}。已启用自动合并；CI 通过后将自动合并。”
 
-### Step 12: Poll for Merge
+### 第 12 步：轮询合并状态
 
-Check PR merge status every 5 minutes:
+每 5 分钟检查一次 PR：
 
 ```bash
 gh pr view {PR_NUMBER} --json state,mergedAt,mergeStateStatus
 ```
 
-**Decision logic:**
+**判断逻辑：**
 
-| `state`                                                                     | Action                                                                                 |
-| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `MERGED`                                                                    | Proceed to Step 13                                                                     |
-| `CLOSED` (not merged)                                                       | Stop: "PR was closed without merging. Please check and confirm how to proceed."        |
-| `OPEN` with `mergeStateStatus: BLOCKED` or CI failure persisting > 3 checks | Stop: "PR merge is blocked (CI failure or review required). Please investigate: {URL}" |
-| `OPEN` otherwise                                                            | Wait 5 minutes, check again                                                            |
+| `state`                                                          | 操作                                                          |
+| ---------------------------------------------------------------- | ------------------------------------------------------------- |
+| `MERGED`                                                         | 进入第 13 步                                                  |
+| `CLOSED` 且未合并                                                | 停止并提示“PR 未合并即被关闭，请检查并确认后续操作。”         |
+| `OPEN` 且 `mergeStateStatus: BLOCKED`，或 CI 连续 3 次检查仍失败 | 停止并提示“PR 合并被阻断（CI 失败或需要审查），请检查：{URL}” |
+| 其他 `OPEN`                                                      | 等待 5 分钟后再次检查                                         |
 
-**Maximum wait:** 30 minutes (6 checks). If not merged after 30 minutes:
+**最长等待时间：**30 分钟（6 次检查）。30 分钟后仍未合并时提示：
 
-> "PR has not merged after 30 minutes. Please check status: {URL}. Reply 'continue' when merged, or 'abort' to stop."
+> “PR 在 30 分钟后仍未合并，请检查状态：{URL}。合并后回复 `continue`，或回复 `abort` 停止。”
 
-**Wait for user confirmation only in this timeout case.**
+**只有发生该超时时才等待用户确认。**
 
-### Step 13: Cleanup + Tag
+### 第 13 步：清理并创建 tag
 
-After merge is confirmed (either via polling or user confirmation):
+确认合并后（通过轮询或用户确认）：
 
 ```bash
 git checkout main
@@ -231,44 +236,44 @@ git pull --rebase origin main
 git branch -d chore/bump-version-{target}
 ```
 
-Check if remote branch still exists:
+检查远程分支是否仍存在：
 
 ```bash
 git ls-remote --heads origin chore/bump-version-{target}
 ```
 
-- Has output → `git push origin --delete chore/bump-version-{target}`
-- No output → skip
+- 有输出：执行 `just push origin --delete chore/bump-version-{target}`
+- 无输出：跳过
 
-Create and push tag:
+创建并推送 tag：
 
 ```bash
 git tag v{target}
-git push origin v{target}
+just push origin v{target}
 ```
 
-Wait a few seconds for GitHub to pick up the tag push, then fetch the triggered workflow run:
+等待 GitHub 识别 tag 推送，再获取触发的 workflow：
 
 ```bash
-gh run list --workflow=release.yml --branch v{target} --limit 1 --json databaseId,url
+gh run list --workflow=build-and-release.yml --branch v{target} --limit 1 --json databaseId,url
 ```
 
-Display: "Tag v{target} created and pushed. Release build triggered! Action: {run URL}"
+显示：“tag v{target} 已创建并推送，Release 构建已触发。Action：{run URL}”
 
-## Quick Reference
+## 快速参考
 
-```
- 1. Must be on clean main
+```text
+ 1. 必须位于干净的 main
  2. git pull --rebase
- 3. Determine AionUi target version (patch+1 or explicit)
- 4. Query AionCore latest release (or --core / --skip-core)
- 5. Verify AionCore artifacts (7 files)
- 6. Edit package.json (version + aioncoreVersion)
- 7. Generate CHANGELOG entry (frontend commits + AionCore release body)
- 8. lint + format + tsc
+ 3. 确定 TjuaeUI 目标版本（patch + 1 或显式指定）
+ 4. 查询最新 TjuaeCore Release（或使用 --core / --skip-core）
+ 5. 校验 TjuaeCore 产物（7 个文件）
+ 6. 修改 package.json（version + tjuaeCoreVersion）
+ 7. 生成 CHANGELOG（前端 commit + TjuaeCore Release body）
+ 8. identity + lint + format + tsc + i18n
  9. vitest run
 10. branch → commit → push
-11. gh pr create → enable auto-merge (squash)
-12. poll merge status (every 5min, max 30min) → stop on failure
-13. cleanup → git tag → git push tag
+11. gh pr create → 启用自动合并（squash）
+12. 每 5 分钟轮询，最多 30 分钟；失败时停止
+13. 清理 → git tag → 推送 tag
 ```

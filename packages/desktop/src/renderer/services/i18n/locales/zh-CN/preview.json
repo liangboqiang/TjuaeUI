@@ -70,30 +70,14 @@
     "emptySnapshot": "快照内容为空"
   },
   "office": {
-    "installLinkText": "打开 officecli 安装说明",
-    "errors": {
-      "officecliNotFound": "未安装 officecli。",
-      "installFailed": "自动安装 officecli 失败，请检查后端日志后重试。",
-      "portTimeout": "预览服务启动后未在预期时间内就绪，请重试。",
-      "startFailed": "启动 Office 预览服务失败。",
-      "outsideSandbox": "该文件不在当前项目沙箱范围内。"
-    },
-    "serverInstall": {
-      "hint": "AionUi 运行在服务器上，预览组件需要安装在该服务器上。请在服务器执行以下命令后重试：",
-      "icuNote": "若安装后仍无法启动，请在服务器安装 ICU 库（Debian/Ubuntu：apt-get install -y libicu-dev）。"
-    }
+    "previewUnavailable": "此文件类型暂不支持应用内预览。",
+    "openOrDownloadHint": "请使用工具栏通过系统应用打开原文件，或下载副本。"
   },
   "word": {
     "title": "Word 文档",
     "loading": "加载 Word 文档中...",
     "invalid": "请检查文件是否为有效的 Word 文档",
-    "loadFailed": "加载 Word 文档失败",
-    "watch": {
-      "loading": "正在加载 Word 文档...",
-      "installing": "正在安装 officecli...",
-      "startFailed": "启动 Word 预览失败",
-      "installHint": "需要 officecli，将自动安装。"
-    }
+    "loadFailed": "加载 Word 文档失败"
   },
   "excel": {
     "title": "Excel 表格",
@@ -104,13 +88,7 @@
     "convertFailed": "Excel 转换失败",
     "loadFailed": "加载 Excel 文档失败",
     "emptySheet": "此工作表无数据",
-    "emptySheetHint": "请检查 Excel 文件是否包含数据或图片",
-    "watch": {
-      "loading": "正在加载 Excel 文件...",
-      "installing": "正在安装 officecli...",
-      "startFailed": "启动 Excel 预览失败",
-      "installHint": "需要 officecli，将自动安装。"
-    }
+    "emptySheetHint": "请检查 Excel 文件是否包含数据或图片"
   },
   "pdf": {
     "title": "PDF 文档",
@@ -133,11 +111,5 @@
     "inspectElement": "审核元素",
     "inspectElementEnable": "开启审核元素",
     "inspectElementDisable": "关闭审核元素"
-  },
-  "ppt": {
-    "loading": "正在启动 PPT 预览...",
-    "installing": "正在安装预览组件...",
-    "startFailed": "启动 PPT 预览失败",
-    "installHint": "请从官方 iOfficeAI/OfficeCLI releases 页面安装 OfficeCLI"
   }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
  * Pure Node/Bun CLI — resets the WebUI admin password for the standalone
@@ -12,14 +12,14 @@
  *   1. A `bun run webui` is already running on the default port → reach its
  *      reverse-proxied /api/webui/reset-password directly. Users don't have to
  *      stop the server first; the just-reset password can be used immediately.
- *   2. No webui running → spawn a short-lived aioncore against the same
+ *   2. No webui running → spawn a short-lived tjuaecore against the same
  *      data-dir, POST /api/webui/reset-password, and stop the backend. This is
  *      the offline / cold-start path.
  *
  * Usage:
  *   bun run resetpass                 # default work dir
  *   bun run resetpass --data-dir /x   # custom work dir
- *   AIONUI_DATA_DIR=/x bun run resetpass
+ *   TJUAEUI_DATA_DIR=/x bun run resetpass
  *   NODE_ENV=production bun run resetpass
  */
 
@@ -28,9 +28,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { startBackend, stopBackend } from '@aionui/web-host';
+import { startBackend, stopBackend } from '@tjuae/web-host';
 
-const BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BACKEND_BINARY = process.platform === 'win32' ? 'tjuaecore.exe' : 'tjuaecore';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..');
@@ -46,10 +46,10 @@ const colors = {
 };
 
 const log = {
-  info: (msg: string) => console.log(`${colors.blue}i${colors.reset} ${msg}`),
-  success: (msg: string) => console.log(`${colors.green}OK${colors.reset} ${msg}`),
-  error: (msg: string) => console.log(`${colors.red}ERR${colors.reset} ${msg}`),
-  warning: (msg: string) => console.log(`${colors.yellow}WARN${colors.reset} ${msg}`),
+  info: (msg: string) => console.log(`${colors.blue}信息${colors.reset} ${msg}`),
+  success: (msg: string) => console.log(`${colors.green}成功${colors.reset} ${msg}`),
+  error: (msg: string) => console.log(`${colors.red}错误${colors.reset} ${msg}`),
+  warning: (msg: string) => console.log(`${colors.yellow}警告${colors.reset} ${msg}`),
   highlight: (msg: string) => console.log(`${colors.cyan}${colors.bright}${msg}${colors.reset}`),
 };
 
@@ -63,26 +63,26 @@ function getFlag(name: string): string | undefined {
 /**
  * Same resolution as scripts/webui.ts:resolveBackendDataDir — keep both in sync
  * so `bun run webui` and `bun run resetpass` always target the same SQLite DB.
- * See the comment there for why the default is `~/.aionui-web*` (not `~/.aionui*`).
+ * See the comment there for why the default is `~/.tjuaeui-web*` (not `~/.tjuaeui*`).
  */
 function resolveWorkDir(): string {
-  const override = getFlag('--data-dir') ?? process.env.AIONUI_DATA_DIR;
+  const override = getFlag('--data-dir') ?? process.env.TJUAEUI_DATA_DIR;
   if (override && override.trim().length > 0) {
     const resolved = path.resolve(override);
     fs.mkdirSync(resolved, { recursive: true });
     return resolved;
   }
   const suffix =
-    process.env.NODE_ENV === 'production' ? '' : process.env.AIONUI_MULTI_INSTANCE === '1' ? '-dev-2' : '-dev';
-  const dir = path.join(os.homedir(), `.aionui-web${suffix}`);
+    process.env.NODE_ENV === 'production' ? '' : process.env.TJUAEUI_MULTI_INSTANCE === '1' ? '-dev-2' : '-dev';
+  const dir = path.join(os.homedir(), `.tjuaeui-web${suffix}`);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
 
 function resolveBackendBinary(): string {
-  if (process.env.AIONUI_BACKEND_BIN) return process.env.AIONUI_BACKEND_BIN;
+  if (process.env.TJUAEUI_BACKEND_BIN) return process.env.TJUAEUI_BACKEND_BIN;
 
-  const bundledBase = process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
+  const bundledBase = process.env.TJUAEUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-tjuaecore');
   const runtimeKey = `${process.platform}-${process.arch}`;
   const bundled = path.join(bundledBase, runtimeKey, BACKEND_BINARY);
   if (fs.existsSync(bundled)) return bundled;
@@ -92,34 +92,30 @@ function resolveBackendBinary(): string {
     const found = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim().split(/\r?\n/)[0];
     if (found && fs.existsSync(found)) return found;
   } catch {
-    // fall through
+    // 继续尝试其他位置。
   }
 
-  throw new Error(
-    `Cannot find "${BACKEND_BINARY}". Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ${bundled}.`
-  );
+  throw new Error(`未找到“${BACKEND_BINARY}”。请设置 TJUAEUI_BACKEND_BIN、将它加入 PATH，或放到 ${bundled}。`);
 }
 
 /**
- * Same default port as scripts/webui.ts (mirrors WEBUI_DEFAULT_PORT on the
- * desktop side). Callers can override with `--port` / `AIONUI_PORT` to match
- * a non-default webui launch.
+ * 使用与 scripts/webui.ts 相同的默认端口；调用方可通过 --port 或
+ * TJUAEUI_PORT 覆盖，以匹配非默认 WebUI 启动。
  */
 function resolveWebUIProbePort(): number {
   const cli = getFlag('--port');
   if (cli && /^\d+$/.test(cli)) return Number(cli);
-  const env = process.env.AIONUI_PORT ?? process.env.PORT;
+  const env = process.env.TJUAEUI_PORT ?? process.env.PORT;
   if (env && /^\d+$/.test(env)) return Number(env);
   if (process.env.NODE_ENV === 'production') return 25808;
-  if (process.env.AIONUI_MULTI_INSTANCE === '1') return 25810;
+  if (process.env.TJUAEUI_MULTI_INSTANCE === '1') return 25810;
   return 25809;
 }
 
 /**
- * Probe an in-flight `bun run webui` on the expected port. Returns the port if
- * its /api/auth/status responds 200 within ~1.5s, otherwise undefined.
- * We intentionally do NOT try to auto-discover arbitrary ports — the user can
- * pass --port / AIONUI_PORT if they launched webui on a non-default one.
+ * 探测预期端口上正在运行的 `bun run webui`。若 /api/auth/status 在约
+ * 1.5 秒内返回 200，则判定为可用。不会扫描任意端口；非默认启动应显式传入
+ * --port 或 TJUAEUI_PORT。
  */
 async function detectRunningWebUI(port: number): Promise<boolean> {
   try {
@@ -137,16 +133,15 @@ async function resetPasswordVia(url: string): Promise<string> {
   const res = await fetch(url, { method: 'POST' });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`reset-password failed (${res.status}): ${body}`);
+    throw new Error(`reset-password 失败（${res.status}）：${body}`);
   }
   const payload = (await res.json()) as { data?: { new_password?: string } };
   const newPassword = payload.data?.new_password;
-  if (!newPassword) throw new Error('reset-password returned no new_password');
+  if (!newPassword) throw new Error('reset-password 未返回 new_password');
   return newPassword;
 }
 
-// Skip flag values (e.g. `--data-dir /some/path`) so they don't get picked up
-// as the username positional argument.
+// 跳过参数值，避免把 --data-dir 等参数的值误判为用户名位置参数。
 const FLAGS_WITH_VALUES = new Set(['--data-dir', '--port']);
 
 function resolveUsername(): string {
@@ -155,7 +150,7 @@ function resolveUsername(): string {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a.startsWith('--')) {
-      if (FLAGS_WITH_VALUES.has(a)) i++; // skip the flag's value too
+      if (FLAGS_WITH_VALUES.has(a)) i++; // 同时跳过参数值。
       continue;
     }
     positional.push(a);
@@ -193,7 +188,7 @@ async function main(): Promise<void> {
 
   // Slow path: no webui running. Spawn a short-lived backend against the same
   // data-dir, reset, stop.
-  const logDir = process.env.AIONUI_LOG_DIR ?? path.join(workDir, 'logs');
+  const logDir = process.env.TJUAEUI_LOG_DIR ?? path.join(workDir, 'logs');
   fs.mkdirSync(logDir, { recursive: true });
 
   const backendBin = resolveBackendBinary();

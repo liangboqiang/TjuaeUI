@@ -4,6 +4,6 @@ export function isDeprecatedRuntimeAgentType(agentType?: string | null): boolean
   return Boolean(agentType && DEPRECATED_RUNTIME_AGENT_TYPES.has(agentType));
 }
 
-export function resolveSupportedConversationType(backend?: string | null): 'acp' | 'aionrs' {
-  return backend === 'aionrs' ? 'aionrs' : 'acp';
+export function resolveSupportedConversationType(backend?: string | null): 'acp' | 'tjuaecli' {
+  return backend === 'tjuaecli' ? 'tjuaecli' : 'acp';
 }

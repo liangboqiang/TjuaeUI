@@ -29,7 +29,7 @@ import {
   httpGet,
   httpPost,
   httpDelete,
-  resolveAionrsPreconditions,
+  resolveTjuaeCliPreconditions,
 } from '../helpers';
 
 // Generous timeout for AI responses
@@ -206,7 +206,7 @@ async function selectPreferredCronDialogAgent(
 async function selectCronDialogAgentByPattern(
   page: import('@playwright/test').Page,
   dialog: import('@playwright/test').Locator,
-  preferredPatterns = [/Gemini/i, /Claude/i, /Codex/i, /Aion/i]
+  preferredPatterns = [/Gemini/i, /Claude/i, /Codex/i, /Tjuae/i]
 ): Promise<string | null> {
   const agentSelect = dialog.locator('[data-testid="cron-assistant-select"]').first();
   await agentSelect.click();
@@ -906,7 +906,7 @@ test.describe('Conversation Full Cycle', () => {
 
     const assistantOptions = page
       .locator('.arco-select-option:not(.arco-select-option-disabled)')
-      .filter({ hasText: /Claude|Codex|Gemini|Aion/ });
+      .filter({ hasText: /Claude|Codex|Gemini|Tjuae/ });
     if ((await assistantOptions.count()) === 0) {
       await page.keyboard.press('Escape');
       await page.keyboard.press('Escape');
@@ -1239,7 +1239,7 @@ test.describe('Conversation Full Cycle', () => {
     stopAutoApprove?.();
   });
 
-  const cronConversationAgents = ['claude', 'codex', 'gemini', 'aionrs', 'opencode'] as const;
+  const cronConversationAgents = ['claude', 'codex', 'gemini', 'tjuaecli', 'opencode'] as const;
 
   for (const backend of cronConversationAgents) {
     test(`cron -- ${backend} conversation skill creates task with full-auto job mode`, async ({ page }) => {
@@ -1255,10 +1255,10 @@ test.describe('Conversation Full Cycle', () => {
         await page
           .waitForFunction(() => (document.body.textContent?.length ?? 0) > 200, { timeout: 15_000 })
           .catch(() => {});
-        if (backend === 'aionrs') {
-          const preconditions = await resolveAionrsPreconditions(page);
+        if (backend === 'tjuaecli') {
+          const preconditions = await resolveTjuaeCliPreconditions(page);
           if (!preconditions.binary || !preconditions.models) {
-            test.skip(true, 'No aionrs-compatible provider found, skipping E2E tests');
+            test.skip(true, 'No tjuaecli-compatible provider found, skipping E2E tests');
             return;
           }
         }

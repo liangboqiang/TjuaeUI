@@ -10,20 +10,20 @@ MIRROR="${1:-}"
 VERSION="${2:-}"
 
 if [[ -z "$MIRROR" ]]; then
-    echo "Usage: $0 <mirror-url> [version]"
-    echo "Example: $0 file:///tmp/releases 1.0.0"
+  echo "用法：$0 <镜像地址> [版本]"
+  echo "示例：$0 file:///tmp/releases 3.0.0"
     exit 1
 fi
 
 echo "========================================"
-echo "Smoke test for install-web.sh"
+echo "install-web.sh 冒烟测试"
 echo "========================================"
-echo "MIRROR: $MIRROR"
-echo "VERSION: ${VERSION:-latest}"
+echo "镜像：$MIRROR"
+echo "版本：${VERSION:-latest}"
 
 # 1. Download install-web.sh
 echo ""
-echo "1. Downloading install-web.sh..."
+echo "1. 正在下载 install-web.sh……"
 if [[ "$MIRROR" == file://* ]]; then
     # Local mirror: copy from filesystem
     base_path="${MIRROR#file://}"
@@ -36,10 +36,10 @@ chmod +x /tmp/install-web.sh
 
 # 2. Run installation
 echo ""
-echo "2. Running installation..."
+echo "2. 正在执行安装……"
 export MIRROR="$MIRROR"
 export VERSION="${VERSION:-latest}"
-export INSTALL_DIR="/tmp/aionui-web-smoke-test"
+export INSTALL_DIR="/tmp/tjuaeui-web-smoke-test"
 export BIN_DIR="/tmp/smoke-bin"
 export CREATE_SYMLINK=1
 export UPDATE_PATH=0  # Don't modify shell profile in container
@@ -48,41 +48,41 @@ bash /tmp/install-web.sh --no-path
 
 # 3. Verify installation
 echo ""
-echo "3. Verifying installation..."
+echo "3. 正在验证安装……"
 
 if [[ ! -d "$INSTALL_DIR" ]]; then
-    echo "❌ Installation directory not found: $INSTALL_DIR"
+  echo "❌ 未找到安装目录：$INSTALL_DIR"
     exit 1
 fi
-echo "✓ Installation directory exists"
+echo "✓ 安装目录存在"
 
-if [[ ! -x "${INSTALL_DIR}/aionui-web" ]]; then
-    echo "❌ CLI executable not found or not executable: ${INSTALL_DIR}/aionui-web"
+if [[ ! -x "${INSTALL_DIR}/tjuaeui-web" ]]; then
+  echo "❌ CLI 可执行文件缺失或不可执行：${INSTALL_DIR}/tjuaeui-web"
     exit 1
 fi
-echo "✓ CLI executable exists"
+echo "✓ CLI 可执行文件存在"
 
-if [[ ! -L "${BIN_DIR}/aionui-web" ]]; then
-    echo "❌ Symlink not found: ${BIN_DIR}/aionui-web"
+if [[ ! -L "${BIN_DIR}/tjuaeui-web" ]]; then
+  echo "❌ 未找到符号链接：${BIN_DIR}/tjuaeui-web"
     exit 1
 fi
-echo "✓ Symlink created"
+echo "✓ 符号链接已创建"
 
 # 4. Test version command
 echo ""
-echo "4. Testing version command..."
+echo "4. 正在测试版本命令……"
 export PATH="${BIN_DIR}:$PATH"
-VERSION_OUTPUT=$(aionui-web version 2>&1 || echo "")
+VERSION_OUTPUT=$(tjuaeui-web version 2>&1 || echo "")
 if [[ -z "$VERSION_OUTPUT" ]]; then
-    echo "❌ version command returned empty"
+  echo "❌ 版本命令返回空结果"
     exit 1
 fi
-echo "✓ Version: $VERSION_OUTPUT"
+echo "✓ 版本：$VERSION_OUTPUT"
 
 # Cleanup
 rm -rf "$INSTALL_DIR" "$BIN_DIR" /tmp/install-web.sh
 
 echo ""
 echo "========================================"
-echo "✅ Smoke test passed!"
+echo "✅ 冒烟测试通过！"
 echo "========================================"

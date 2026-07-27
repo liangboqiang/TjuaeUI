@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -43,7 +43,7 @@ export function shouldAutoOpenBrowser(opts: ShouldAutoOpenBrowserOptions): boole
   if (opts.noOpenFlag) return false;
   if (opts.openFlag) return true;
 
-  const envOverride = parseBoolean(opts.env?.AIONUI_OPEN_BROWSER);
+  const envOverride = parseBoolean(opts.env?.TJUAEUI_OPEN_BROWSER);
   if (envOverride !== undefined) return envOverride;
 
   return !opts.allowRemote;

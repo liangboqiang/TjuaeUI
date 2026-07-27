@@ -1,6 +1,6 @@
 # 设置页 → 关于 & 检查更新 (F-ABOUT)
 
-> 本文档覆盖「设置 → 关于」页面的全部功能，包括应用信息展示、版本更新（检查/下载/安装）、外部链接导航、问题报告。
+> 本文档覆盖「设置 → 关于」页面的全部功能，包括应用信息展示、版本更新（检查/下载/安装）和外部链接导航。
 > 基于静态代码分析和动态 UI 验证综合整理，经 DA 质疑和 Tester 反馈修正定稿。
 
 ---
@@ -12,10 +12,10 @@
 **正常流程**（用户视角）：
 
 1. 用户打开「设置 → 关于」页面
-2. 页面顶部居中显示应用名 "AionUi"（h3 标题）
+2. 页面顶部居中显示应用名 "TjuaeUI"（h3 标题）
 3. 下方显示应用描述（通过 i18n 系统，随语言设置变化）
 4. 显示当前版本号 badge（格式 `v{x.y.z}`），版本号来自打包时的 `package.json`
-5. 版本号旁有 GitHub 图标，点击在系统浏览器中打开项目仓库 `https://github.com/iOfficeAI/AionUi`
+5. 版本号旁有 GitHub 图标，点击在系统浏览器中打开项目仓库 `https://github.com/liangboqiang/TjuaeUI`
 
 **异常情况**：
 
@@ -24,7 +24,7 @@
 
 **验收标准**：
 
-- [ ] 显示应用名 "AionUi"
+- [ ] 显示应用名 "TjuaeUI"
 - [ ] 显示应用描述（通过 i18n 系统，随语言设置变化）
 - [ ] 版本号格式为 `v{x.y.z}`，与 `package.json` 一致
 - [ ] GitHub 图标点击打开项目仓库页面
@@ -371,24 +371,22 @@
 
 ## (F-ABOUT-10) 外部链接导航 [已实现]
 
-**用户故事**：作为用户，我希望在关于页面快速访问帮助文档、更新日志、反馈渠道等外部资源。
+**用户故事**：作为用户，我希望在关于页面快速访问帮助文档、更新日志、问题报告等外部资源。
 
 **正常流程**（用户视角）：
 
-1. 关于页面下半部分显示 6 个链接项，每项有标题和右箭头图标
+1. 关于页面下半部分显示 4 个链接项，每项有标题和右箭头图标
 2. 鼠标悬停时有背景色变化（hover 效果）
-3. 点击打开对应链接或弹窗
+3. 点击后在系统默认浏览器中打开对应链接
 
 **链接列表**：
 
-| 序号 | 标题     | 行为               | 目标                                           |
-| ---- | -------- | ------------------ | ---------------------------------------------- |
-| 1    | 帮助文档 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/wiki`     |
-| 2    | 更新日志 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/releases` |
-| 3    | 意见反馈 | 打开外部链接       | `https://github.com/iOfficeAI/AionUi/issues`   |
-| 4    | 问题报告 | **打开应用内弹窗** | FeedbackReportModal（见 F-ABOUT-11）           |
-| 5    | 联系我   | 打开外部链接       | `https://x.com/WailiVery`                      |
-| 6    | 官网     | 打开外部链接       | `https://www.aionui.com`                       |
+| 序号 | 标题     | 行为         | 目标                                                     |
+| ---- | -------- | ------------ | -------------------------------------------------------- |
+| 1    | 帮助文档 | 打开外部链接 | `https://github.com/liangboqiang/TjuaeUI/tree/main/docs` |
+| 2    | 更新日志 | 打开外部链接 | `https://github.com/liangboqiang/TjuaeUI/releases`       |
+| 3    | 问题报告 | 打开外部链接 | `https://github.com/liangboqiang/TjuaeUI/issues`         |
+| 4    | 官网     | 打开外部链接 | `https://github.com/liangboqiang/TjuaeUI`                |
 
 **打开机制**：
 
@@ -397,7 +395,6 @@
 
 **已知问题**：
 
-- "问题报告"（打开应用内弹窗）与其他外部链接项在视觉上完全相同，用户无法从外观区分行为差异
 - 外部链接打开后无任何视觉反馈（无 toast、无状态变化），如果打开失败仅记录日志（console.log 或 console.error），无用户可见提示
 
 **异常情况**：
@@ -406,72 +403,10 @@
 
 **验收标准**：
 
-- [ ] 6 个链接项全部可点击且行为正确
+- [ ] 4 个链接项全部可点击且行为正确
 - [ ] Electron 环境在系统浏览器中打开
 - [ ] WebUI 环境在新标签页中打开
 - [ ] 各链接显示 i18n 化的文案
-
----
-
-## (F-ABOUT-11) 问题报告 [已实现]
-
-**用户故事**：作为用户，我希望可以直接在应用内提交问题报告，附带截图和描述，无需离开应用去 GitHub Issues。
-
-**正常流程**（用户视角）：
-
-1. 用户在关于页面点击"问题报告"
-2. 弹出问题报告弹窗（标题"问题报告"）
-3. 选择所属模块（必填，15 个模块可选，选择后显示模块描述）
-4. 填写问题描述（必填，最多 2000 字符，显示字数统计）
-5. 可选：上传截图（最多 3 张）
-   - 支持点击选择文件
-   - 支持拖拽到上传区域
-   - 支持 Ctrl/Cmd+V 粘贴（弹窗可见时全局监听 paste 事件）
-   - 支持格式：PNG、JPG、GIF
-   - 重复文件自动去重（基于文件名+大小）
-6. 点击"提交"（模块和描述均填写后按钮可用）
-7. 系统自动附加最近 3 天的应用日志（gzip 格式）
-8. 提交到 Sentry（level: info, tag: user-feedback + module）
-9. 显示成功 toast，表单重置并关闭弹窗
-
-**反馈模块列表**（15 个）：
-
-| 模块名称           | Sentry Tag           |
-| ------------------ | -------------------- |
-| Agent 检测与连接   | agent-detection      |
-| 助手与预设         | assistant-preset     |
-| 模型与认证         | model-auth           |
-| MCP 与工具         | mcp-tools            |
-| 技能与插件         | skills-plugin        |
-| 频道接入           | channel              |
-| 对话与会话         | conversation-session |
-| 搜索与历史         | search-history       |
-| 工作区、文件与预览 | workspace-preview    |
-| WebUI 与远程连接   | webui-remote         |
-| 定时任务           | scheduled-task       |
-| 团队协作           | agent-team           |
-| 显示与桌宠         | display-desktop      |
-| 系统设置           | system-settings      |
-| 其他               | other                |
-
-**异常情况**：
-
-- 日志收集失败：静默忽略，继续提交（非阻塞）
-- `electronAPI` 不存在（WebUI 环境）：跳过日志收集，仍可提交
-- Sentry SDK 未初始化或网络不可用：提交失败，在弹窗内显示红色错误 banner
-- 截图超过 3 张：超出部分被忽略
-- 粘贴无名文件：自动生成文件名 `pasted-screenshot-{timestamp}-{index}.{ext}`
-- 上传超大文件（如 >10MB）：可能导致内存压力或 Sentry 提交失败（已知局限：无文件大小校验）
-
-**验收标准**：
-
-- [ ] 模块和描述为必填，未填时提交按钮禁用
-- [ ] 截图最多 3 张，支持拖拽 + 选择 + 粘贴三种方式
-- [ ] 描述最多 2000 字符，显示字数统计
-- [ ] 提交成功后表单重置并关闭弹窗，显示成功 toast
-- [ ] 提交失败在弹窗内显示错误信息（非 toast）
-- [ ] 应用日志自动附加（失败不阻塞提交）
-- [ ] 取消或关闭弹窗时表单重置
 
 ---
 
@@ -518,7 +453,7 @@
 │ 渲染进程 (Renderer)                                      │
 │                                                          │
 │  AboutModalContent                                       │
-│    ├─ CustomEvent('aionui-open-update-modal')            │
+│    ├─ CustomEvent('tjuaeui-open-update-modal')            │
 │    └─ localStorage('update.includePrerelease')           │
 │                                                          │
 │  UpdateModal                                             │
@@ -529,10 +464,6 @@
 │    ├─ ipcBridge.autoUpdate.quitAndInstall.invoke() → 安装│
 │    ├─ ipcBridge.autoUpdate.status.on()      ← 状态事件   │
 │    └─ ipcBridge.update.downloadProgress.on()← 下载进度   │
-│                                                          │
-│  FeedbackReportModal                                     │
-│    ├─ electronAPI.collectFeedbackLogs()     → 收集日志   │
-│    └─ Sentry.captureEvent()                 → 提交反馈   │
 └────────────────────┬────────────────────────────────────┘
                      │ IPC Bridge
 ┌────────────────────▼────────────────────────────────────┐
@@ -553,8 +484,7 @@
 │ 外部服务                                                 │
 │  ├─ GitHub REST API (releases 列表)                      │
 │  ├─ GitHub Release Assets (安装包下载)                   │
-│  ├─ electron-updater yml (latest*.yml)                   │
-│  └─ Sentry (反馈事件)                                    │
+│  └─ electron-updater yml (latest*.yml)                   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -569,9 +499,8 @@
 | 3   | F-ABOUT-04    | 双路径串行执行，路径 A 超时会导致总耗时超过 60 秒          |
 | 4   | F-ABOUT-06/07 | 下载中关闭弹窗无取消机制，重开后进度丢失                   |
 | 5   | F-ABOUT-07    | 服务器未返回 Content-Length 时进度条显示 0%                |
-| 6   | F-ABOUT-10    | "问题报告"与外部链接视觉无差异；链接打开失败无用户提示     |
-| 7   | F-ABOUT-11    | 截图无文件大小限制，超大文件可能导致内存压力或 Sentry 拒绝 |
-| 8   | F-ABOUT-12    | 启动自动检查与手动检查并发时事件可能互相干扰               |
+| 6   | F-ABOUT-10    | 外部链接打开失败无用户提示                                 |
+| 7   | F-ABOUT-12    | 启动自动检查与手动检查并发时事件可能互相干扰               |
 
 ---
 
@@ -581,11 +510,11 @@ Scope: PR4 final verification for Windows NSIS updates.
 
 Implemented behavior:
 
-- Both x64 and arm64 installers run the shared `AIONUI_VERIFY_CORE_APP_FILES` macro before bundled AionCore verification.
-- Missing `AionUi.exe`, core DLLs, or `resources\app.asar` fails through `AIONUI_FAIL_UX` with code `E1031` and logs the missing label and path.
-- Bundled AionCore verification remains `E1030`.
-- If a silent `--updated` install cannot close AionUi after retries, the installer writes `%APPDATA%\AionUi\installer-last-failure.json`.
-- On next renderer startup, the update notification consumes that marker once through `update.installer-last-failure.consume`, deletes the valid marker, and shows retry, log, and feedback actions.
+- Both x64 and arm64 installers run the shared `TJUAEUI_VERIFY_CORE_APP_FILES` macro before bundled TjuaeCore verification.
+- Missing `TjuaeUI.exe`, core DLLs, or `resources\app.asar` fails through `TJUAEUI_FAIL_UX` with code `E1031` and logs the missing label and path.
+- Bundled TjuaeCore verification remains `E1030`.
+- If a silent `--updated` install cannot close TjuaeUI after retries, the installer writes `%APPDATA%\TjuaeUI\installer-last-failure.json`.
+- On next renderer startup, the update notification consumes that marker once through `update.installer-last-failure.consume`, deletes the valid marker, and shows retry and local log actions.
 
 Marker schema:
 
@@ -597,8 +526,8 @@ Marker schema:
   "silent": true,
   "updated": true,
   "retryCount": 3,
-  "instDir": "C:\\Program Files\\AionUi",
-  "logPath": "C:\\Users\\user\\AppData\\Local\\Temp\\aionui-installer-process-check.log",
+  "instDir": "C:\\Program Files\\TjuaeUI",
+  "logPath": "C:\\Users\\user\\AppData\\Local\\Temp\\tjuaeui-installer-process-check.log",
   "at": "2026-07-01T00:00:00.0000000+08:00"
 }
 ```
@@ -607,5 +536,5 @@ Manual verification:
 
 - Build an x64 installer with `ffmpeg.dll` removed from the unpacked app payload. Expected: installer fails with `E1031`, and logs include `missing label=ffmpeg.dll path=...`.
 - Build an x64 installer with `resources\app.asar` removed. Expected: same `E1031` path.
-- Run normal x64 and arm64 installs. Expected: shared core verification runs before bundled AionCore verification and installation succeeds.
-- Run silent `/S --updated` while AionUi cannot be closed. Expected: marker file appears under `%APPDATA%\AionUi`; next app launch shows the update failure notification; the following launch does not show it again.
+- Run normal x64 and arm64 installs. Expected: shared core verification runs before bundled TjuaeCore verification and installation succeeds.
+- Run silent `/S --updated` while TjuaeUI cannot be closed. Expected: marker file appears under `%APPDATA%\TjuaeUI`; next app launch shows the update failure notification; the following launch does not show it again.

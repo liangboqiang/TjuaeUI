@@ -1,0 +1,58 @@
+name: 持续集成
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
+
+jobs:
+  verify:
+    name: 身份、质量、国际化与测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 配置 Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 安装锁定依赖
+        run: bun install --frozen-lockfile
+
+      - name: 执行安装后准备
+        run: bun run postinstall
+
+      - name: 运行身份与去推广契约
+        run: bun run identity:check
+
+      - name: 运行静态检查
+        run: bun run lint -- --quiet
+
+      - name: 检查格式
+        run: bun run format:check
+
+      - name: 检查 TypeScript 类型
+        run: bunx tsc --noEmit
+
+      - name: 检查国际化
+        shell: bash
+        run: |
+          bun run i18n:types
+          node scripts/check-i18n.js
+          git diff --exit-code
+
+      - name: 运行全部测试
+        run: bun run test

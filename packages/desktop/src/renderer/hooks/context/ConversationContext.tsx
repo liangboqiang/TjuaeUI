@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -28,7 +28,7 @@ export interface ConversationContextValue {
    * Conversation type
    * 会话类型
    */
-  type: 'acp' | 'codex' | 'aionrs';
+  type: 'acp' | 'codex' | 'tjuaecli';
 
   /**
    * Cron job ID (if this conversation was created by a scheduled task)

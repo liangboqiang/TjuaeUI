@@ -2,12 +2,11 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { sentryVitePlugin } from '@sentry/vite-plugin';
 import UnoCSS from 'unocss/vite';
 import unoConfig from '../../uno.config.ts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-// Read the real AionUi version from the repo-root package.json.
+// Read the real TjuaeUI version from the repo-root package.json.
 // `packages/desktop/package.json` is a workspace-internal placeholder pinned
 // at "0.0.0" — never use it for user-visible version strings.
 const rootPackageJson = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf-8')) as {
@@ -67,42 +66,16 @@ const mainAliases = {
 
 export default defineConfig(({ mode }) => {
   const isDevelopment = mode === 'development';
-  const enableSentrySourceMaps =
-    !isDevelopment &&
-    !!process.env.SENTRY_AUTH_TOKEN &&
-    (process.env.CI !== 'true' || process.env.SENTRY_UPLOAD_SOURCE_MAPS === 'true');
-  const sentryReleaseName = process.env.SENTRY_RELEASE ?? `v${rootPackageJson.version}`;
-
-  const sentryPluginOptions = {
-    org: process.env.SENTRY_ORG,
-    project: process.env.SENTRY_PROJECT,
-    authToken: process.env.SENTRY_AUTH_TOKEN,
-    release: {
-      name: sentryReleaseName,
-    },
-    errorHandler: (error: Error) => {
-      throw error;
-    },
-    sourcemaps: {
-      filesToDeleteAfterUpload: ['./out/**/*.map'],
-      rewriteSources: (source: string) => {
-        // Normalize Windows backslashes and strip leading relative prefixes
-        // so Sentry paths match the GitHub repo structure (e.g.
-        // packages/desktop/src/process/...)
-        return source.replace(/\\/g, '/').replace(/^(\.\.\/)+(packages\/desktop\/src\/)/, '$2');
-      },
-    },
-  };
 
   return {
     main: {
       plugins: [
         // externalizeDepsPlugin replaces our custom getExternalDeps() + pluginExternalizeDynamicImports.
         // 'fix-path' excluded so it gets bundled inline (only 3KB).
-        // '@aionui/web-host' excluded so its TS sources (which use ESM ".js" import specifiers)
-        // are bundled by esbuild rather than left as `require('@aionui/web-host')`, which Node
+        // '@tjuae/web-host' excluded so its TS sources (which use ESM ".js" import specifiers)
+        // are bundled by esbuild rather than left as `require('@tjuae/web-host')`, which Node
         // cannot resolve because the package ships no compiled .js files (workspace-only).
-        externalizeDepsPlugin({ exclude: ['fix-path', '@aionui/web-host'] }),
+        externalizeDepsPlugin({ exclude: ['fix-path', '@tjuae/web-host'] }),
         ...(isDevelopment
           ? [
               {
@@ -130,12 +103,11 @@ export default defineConfig(({ mode }) => {
               }),
             ]
           : []),
-        ...(enableSentrySourceMaps ? [sentryVitePlugin(sentryPluginOptions)] : []),
         ...(isDevelopment ? [buildMcpServersPlugin()] : []),
       ],
       resolve: { alias: mainAliases, extensions: ['.ts', '.tsx', '.js', '.json'] },
       build: {
-        sourcemap: enableSentrySourceMaps ? 'hidden' : isDevelopment,
+        sourcemap: isDevelopment,
         reportCompressedSize: false,
         rollupOptions: {
           input: {
@@ -152,17 +124,11 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.NODE_ENV': JSON.stringify(mode),
         'process.env.env': JSON.stringify(process.env.env),
-        'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
       },
     },
 
     preload: {
-      // Bundle @sentry/electron/preload so its hookupIpc() runs in the preload
-      // context. Externalized dependencies leave a runtime require('...') in
-      // the output, which Electron's sandbox-mode preload cannot resolve from
-      // node_modules (→ "module not found"). Bundling inlines the few hundred
-      // bytes of IPC wiring we actually need.
-      plugins: [externalizeDepsPlugin({ exclude: ['@sentry/electron'] })],
+      plugins: [externalizeDepsPlugin()],
       resolve: {
         alias: {
           '@': resolve('packages/desktop/src'),
@@ -193,7 +159,7 @@ export default defineConfig(({ mode }) => {
       publicDir: resolve('public'),
       appType: 'mpa',
       server: {
-        // Default to 5173; when occupied (e.g. another AionUi clone is running),
+        // Default to 5173; when occupied (e.g. another TjuaeUI clone is running),
         // Vite auto-increments to the next available port.
         // electron-vite reads the actual port and sets ELECTRON_RENDERER_URL accordingly.
         port: 5173,
@@ -234,14 +200,10 @@ export default defineConfig(({ mode }) => {
           '@lezer/highlight',
         ],
       },
-      plugins: [
-        UnoCSS(unoConfig),
-        iconParkPlugin(),
-        ...(enableSentrySourceMaps ? [sentryVitePlugin(sentryPluginOptions)] : []),
-      ],
+      plugins: [UnoCSS(unoConfig), iconParkPlugin()],
       build: {
         target: 'es2022',
-        sourcemap: enableSentrySourceMaps ? 'hidden' : isDevelopment,
+        sourcemap: isDevelopment,
         minify: !isDevelopment,
         reportCompressedSize: false,
         chunkSizeWarningLimit: 1500,
@@ -297,9 +259,8 @@ export default defineConfig(({ mode }) => {
       define: {
         'process.env.NODE_ENV': JSON.stringify(mode),
         'process.env.env': JSON.stringify(process.env.env),
-        'process.env.AIONUI_MULTI_INSTANCE': JSON.stringify(process.env.AIONUI_MULTI_INSTANCE ?? ''),
-        'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? ''),
-        // Inject the real AionUi version (root package.json) so renderer code
+        'process.env.TJUAEUI_MULTI_INSTANCE': JSON.stringify(process.env.TJUAEUI_MULTI_INSTANCE ?? ''),
+        // Inject the real TjuaeUI version (root package.json) so renderer code
         // can show it without importing packages/desktop/package.json, which is
         // a workspace-internal placeholder frozen at "0.0.0".
         __APP_VERSION__: JSON.stringify(rootPackageJson.version),

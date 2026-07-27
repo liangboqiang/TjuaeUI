@@ -1,5 +1,5 @@
-import { startWebHost, startStaticServer } from '@aionui/web-host';
-import type { WebHostHandle, StaticServerHandle } from '@aionui/web-host';
+import { startWebHost, startStaticServer } from '@tjuae/web-host';
+import type { WebHostHandle, StaticServerHandle } from '@tjuae/web-host';
 import { setTimeout as delay } from 'node:timers/promises';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -9,10 +9,10 @@ import { openBrowserUrl, shouldAutoOpenBrowser } from './browser.js';
 import { ensureAdminPassword } from './ensureAdminPassword.js';
 
 // tarball layout:
-//   aionui-web/
-//   ├── aionui-web              ← bun-compiled standalone binary (process.execPath)
+//   tjuaeui-web/
+//   ├── tjuaeui-web              ← bun-compiled standalone binary (process.execPath)
 //   ├── package.json             ← for runtime version lookup
-//   ├── bundled-aioncore/<plat-arch>/aioncore[.exe]
+//   ├── bundled-tjuaecore/<plat-arch>/tjuaecore[.exe]
 //   └── static/                  ← SPA assets
 //
 // Under `bun build --compile`, import.meta.url resolves to a virtual /$bunfs/
@@ -20,11 +20,11 @@ import { ensureAdminPassword } from './ensureAdminPassword.js';
 // sibling files. In dev (tsx/node), process.execPath is the node/bun binary,
 // so fall back to import.meta.url there.
 function resolveCliRoot(): string {
-  // Heuristic: if the executable path ends in "aionui-web" or "aionui-web.exe",
+  // Heuristic: if the executable path ends in "tjuaeui-web" or "tjuaeui-web.exe",
   // treat it as the packaged single-file binary and return its directory.
   const exe = process.execPath;
   const exeName = path.basename(exe).toLowerCase();
-  if (exeName === 'aionui-web' || exeName === 'aionui-web.exe') {
+  if (exeName === 'tjuaeui-web' || exeName === 'tjuaeui-web.exe') {
     return path.dirname(exe);
   }
   // Dev mode (tsx/node/bun running from source): use import.meta.url
@@ -46,12 +46,12 @@ const cliRoot = resolveCliRoot();
 // binary itself can do about first-launch quarantine.
 const isPackaged = (() => {
   const exeName = path.basename(process.execPath).toLowerCase();
-  return exeName === 'aionui-web' || exeName === 'aionui-web.exe';
+  return exeName === 'tjuaeui-web' || exeName === 'tjuaeui-web.exe';
 })();
 
-const BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BACKEND_BINARY = process.platform === 'win32' ? 'tjuaecore.exe' : 'tjuaecore';
 const DEFAULT_PORT = 25808;
-const RESET_COMMAND = isPackaged ? 'aionui-web resetpass' : 'bun run resetpass';
+const RESET_COMMAND = isPackaged ? 'tjuaeui-web resetpass' : 'bun run resetpass';
 
 let currentHandle: WebHostHandle | StaticServerHandle | null = null;
 
@@ -76,10 +76,10 @@ function parseArgs(argv: string[]): { command: string; flags: Map<string, string
 function resolveBackendBinary(flags: Map<string, string | true>): string {
   const override = flags.get('backend-bin');
   if (typeof override === 'string') return path.resolve(override);
-  const envOverride = process.env.AIONUI_BACKEND_BIN;
+  const envOverride = process.env.TJUAEUI_BACKEND_BIN;
   if (envOverride) return path.resolve(envOverride);
   const platArch = `${process.platform}-${process.arch}`;
-  const bundled = path.join(cliRoot, 'bundled-aioncore', platArch, BACKEND_BINARY);
+  const bundled = path.join(cliRoot, 'bundled-tjuaecore', platArch, BACKEND_BINARY);
   return bundled;
 }
 
@@ -92,15 +92,15 @@ function resolveStaticDir(flags: Map<string, string | true>): string {
 function resolveDataDir(flags: Map<string, string | true>): string {
   const override = flags.get('data-dir');
   if (typeof override === 'string') return path.resolve(override);
-  const envOverride = process.env.AIONUI_DATA_DIR;
+  const envOverride = process.env.TJUAEUI_DATA_DIR;
   if (envOverride) return path.resolve(envOverride);
-  return path.join(os.homedir(), '.aionui-web');
+  return path.join(os.homedir(), '.tjuaeui-web');
 }
 
 function resolveLogDir(flags: Map<string, string | true>, dataDir: string): string {
   const override = flags.get('log-dir');
   if (typeof override === 'string') return path.resolve(override);
-  const envOverride = process.env.AIONUI_LOG_DIR;
+  const envOverride = process.env.TJUAEUI_LOG_DIR;
   if (envOverride) return path.resolve(envOverride);
   return path.join(dataDir, 'logs');
 }
@@ -108,14 +108,14 @@ function resolveLogDir(flags: Map<string, string | true>, dataDir: string): stri
 function resolvePort(flags: Map<string, string | true>): number {
   const cli = flags.get('port');
   if (typeof cli === 'string' && /^\d+$/.test(cli)) return Number(cli);
-  const env = process.env.AIONUI_PORT ?? process.env.PORT;
+  const env = process.env.TJUAEUI_PORT ?? process.env.PORT;
   if (env && /^\d+$/.test(env)) return Number(env);
   return DEFAULT_PORT;
 }
 
 function resolveAllowRemote(flags: Map<string, string | true>): boolean {
   if (flags.has('remote')) return true;
-  const env = process.env.AIONUI_ALLOW_REMOTE ?? process.env.AIONUI_REMOTE;
+  const env = process.env.TJUAEUI_ALLOW_REMOTE ?? process.env.TJUAEUI_REMOTE;
   if (!env) return false;
   return ['1', 'true', 'yes', 'on'].includes(env.trim().toLowerCase());
 }
@@ -148,53 +148,52 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
   });
 
   if (!fs.existsSync(staticDir)) {
-    console.error(`[aionui-web] static dir not found: ${staticDir}`);
-    console.error(`  hint: pass --static-dir <path> pointing to the SPA build output`);
+    console.error(`[tjuaeui-web] 未找到静态资源目录：${staticDir}`);
+    console.error('  提示：使用 --static-dir <路径> 指向 SPA 构建输出');
     process.exit(1);
   }
 
-  console.log(`[aionui-web] version    : ${version}`);
-  console.log(`[aionui-web] data dir   : ${dataDir}`);
-  console.log(`[aionui-web] log dir    : ${logDir}`);
-  console.log(`[aionui-web] static dir : ${staticDir}`);
-  console.log(`[aionui-web] backend bin: ${backendBin}`);
-  console.log(`[aionui-web] launching  : port=${port} allowRemote=${allowRemote}`);
+  console.log(`[tjuaeui-web] 版本：${version}`);
+  console.log(`[tjuaeui-web] 数据目录：${dataDir}`);
+  console.log(`[tjuaeui-web] 日志目录：${logDir}`);
+  console.log(`[tjuaeui-web] 静态资源目录：${staticDir}`);
+  console.log(`[tjuaeui-web] 后端二进制文件：${backendBin}`);
+  console.log(`[tjuaeui-web] 正在启动：端口=${port}，允许远程访问=${allowRemote}`);
 
   const backendAvailable = fs.existsSync(backendBin);
 
   if (!backendAvailable) {
-    // Graceful degradation: serve the SPA shell without spawning backend.
-    // API calls from the browser will 502/ECONNREFUSED — frontend is expected
-    // to surface this to the user (e.g. "backend missing" banner).
+    // 降级模式：不启动后端，仅提供 SPA 外壳。浏览器 API 请求会失败，
+    // 前端负责向用户显示“后端缺失”提示。
     console.warn('');
-    console.warn('⚠️  Backend binary not found — starting in FRONTEND-ONLY mode.');
-    console.warn(`   Missing: ${backendBin}`);
-    console.warn('   The web UI will load but API calls will fail until a backend is available.');
-    console.warn('   To enable backend: download aioncore and set AIONUI_BACKEND_BIN.');
+    console.warn('⚠️  未找到后端二进制文件，正在以前端模式启动。');
+    console.warn(`   缺失：${backendBin}`);
+    console.warn('   WebUI 可以加载，但在后端可用前 API 请求都会失败。');
+    console.warn('   启用后端：下载 tjuaecore，并设置 TJUAEUI_BACKEND_BIN。');
     console.warn('');
 
     const handle = await startStaticServer({
       staticDir,
-      backendPort: 0, // invalid port → API proxy will fail cleanly
+      backendPort: 0, // 无效端口使 API 代理以可控方式失败。
       port,
       allowRemote,
     });
     currentHandle = handle;
 
     console.log('');
-    console.log('AionUi WebUI (frontend only) is ready');
-    console.log(`  Local  : ${handle.localUrl}`);
-    if (handle.networkUrl) console.log(`  Network: ${handle.networkUrl}`);
+    console.log('TjuaeUI WebUI（仅前端）已就绪');
+    console.log(`  本机地址：${handle.localUrl}`);
+    if (handle.networkUrl) console.log(`  网络地址：${handle.networkUrl}`);
     if (autoOpenBrowser) {
       const openResult = openBrowserUrl(handle.localUrl);
       if (openResult.ok) {
-        console.log(`[aionui-web] opened ${handle.localUrl} in your browser.`);
+        console.log(`[tjuaeui-web] 已在浏览器中打开 ${handle.localUrl}`);
       } else {
-        console.warn(`[aionui-web] could not open the browser automatically: ${openResult.reason}`);
+        console.warn(`[tjuaeui-web] 无法自动打开浏览器：${openResult.reason}`);
       }
     }
     console.log('');
-    console.log('Press Ctrl+C to stop.');
+    console.log('按 Ctrl+C 停止。');
   } else {
     const handle = await startWebHost({
       app: {
@@ -222,13 +221,12 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
     currentHandle = handle;
 
     console.log('');
-    console.log('AionUi WebUI is ready');
-    console.log(`  Local  : ${handle.localUrl}`);
-    if (handle.networkUrl) console.log(`  Network: ${handle.networkUrl}`);
+    console.log('TjuaeUI WebUI 已就绪');
+    console.log(`  本机地址：${handle.localUrl}`);
+    if (handle.networkUrl) console.log(`  网络地址：${handle.networkUrl}`);
 
-    // First-launch bootstrap: if SQLite has no admin password yet, seed one via
-    // backend and print plaintext credentials. Failure must not abort startup —
-    // the user can always fall back to running resetpass manually.
+    // 首次启动时，如果 SQLite 尚无管理员密码，则由后端生成密码并输出。
+    // 该步骤失败时不终止启动，用户仍可手动执行 resetpass。
     await ensureAdminPassword(
       { backendPort: handle.backendPort, resetCommand: RESET_COMMAND },
       {
@@ -243,25 +241,25 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
     if (autoOpenBrowser) {
       const openResult = openBrowserUrl(handle.localUrl);
       if (openResult.ok) {
-        console.log(`[aionui-web] opened ${handle.localUrl} in your browser.`);
+        console.log(`[tjuaeui-web] 已在浏览器中打开 ${handle.localUrl}`);
       } else {
-        console.warn(`[aionui-web] could not open the browser automatically: ${openResult.reason}`);
+        console.warn(`[tjuaeui-web] 无法自动打开浏览器：${openResult.reason}`);
       }
     }
 
     console.log('');
-    console.log('Press Ctrl+C to stop.');
+    console.log('按 Ctrl+C 停止。');
   }
 
   let shuttingDown = false;
   const shutdown = async (signal: string): Promise<void> => {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.log(`\n[aionui-web] received ${signal}, stopping...`);
+    console.log(`\n[tjuaeui-web] 收到 ${signal}，正在停止……`);
     try {
       if (currentHandle) await currentHandle.stop();
     } catch (err) {
-      console.error('[aionui-web] stop failed:', err);
+      console.error('[tjuaeui-web] 停止失败：', err);
     }
     process.exit(0);
   };
@@ -270,16 +268,15 @@ async function runStart(flags: Map<string, string | true>): Promise<void> {
 }
 
 /**
- * `aionui-web resetpass` — spin up the backend just long enough to POST
- * /api/webui/reset-password, print the new plaintext password, then tear down.
- * Uses the same data-dir resolution as `start`, so the reset targets whichever
- * DB the user normally runs against.
+ * `tjuaeui-web resetpass`：临时启动后端，调用
+ * /api/webui/reset-password，输出新密码后关闭。它与 `start` 使用相同的
+ * data-dir 解析规则，因此会重置用户日常使用的数据库。
  */
 async function runResetPassword(flags: Map<string, string | true>): Promise<void> {
   const backendBin = resolveBackendBinary(flags);
   if (!fs.existsSync(backendBin)) {
-    console.error(`[aionui-web] backend binary not found: ${backendBin}`);
-    console.error('  hint: pass --backend-bin <path> or set AIONUI_BACKEND_BIN');
+    console.error(`[tjuaeui-web] 未找到后端二进制文件：${backendBin}`);
+    console.error('  提示：使用 --backend-bin <路径>，或设置 TJUAEUI_BACKEND_BIN');
     process.exit(1);
   }
   const dataDir = resolveDataDir(flags);
@@ -289,7 +286,7 @@ async function runResetPassword(flags: Map<string, string | true>): Promise<void
   const staticDir = resolveStaticDir(flags);
   const version = readPackageVersion();
 
-  console.log(`[aionui-web] resetting admin password in ${dataDir}`);
+  console.log(`[tjuaeui-web] 正在重置 ${dataDir} 中的管理员密码`);
 
   const handle = await startWebHost({
     app: {
@@ -298,10 +295,9 @@ async function runResetPassword(flags: Map<string, string | true>): Promise<void
       resourcesPath: cliRoot,
       userDataPath: dataDir,
     },
-    // resetpass only needs the backend up; serve static anyway so the web-host
-    // does not choke on a missing staticDir.
+    // resetpass 只需要后端；仍传入静态目录以满足 Web Host 启动契约。
     staticDir,
-    // Use an ephemeral port (0) so a concurrent running instance does not clash.
+    // 使用临时端口（0），避免与并行运行的实例冲突。
     port: 0,
     allowRemote: false,
     dataDir,
@@ -312,7 +308,7 @@ async function runResetPassword(flags: Map<string, string | true>): Promise<void
   currentHandle = handle;
 
   try {
-    // Wait for backend to finish migrating + seeding before we hit the endpoint.
+    // 等待后端完成迁移和初始化后再调用接口。
     const deadline = Date.now() + 15_000;
     let ready = false;
     while (Date.now() < deadline) {
@@ -323,12 +319,12 @@ async function runResetPassword(flags: Map<string, string | true>): Promise<void
           break;
         }
       } catch {
-        /* backend still booting */
+        /* 后端仍在启动 */
       }
       await delay(500);
     }
     if (!ready) {
-      console.error('[aionui-web] backend did not become ready within 15s');
+      console.error('[tjuaeui-web] 后端未在 15 秒内就绪');
       process.exit(1);
     }
 
@@ -336,7 +332,7 @@ async function runResetPassword(flags: Map<string, string | true>): Promise<void
       method: 'POST',
     });
     if (!res.ok) {
-      console.error(`[aionui-web] /api/webui/reset-password returned ${res.status}`);
+      console.error(`[tjuaeui-web] /api/webui/reset-password 返回状态码 ${res.status}`);
       process.exit(1);
     }
     const payload = (await res.json()) as {
@@ -347,17 +343,17 @@ async function runResetPassword(flags: Map<string, string | true>): Promise<void
     const newPassword = payload.data?.new_password ?? payload.new_password;
     const username = payload.data?.username ?? payload.username ?? 'admin';
     if (!newPassword) {
-      console.error('[aionui-web] reset-password response missing new_password');
+      console.error('[tjuaeui-web] reset-password 响应缺少 new_password');
       process.exit(1);
     }
-    console.log(`[aionui-web] username: ${username}`);
-    console.log(`[aionui-web] new password: ${newPassword}`);
-    console.log('[aionui-web] existing sessions have been invalidated.');
+    console.log(`[tjuaeui-web] 用户名：${username}`);
+    console.log(`[tjuaeui-web] 新密码：${newPassword}`);
+    console.log('[tjuaeui-web] 现有会话均已失效。');
   } finally {
     try {
       await handle.stop();
     } catch {
-      /* best-effort shutdown */
+      /* 尽力关闭 */
     }
     currentHandle = null;
   }
@@ -372,31 +368,31 @@ async function main(): Promise<void> {
   }
 
   if (command === '--help' || command === 'help' || command === '-h') {
-    console.log(`Usage: aionui-web <command> [options]
+    console.log(`用法：tjuaeui-web <命令> [选项]
 
-Commands:
-  start              Start the WebUI (default)
-  resetpass          Reset the admin password and print the new one
-  version            Print version
-  help               Show this help
+命令：
+  start              启动 WebUI（默认）
+  resetpass          重置管理员密码并输出新密码
+  version            显示版本
+  help               显示帮助
 
-Options for start:
-  --port <n>              Listen port (default: ${DEFAULT_PORT})
-  --remote                Bind 0.0.0.0 instead of 127.0.0.1
-  --open                  Force opening the local URL in a browser
-  --no-open               Disable automatic browser opening
-  --data-dir <path>       Override data dir (default: ~/.aionui-web)
-  --log-dir <path>        Override log dir (default: <data-dir>/logs)
-  --static-dir <path>     Override static assets dir
-  --backend-bin <path>    Override backend binary path
+start 选项：
+  --port <端口>           监听端口（默认：${DEFAULT_PORT}）
+  --remote                绑定 0.0.0.0，而不是 127.0.0.1
+  --open                  强制在浏览器中打开本机地址
+  --no-open               禁止自动打开浏览器
+  --data-dir <路径>       覆盖数据目录（默认：~/.tjuaeui-web）
+  --log-dir <路径>        覆盖日志目录（默认：<数据目录>/logs）
+  --static-dir <路径>     覆盖静态资源目录
+  --backend-bin <路径>    覆盖后端二进制文件路径
 
-Options for resetpass:
-  --data-dir <path>       Which data dir to reset (default: ~/.aionui-web)
-  --backend-bin <path>    Override backend binary path
+resetpass 选项：
+  --data-dir <路径>       要重置的数据目录（默认：~/.tjuaeui-web）
+  --backend-bin <路径>    覆盖后端二进制文件路径
 
-Environment variables:
-  AIONUI_PORT, AIONUI_ALLOW_REMOTE, AIONUI_DATA_DIR, AIONUI_LOG_DIR,
-  AIONUI_BACKEND_BIN, AIONUI_OPEN_BROWSER
+环境变量：
+  TJUAEUI_PORT, TJUAEUI_ALLOW_REMOTE, TJUAEUI_DATA_DIR, TJUAEUI_LOG_DIR,
+  TJUAEUI_BACKEND_BIN, TJUAEUI_OPEN_BROWSER
 `);
     return;
   }
@@ -407,8 +403,8 @@ Environment variables:
   }
 
   if (command !== 'start') {
-    console.error(`Unknown command: ${command}`);
-    console.error('Usage: aionui-web [start|resetpass|version|help]');
+    console.error(`未知命令：${command}`);
+    console.error('用法：tjuaeui-web [start|resetpass|version|help]');
     process.exit(1);
   }
 
@@ -416,7 +412,7 @@ Environment variables:
 }
 
 main().catch((err: Error) => {
-  console.error('[aionui-web] fatal:', err.message);
+  console.error('[tjuaeui-web] 严重错误：', err.message);
   if (currentHandle) void currentHandle.stop().catch(() => undefined);
   process.exit(1);
 });

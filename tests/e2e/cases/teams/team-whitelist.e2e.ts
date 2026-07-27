@@ -104,8 +104,8 @@ test.describe('Team Assistant Leader Options', () => {
 
   test('UI keeps backend team_selectable assistants selectable', async ({ page }) => {
     test.skip(
-      process.env.AIONUI_BYPASS_PROBE !== '1',
-      'This deterministic custom-agent e2e requires AIONUI_BYPASS_PROBE=1.'
+      process.env.TJUAE_BYPASS_PROBE !== '1',
+      'This deterministic custom-agent e2e requires TJUAE_BYPASS_PROBE=1.'
     );
     test.setTimeout(90_000);
 

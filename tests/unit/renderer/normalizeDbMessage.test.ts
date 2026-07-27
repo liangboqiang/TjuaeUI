@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -119,13 +119,13 @@ describe('normalizeDbMessage', () => {
         source: 'send_failed',
         code: 'WORKSPACE_PATH_CONTAINS_WHITESPACE_RUNTIME_UNSUPPORTED',
         details: {
-          workspace_path: '/Users/zhoukai/Documents/Archive ',
+          workspace_path: '/Users/developer/Documents/Archive ',
         },
         error: {
           message: 'The current Agent failed to run in this workspace path',
           code: 'UNKNOWN_UPSTREAM_ERROR',
           ownership: 'unknown_upstream',
-          detail: '/Users/zhoukai/Documents/Archive . Make sure the workspace path exists and is accessible.',
+          detail: '/Users/developer/Documents/Archive . Make sure the workspace path exists and is accessible.',
           retryable: true,
           feedback_recommended: true,
         },
@@ -135,9 +135,9 @@ describe('normalizeDbMessage', () => {
     expect(normalized.content.error).toEqual({
       message: 'The current Agent failed to run in this workspace path',
       code: 'WORKSPACE_PATH_RUNTIME_UNAVAILABLE',
-      ownership: 'aionui',
-      detail: '/Users/zhoukai/Documents/Archive . Make sure the workspace path exists and is accessible.',
-      workspacePath: '/Users/zhoukai/Documents/Archive ',
+      ownership: 'tjuaeui',
+      detail: '/Users/developer/Documents/Archive . Make sure the workspace path exists and is accessible.',
+      workspacePath: '/Users/developer/Documents/Archive ',
       retryable: false,
       feedback_recommended: false,
     });

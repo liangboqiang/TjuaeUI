@@ -1,15 +1,15 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
+import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import type { IChannelAssistantBindingRead, IChannelAssistantBindingWrite } from '@/common/types/channel/channel';
 
 /**
  * Channel settings UI consumes backend-normalized assistant bindings.
- * Legacy backend/custom-agent migration is handled by aionCore during channel
+ * Legacy backend/custom-agent migration is handled by tjuaeCore during channel
  * settings reads; renderer-side selection must only trust canonical
  * `assistant_id` bindings.
  */
@@ -22,8 +22,8 @@ export type ResolvedChannelAssistantSelection = {
 
 export function getDefaultChannelAssistant(assistants: Assistant[]): Assistant | undefined {
   return (
-    assistants.find((assistant) => assistant.source === 'generated' && isAionrsAssistant(assistant)) ||
-    assistants.find((assistant) => isAionrsAssistant(assistant)) ||
+    assistants.find((assistant) => assistant.source === 'generated' && isTjuaeCliAssistant(assistant)) ||
+    assistants.find((assistant) => isTjuaeCliAssistant(assistant)) ||
     assistants[0]
   );
 }

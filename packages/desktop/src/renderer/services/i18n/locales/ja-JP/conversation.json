@@ -12,10 +12,9 @@
     "clearWorkspace": "プロジェクトを解除",
     "openFolder": "Open Folder",
     "none": "None",
-    "quickActionsTitle": "AionUi で何ができる？",
-    "quickActionFeedback": "問題を報告",
-    "quickActionStar": "気に入った？スターをください！",
-    "skillsMarket": "AionUi Skills Market",
+    "quickActionsTitle": "TjuaeUI で何ができる？",
+    "quickActionRepository": "リポジトリ",
+    "skillsMarket": "TjuaeUI Skills Market",
     "skillsMarketDesc": "コミュニティ Skills をオンデマンドで検索・有効化。一度設定すれば、すべてのAgentで利用可能。",
     "skillsMarketDetails": "詳細 >>"
   },
@@ -124,32 +123,32 @@
       "check_provider_base_url": "モデルプロバイダーの Base URL、API パス、プロキシ、API 互換性を確認してください。",
       "change_model": "現在のアカウントで利用でき、このリクエストをサポートするモデルを選択してください。",
       "reduce_context": "メッセージ内容、参照ファイル、またはコンテキストサイズを減らしてから再試行してください。",
-      "send_feedback": "チームが調査できるよう、ログを添えてフィードバックを送信してください。"
+      "send_feedback": "GitHub Issues から問題を報告してください。ローカルデータは自動的にアップロードされません。"
     },
     "ownership": {
-      "aionui": "アプリ",
+      "tjuaeui": "アプリ",
       "user_agent": "エージェント",
       "user_llm_provider": "モデルプロバイダー",
       "unknown_upstream": "上流"
     },
     "codes": {
-      "AIONUI_STREAM_BROKEN": {
+      "TJUAEUI_STREAM_BROKEN": {
         "title": "応答ストリームが中断されました",
-        "body": "アプリはメッセージを受け付けましたが、応答ストリームが予期せず終了しました。再試行してください。繰り返し発生する場合はフィードバックを送信してください。"
+        "body": "アプリはメッセージを受け付けましたが、応答ストリームが予期せず終了しました。もう一度お試しください。"
       },
-      "AIONUI_STATE_INCONSISTENT": {
+      "TJUAEUI_STATE_INCONSISTENT": {
         "title": "会話状態が同期していません",
         "body": "会話の状態が同期していません。このチャットを再開するか、アプリを再読み込みしてから再試行してください。"
       },
-      "AIONUI_PERMISSION_ERROR": {
+      "TJUAEUI_PERMISSION_ERROR": {
         "title": "必要なリソースにアクセスできませんでした",
         "body": "ローカル権限またはファイルシステムの確認に失敗しました。プロジェクトパスとアプリの権限を確認してから再試行してください。"
       },
-      "AIONUI_INTERNAL_ERROR": {
+      "TJUAEUI_INTERNAL_ERROR": {
         "title": "アプリ内でリクエストに失敗しました",
-        "body": "アプリが処理している間にリクエストが失敗しました。一度再試行してください。繰り返し発生する場合はフィードバックを送信してください。"
+        "body": "アプリでリクエストを処理中に失敗しました。もう一度お試しください。"
       },
-      "AIONUI_CONVERSATION_BUSY": {
+      "TJUAE_CONVERSATION_BUSY": {
         "title": "会話は処理中です",
         "body": "別の応答がまだ実行中です。完了してから新しいメッセージを送信してください。"
       },
@@ -304,7 +303,7 @@
       },
       "MCP_HTTP_RESPONSE_READ_FAILED": {
         "title": "Failed to read the team helper response",
-        "body": "AionUi could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
+        "body": "TjuaeUI could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
       },
       "MCP_TOOL_REMOTE_ERROR": {
         "title": "The local team helper rejected the request",
@@ -312,11 +311,11 @@
       },
       "MCP_TOOL_RESPONSE_UNEXPECTED": {
         "title": "The team helper returned an unexpected response",
-        "body": "AionUi received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
+        "body": "TjuaeUI received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
       },
       "MCP_TCP_READ_FAILED": {
         "title": "Failed to read from the local team helper",
-        "body": "AionUi could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
+        "body": "TjuaeUI could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
       },
       "TEAM_SERVICE_UNAVAILABLE": {
         "title": "Team service is not ready yet",

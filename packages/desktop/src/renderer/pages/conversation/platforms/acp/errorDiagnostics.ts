@@ -1,12 +1,12 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import { isBackendHttpError } from '@/common/adapter/httpBridge';
 
-/** Redacted summary of an original error, safe to attach to a Sentry report. */
+/** Redacted summary of an original error, safe to display in local diagnostics. */
 export type RawErrorSummary = {
   name?: string;
   message?: string;
@@ -48,7 +48,7 @@ const REDACTION_RULES: ReadonlyArray<readonly [RegExp, string]> = [
 
 /**
  * Strip secrets and personally-identifying path segments from free-form error
- * text so it can be safely attached to telemetry.
+ * text so it can be safely retained in local error context.
  */
 export const redactErrorText = (text: string): string => {
   let out = text;
@@ -66,7 +66,7 @@ const getStringProp = (value: object, key: string): string | undefined => {
 };
 
 /**
- * Build a redacted, size-bounded summary of an original error for telemetry.
+ * Build a redacted, size-bounded summary of an original error for local diagnostics.
  * Returns undefined for empty/nullish values so callers can omit the field.
  */
 export const buildRawErrorSummary = (error: unknown): RawErrorSummary | undefined => {

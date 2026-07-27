@@ -61,10 +61,10 @@
   "more": "Більше",
   "refresh": "Оновити",
   "readOnly": "Лише читання",
-  "tray.showWindow": "Показати AionUi",
+  "tray.showWindow": "Показати TjuaeUI",
   "tray.newChat": "Новий чат",
   "tray.closeToTray": "Згорнути в трей",
-  "tray.about": "Про AionUi",
+  "tray.about": "Про TjuaeUI",
   "tray.restart": "Перезапустити програму",
   "tray.quit": "Вийти",
   "tray.runningTasks": "Запущені завдання",
@@ -75,66 +75,40 @@
   "backendStartup": {
     "incompatibleRuntime": {
       "title": "Ця система не підтримується вбудованим backend",
-      "description": "AionUi відкрився, але локальний backend AionCore не може працювати в цій версії Linux. Оновіться до підтримуваного дистрибутива Linux і перезапустіть AionUi.",
+      "description": "TjuaeUI відкрився, але локальний backend TjuaeCore не може працювати в цій версії Linux. Оновіться до підтримуваного дистрибутива Linux і перезапустіть TjuaeUI.",
       "requiredVersions": "Потрібні символи середовища виконання: {{versions}}"
     },
     "incompleteInstallation": {
-      "title": "Встановлення AionUi неповне",
-      "description": "У цьому встановленні бракує потрібних локальних ресурсів, тому AionCore не може запуститися. Завантажте та перевстановіть останню версію AionUi. Якщо проблема повториться після перевстановлення, перевірте, чи захисне або антивірусне ПЗ не помістило AionCore у карантин.",
+      "title": "Встановлення TjuaeUI неповне",
+      "description": "У цьому встановленні бракує потрібних локальних ресурсів, тому TjuaeCore не може запуститися. Завантажте та перевстановіть останню версію TjuaeUI. Якщо проблема повториться після перевстановлення, перевірте, чи захисне або антивірусне ПЗ не помістило TjuaeCore у карантин.",
       "downloadLatest": "Завантажити останню версію",
-      "sendDiagnostics": "Надіслати діагностику",
-      "diagnosticsSent": "Діагностику надіслано",
-      "diagnosticsReportSuccess": "Діагностичний звіт надіслано",
-      "diagnosticsReportFailed": "Не вдалося надіслати діагностичний звіт",
-      "runtimeComponentDescription": "У цій інсталяції бракує потрібних вбудованих компонентів середовища виконання, тому {{resource}} не може запуститися. Перевстановіть найновіший пакет AionUi. Якщо проблема повториться після перевстановлення, перевірте, чи не помістило програмне забезпечення безпеки або антивірус компоненти AionUi у карантин."
+      "runtimeComponentDescription": "У цій інсталяції бракує потрібних вбудованих компонентів середовища виконання, тому {{resource}} не може запуститися. Перевстановіть найновіший пакет TjuaeUI. Якщо проблема повториться після перевстановлення, перевірте, чи не помістило програмне забезпечення безпеки або антивірус компоненти TjuaeUI у карантин."
     },
     "packageArchitectureMismatch": {
-      "title": "AionUi package architecture mismatch",
-      "description": "This AionUi package is for {{packageArch}}, but this Mac is {{deviceArch}}. You may have downloaded the wrong package. Please download and install the {{expectedArch}} package."
+      "title": "TjuaeUI package architecture mismatch",
+      "description": "This TjuaeUI package is for {{packageArch}}, but this Mac is {{deviceArch}}. You may have downloaded the wrong package. Please download and install the {{expectedArch}} package."
     },
     "dataMigration": {
       "title": "Local data migration failed",
-      "description": "AionUi opened, but AionCore stopped while initializing local data. Reinstalling AionUi may not fix this. Send a diagnostics report or contact support so the local database migration can be inspected.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report"
+      "description": "TjuaeUI opened, but TjuaeCore stopped while initializing local data. Reinstalling TjuaeUI may not fix this. Send a diagnostics report or contact support so the local database migration can be inspected."
     },
     "localDataRepair": {
       "title": "Local data repair failed",
-      "description": "AionUi відкрився, але AionCore зупинився під час підготовки локальних даних запуску, як-от записи assistants або агентів. Повторне встановлення AionUi може не вирішити проблему. Надішліть діагностичний звіт або зверніться до підтримки, щоб можна було перевірити локальну базу даних.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report"
+      "description": "TjuaeUI відкрився, але TjuaeCore зупинився під час підготовки локальних даних запуску, як-от записи assistants або агентів. Повторне встановлення TjuaeUI може не вирішити проблему. Надішліть діагностичний звіт або зверніться до підтримки, щоб можна було перевірити локальну базу даних."
     },
     "startupDirectory": {
       "title": "Startup directory is unavailable",
-      "description": "AionUi opened, but AionCore could not start because the configured work or log directory is missing, unavailable, or blocked by permissions. Check that the configured directories exist and are writable, then restart AionUi.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report"
+      "description": "TjuaeUI opened, but TjuaeCore could not start because the configured work or log directory is missing, unavailable, or blocked by permissions. Check that the configured directories exist and are writable, then restart TjuaeUI."
     },
     "recoverableDatabaseCorruption": {
       "title": "Локальні дані пошкоджено",
-      "description": "AionUi виявив пошкодження локальної бази даних і не може продовжити запуск. Після підтвердження стару базу даних буде збережено як резервну копію, а для продовження запуску буде створено нову локальну базу даних. Історичні локальні дані поки не відображатимуться, стара база даних збережеться як резервна копія.",
+      "description": "TjuaeUI виявив пошкодження локальної бази даних і не може продовжити запуск. Після підтвердження стару базу даних буде збережено як резервну копію, а для продовження запуску буде створено нову локальну базу даних. Історичні локальні дані поки не відображатимуться, стара база даних збережеться як резервна копія.",
       "confirmRebuild": "Зберегти стару БД і створити нову",
-      "sendDiagnostics": "Надіслати діагностику",
-      "diagnosticsHint": "Надсилання діагностики не змінить локальну базу даних.",
-      "diagnosticsSent": "Діагностику надіслано",
-      "diagnosticsReportSuccess": "Діагностичний звіт надіслано",
-      "diagnosticsReportFailed": "Не вдалося надіслати діагностичний звіт",
       "rebuildFailed": "Не вдалося зберегти стару БД і створити нову"
     },
     "transientConcurrentStartup": {
-      "title": "AionUi запускається",
-      "description": "Коли це вікно відкрилося, інший процес запуску AionUi усе ще використовував локальні дані. Це тимчасово, і ваші дані в безпеці — перевстановлення не потрібне. Зачекайте трохи та повторіть спробу або перезапустіть AionUi.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report",
-      "diagnosticsHint": "Якщо це повторюється, ви можете надіслати звіт діагностики."
+      "title": "TjuaeUI запускається",
+      "description": "Коли це вікно відкрилося, інший процес запуску TjuaeUI усе ще використовував локальні дані. Це тимчасово, і ваші дані в безпеці — перевстановлення не потрібне. Зачекайте трохи та повторіть спробу або перезапустіть TjuaeUI."
     }
   },
   "fileAttach.addFiles": "Додати файли",

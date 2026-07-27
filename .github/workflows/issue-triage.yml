@@ -1,17 +1,10 @@
-name: Issue Triage
+name: Issue 分类
 
-# Auto-label and auto-assign newly opened issues based on the
-# "Module" dropdown in the issue templates.
-# Mapping lives in .github/triage-map.json — edit owners there.
-# Issues labeled "bonus" are reserved for community contributors (Kimi
-# campaign): they are never auto-assigned, adding the label clears any
-# earlier auto-assignment, and a claim-invitation comment is posted so
-# contributors know the issue is up for grabs. (Labels set at creation
-# also fire "labeled" events, so that path is covered too.)
-
+# 根据 Issue 模板中的“模块”下拉选项，为新 Issue 自动添加标签并分配负责人。
+# 映射位于 .github/triage-map.json；负责人只需在那里修改。
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
 
 permissions:
   issues: write
@@ -26,7 +19,7 @@ jobs:
           sparse-checkout: .github/triage-map.json
           sparse-checkout-cone-mode: false
 
-      - name: Label and assign by module
+      - name: 按模块添加标签并分配负责人
         uses: actions/github-script@v7
         with:
           script: |
@@ -34,78 +27,23 @@ jobs:
             const map = JSON.parse(fs.readFileSync('.github/triage-map.json', 'utf8'));
             const issue = context.payload.issue;
             const issue_number = issue.number;
-            const labelNames = (labels) => labels.map((l) => (typeof l === 'string' ? l : l.name));
-
-            // "labeled" runs handle the "bonus" label only: bonus issues are
-            // reserved for community contributors (Kimi campaign), so clear
-            // any maintainer assignment and post the claim invitation.
-            if (context.payload.action === 'labeled') {
-              if (context.payload.label?.name !== 'bonus') return;
-
-              const assignees = (issue.assignees ?? []).map((a) => a.login);
-              if (assignees.length > 0) {
-                core.info(`"bonus" label added — removing assignees: ${assignees.join(', ')}`);
-                await github.rest.issues.removeAssignees({ ...context.repo, issue_number, assignees });
-              }
-
-              // Post the claim invitation once — re-labeling must not spam.
-              const CLAIM_MARKER = '<!-- bonus-claim-invite -->';
-              const comments = await github.paginate(github.rest.issues.listComments, {
-                ...context.repo,
-                issue_number,
-                per_page: 100,
-              });
-              if (comments.some((c) => c.body?.includes(CLAIM_MARKER))) {
-                core.info('Claim invitation already posted — skipping.');
-                return;
-              }
-              await github.rest.issues.createComment({
-                ...context.repo,
-                issue_number,
-                body: [
-                  CLAIM_MARKER,
-                  '🎁 This issue is part of the **AionUi × Kimi contributor campaign** — merge 3 campaign PRs, get a free Kimi Allegretto plan ($39/mo value).',
-                  '',
-                  '**To claim this issue:**',
-                  '1. Comment below with your fix approach (a brief plan is enough)',
-                  '2. If it looks good, @IceyLiu will assign it to you',
-                  '3. Submit your PR referencing this issue (`Fixes #' + issue_number + '`)',
-                  '',
-                  '📋 Full rules: https://x.com/AionUi/status/2079493379914961069',
-                  '🙋 Claim your reward: https://github.com/iOfficeAI/AionUi/discussions/3640',
-                ].join('\n'),
-              });
-              core.info('Claim invitation posted.');
-              return;
-            }
-
-            // --- action === "opened": module triage ---
             const body = issue.body || '';
 
-            // Issue-form dropdowns render as "### <field label>\n\n<selected value>".
-            // Extract the value under the "### Module" heading and require an
-            // exact match — plain-English options like "Other" would otherwise
-            // false-positive on free text elsewhere in the body. Fall back when
-            // the field is absent (blank issue) or unrecognized.
-            const section = body.match(/^###\s*Module\s*\r?\n+([^\r\n#]+)/m);
+            // Issue Form 下拉项会渲染为“### <字段标签>\n\n<选中值>”。
+            // 只提取“模块”标题下的值并精确匹配，避免正文中的普通文本误命中。
+            // 空白 Issue 或无法识别的值使用 fallback。
+            const section = body.match(/^###\s*(?:模块|Module)\s*\r?\n+([^\r\n#]+)/m);
             const selected = section ? section[1].trim() : null;
             const matched = selected ? (map.modules.find((entry) => entry.module === selected) ?? null) : null;
 
             const target = matched ?? map.fallback;
-            core.info(`Module match: ${matched ? matched.module : '(none)'} → label=${target.label} owner=${target.owner}`);
+            core.info(`模块匹配：${matched ? matched.module : '无'} → 标签=${target.label} 负责人=${target.owner}`);
 
             await github.rest.issues.addLabels({
               ...context.repo,
               issue_number,
               labels: [target.label],
             });
-
-            // Never auto-assign an issue already labeled "bonus" (e.g. opened
-            // by a maintainer with the label preset).
-            if (labelNames(issue.labels ?? []).includes('bonus')) {
-              core.info('Issue opened with the "bonus" label — skipping auto-assign.');
-              return;
-            }
 
             try {
               await github.rest.issues.addAssignees({
@@ -114,9 +52,8 @@ jobs:
                 assignees: [target.owner],
               });
             } catch (e) {
-              // Assignment can fail if the owner loses repo access; keep the
-              // label and surface the problem instead of failing the run.
-              core.warning(`Failed to assign ${target.owner}: ${e.message}`);
+              // 负责人失去仓库权限时分配可能失败；保留标签并暴露问题，不让整个任务失败。
+              core.warning(`无法分配给 ${target.owner}：${e.message}`);
               await github.rest.issues.addLabels({
                 ...context.repo,
                 issue_number,

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -45,7 +45,7 @@ vi.mock('@/common', () => ({
   },
 }));
 
-vi.mock('@renderer/components/base/AionModal', () => ({
+vi.mock('@renderer/components/base/TjuaeModal', () => ({
   __esModule: true,
   default: ({ visible, children, onOk }: { visible: boolean; children: React.ReactNode; onOk?: () => void }) =>
     visible ? (

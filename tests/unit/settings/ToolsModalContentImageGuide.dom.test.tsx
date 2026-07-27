@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -19,11 +19,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key }),
 }));
 
-vi.mock('@/renderer/components/base/AionScrollArea', () => ({
+vi.mock('@/renderer/components/base/TjuaeScrollArea', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('@/renderer/components/base/AionSelect', () => {
+vi.mock('@/renderer/components/base/TjuaeSelect', () => {
   const Select = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
   return { default: Object.assign(Select, { OptGroup: Select, Option: Select }) };
 });

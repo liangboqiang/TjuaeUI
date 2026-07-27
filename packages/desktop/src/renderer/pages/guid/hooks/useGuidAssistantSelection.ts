@@ -1,10 +1,10 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { assistantRuntimeKey, isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
+import { assistantRuntimeKey, isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import { configService } from '@/common/config/configService';
 import type { AcpModelInfo } from '../types';
 import type { AgentModeOption } from '@/renderer/utils/model/agentTypes';
@@ -104,8 +104,8 @@ function persistGuidAssistantSelectionKey(assistantId: string): void {
 export function pickDefaultAssistantSelectionKey(assistants: Assistant[]): string | null {
   const enabledAssistants = assistants.filter((assistant) => assistant.enabled !== false);
   const preferred =
-    enabledAssistants.find((assistant) => assistant.source === 'generated' && isAionrsAssistant(assistant)) ??
-    enabledAssistants.find((assistant) => isAionrsAssistant(assistant)) ??
+    enabledAssistants.find((assistant) => assistant.source === 'generated' && isTjuaeCliAssistant(assistant)) ??
+    enabledAssistants.find((assistant) => isTjuaeCliAssistant(assistant)) ??
     enabledAssistants[0];
   return preferred?.id ?? null;
 }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -29,7 +29,7 @@ const getElectronPathOrFallback = (name: 'temp' | 'home' | 'userData'): string =
 
 export const getTempPath = () => {
   const rootPath = getElectronPathOrFallback('temp');
-  return path.join(rootPath, 'aionui');
+  return path.join(rootPath, 'tjuaeui');
 };
 
 /**
@@ -91,26 +91,26 @@ const ensureCliSafeSymlink = (targetPath: string, symlinkName: string): string =
 
 /**
  * Get data path, using CLI-safe symlink on macOS.
- * Release builds use ~/.aionui; dev builds use ~/.aionui-dev.
+ * Release builds use ~/.tjuaeui; dev builds use ~/.tjuaeui-dev.
  * 获取数据目录路径，macOS 上使用符号链接。
- * Release 使用 ~/.aionui，Dev 模式使用 ~/.aionui-dev。
+ * Release 使用 ~/.tjuaeui，Dev 模式使用 ~/.tjuaeui-dev。
  */
 export const getDataPath = (): string => {
   const rootPath = getElectronPathOrFallback('userData');
-  const dataPath = path.join(rootPath, 'aionui');
-  return ensureCliSafeSymlink(dataPath, getEnvAwareName('.aionui'));
+  const dataPath = path.join(rootPath, 'tjuaeui');
+  return ensureCliSafeSymlink(dataPath, getEnvAwareName('.tjuaeui'));
 };
 
 /**
  * Get config path, using CLI-safe symlink on macOS.
- * Release builds use ~/.aionui-config; dev builds use ~/.aionui-config-dev.
+ * Release builds use ~/.tjuaeui-config; dev builds use ~/.tjuaeui-config-dev.
  * 获取配置目录路径，macOS 上使用符号链接。
- * Release 使用 ~/.aionui-config，Dev 模式使用 ~/.aionui-config-dev。
+ * Release 使用 ~/.tjuaeui-config，Dev 模式使用 ~/.tjuaeui-config-dev。
  */
 export const getConfigPath = (): string => {
   const rootPath = getElectronPathOrFallback('userData');
   const configPath = path.join(rootPath, 'config');
-  return ensureCliSafeSymlink(configPath, getEnvAwareName('.aionui-config'));
+  return ensureCliSafeSymlink(configPath, getEnvAwareName('.tjuaeui-config'));
 };
 
 /**
@@ -362,7 +362,7 @@ export async function verifyDirectoryFiles(dir1: string, dir2: string): Promise<
 
     return true;
   } catch (error) {
-    console.warn('[AionUi] Error verifying directory files:', error);
+    console.warn('[TjuaeUI] Error verifying directory files:', error);
     return false;
   }
 }
@@ -387,8 +387,8 @@ export const copyFilesToDirectory = async (
     try {
       await fs.access(absoluteFilePath);
     } catch (error) {
-      console.warn(`[AionUi] Source file does not exist, skipping: ${absoluteFilePath}`);
-      console.warn(`[AionUi] Original path: ${file}`);
+      console.warn(`[TjuaeUI] Source file does not exist, skipping: ${absoluteFilePath}`);
+      console.warn(`[TjuaeUI] Original path: ${file}`);
       // 跳过不存在的文件，而不是抛出错误
       continue;
     }
@@ -419,7 +419,7 @@ export const copyFilesToDirectory = async (
       await fs.copyFile(absoluteFilePath, destPath);
       copiedFiles.push(destPath);
     } catch (error) {
-      console.error(`[AionUi] Failed to copy file from ${absoluteFilePath} to ${destPath}:`, error);
+      console.error(`[TjuaeUI] Failed to copy file from ${absoluteFilePath} to ${destPath}:`, error);
       // 继续处理其他文件，而不是完全失败
     }
 

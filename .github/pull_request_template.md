@@ -1,61 +1,61 @@
-# Pull Request
+# 拉取请求
 
-> Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting. PRs that ignore the rules below may be closed and asked to resubmit.
+> 提交前请阅读 [CONTRIBUTING.md](../CONTRIBUTING.md)。不符合下列规则的 PR 可能会被关闭并要求重新提交。
 
-## Description
+## 变更说明
 
-<!-- Provide a clear and concise description of what this PR does and why. -->
+<!-- 清晰、简洁地说明此 PR 做了什么以及为什么要这样做。 -->
 
-## Related Issues
+## 关联议题
 
-<!-- Link related issues. "Closes #123" / "Fixes #123" will auto-close the issue on merge. -->
+<!-- 关联相关 Issue。合并后，“Closes #123”或“Fixes #123”会自动关闭对应 Issue。 -->
 
 - Closes #
 
-## Type of Change
+## 变更类型
 
-- [ ] `fix` — Bug fix (non-breaking change which fixes an issue)
-- [ ] `feat` — New feature (non-breaking change which adds functionality)
-- [ ] `perf` — Performance improvement
-- [ ] `refactor` — Code restructuring (no behavior change)
-- [ ] Breaking change (fix or feature that would break existing functionality)
-- [ ] `docs` — Documentation update
+- [ ] `fix` — 缺陷修复（不破坏现有功能）
+- [ ] `feat` — 新功能（不破坏现有功能）
+- [ ] `perf` — 性能改进
+- [ ] `refactor` — 代码重构（不改变行为）
+- [ ] 破坏性变更（会影响现有功能的修复或功能）
+- [ ] `docs` — 文档更新
 
-## Atomic PR Checklist (Rule 1)
+## 原子 PR 检查（规则 1）
 
-- [ ] This PR contains **exactly one** feature or bug fix that cannot be further decomposed
-- [ ] The PR title follows Conventional Commit format: `<type>(<scope>): <subject>` (English)
+- [ ] 此 PR 只包含**一个**无法继续拆分的功能或缺陷修复
+- [ ] PR 标题遵循 Conventional Commits 格式：`<type>(<scope>): <subject>`（英文）
 
-## Local Checks (Rule 3)
+## 本地检查（规则 3）
 
-<!-- Run these before pushing — CI will reject the PR if they fail. -->
+<!-- 推送前运行这些检查；任一失败都会被 CI 拒绝。 -->
 
-- [ ] `bun run format` — formatting passes
-- [ ] `bun run lint` — no lint errors (skip if no `.ts`/`.tsx` changed)
-- [ ] `bunx tsc --noEmit` — no type errors (skip if no `.ts`/`.tsx` changed)
-- [ ] `bunx vitest run` — tests pass
-- [ ] i18n validated (`bun run i18n:types` + `node scripts/check-i18n.js`) — only if `src/renderer/`, `locales/`, or `src/common/config/i18n/` changed; N/A otherwise
-- [ ] New/changed user-facing text uses i18n keys (no hardcoded strings)
+- [ ] `bun run format` — 格式化通过
+- [ ] `bun run lint` — 无 lint 错误（未修改 `.ts`/`.tsx` 时可跳过）
+- [ ] `bunx tsc --noEmit` — 无类型错误（未修改 `.ts`/`.tsx` 时可跳过）
+- [ ] `bunx vitest run` — 测试通过
+- [ ] i18n 验证通过（`bun run i18n:types` + `node scripts/check-i18n.js`）；修改 `packages/desktop/src/renderer/`、语言包或 i18n 配置时必选，否则不适用
+- [ ] 新增或修改的用户可见文案使用 i18n 键，没有硬编码
 
-## Runtime Verification
+## 运行验证
 
-<!-- Which platforms did you actually run and verify on? -->
+<!-- 实际在哪些平台运行并验证过？ -->
 
-- [ ] Verified on macOS
-- [ ] Verified on Windows
-- [ ] Verified on Linux
-- [ ] I have performed a self-review of my own code
+- [ ] 已在 macOS 验证
+- [ ] 已在 Windows 验证
+- [ ] 已在 Linux 验证
+- [ ] 已完成代码自审
 
-## Screenshots
+## 截图
 
-<!-- If applicable, add screenshots or recordings to help explain your changes. -->
+<!-- 如适用，请添加截图或录屏说明变更。 -->
 
-## Additional Context
+## 补充信息
 
-<!-- Add any other context about the pull request here. -->
+<!-- 在此补充其他背景信息。 -->
 
 ---
 
-<!-- Commits and PR titles must NOT contain AI signatures (Co-Authored-By, "Generated with", etc.). -->
+<!-- Commit 和 PR 标题不得包含 AI 签名（如 Co-Authored-By、Generated with 等）。 -->
 
-**Thank you for contributing to AionUi! 🎉**
+**感谢你为 TjuaeUI 作出贡献！🎉**

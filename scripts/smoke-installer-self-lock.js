@@ -48,7 +48,7 @@ function findMakensis() {
     }
   }
 
-  throw new Error('makensis.exe not found. Run a Windows build once or set MAKENSIS=C:\\path\\to\\makensis.exe');
+  throw new Error('未找到 makensis.exe。请先执行一次 Windows 构建，或设置 MAKENSIS=C:\\path\\to\\makensis.exe');
 }
 
 function readJsonl(logPath) {
@@ -64,63 +64,63 @@ function normalizeWinPath(value) {
 
 function main() {
   if (process.platform !== 'win32') {
-    throw new Error('This smoke test only runs on Windows.');
+    throw new Error('此冒烟测试仅支持 Windows。');
   }
 
   const makensis = findMakensis();
-  const root = mkdtempSync(path.join(tmpdir(), 'aionui-self-lock-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'tjuaeui-self-lock-'));
   const installDir = path.join(root, 'install-dir');
   mkdirSync(installDir, { recursive: true });
   writeFileSync(path.join(installDir, 'existing-file.txt'), 'self-lock smoke\n', 'utf8');
 
-  const nsiPath = path.join(root, 'aionui-self-lock-smoke.nsi');
-  const exePath = path.join(root, 'aionui-self-lock-smoke.exe');
+  const nsiPath = path.join(root, 'tjuaeui-self-lock-smoke.nsi');
+  const exePath = path.join(root, 'tjuaeui-self-lock-smoke.exe');
   const logPath = path.join(
     process.env.TEMP || tmpdir(),
-    `aionui-installer-self-lock-${new Date()
+    `tjuaeui-installer-self-lock-${new Date()
       .toISOString()
       .replace(/[-:]/g, '')
       .replace(/\..+$/, '')
       .replace('T', '-')}-log.jsonl`
   );
-  const resultPath = path.join(process.env.TEMP || tmpdir(), `aionui-installer-self-lock-${process.pid}-result.txt`);
+  const resultPath = path.join(process.env.TEMP || tmpdir(), `tjuaeui-installer-self-lock-${process.pid}-result.txt`);
   const processControlPath = path.join(repoRoot, 'resources', 'windows', 'installer-process-control.nsh');
 
   const nsi = `
 Unicode true
-Name "AionUi Installer Self Lock Smoke"
+Name "TjuaeUI Installer Self Lock Smoke"
 OutFile "${nsisQuote(exePath)}"
 RequestExecutionLevel user
 SilentInstall silent
 !define VERSION "self-lock-smoke"
-!define AIONUI_TARGET_ARCH "x64"
-!define AIONUI_FALLBACK_LOG "aionui-installer-self-lock-fallback.log"
-!define AIONUI_APP_EXECUTABLE_FILENAME "AionUi.exe"
-!define UNINSTALL_FILENAME "Uninstall AionUi.exe"
+!define TJUAEUI_TARGET_ARCH "x64"
+!define TJUAEUI_FALLBACK_LOG "tjuaeui-installer-self-lock-fallback.log"
+!define TJUAEUI_APP_EXECUTABLE_FILENAME "TjuaeUI.exe"
+!define UNINSTALL_FILENAME "Uninstall TjuaeUI.exe"
 !define PROJECT_DIR "${nsisQuote(repoRoot)}"
 !include LogicLib.nsh
 !include "${nsisQuote(processControlPath)}"
 
-Var AionUiSessionId
-Var AionUiIsUpdated
-Var AionUiSessionLogPath
+Var TjuaeUISessionId
+Var TjuaeUIIsUpdated
+Var TjuaeUISessionLogPath
 Var ResultFile
 
 Section
   StrCpy $INSTDIR "${nsisQuote(installDir)}"
-  StrCpy $AionUiSessionId "selflock"
-  StrCpy $AionUiIsUpdated "1"
-  StrCpy $AionUiSessionLogPath "${nsisQuote(logPath)}"
+  StrCpy $TjuaeUISessionId "selflock"
+  StrCpy $TjuaeUIIsUpdated "1"
+  StrCpy $TjuaeUISessionLogPath "${nsisQuote(logPath)}"
   StrCpy $ResultFile "${nsisQuote(resultPath)}"
   InitPluginsDir
   SetOutPath $INSTDIR
-  StrCpy $AionUiCurrentOutDir "$INSTDIR"
-  !insertmacro AIONUI_QUERY_LOCKERS "$INSTDIR" $AionUiLockerResult
+  StrCpy $TjuaeUICurrentOutDir "$INSTDIR"
+  !insertmacro TJUAEUI_QUERY_LOCKERS "$INSTDIR" $TjuaeUILockerResult
   FileOpen $0 "$ResultFile" w
-  FileWrite $0 "$AionUiLockerResult"
-  FileWrite $0 "|$AionUiCurrentOutDir|$AionUiSessionLogPath"
+  FileWrite $0 "$TjuaeUILockerResult"
+  FileWrite $0 "|$TjuaeUICurrentOutDir|$TjuaeUISessionLogPath"
   FileClose $0
-  \${If} $AionUiLockerResult != 0
+  \${If} $TjuaeUILockerResult != 0
     SetErrorLevel 10
     Quit
   \${EndIf}
@@ -129,20 +129,20 @@ SectionEnd
 
   try {
     writeFileSync(nsiPath, nsi, 'utf8');
-    console.log(`[self-lock] makensis: ${makensis}`);
+    console.log(`[安装器自身占用] makensis：${makensis}`);
     const compile = spawnSync(makensis, [nsiPath], { encoding: 'utf8' });
     if (compile.status !== 0) {
       process.stdout.write(compile.stdout || '');
       process.stderr.write(compile.stderr || '');
-      throw new Error(`makensis failed with exit ${compile.status}`);
+      throw new Error(`makensis 执行失败，退出码：${compile.status}`);
     }
 
     const run = spawnSync(exePath, [], { encoding: 'utf8' });
     if (run.status !== 0) {
       process.stdout.write(run.stdout || '');
       process.stderr.write(run.stderr || '');
-      const result = existsSync(resultPath) ? readFileSync(resultPath, 'utf8') : '<missing>';
-      throw new Error(`self-lock harness exited with ${run.status}; locker result=${result}`);
+      const result = existsSync(resultPath) ? readFileSync(resultPath, 'utf8') : '<缺失>';
+      throw new Error(`自身占用测试程序退出码为 ${run.status}；占用检测结果=${result}`);
     }
 
     const events = readJsonl(logPath);
@@ -150,20 +150,20 @@ SectionEnd
       events.findLast?.((event) => event.event === 'rm-lockers') ??
       events.filter((event) => event.event === 'rm-lockers').at(-1);
     if (!lockers) {
-      throw new Error(`rm-lockers event missing: ${logPath}`);
+      throw new Error(`缺少 rm-lockers 事件：${logPath}`);
     }
     if (lockers.fallbackReason !== 'installer-self-lock') {
-      throw new Error(`expected installer-self-lock, got ${lockers.fallbackReason || '<empty>'}`);
+      throw new Error(`预期 fallbackReason 为 installer-self-lock，实际为 ${lockers.fallbackReason || '<空>'}`);
     }
     if (normalizeWinPath(lockers.currentOutDir) !== normalizeWinPath(installDir)) {
-      throw new Error(`expected currentOutDir ${installDir}, got ${lockers.currentOutDir}`);
+      throw new Error(`预期 currentOutDir 为 ${installDir}，实际为 ${lockers.currentOutDir}`);
     }
     const blocking = lockers.blockingProcesses || [];
-    if (!blocking.some((process) => process.name === 'AionUi installer' && Number(process.pid) > 0)) {
-      throw new Error(`expected AionUi installer blocker, got ${JSON.stringify(blocking)}`);
+    if (!blocking.some((process) => process.name === 'TjuaeUI installer' && Number(process.pid) > 0)) {
+      throw new Error(`预期检测到 TjuaeUI 安装器占用，实际为 ${JSON.stringify(blocking)}`);
     }
 
-    console.log(`[self-lock] ok: ${logPath}`);
+    console.log(`[安装器自身占用] 检查通过：${logPath}`);
   } finally {
     rmSync(resultPath, { force: true });
     rmSync(root, { recursive: true, force: true });
@@ -173,6 +173,6 @@ SectionEnd
 try {
   main();
 } catch (err) {
-  console.error(`[self-lock] ${err instanceof Error ? err.message : String(err)}`);
+  console.error(`[安装器自身占用] ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 }

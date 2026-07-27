@@ -1,4 +1,4 @@
-name: '🔨 Manual Build'
+name: '🔨 手动构建'
 
 permissions:
   contents: write
@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to build from'
+        description: '要构建的分支'
         required: true
         default: 'main'
         type: string
       platform:
-        description: 'Platform to build'
+        description: '目标平台'
         required: true
         type: choice
         options:
@@ -26,12 +26,12 @@ on:
           - all
         default: 'macos-arm64'
       skip_code_quality:
-        description: 'Skip code quality checks (faster builds for debugging)'
+        description: '跳过代码质量检查（仅用于加快调试构建）'
         required: false
         type: boolean
         default: false
-      aioncore_run_id:
-        description: 'Optional AionCore Manual Build workflow run id to bundle instead of the pinned release'
+      tjuaecore_run_id:
+        description: '可选的 TjuaeCore 手动构建运行 ID，用其产物替代锁定版本'
         required: false
         type: string
         default: ''
@@ -41,13 +41,13 @@ env:
 
 jobs:
   prepare-matrix:
-    name: Prepare Build Matrix
+    name: 准备构建矩阵
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
 
     steps:
-      - name: Generate build matrix
+      - name: 生成构建矩阵
         id: set-matrix
         shell: bash
         run: |
@@ -77,7 +77,7 @@ jobs:
           fi
 
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-          echo "Generated matrix for platform '$PLATFORM':"
+          echo "为平台 '$PLATFORM' 生成的矩阵："
           echo "$MATRIX" | python3 -m json.tool
 
   build-pipeline:
@@ -87,7 +87,7 @@ jobs:
       matrix: ${{ needs.prepare-matrix.outputs.matrix }}
       ref: ${{ inputs.branch }}
       skip_code_quality: ${{ inputs.skip_code_quality }}
-      aioncore_run_id: ${{ inputs.aioncore_run_id }}
+      tjuaecore_run_id: ${{ inputs.tjuaecore_run_id }}
       append_commit_hash: true
       upload_installers_only: true
     secrets: inherit

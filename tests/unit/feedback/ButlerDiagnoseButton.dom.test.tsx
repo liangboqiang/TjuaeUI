@@ -1,10 +1,10 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
  * ButlerDiagnoseButton — the "Ask the Butler" chip mounted next to
- * FeedbackButton on conversation error surfaces. Clicking it must hand a
+ * Butler diagnostics action on conversation error surfaces. Clicking it must hand a
  * diagnosis prompt containing the error text to the talk-to-butler flow
  * (the same flow behind the report modal's "Solve via chat").
  */

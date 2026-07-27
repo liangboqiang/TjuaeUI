@@ -10,21 +10,21 @@ describe('resolveTeamWorkspaceView', () => {
   });
 
   it('uses leader workspace only as display fallback for legacy empty teams.workspace', () => {
-    const view = resolveTeamWorkspaceView('', '/tmp/aion/conversations/acp-temp-leader');
-    expect(view.workspacePath).toBe('/tmp/aion/conversations/acp-temp-leader');
+    const view = resolveTeamWorkspaceView('', '/tmp/tjuae/conversations/acp-temp-leader');
+    expect(view.workspacePath).toBe('/tmp/tjuae/conversations/acp-temp-leader');
     expect(view.workspaceEnabled).toBe(true);
     expect(view.isTemporaryWorkspace).toBe(true);
   });
 
   it('marks Team-scoped temp workspace as temporary even when teams.workspace is non-empty', () => {
-    const view = resolveTeamWorkspaceView('/tmp/aion/conversations/team-temp-team123', '');
-    expect(view.workspacePath).toBe('/tmp/aion/conversations/team-temp-team123');
+    const view = resolveTeamWorkspaceView('/tmp/tjuae/conversations/team-temp-team123', '');
+    expect(view.workspacePath).toBe('/tmp/tjuae/conversations/team-temp-team123');
     expect(view.workspaceEnabled).toBe(true);
     expect(view.isTemporaryWorkspace).toBe(true);
   });
 
   it('marks per-conversation temp workspace as temporary for compatibility display', () => {
-    const view = resolveTeamWorkspaceView('/tmp/aion/conversations/acp-temp-conv123', '');
+    const view = resolveTeamWorkspaceView('/tmp/tjuae/conversations/acp-temp-conv123', '');
     expect(view.isTemporaryWorkspace).toBe(true);
   });
 });

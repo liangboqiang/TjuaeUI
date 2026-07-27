@@ -1,12 +1,12 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { IChannelPairingRequest, IChannelPluginStatus, IChannelUser } from '@/common/types/channel/channel';
 import { assistants, channel } from '@/common/adapter/ipcBridge';
-import { isAionrsAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
+import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import { resolveLocaleKey } from '@/common/utils';
 import { openExternalUrl } from '@/renderer/utils/platform';
 import { resolveAssistantName } from '@/renderer/utils/model/assistantDisplay';
@@ -321,7 +321,7 @@ const LarkConfigForm: React.FC<LarkConfigFormProps> = ({ pluginStatus, modelSele
   };
 
   const hasExistingUsers = authorizedUsers.length > 0;
-  const showModelSelector = isAionrsAssistant(selectedAssistant);
+  const showModelSelector = isTjuaeCliAssistant(selectedAssistant);
   const assistantOptions = availableAssistants;
   const selectedAssistantName = selectedAssistant
     ? resolveAssistantName(selectedAssistant, localeKey, selectedAssistant.name)
@@ -612,7 +612,7 @@ const LarkConfigForm: React.FC<LarkConfigFormProps> = ({ pluginStatus, modelSele
                         setSelectedAssistant(assistant);
                         void persistSelectedAssistant(assistant);
 
-                        if (isAionrsAssistant(assistant)) {
+                        if (isTjuaeCliAssistant(assistant)) {
                           const providers = modelSelection.providers;
                           const savedProviderExists =
                             modelSelection.current_model?.id &&

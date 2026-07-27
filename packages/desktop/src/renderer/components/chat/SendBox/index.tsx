@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -856,9 +856,9 @@ const SendBox: React.FC<{
   }, []);
 
   useAddEventListener(
-    'aionrs.selected.file.append',
+    'tjuaecli.selected.file.append',
     (items: FileSelectionItem[]) => {
-      if (conversationContext?.type === 'aionrs') {
+      if (conversationContext?.type === 'tjuaecli') {
         handleExternalSelectionAppend(items);
       }
     },
@@ -886,8 +886,8 @@ const SendBox: React.FC<{
   const emitSelectedFileAppend = useCallback(
     (item: FileOrFolderItem) => {
       switch (conversationContext?.type) {
-        case 'aionrs':
-          emitter.emit('aionrs.selected.file.append', [item]);
+        case 'tjuaecli':
+          emitter.emit('tjuaecli.selected.file.append', [item]);
           break;
         case 'acp':
           emitter.emit('acp.selected.file.append', [item]);

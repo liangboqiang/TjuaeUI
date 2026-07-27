@@ -19,30 +19,20 @@
     "quick_switch_content": "當前服務遇到網路限制時，你可以：\n\n1. **立即切換 AI 助手**：從左側面板選擇其他可用助手\n2. **檢查服務狀態**：不同地區的服務可用性可能不同\n3. **網路優化**：使用穩定的網路環境以提升連線成功率\n4. **稍後重試**：網路限制通常是暫時的\n\n**提示**：建議配置多個備用的 AI 服務以確保工作不中斷。",
     "recovery_actions": {
       "cloudflare_blocked": [
-        "• Use VPN or proxy service",
-        "• Switch network environment (like mobile hotspot)",
-        "• Wait 10-30 minutes and retry",
-        "• Clear browser cache and cookies",
-        "• Switch to other available services: ChatGPT, Claude, Qwen, Gemini"
+        "• 使用 VPN 或代理服務",
+        "• 切換網路環境，例如行動熱點",
+        "• 等待 10 至 30 分鐘後重試",
+        "• 清除瀏覽器快取與 Cookie",
+        "• 切換至其他可用服務：ChatGPT、Claude、Qwen、Gemini"
       ],
-      "network_timeout": [
-        "• Check if network connection is stable",
-        "• Retry connection operation",
-        "• Switch to more stable network environment",
-        "• Check firewall settings"
-      ],
+      "network_timeout": ["• 檢查網路連線是否穩定", "• 重試連線操作", "• 切換至更穩定的網路環境", "• 檢查防火牆設定"],
       "connection_refused": [
-        "• Check if Codex CLI is properly installed",
-        "• Verify service configuration and API keys",
-        "• Restart application",
-        "• Check if local ports are occupied"
+        "• 檢查 Codex CLI 是否已正確安裝",
+        "• 驗證服務設定與 API 金鑰",
+        "• 重新啟動應用程式",
+        "• 檢查本機連接埠是否被占用"
       ],
-      "unknown": [
-        "• Check network connection status",
-        "• Retry current operation",
-        "• Switch network environment",
-        "• Contact technical support"
-      ]
+      "unknown": ["• 檢查網路連線狀態", "• 重試目前操作", "• 切換網路環境", "• 聯絡技術支援"]
     }
   },
   "thinking": {

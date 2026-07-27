@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -17,7 +17,7 @@ export interface SlashCommandListAvailabilityInput {
 /**
  * Determines whether the slash command autocomplete list should be enabled.
  *
- * Slash commands are supported by ACP and aionrs agent types. The backend's
+ * Slash commands are supported by ACP and tjuaecli agent types. The backend's
  * `/slash-commands` endpoint returns an empty list for other agent types
  * (openclaw-gateway / nanobot / remote), so calling it from those is waste
  * (and additionally 404s when the agent has not been warmed up yet).
@@ -33,5 +33,5 @@ export function isSlashCommandListEnabled(input: SlashCommandListAvailabilityInp
   if (input.conversation_type === 'codex') {
     return input.codexStatus === 'session_active';
   }
-  return input.conversation_type === 'acp' || input.conversation_type === 'aionrs';
+  return input.conversation_type === 'acp' || input.conversation_type === 'tjuaecli';
 }

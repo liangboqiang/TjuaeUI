@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -30,16 +30,16 @@ const {
     resetCurrentModel: vi.fn(),
   },
   agentSelectionMock: {
-    selectedAssistantId: 'bare-aionrs',
+    selectedAssistantId: 'bare-tjuaecli',
     selectedAssistant: {
-      id: 'bare-aionrs',
+      id: 'bare-tjuaecli',
       source: 'generated',
-      name: 'Aion CLI',
+      name: 'Tjuae CLI',
       name_i18n: {},
       description_i18n: {},
       enabled: true,
       sort_order: 10,
-      preset_agent_type: 'aionrs',
+      preset_agent_type: 'tjuaecli',
       enabled_skills: [],
       custom_skill_names: [],
       disabled_builtin_skills: [],
@@ -53,14 +53,14 @@ const {
     },
     assistants: [
       {
-        id: 'bare-aionrs',
+        id: 'bare-tjuaecli',
         source: 'generated',
-        name: 'Aion CLI',
+        name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'aionrs',
+        preset_agent_type: 'tjuaecli',
         enabled_skills: [],
         custom_skill_names: [],
         disabled_builtin_skills: [],
@@ -73,14 +73,14 @@ const {
         deletable: false,
       },
     ],
-    selectedAssistantBackend: 'aionrs',
+    selectedAssistantBackend: 'tjuaecli',
     selectedAssistantAvailable: true,
     selectedMode: 'default',
     setSelectedMode: vi.fn(),
     selectedAcpModel: null,
     setSelectedAcpModel: vi.fn(),
     currentAcpCachedModelInfo: null,
-    defaultAssistantId: 'bare-aionrs',
+    defaultAssistantId: 'bare-tjuaecli',
     setSelectedAssistantId: vi.fn(),
   },
   guidInputMock: {
@@ -213,10 +213,6 @@ vi.mock('@/renderer/pages/guid/components/QuickActionButtons', () => ({
   default: () => <div data-testid='guid-quick-actions' />,
 }));
 
-vi.mock('@/renderer/components/settings/SettingsModal/contents/FeedbackReportModal', () => ({
-  default: () => null,
-}));
-
 vi.mock('@/renderer/components/chat/SpeechInputButton', () => ({
   default: () => null,
 }));
@@ -279,7 +275,7 @@ vi.mock('swr', async () => {
 import GuidPage from '@/renderer/pages/guid/GuidPage';
 
 const guidInputCardProps = {
-  input: 'Existing Guid draft\nCreate with /cron in AionUi',
+  input: 'Existing Guid draft\nCreate with /cron in TjuaeUI',
   onInputChange: vi.fn(),
   onKeyDown: vi.fn(),
   onPaste: vi.fn(),
@@ -321,19 +317,19 @@ describe('GuidPage', () => {
     modelSelectionMock.resetCurrentModel.mockReset();
     agentSelectionMock.currentAgentModeOptions = [];
     agentSelectionMock.currentAcpCachedModelInfo = null;
-    agentSelectionMock.selectedAssistantBackend = 'aionrs';
+    agentSelectionMock.selectedAssistantBackend = 'tjuaecli';
     agentSelectionMock.setSelectedAcpModel.mockReset();
     agentSelectionMock.setSelectedMode.mockReset();
     agentSelectionMock.assistants = [
       {
-        id: 'bare-aionrs',
+        id: 'bare-tjuaecli',
         source: 'generated',
-        name: 'Aion CLI',
+        name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'aionrs',
+        preset_agent_type: 'tjuaecli',
         enabled_skills: [],
         custom_skill_names: [],
         disabled_builtin_skills: [],
@@ -376,7 +372,7 @@ describe('GuidPage', () => {
 
   it('appends a draft-preserving prefill without clearing attachments or workspace', () => {
     locationMock.state = {
-      prefillPrompt: 'Create with /cron in AionUi',
+      prefillPrompt: 'Create with /cron in TjuaeUI',
       preservePrefillDraft: true,
       focusPrefill: true,
       returnTo: 'conversation-sidebar',
@@ -389,7 +385,7 @@ describe('GuidPage', () => {
 
     const inputUpdater = guidInputMock.setInput.mock.calls[0]?.[0];
     expect(inputUpdater).toBeTypeOf('function');
-    expect(inputUpdater('Existing Guid draft')).toBe('Existing Guid draft\nCreate with /cron in AionUi');
+    expect(inputUpdater('Existing Guid draft')).toBe('Existing Guid draft\nCreate with /cron in TjuaeUI');
     expect(guidInputMock.setFiles).not.toHaveBeenCalled();
     expect(guidInputMock.setDir).not.toHaveBeenCalled();
     expect(capturedGuidInputCardProps.at(-1)?.focusRequestKey).toBe('guid-location');
@@ -413,7 +409,7 @@ describe('GuidPage', () => {
 
   it('removes a consumed preserved prefill even when no other navigation state remains', () => {
     locationMock.state = {
-      prefillPrompt: 'Create with /cron in AionUi',
+      prefillPrompt: 'Create with /cron in TjuaeUI',
       preservePrefillDraft: true,
       focusPrefill: true,
     };
@@ -466,14 +462,14 @@ describe('GuidPage', () => {
   it('renders example prompts with wrapping text for long assistant suggestions', () => {
     agentSelectionMock.assistants = [
       {
-        id: 'bare-aionrs',
+        id: 'bare-tjuaecli',
         source: 'generated',
-        name: 'Aion CLI',
+        name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'aionrs',
+        preset_agent_type: 'tjuaecli',
         enabled_skills: [],
         custom_skill_names: [],
         disabled_builtin_skills: [],
@@ -521,14 +517,14 @@ describe('GuidPage', () => {
   it('does not seed skill defaults from the assistant list while detail is loading', async () => {
     agentSelectionMock.assistants = [
       {
-        id: 'bare-aionrs',
+        id: 'bare-tjuaecli',
         source: 'generated',
-        name: 'Aion CLI',
+        name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'aionrs',
+        preset_agent_type: 'tjuaecli',
         enabled_skills: ['stale-list-skill'],
         custom_skill_names: [],
         disabled_builtin_skills: ['stale-disabled-builtin'],
@@ -554,7 +550,7 @@ describe('GuidPage', () => {
     });
   });
 
-  it('applies an aionrs assistant default model after provider models load', async () => {
+  it('applies an tjuaecli assistant default model after provider models load', async () => {
     swrMock.useSWRMock.mockReturnValue({ data: assistantDetailFixture });
     resolveGuidAssistantDefaultsMock.mockReturnValue({
       modelId: 'gpt-4.1',

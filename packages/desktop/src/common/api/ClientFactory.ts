@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -76,8 +76,8 @@ export class ClientFactory {
           baseURL: base_url,
           timeout: options.timeout,
           defaultHeaders: {
-            'HTTP-Referer': 'https://aionui.com',
-            'X-Title': 'AionUi',
+            'HTTP-Referer': 'https://github.com/liangboqiang/TjuaeUI',
+            'X-Title': 'TjuaeUI',
           },
           ...(options.baseConfig as OpenAIClientConfig),
         };
@@ -127,8 +127,8 @@ export class ClientFactory {
           baseURL: base_url,
           timeout: options.timeout,
           defaultHeaders: {
-            'HTTP-Referer': 'https://aionui.com',
-            'X-Title': 'AionUi',
+            'HTTP-Referer': 'https://github.com/liangboqiang/TjuaeUI',
+            'X-Title': 'TjuaeUI',
           },
           ...(options.baseConfig as OpenAIClientConfig),
         };

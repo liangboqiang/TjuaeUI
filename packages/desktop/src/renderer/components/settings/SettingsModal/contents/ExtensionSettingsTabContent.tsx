@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -49,7 +49,7 @@ const ExtensionSettingsTabContent: React.FC<ExtensionSettingsTabContentProps> = 
 
       frameWindow.postMessage(
         {
-          type: 'aion:init',
+          type: 'tjuae:init',
           locale: i18n.language,
           extensionName,
           translations,
@@ -72,7 +72,7 @@ const ExtensionSettingsTabContent: React.FC<ExtensionSettingsTabContentProps> = 
       const data = event.data as { type?: string; reqId?: string } | undefined;
       if (!data) return;
 
-      if (data.type === 'aion:get-locale') {
+      if (data.type === 'tjuae:get-locale') {
         void postLocaleInit();
         return;
       }

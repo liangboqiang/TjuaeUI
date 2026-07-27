@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
  * Unit tests for process/utils/migrateAssistants.ts (A11 in N4a).
@@ -112,7 +112,7 @@ describe('migrateAssistants', () => {
 
     it('omits legacy default gemini so the backend applies its current default', () => {
       // Legacy Electron shipped 'gemini' as the global default; the current
-      // backend default is 'aionrs' (the internal gemini engine was removed).
+      // backend default is 'tjuaecli' (the internal gemini engine was removed).
       // Treat a legacy 'gemini' value as "no explicit choice" so users who
       // never touched the picker get the current default, not a broken one.
       const result = legacyAssistantToCreateRequest({ id: 'x', presetAgentType: 'gemini' });
@@ -126,7 +126,7 @@ describe('migrateAssistants', () => {
 
     it('maps non-default legacy backend choices to agent_id', () => {
       // Users who actually picked a backend keep their choice across the
-      // gemini → aionrs default migration.
+      // gemini → tjuaecli default migration.
       const result = legacyAssistantToCreateRequest(
         { id: 'x', presetAgentType: 'codex' },
         new Map([['codex', '8e1acf31']])
@@ -156,7 +156,7 @@ describe('migrateAssistants', () => {
       // the next launch does not abort the whole pipeline.
       const config = makeConfig({
         assistants: [
-          { id: 'builtin-morph-ppt-3d', enabled: false, isBuiltin: true },
+          { id: 'builtin-retired-assistant', enabled: false, isBuiltin: true },
           { id: 'builtin-pptx-generator', enabled: false, isBuiltin: true },
         ],
       });
@@ -184,13 +184,13 @@ describe('migrateAssistants', () => {
 
     it('still fails migration on non-404 backend errors', async () => {
       const config = makeConfig({
-        assistants: [{ id: 'builtin-morph-ppt-3d', enabled: false, isBuiltin: true }],
+        assistants: [{ id: 'builtin-retired-assistant', enabled: false, isBuiltin: true }],
       });
 
       (ipcBridge.assistants.setState.invoke as any).mockRejectedValue(
         new BackendHttpError({
           method: 'PATCH',
-          path: '/api/assistants/morph-ppt-3d/state',
+          path: '/api/assistants/retired-assistant/state',
           status: 500,
           body: { error: 'internal' },
         })
@@ -205,16 +205,16 @@ describe('migrateAssistants', () => {
     it('skips legacy builtin override replay when backend already exposes unified assistant detail', async () => {
       const config = makeConfig({
         assistants: [
-          { id: 'builtin-morph-ppt-3d', enabled: false, isBuiltin: true },
+          { id: 'builtin-word-creator', enabled: false, isBuiltin: true },
           { id: 'custom-1', name: 'Custom 1' },
         ],
       });
 
-      (ipcBridge.assistants.list.invoke as any).mockResolvedValue([{ id: 'morph-ppt-3d', source: 'builtin' }]);
+      (ipcBridge.assistants.list.invoke as any).mockResolvedValue([{ id: 'word-creator', source: 'builtin' }]);
       (ipcBridge.assistants.get.invoke as any).mockResolvedValue({
-        id: 'morph-ppt-3d',
+        id: 'word-creator',
         source: 'builtin',
-        profile: { name: 'Morph PPT', name_i18n: {}, description_i18n: {} },
+        profile: { name: '文档助手', name_i18n: {}, description_i18n: {} },
         state: { enabled: true, sort_order: 0 },
         engine: { agent_id: '632f31d2' },
         rules: { content: '', storage_mode: 'builtin_asset' },
@@ -263,7 +263,7 @@ describe('migrateAssistants', () => {
     }
 
     it('preserves explicit user choice (codex) across the default change', async () => {
-      // Legacy built-in was set to 'codex'; backend default is 'aionrs'. The
+      // Legacy built-in was set to 'codex'; backend default is 'tjuaecli'. The
       // migration should PUT an override so the user's choice survives.
       const config = makeConfig({
         assistants: [{ id: 'builtin-word-creator', enabled: true, presetAgentType: 'codex', isBuiltin: true }],
@@ -289,7 +289,7 @@ describe('migrateAssistants', () => {
 
     it('does not override when legacy value is the old default (gemini)', async () => {
       // 'gemini' legacy-default must collapse to "no preference" so the user
-      // lands on the new default aionrs, not a broken gemini reference.
+      // lands on the new default tjuaecli, not a broken gemini reference.
       const config = makeConfig({
         assistants: [{ id: 'builtin-word-creator', enabled: true, presetAgentType: 'gemini', isBuiltin: true }],
       });
@@ -305,10 +305,10 @@ describe('migrateAssistants', () => {
     });
 
     it('does not override when legacy value already matches the current default', async () => {
-      // User picked 'aionrs' explicitly (or the legacy default already matched):
+      // User picked 'tjuaecli' explicitly (or the legacy default already matched):
       // writing an identical override would be a no-op row.
       const config = makeConfig({
-        assistants: [{ id: 'builtin-word-creator', enabled: true, presetAgentType: 'aionrs', isBuiltin: true }],
+        assistants: [{ id: 'builtin-word-creator', enabled: true, presetAgentType: 'tjuaecli', isBuiltin: true }],
       });
 
       (ipcBridge.assistants.list.invoke as any).mockResolvedValue(

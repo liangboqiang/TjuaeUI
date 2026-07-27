@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -193,7 +193,7 @@ export const useConversationRuntimeView = (conversation_id: string): UseConversa
 export const logStreamTerminalObserved = (
   conversation_id: string,
   turn_id: string | undefined,
-  platform: 'acp' | 'aionrs',
+  platform: 'acp' | 'tjuaecli',
   stream_type: string
 ): void => {
   const rendererLogger = ipcBridge.application?.writeRendererLog;

@@ -191,7 +191,7 @@ bun run test:e2e
 
 测试用 extension：
 
-- `aion-extension.json` — 声明 `contributes.acpAdapters`，声明 `lifecycle.onInstall`
+- `tjuae-extension.json` — 声明 `contributes.acpAdapters`，声明 `lifecycle.onInstall`
 - `scripts/install.js` — onInstall 钩子，将 fake-acp-cli 放到临时 PATH（Unix: symlink, Windows: .cmd wrapper）
 
 ### 跨平台兼容性

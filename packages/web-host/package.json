@@ -1,8 +1,8 @@
 {
-  "name": "@aionui/web-host",
+  "name": "@tjuae/web-host",
   "version": "0.0.0",
   "private": true,
-  "description": "WebUI host package - spawns backend and reverse-proxies to it; serves static files (no Electron dependency)",
+  "description": "WebUI 宿主包：启动后端、提供反向代理并托管静态文件，不依赖 Electron",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { buildDisplayMessage } from '@/renderer/utils/file/messageFiles';
 
 describe('buildDisplayMessage', () => {
-  const workspace = '/tmp/aion/workspace-1';
+  const workspace = '/tmp/tjuae/workspace-1';
 
   it('stores workspace files with workspace prefix', () => {
     const files = [`${workspace}/uploads/photo.jpg`];
@@ -40,8 +40,8 @@ describe('buildDisplayMessage', () => {
     expect(result).toBe('hello');
   });
 
-  it('strips AIONUI timestamp separators from filenames while keeping prefix', () => {
-    const files = [`${workspace}/uploads/photo_aionui_1234567890123.jpg`];
+  it('strips TJUAEUI timestamp separators from filenames while keeping prefix', () => {
+    const files = [`${workspace}/uploads/photo_tjuaeui_1234567890123.jpg`];
     const result = buildDisplayMessage('hello', files, workspace);
     expect(result).toContain(`${workspace}/uploads/photo.jpg`);
   });

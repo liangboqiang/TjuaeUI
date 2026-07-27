@@ -1,17 +1,17 @@
-# @aionui/web-host
+# @tjuae/web-host
 
-WebUI host package for AionUi - zero Electron dependency.
+TjuaeUI 的 WebUI host 包，不依赖 Electron。
 
-## Responsibilities
+## 职责
 
-- **backend-launcher**: spawn or reuse existing aioncore process
-- **static-server**: serve out/renderer SPA + reverse proxy /api and /ws to backend
-- **auth**: password reset, change, verify, config I/O (bcrypt + session)
+- **backend-launcher**：创建或复用现有 `tjuaecore` 进程
+- **static-server**：提供 `out/renderer` SPA，并将 `/api` 与 `/ws` 反向代理到后端
+- **auth**：密码重置、修改、验证及配置读写（bcrypt + session）
 
-## Usage
+## 用法
 
 ```ts
-import { startWebHost } from '@aionui/web-host';
+import { startWebHost } from '@tjuae/web-host';
 
 const handle = await startWebHost({
   app: {
@@ -23,7 +23,7 @@ const handle = await startWebHost({
   staticDir: '/path/to/out/renderer',
   backend: {
     kind: 'ownBackend',
-    resolveBackend: () => '/path/to/aioncore',
+    resolveBackend: () => '/path/to/tjuaecore',
   },
 });
 
@@ -32,6 +32,6 @@ console.log(`WebUI running at ${handle.url}`);
 await handle.stop();
 ```
 
-## Status
+## 状态
 
-M3: skeleton + type definitions + placeholder implementations (all throw `not implemented yet`)
+M3：骨架、类型定义与占位实现；占位实现目前都会抛出 `not implemented yet`。

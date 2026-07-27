@@ -1,138 +1,140 @@
 ---
 name: testing
 description: |
-  Testing workflow and quality standards for writing and running tests.
-  Use when: (1) Writing new tests, (2) Adding a new feature that needs tests,
-  (3) Modifying logic that has existing tests, (4) Before claiming a task is complete.
+  编写与运行测试的流程和质量标准。
+  使用场景：(1) 编写新测试；(2) 新增需要测试的功能；
+  (3) 修改已有测试覆盖的逻辑；(4) 声明任务完成前。
 ---
 
-# Testing Skill
+# 测试技能
 
-Standards and workflow for writing and running tests. Every feature must be tested.
+本技能规定测试的编写和运行流程。每项功能都必须经过测试。
 
-**Announce at start:** "I'm using testing skill to ensure proper test coverage."
+**开始时声明：**“我将使用 testing 技能确保测试覆盖与质量符合要求。”
 
-## Trigger Conditions
+## 触发条件
 
-- Writing new tests for a feature or bug fix
-- Adding a new feature (must include tests)
-- Modifying logic that has existing tests (must update them)
-- Before claiming work is complete
-- Before committing code
+- 为功能或缺陷修复编写新测试
+- 新增功能（必须同时提供测试）
+- 修改已有测试覆盖的逻辑（必须同步更新测试）
+- 声明工作完成前
+- 提交代码前
 
-## Framework
+## 测试框架
 
-**Vitest 4** — configured in `vitest.config.ts`.
+使用 **Vitest 4**，配置位于 `vitest.config.ts`。
 
-## Test Structure
+## 测试结构
 
-```
+```text
 tests/
-├── unit/          # Individual functions, utilities, components
-├── integration/   # IPC, database, service interactions
-├── regression/    # Regression test cases
-└── e2e/           # End-to-end tests (Playwright, playwright.config.ts)
+├── unit/          # 独立函数、工具、组件
+├── integration/   # IPC、数据库、Service 交互
+├── regression/    # 回归用例
+└── e2e/           # 端到端测试（Playwright，配置见 playwright.config.ts）
 ```
 
-## Two Test Environments
+## 两种测试环境
 
-| Environment      | When                              | File naming     |
-| ---------------- | --------------------------------- | --------------- |
-| `node` (default) | Main process, utilities, services | `*.test.ts`     |
-| `jsdom`          | DOM/browser-dependent code        | `*.dom.test.ts` |
+| 环境           | 适用对象                  | 文件命名        |
+| -------------- | ------------------------- | --------------- |
+| `node`（默认） | 主进程、工具函数、Service | `*.test.ts`     |
+| `jsdom`        | 依赖 DOM 或浏览器的代码   | `*.dom.test.ts` |
 
-## Workflow
+## 流程
 
-### Step 1: Identify What to Test
+### 第 1 步：识别测试对象
 
-Before writing tests, list the **riskiest scenarios** first:
+编写测试前，先列出**风险最高的场景**：
 
-- What happens when the dependency returns `undefined` / throws?
-- What happens at boundaries (empty list, max retries, past timestamp)?
-- What is most likely to break in production?
+- 依赖返回 `undefined` 或抛出异常时会发生什么？
+- 边界值如何处理（空列表、最大重试次数、过去的时间戳）？
+- 哪种情况最可能在生产环境中出错？
 
-### Step 2: Write Tests
+### 第 2 步：编写测试
 
-Follow these quality rules:
+遵循以下质量规则。
 
-**1. Describe behavior, not code structure**
+**1. 描述行为，不描述代码结构**
 
 ```typescript
-// Wrong — describes implementation
+// 错误：描述实现
 it('should call repo.getConversation', ...)
 
-// Correct — describes behavior
+// 正确：描述可观察行为
 it('should return cached task without hitting repo on second call', ...)
 it('should reject with error when conversation does not exist', ...)
 ```
 
-**2. Every describe block must cover at least one failure path**
+**2. 每个 `describe` 至少覆盖一条失败路径**
 
-Happy-path-only tests leave the most dangerous code untested.
+只测试 happy path 会让风险最高的分支失去保护。
 
-**3. One behavior per test**
+**3. 每个测试只验证一个行为**
 
-Keep each `it()` focused. More than 3 `expect()` calls in one test is a signal it is testing too much at once.
+保持每个 `it()` 聚焦。一个测试超过 3 个 `expect()` 通常意味着覆盖内容过多，应考虑拆分。
 
-**4. Self-check**
+**4. 自检测试有效性**
 
-After writing a test, mentally delete the core logic it targets. If the test would still pass, rewrite it — it is not guarding anything.
+写完测试后，设想删除它要保护的核心逻辑。如果测试仍会通过，就应重写，因为它没有真正形成保护。
 
-**5. Start from risk, not from coverage gaps**
+**5. 从风险出发，而不是从覆盖率缺口出发**
 
-List scenarios most likely to produce bugs. Write those first. Coverage is the outcome, not the starting point.
+先列出最容易产生缺陷的场景并优先测试。覆盖率是结果，不是起点。
 
-### Step 3: Run Tests
-
-```bash
-bun run test              # Run all tests (REQUIRED before every commit)
-bun run test:coverage     # Check coverage (before opening a PR)
-```
-
-### Step 4: Verify Coverage
-
-**Coverage target**: ≥ 80% for all source files matched by `vitest.config.ts` → `coverage.include` (currently `src/**/*.{ts,tsx}` plus a few scripts).
-
-New source files are automatically included in coverage — no manual config changes needed. If a new file is accidentally excluded by a rule in `coverage.exclude`, remove it from the exclude list.
-
-### Step 5: Update Existing Tests
-
-When modifying logic, check if existing tests need updating:
+### 第 3 步：运行测试
 
 ```bash
-bun run test -- --reporter=verbose   # See which tests pass/fail with names
+bun run test              # 每次提交前必须运行全部测试
+bun run test:coverage     # 创建 PR 前检查覆盖率
 ```
 
-If a test fails because the behavior changed intentionally, update the test. If it fails unexpectedly, investigate.
+修改范围较小时，可以先运行聚焦测试快速反馈，但最终声明完整验证时必须如实说明实际运行范围。
 
-## Edge Case Checklist
+### 第 4 步：验证覆盖率
 
-When testing a module, verify:
+**覆盖率目标**：`vitest.config.ts` 中 `coverage.include` 匹配的全部源码达到 ≥ 80%。
 
-- [ ] `null` / `undefined` inputs handled
-- [ ] Empty arrays/objects handled
-- [ ] Error thrown by dependencies handled
-- [ ] Boundary values (0, -1, max, empty string)
-- [ ] Async operations (timeout, rejection, cancellation)
+新源码文件会自动纳入覆盖率，无需手动修改配置。如果新文件被 `coverage.exclude` 规则意外排除，应删除对应排除项。
 
-## Quick Checklist
+### 第 5 步：更新既有测试
 
-Before submitting code:
+修改逻辑时，检查既有测试是否也需要更新：
 
-- [ ] New features have corresponding test cases
-- [ ] Modified logic has updated tests
-- [ ] `bun run test` passes
-- [ ] Tests describe **behavior**, not implementation
-- [ ] At least one failure path per describe block
-- [ ] New source files are not accidentally excluded by `coverage.exclude`
-- [ ] `bun run test:coverage` meets ≥ 80% target
+```bash
+bun run test -- --reporter=verbose
+```
 
-## Common Mistakes
+行为有意变化导致测试失败时，更新测试；意外失败时先调查根因。
 
-| Mistake                           | Correct                                       |
-| --------------------------------- | --------------------------------------------- |
-| Testing implementation details    | Test observable behavior                      |
-| Only testing happy path           | Must include at least one failure path        |
-| 5+ expects in one `it()`          | Split into separate tests                     |
-| Skipping tests for "simple" code  | Simple code breaks too — test the risky parts |
-| Writing tests after saying "done" | Tests are part of "done", not an afterthought |
+## 边界场景清单
+
+测试模块时确认：
+
+- [ ] 能处理 `null` 与 `undefined`
+- [ ] 能处理空数组和空对象
+- [ ] 能处理依赖抛出的异常
+- [ ] 已覆盖边界值（0、-1、最大值、空字符串）
+- [ ] 已覆盖异步操作（超时、拒绝、取消）
+
+## 快速检查清单
+
+提交代码前：
+
+- [ ] 新功能有对应测试
+- [ ] 修改的逻辑已同步更新测试
+- [ ] `bun run test` 通过
+- [ ] 测试描述的是**行为**，不是实现
+- [ ] 每个 `describe` 至少包含一条失败路径
+- [ ] 新源码未被 `coverage.exclude` 意外排除
+- [ ] `bun run test:coverage` 达到 ≥ 80% 目标
+
+## 常见错误
+
+| 错误                          | 正确做法                               |
+| ----------------------------- | -------------------------------------- |
+| 测试实现细节                  | 测试可观察行为                         |
+| 只测试 happy path             | 至少覆盖一条失败路径                   |
+| 一个 `it()` 中有 5 个以上断言 | 拆分成多个测试                         |
+| 因代码“简单”而跳过测试        | 简单代码也会出错，应测试高风险部分     |
+| 先声称“完成”再补测试          | 测试是完成定义的一部分，而不是事后补充 |

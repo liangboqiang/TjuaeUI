@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -40,7 +40,7 @@ describe('OpenAIRotatingClient', () => {
     const client = new OpenAIRotatingClient(' \n sk-configured-key\t ', {
       baseURL: 'https://gateway.example.com/v1',
       defaultHeaders: {
-        'HTTP-Referer': 'https://aionui.com',
+        'HTTP-Referer': 'https://github.com/liangboqiang/TjuaeUI',
       },
       httpAgent,
     });
@@ -54,7 +54,7 @@ describe('OpenAIRotatingClient', () => {
       apiKey: 'sk-configured-key',
       baseURL: 'https://gateway.example.com/v1',
       defaultHeaders: {
-        'HTTP-Referer': 'https://aionui.com',
+        'HTTP-Referer': 'https://github.com/liangboqiang/TjuaeUI',
       },
       httpAgent,
     });

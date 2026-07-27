@@ -2,8 +2,8 @@
  * Electron Cold Startup Benchmark
  *
  * Launches the Electron app N times and measures per-phase startup timings by
- * parsing the electron-log file for [AionUi:ready] / [AionUi:init] /
- * [AionUi:process] marks, plus `ready-to-show` / `did-finish-load` /
+ * parsing the electron-log file for [TjuaeUI:ready] / [TjuaeUI:init] /
+ * [TjuaeUI:process] marks, plus `ready-to-show` / `did-finish-load` /
  * time-to-interactive (chat input visible).
  *
  * Optional `--with-memory` mode samples RSS / heap in the main and renderer
@@ -111,14 +111,14 @@ type StartupTiming = {
   wallDomContentLoadedMs: number;
   wallTimeToInteractiveMs: number;
   wallTotalMs: number;
-  // Parsed from [AionUi:ready] marks
+  // Parsed from [TjuaeUI:ready] marks
   readyInitializeProcessMs: number;
   readyInitializeZoomFactorMs: number;
   readyCreateWindowMs: number;
   readyInitializeAcpDetectorMs: number;
-  // Parsed from [AionUi:init] marks
+  // Parsed from [TjuaeUI:init] marks
   initTotalMs: number;
-  // Parsed from [AionUi:process] marks
+  // Parsed from [TjuaeUI:process] marks
   processInitStorageMs: number;
   processExtensionRegistryMs: number;
   processChannelManagerMs: number;
@@ -142,14 +142,14 @@ function getLogFilePath(): string {
   const candidates: string[] = [];
   if (process.platform === 'darwin') {
     candidates.push(
-      path.join(os.homedir(), 'Library', 'Logs', 'AionUi-Dev', `${today}.log`),
-      path.join(os.homedir(), 'Library', 'Logs', 'AionUi', `${today}.log`)
+      path.join(os.homedir(), 'Library', 'Logs', 'TjuaeUI-Dev', `${today}.log`),
+      path.join(os.homedir(), 'Library', 'Logs', 'TjuaeUI', `${today}.log`)
     );
   } else if (process.platform === 'win32') {
     const appData = process.env.APPDATA ?? path.join(os.homedir(), 'AppData', 'Roaming');
-    candidates.push(path.join(appData, 'AionUi', 'logs', `${today}.log`));
+    candidates.push(path.join(appData, 'TjuaeUI', 'logs', `${today}.log`));
   } else {
-    candidates.push(path.join(os.homedir(), '.config', 'AionUi', 'logs', `${today}.log`));
+    candidates.push(path.join(os.homedir(), '.config', 'TjuaeUI', 'logs', `${today}.log`));
   }
   return candidates.find((p) => fs.existsSync(p)) ?? candidates[0];
 }
@@ -178,10 +178,10 @@ function readNewLogLines(logPath: string, offset: number): string[] {
 
 // ── Log parsing ─────────────────────────────────────────────────────────────
 
-// Matches: [AionUi:ready] <label> +<ms>ms
-// Matches: [AionUi:init]  <label> +<ms>ms
-// Matches: [AionUi:process] <label> +<ms>ms
-const MARK_REGEX = /\[AionUi:(ready|init|process)\]\s+([^+]+?)\s+\+(\d+)ms/;
+// Matches: [TjuaeUI:ready] <label> +<ms>ms
+// Matches: [TjuaeUI:init]  <label> +<ms>ms
+// Matches: [TjuaeUI:process] <label> +<ms>ms
+const MARK_REGEX = /\[TjuaeUI:(ready|init|process)\]\s+([^+]+?)\s+\+(\d+)ms/;
 
 type ParsedMarks = {
   ready: Map<string, number>;
@@ -210,9 +210,9 @@ function parseStartupLog(lines: string[]): ParsedMarks {
       continue;
     }
 
-    if (line.includes('[AionUi] Renderer did-finish-load')) marks.logs.rendererDidFinishLoad = true;
-    else if (line.includes('[AionUi] Window ready-to-show')) marks.logs.windowReadyToShow = true;
-    else if (line.includes('[AionUi] Showing main window')) marks.logs.showingMainWindow = true;
+    if (line.includes('[TjuaeUI] Renderer did-finish-load')) marks.logs.rendererDidFinishLoad = true;
+    else if (line.includes('[TjuaeUI] Window ready-to-show')) marks.logs.windowReadyToShow = true;
+    else if (line.includes('[TjuaeUI] Showing main window')) marks.logs.showingMainWindow = true;
   }
 
   return marks;
@@ -234,7 +234,7 @@ function getProjectRoot(): string {
       return mainRoot;
     }
   } catch {
-    // not in a worktree or git not available
+    // 当前不在工作树中，或 Git 不可用。
   }
   return path.resolve(__dirname, '..');
 }
@@ -242,10 +242,10 @@ function getProjectRoot(): string {
 async function launchApp(timeoutMs: number, withMemory: boolean): Promise<ElectronApplication> {
   const projectRoot = getProjectRoot();
 
-  // Ensure production build exists
+  // 确保生产构建已经存在。
   const mainEntry = path.join(projectRoot, 'out/main/index.js');
   if (!fs.existsSync(mainEntry)) {
-    console.log('[bench:startup] Building production bundle (electron-vite build)...');
+    console.log('[启动基准] 正在构建生产包（electron-vite build）……');
     const { execSync } = require('child_process');
     execSync('npx electron-vite build', { cwd: projectRoot, stdio: 'inherit' });
   }
@@ -256,10 +256,10 @@ async function launchApp(timeoutMs: number, withMemory: boolean): Promise<Electr
     cwd: projectRoot,
     env: {
       ...process.env,
-      AIONUI_DISABLE_AUTO_UPDATE: '1',
-      AIONUI_E2E_TEST: '1',
-      AIONUI_DISABLE_DEVTOOLS: '1',
-      AIONUI_CDP_PORT: '0',
+      TJUAEUI_DISABLE_AUTO_UPDATE: '1',
+      TJUAEUI_E2E_TEST: '1',
+      TJUAEUI_DISABLE_DEVTOOLS: '1',
+      TJUAEUI_CDP_PORT: '0',
       NODE_ENV: 'production',
     },
     timeout: timeoutMs,
@@ -282,7 +282,7 @@ async function resolveMainWindow(app: ElectronApplication, timeoutMs: number): P
       return win;
     }
   }
-  throw new Error('Failed to resolve main window within timeout');
+  throw new Error('在超时时间内未能找到主窗口');
 }
 
 // ── Memory sampling ─────────────────────────────────────────────────────────
@@ -559,28 +559,28 @@ function printTerminalReport(results: StartupTiming[]): void {
   const failed = results.filter((r) => r.failed);
 
   console.log('\n' + '='.repeat(80));
-  console.log('  Electron Cold Startup Benchmark — Summary');
+  console.log('  Electron 冷启动基准测试摘要');
   console.log('='.repeat(80));
-  console.log(`  Iterations: ${results.length} (successful: ${successful.length}, failed: ${failed.length})`);
+  console.log(`  迭代次数：${results.length}（成功：${successful.length}，失败：${failed.length}）`);
   console.log('-'.repeat(80));
 
   const rows: [string, Stats][] = [
-    ['Wall: first window', computeStats(successful.map((r) => r.wallFirstWindowMs))],
-    ['Wall: DOM loaded', computeStats(successful.map((r) => r.wallDomContentLoadedMs))],
-    ['Wall: interactive', computeStats(successful.map((r) => r.wallTimeToInteractiveMs))],
-    ['Wall: total', computeStats(successful.map((r) => r.wallTotalMs))],
-    ['ready: initializeProcess', computeStats(successful.map((r) => r.readyInitializeProcessMs))],
-    ['ready: createWindow', computeStats(successful.map((r) => r.readyCreateWindowMs))],
-    ['ready: initAcpDetector', computeStats(successful.map((r) => r.readyInitializeAcpDetectorMs))],
-    ['init: done (storage)', computeStats(successful.map((r) => r.initTotalMs))],
-    ['process: initStorage', computeStats(successful.map((r) => r.processInitStorageMs))],
-    ['process: ExtensionReg', computeStats(successful.map((r) => r.processExtensionRegistryMs))],
-    ['process: ChannelMgr', computeStats(successful.map((r) => r.processChannelManagerMs))],
+    ['总耗时：首个窗口', computeStats(successful.map((r) => r.wallFirstWindowMs))],
+    ['总耗时：DOM 已加载', computeStats(successful.map((r) => r.wallDomContentLoadedMs))],
+    ['总耗时：可交互', computeStats(successful.map((r) => r.wallTimeToInteractiveMs))],
+    ['总耗时：完成', computeStats(successful.map((r) => r.wallTotalMs))],
+    ['就绪：初始化进程', computeStats(successful.map((r) => r.readyInitializeProcessMs))],
+    ['就绪：创建窗口', computeStats(successful.map((r) => r.readyCreateWindowMs))],
+    ['就绪：ACP 检测器', computeStats(successful.map((r) => r.readyInitializeAcpDetectorMs))],
+    ['初始化：存储完成', computeStats(successful.map((r) => r.initTotalMs))],
+    ['进程：初始化存储', computeStats(successful.map((r) => r.processInitStorageMs))],
+    ['进程：扩展注册表', computeStats(successful.map((r) => r.processExtensionRegistryMs))],
+    ['进程：渠道管理器', computeStats(successful.map((r) => r.processChannelManagerMs))],
   ];
 
   const pad = 26;
   console.log(
-    `  ${'Phase'.padEnd(pad)} ${'Mean'.padStart(8)} ${'Median'.padStart(8)} ${'P95'.padStart(8)} ${'Min'.padStart(8)} ${'Max'.padStart(8)} ${'N'.padStart(4)}`
+    `  ${'阶段'.padEnd(pad)} ${'平均值'.padStart(8)} ${'中位数'.padStart(8)} ${'P95'.padStart(8)} ${'最小值'.padStart(8)} ${'最大值'.padStart(8)} ${'样本'.padStart(4)}`
   );
   console.log('-'.repeat(80));
   for (const [label, s] of rows) {
@@ -592,20 +592,20 @@ function printTerminalReport(results: StartupTiming[]): void {
   const memSummary = computeMemorySummary(successful);
   if (memSummary) {
     console.log('-'.repeat(80));
-    console.log('  Memory Profile (median across runs)');
+    console.log('  内存概况（各次运行的中位数）');
     console.log('-'.repeat(80));
     const memRows: [string, number][] = [
-      ['Idle — main RSS', memSummary.idleMainRss.median],
-      ['Idle — main heapUsed', memSummary.idleMainHeapUsed.median],
-      ['Idle — renderer used', memSummary.idleRendererUsed.median],
-      ['After conv — main RSS', memSummary.afterConversationMainRss.median],
-      ['After conv — renderer', memSummary.afterConversationRendererUsed.median],
-      ['After close — main RSS', memSummary.afterCloseMainRss.median],
-      ['After close — renderer', memSummary.afterCloseRendererUsed.median],
-      ['Leak — main RSS', memSummary.leakMainRssBytes.median],
-      ['Leak — renderer used', memSummary.leakRendererUsedBytes.median],
-      ['Δopen — main RSS', memSummary.openDeltaMainRssBytes.median],
-      ['Δopen — renderer used', memSummary.openDeltaRendererUsedBytes.median],
+      ['空闲—主进程 RSS', memSummary.idleMainRss.median],
+      ['空闲—主进程堆', memSummary.idleMainHeapUsed.median],
+      ['空闲—渲染进程堆', memSummary.idleRendererUsed.median],
+      ['打开会话后—主进程', memSummary.afterConversationMainRss.median],
+      ['打开会话后—渲染进程', memSummary.afterConversationRendererUsed.median],
+      ['关闭后—主进程', memSummary.afterCloseMainRss.median],
+      ['关闭后—渲染进程', memSummary.afterCloseRendererUsed.median],
+      ['泄漏估算—主进程', memSummary.leakMainRssBytes.median],
+      ['泄漏估算—渲染进程', memSummary.leakRendererUsedBytes.median],
+      ['打开增量—主进程', memSummary.openDeltaMainRssBytes.median],
+      ['打开增量—渲染进程', memSummary.openDeltaRendererUsedBytes.median],
     ];
     for (const [label, bytes] of memRows) {
       console.log(`  ${label.padEnd(pad)} ${formatMb(bytes).padStart(10)}`);
@@ -614,9 +614,9 @@ function printTerminalReport(results: StartupTiming[]): void {
 
   if (failed.length > 0) {
     console.log('-'.repeat(80));
-    console.log('  Failed iterations:');
+    console.log('  失败的迭代：');
     for (const r of failed) {
-      console.log(`    #${r.iteration}: ${r.failureReason ?? 'unknown'}`);
+      console.log(`    #${r.iteration}：${r.failureReason ?? '未知原因'}`);
     }
   }
 
@@ -659,26 +659,26 @@ function writeJsonReport(results: StartupTiming[], outputPath: string | null): s
 async function main(): Promise<void> {
   const args = parseArgs();
   console.log(
-    `[bench:startup] iterations=${args.iterations} cooldown=${args.cooldownMs}ms launchTimeout=${args.launchTimeoutMs}ms withMemory=${args.withMemory}`
+    `[启动基准] 迭代=${args.iterations} 冷却=${args.cooldownMs}ms 启动超时=${args.launchTimeoutMs}ms 采集内存=${args.withMemory}`
   );
 
   const results: StartupTiming[] = [];
   for (let i = 1; i <= args.iterations; i++) {
-    console.log(`\n[bench:startup] --- iteration ${i}/${args.iterations} ---`);
+    console.log(`\n[启动基准] --- 第 ${i}/${args.iterations} 次 ---`);
     const timing = await runOneIteration(i, args);
     results.push(timing);
 
     if (timing.failed) {
-      console.log(`[bench:startup] #${i} FAILED: ${timing.failureReason}`);
+      console.log(`[启动基准] #${i} 失败：${timing.failureReason}`);
     } else {
       const memSuffix = timing.memory
-        ? ` idleRss=${formatMb(timing.memory.idle?.main?.rss ?? 0)} leakRss=${formatMb(timing.memory.leakMainRssBytes)}`
+        ? ` 空闲RSS=${formatMb(timing.memory.idle?.main?.rss ?? 0)} 泄漏RSS=${formatMb(timing.memory.leakMainRssBytes)}`
         : '';
       console.log(
-        `[bench:startup] #${i} interactive=${timing.wallTimeToInteractiveMs}ms ` +
-          `domLoaded=${timing.wallDomContentLoadedMs}ms ` +
-          `createWindow=${timing.readyCreateWindowMs}ms ` +
-          `initProcess=${timing.readyInitializeProcessMs}ms ` +
+        `[启动基准] #${i} 可交互=${timing.wallTimeToInteractiveMs}ms ` +
+          `DOM加载=${timing.wallDomContentLoadedMs}ms ` +
+          `创建窗口=${timing.readyCreateWindowMs}ms ` +
+          `初始化进程=${timing.readyInitializeProcessMs}ms ` +
           `acp=${timing.readyInitializeAcpDetectorMs}ms` +
           memSuffix
       );
@@ -691,10 +691,10 @@ async function main(): Promise<void> {
 
   printTerminalReport(results);
   const reportPath = writeJsonReport(results, args.outputJson);
-  console.log(`[bench:startup] JSON report: ${reportPath}`);
+  console.log(`[启动基准] JSON 报告：${reportPath}`);
 }
 
 main().catch((err) => {
-  console.error('[bench:startup] Fatal error:', err);
+  console.error('[启动基准] 严重错误：', err);
   process.exit(1);
 });

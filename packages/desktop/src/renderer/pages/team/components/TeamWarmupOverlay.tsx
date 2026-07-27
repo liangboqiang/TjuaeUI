@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -37,7 +37,7 @@ const COLUMN_HEADER_HEIGHT = 41;
 
 /**
  * 后端错误层层包裹（`Invalid request: failed to warm up rebuilt agent <uuid>: Invalid request:
- * Bad request: Provider 'aionrs' not found`），只有末尾一段对用户有意义。剥掉重建噪声 + 通用前缀，
+ * Bad request: Provider 'tjuaecli' not found`），只有末尾一段对用户有意义。剥掉重建噪声 + 通用前缀，
  * 留下真正的原因。取不到就回退原文。
  */
 export function simplifyWarmupError(raw: string | undefined): string | undefined {

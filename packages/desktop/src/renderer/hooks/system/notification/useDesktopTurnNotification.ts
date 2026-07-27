@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -44,7 +44,7 @@ export const useDesktopTurnNotification = (): void => {
       show: ({ body, conversationId, kind }) => {
         // This issue scopes desktop notifications to turn completion only.
         if (kind !== 'turnCompleted') return;
-        void ipcBridge.notification.show.invoke({ title: 'AionUi', body, conversation_id: conversationId });
+        void ipcBridge.notification.show.invoke({ title: 'TjuaeUI', body, conversation_id: conversationId });
       },
     });
 

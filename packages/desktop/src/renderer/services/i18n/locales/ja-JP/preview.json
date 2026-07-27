@@ -70,30 +70,14 @@
     "emptySnapshot": "スナップショット内容が空です"
   },
   "office": {
-    "installLinkText": "officecli のインストール手順を開く",
-    "errors": {
-      "officecliNotFound": "officecli がインストールされていません。",
-      "installFailed": "officecli の自動インストールに失敗しました。バックエンドログを確認して再試行してください。",
-      "portTimeout": "プレビューサービスは起動しましたが、時間内に準備完了になりませんでした。再試行してください。",
-      "startFailed": "Office プレビューサービスの起動に失敗しました。",
-      "outsideSandbox": "このファイルは現在のプロジェクトサンドボックスの外にあります。"
-    },
-    "serverInstall": {
-      "hint": "AionUi はサーバー上で動作しています。プレビューコンポーネントはそのサーバーにインストールする必要があります。サーバーで次のコマンドを実行してから再試行してください：",
-      "icuNote": "それでも起動しない場合は、サーバーに ICU ライブラリをインストールしてください（Debian/Ubuntu：apt-get install -y libicu-dev）。"
-    }
+    "previewUnavailable": "このファイル形式はアプリ内プレビューに対応していません。",
+    "openOrDownloadHint": "ツールバーから元のファイルをシステムアプリで開くか、コピーをダウンロードしてください。"
   },
   "word": {
     "title": "Word ドキュメント",
     "loading": "Word ドキュメントを読み込み中...",
     "invalid": "有効な Word ドキュメントか確認してください",
-    "loadFailed": "Word ドキュメントの読み込みに失敗しました",
-    "watch": {
-      "loading": "Word ドキュメントを読み込み中...",
-      "installing": "officecli をインストール中...",
-      "startFailed": "Word プレビューの起動に失敗しました",
-      "installHint": "officecli が必要です。自動的にインストールされます。"
-    }
+    "loadFailed": "Word ドキュメントの読み込みに失敗しました"
   },
   "excel": {
     "title": "Excel スプレッドシート",
@@ -104,13 +88,7 @@
     "convertFailed": "Excel の変換に失敗しました",
     "loadFailed": "Excel ファイルの読み込みに失敗しました",
     "emptySheet": "このワークシートにはデータがありません",
-    "emptySheetHint": "ワークシートにデータまたは画像が含まれているか確認してください",
-    "watch": {
-      "loading": "Excel ファイルを読み込み中...",
-      "installing": "officecli をインストール中...",
-      "startFailed": "Excel プレビューの起動に失敗しました",
-      "installHint": "officecli が必要です。自動的にインストールされます。"
-    }
+    "emptySheetHint": "ワークシートにデータまたは画像が含まれているか確認してください"
   },
   "pdf": {
     "title": "PDF ドキュメント",
@@ -133,11 +111,5 @@
     "inspectElement": "要素を検証",
     "inspectElementEnable": "要素インスペクターを有効化",
     "inspectElementDisable": "要素インスペクターを無効化"
-  },
-  "ppt": {
-    "loading": "PPTプレビューを起動中...",
-    "installing": "プレビューコンポーネントをインストール中...",
-    "startFailed": "PPTプレビューの起動に失敗しました",
-    "installHint": "公式 iOfficeAI/OfficeCLI releases ページから OfficeCLI をインストールしてください"
   }
 }

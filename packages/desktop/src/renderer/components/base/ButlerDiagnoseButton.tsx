@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -18,9 +18,9 @@ type ButlerDiagnoseButtonProps = {
 };
 
 /**
- * Inline "ask the Butler" chip shown next to FeedbackButton on error surfaces.
+ * Inline "ask the Butler" chip shown on error surfaces.
  * Instead of filing a report, it routes the user to the home chat with the
- * AionUi Butler selected and a diagnosis prompt (including the error text)
+ * TjuaeUI Butler selected and a diagnosis prompt (including the error text)
  * pre-filled — the same flow as the report modal's "Solve via chat" action.
  */
 const ButlerDiagnoseButton: React.FC<ButlerDiagnoseButtonProps> = ({ errorText, className }) => {
@@ -32,7 +32,7 @@ const ButlerDiagnoseButton: React.FC<ButlerDiagnoseButtonProps> = ({ errorText, 
       event.stopPropagation();
       const prompt = t('settings.talkToButler.prompt.diagnoseChatError', {
         defaultValue:
-          'I ran into an error during a conversation in AionUi, please help me diagnose it.\n\n[Error] {{error}}\n\nPlease diagnose the cause and tell me how to fix it.',
+          'I ran into an error during a conversation in TjuaeUI, please help me diagnose it.\n\n[Error] {{error}}\n\nPlease diagnose the cause and tell me how to fix it.',
         error: errorText.trim(),
       });
       talkToButler({ prompt }).catch((err) => {
@@ -56,7 +56,7 @@ const ButlerDiagnoseButton: React.FC<ButlerDiagnoseButtonProps> = ({ errorText, 
       )}
     >
       {/* No pt offset: @icon-park's Robot glyph is vertically centered in its
-          viewBox (unlike Comment in FeedbackButton), so items-center alone
+          viewBox, so items-center alone
           lines it up with the text baseline. */}
       <Robot theme='outline' size='14' fill='currentColor' className='flex-shrink-0' />
       <span>{t('settings.talkToButler.solveWithButler')}</span>

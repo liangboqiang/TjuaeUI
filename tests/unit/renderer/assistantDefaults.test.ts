@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -27,7 +27,7 @@ const buildDetail = (
       sort_order: 1,
     },
     engine: {
-      agent_backend: 'aionrs',
+      agent_backend: 'tjuaecli',
     },
     rules: {
       content: '',

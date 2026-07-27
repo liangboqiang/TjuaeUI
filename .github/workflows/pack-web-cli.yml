@@ -1,28 +1,28 @@
-name: Pack Web CLI
+name: 打包 Web CLI
 
 on:
   workflow_call:
     inputs:
       ref:
-        description: 'Git ref to checkout (leave empty to use the triggering commit)'
+        description: '要检出的 Git ref（留空则使用触发提交）'
         type: string
         default: ''
       append_commit_hash:
-        description: 'Append short commit hash to artifact names'
+        description: '在产物名称后追加短提交哈希'
         type: boolean
         default: false
       skip_code_quality:
-        description: 'Skip code quality checks (caller already ran them)'
+        description: '跳过代码质量检查（调用方已执行）'
         type: boolean
         default: false
   workflow_dispatch:
     inputs:
       ref:
-        description: 'Git ref to checkout (leave empty to use the triggering commit)'
+        description: '要检出的 Git ref（留空则使用触发提交）'
         type: string
         default: ''
       skip_code_quality:
-        description: 'Skip code quality checks'
+        description: '跳过代码质量检查'
         type: boolean
         default: false
 
@@ -31,45 +31,55 @@ env:
 
 jobs:
   code-quality:
-    name: Code Quality
+    name: 代码质量
     runs-on: ubuntu-latest
     if: ${{ !inputs.skip_code_quality }}
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Setup bun
+      - name: 配置 bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: bun install --frozen-lockfile
 
-      - name: Run postinstall
-        run: bun run postinstall || true
+      - name: 运行 postinstall
+        run: bun run postinstall
 
-      - name: Run ESLint
+      - name: 运行身份与去推广契约
+        run: bun run identity:check
+
+      - name: 运行 lint
         run: bun run lint
 
-      - name: Check Prettier formatting
+      - name: 检查格式
         run: bun run format:check
 
-      - name: TypeScript type check
+      - name: TypeScript 类型检查
         run: bunx tsc --noEmit
 
-      - name: Run unit tests
-        run: bunx vitest run
+      - name: 检查国际化
+        shell: bash
+        run: |
+          bun run i18n:types
+          node scripts/check-i18n.js
+          git diff --exit-code
+
+      - name: 运行单元测试
+        run: bun run test
 
   pack-web-cli:
-    name: Pack web-cli ${{ matrix.platform }}-${{ matrix.arch }}
+    name: 打包 web-cli ${{ matrix.platform }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     needs: code-quality
     if: ${{ always() && (inputs.skip_code_quality || needs.code-quality.result == 'success') }}
@@ -84,46 +94,46 @@ jobs:
           - { platform: win32, arch: x64, os: windows-2022 }
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Get commit hash
+      - name: 获取提交哈希
         id: commit
         shell: bash
         run: |
           SHORT=$(git rev-parse --short HEAD)
           echo "short=$SHORT" >> $GITHUB_OUTPUT
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Setup bun
+      - name: 配置 bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: bun install --frozen-lockfile
 
-      - name: Build desktop renderer (for static files)
+      - name: 构建桌面渲染进程（生成静态文件）
         run: bunx electron-vite build --config packages/desktop/electron.vite.config.ts
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
 
-      - name: Pack web-cli tarball
+      - name: 打包 web-cli 压缩包
         shell: bash
         run: node scripts/pack-web-cli.js
         env:
           PACK_PLATFORM: ${{ matrix.platform }}
           PACK_ARCH: ${{ matrix.arch }}
-          # Version is pinned in repo-root package.json (aioncoreVersion).
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 版本由仓库根目录 package.json 中的 tjuaeCoreVersion 固定。
+          GH_TOKEN: ${{ github.token }}
 
-      - name: Upload tarball artifact
+      - name: 上传压缩包产物
         uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.append_commit_hash && format('web-cli-{0}-{1}-{2}', matrix.platform, matrix.arch, steps.commit.outputs.short) || format('web-cli-{0}-{1}', matrix.platform, matrix.arch) }}
@@ -133,42 +143,42 @@ jobs:
           retention-days: 7
 
   prepare-install-script:
-    name: Prepare install-web.sh for release
+    name: 准备发布版 install-web.sh
     runs-on: ubuntu-latest
     needs: pack-web-cli
     if: ${{ always() && needs.pack-web-cli.result == 'success' }}
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Get commit hash
+      - name: 获取提交哈希
         id: commit
         shell: bash
         run: |
           SHORT=$(git rev-parse --short HEAD)
           echo "short=$SHORT" >> $GITHUB_OUTPUT
 
-      - name: Setup Node.js
+      - name: 配置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Get version from package.json
+      - name: 从 package.json 获取版本
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Replace __VERSION__ placeholder in install-web.sh
+      - name: 替换 install-web.sh 中的版本占位符
         run: |
           mkdir -p dist-scripts
           sed "s/__VERSION__/${{ steps.version.outputs.version }}/g" scripts/install-web.sh > dist-scripts/install-web.sh
           chmod +x dist-scripts/install-web.sh
 
-      - name: Upload install-web.sh artifact
+      - name: 上传 install-web.sh 产物
         uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.append_commit_hash && format('install-web-script-{0}', steps.commit.outputs.short) || 'install-web-script' }}
@@ -176,7 +186,7 @@ jobs:
           retention-days: 7
 
   smoke-test:
-    name: Smoke test web-cli tarball (Linux x86_64)
+    name: 冒烟测试 web-cli 压缩包（Linux x86_64）
     runs-on: ubuntu-latest
     needs: pack-web-cli
     if: ${{ always() && needs.pack-web-cli.result == 'success' }}
@@ -184,21 +194,21 @@ jobs:
       image: debian:bookworm-slim
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v6
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           apt-get update
           apt-get install -y curl tar gzip nodejs
 
-      - name: Download linux-x86_64 tarball
+      - name: 下载 Linux x86_64 压缩包
         uses: actions/download-artifact@v7
         with:
           name: web-cli-linux-x64
           path: dist-web-cli
 
-      - name: Run smoke test
+      - name: 运行冒烟测试
         shell: bash
         run: |
           chmod +x scripts/smoke-test-web-cli.sh
@@ -206,7 +216,7 @@ jobs:
           bash scripts/smoke-test-web-cli.sh "$TARBALL"
 
   smoke-test-install:
-    name: Smoke test install-web.sh (Linux x86_64)
+    name: 冒烟测试 install-web.sh（Linux x86_64）
     runs-on: ubuntu-latest
     needs: [pack-web-cli, prepare-install-script]
     if: ${{ always() && needs.pack-web-cli.result == 'success' && needs.prepare-install-script.result == 'success' }}
@@ -214,35 +224,35 @@ jobs:
       image: debian:bookworm-slim
 
     steps:
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v6
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           apt-get update
           apt-get install -y curl tar gzip nodejs coreutils
 
-      - name: Resolve version
+      - name: 解析版本
         id: version
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Resolved version: $VERSION"
+          echo "解析后的版本：$VERSION"
 
-      - name: Download linux-x86_64 tarball
+      - name: 下载 Linux x86_64 压缩包
         uses: actions/download-artifact@v7
         with:
           name: web-cli-linux-x64
           path: /tmp/releases/v${{ steps.version.outputs.version }}
 
-      - name: Download install-web.sh
+      - name: 下载 install-web.sh
         uses: actions/download-artifact@v7
         with:
           name: install-web-script
           path: /tmp/releases
 
-      - name: Run smoke test
+      - name: 运行冒烟测试
         shell: bash
         run: |
           chmod +x scripts/smoke-test-install-web.sh

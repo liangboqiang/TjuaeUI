@@ -22,7 +22,7 @@ function mapPreviewHistoryTarget(target: Record<string, unknown> | undefined): R
 }
 
 /**
- * Mapping from legacy dotted IPC keys to aioncore HTTP routes.
+ * Mapping from legacy dotted IPC keys to tjuaecore HTTP routes.
  * Only keys actually used by E2E tests are listed — unknown keys fall through
  * to the legacy IPC bridge.
  */
@@ -91,7 +91,7 @@ export const HTTP_ROUTES: Record<string, HttpRoute> = {
       return `/api/conversations/${encodeURIComponent(String(p.conversation_id))}/messages?${qs.toString()}`;
     },
   },
-  // Workspace / file-system routes (aioncore, --local mode: no auth).
+  // Workspace / file-system routes (tjuaecore, --local mode: no auth).
   // mapResponse translates snake_case → camelCase so test assertions stay
   // in idiomatic TS.
   'fs.dir': { method: 'POST', path: '/api/fs/dir', mapResponse: 'dirOrFileTree' },
@@ -101,37 +101,6 @@ export const HTTP_ROUTES: Record<string, HttpRoute> = {
   'fs.rename': { method: 'POST', path: '/api/fs/rename', mapResponse: 'renameResult' },
   'fs.remove': { method: 'POST', path: '/api/fs/remove' },
   'fs.metadata': { method: 'POST', path: '/api/fs/metadata' },
-  // Office preview — officecli watch-server lifecycle.
-  'word-preview.start': {
-    method: 'POST',
-    path: '/api/word-preview/start',
-    mapBody: (p) => ({ file_path: p.file_path ?? p.filePath, workspace: p.workspace }),
-  },
-  'word-preview.stop': {
-    method: 'POST',
-    path: '/api/word-preview/stop',
-    mapBody: (p) => ({ file_path: p.file_path ?? p.filePath }),
-  },
-  'excel-preview.start': {
-    method: 'POST',
-    path: '/api/excel-preview/start',
-    mapBody: (p) => ({ file_path: p.file_path ?? p.filePath, workspace: p.workspace }),
-  },
-  'excel-preview.stop': {
-    method: 'POST',
-    path: '/api/excel-preview/stop',
-    mapBody: (p) => ({ file_path: p.file_path ?? p.filePath }),
-  },
-  'ppt-preview.start': {
-    method: 'POST',
-    path: '/api/ppt-preview/start',
-    mapBody: (p) => ({ file_path: p.file_path ?? p.filePath, workspace: p.workspace }),
-  },
-  'ppt-preview.stop': {
-    method: 'POST',
-    path: '/api/ppt-preview/stop',
-    mapBody: (p) => ({ file_path: p.file_path ?? p.filePath }),
-  },
   'document.convert': {
     method: 'POST',
     path: '/api/document/convert',

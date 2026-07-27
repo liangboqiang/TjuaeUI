@@ -1,12 +1,12 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 /**
- * AionRouter 协议检测器
- * Protocol Detector for AionRouter
+ * TjuaeRouter 协议检测器
+ * Protocol Detector for TjuaeRouter
  *
  * 支持自动检测 API 端点使用的协议类型：
  * - OpenAI 协议（大多数第三方服务）

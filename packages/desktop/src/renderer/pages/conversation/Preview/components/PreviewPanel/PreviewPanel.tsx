@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -14,15 +14,13 @@ import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
 import { Link } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DiffPreview from '../viewers/DiffViewer';
-import ExcelPreview from '../viewers/ExcelViewer';
 import HTMLEditor from '../editors/HTMLEditor';
 import HTMLRenderer from '../renderers/HTMLRenderer';
 import ImagePreview from '../viewers/ImageViewer';
 import MarkdownEditor from '../editors/MarkdownEditor';
 import MarkdownPreview from '../viewers/MarkdownViewer';
 import PDFPreview from '../viewers/PDFViewer';
-import OfficeDocPreview from '../viewers/OfficeDocViewer';
-import PptViewer from '../viewers/PptViewer';
+import OfficeFileViewer from '../viewers/OfficeFileViewer';
 import CodeEditor from '../editors/CodeEditor';
 import URLViewer from '../viewers/URLViewer';
 import {
@@ -35,7 +33,7 @@ import {
   type CloseTabConfirmState,
   type PreviewTab,
 } from '.';
-import { DEFAULT_SPLIT_RATIO, FILE_TYPES_WITH_BUILTIN_OPEN, MAX_SPLIT_WIDTH, MIN_SPLIT_WIDTH } from '../../constants';
+import { DEFAULT_SPLIT_RATIO, MAX_SPLIT_WIDTH, MIN_SPLIT_WIDTH } from '../../constants';
 import {
   usePreviewHistory,
   usePreviewKeyboardShortcuts,
@@ -275,11 +273,6 @@ const PreviewPanel: React.FC = () => {
   const isMarkdown = content_type === 'markdown';
   const isHTML = content_type === 'html';
   const isEditable = metadata?.editable !== false; // 默认可编辑 / Default editable
-
-  // 检查文件类型是否已有内置的打开按钮（Word、PPT、PDF、Excel 组件内部已提供）
-  // Check if file type already has built-in open button
-  // (Word, PPT, PDF, Excel components provide their own)
-  const hasBuiltInOpenButton = (FILE_TYPES_WITH_BUILTIN_OPEN as readonly string[]).includes(content_type);
 
   // 对所有有 file_path 的文件显示"在系统中打开"按钮（统一在工具栏显示）
   // Show "Open in System" button for all files with file_path (unified in toolbar)
@@ -618,11 +611,11 @@ const PreviewPanel: React.FC = () => {
     } else if (content_type === 'pdf') {
       return <PDFPreview file_path={metadata?.file_path} content={content} />;
     } else if (content_type === 'ppt') {
-      return <PptViewer file_path={metadata?.file_path} content={content} workspace={metadata?.workspace} />;
+      return <OfficeFileViewer fileType='ppt' file_path={metadata?.file_path} />;
     } else if (content_type === 'word') {
-      return <OfficeDocPreview file_path={metadata?.file_path} content={content} workspace={metadata?.workspace} />;
+      return <OfficeFileViewer fileType='word' file_path={metadata?.file_path} />;
     } else if (content_type === 'excel') {
-      return <ExcelPreview file_path={metadata?.file_path} content={content} workspace={metadata?.workspace} />;
+      return <OfficeFileViewer fileType='excel' file_path={metadata?.file_path} />;
     } else if (content_type === 'image') {
       return (
         <ImagePreview

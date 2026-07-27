@@ -1,22 +1,22 @@
 #!/usr/bin/env bun
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  *
  * Pure Bun CLI — launches the WebUI (backend + static server + auth) without
  * starting Electron. Replaces the former `electron-vite dev -- --webui` flow.
  *
  * Env vars:
- *   AIONUI_PORT           : static server port (default 33000)
- *   AIONUI_HOST           : listen host; set to 0.0.0.0 to imply --remote
- *   AIONUI_ALLOW_REMOTE   : "1"/"true" to expose to LAN
- *   AIONUI_DATA_DIR       : override userData path (default Electron-compatible)
- *   AIONUI_LOG_DIR        : override log dir (default <dataDir>/logs)
- *   AIONUI_STATIC_DIR     : override static dir (default out/renderer)
- *   AIONUI_BACKEND_BIN    : absolute path to aioncore binary (else PATH lookup)
- *   AIONUI_BACKEND_BUNDLED_DIR : dir containing bundled-aioncore/<plat-arch>/binary
- *   AIONUI_OPEN_BROWSER   : "1"/"true" to force open, "0"/"false" to disable
+ *   TJUAEUI_PORT           : static server port (default 33000)
+ *   TJUAEUI_HOST           : listen host; set to 0.0.0.0 to imply --remote
+ *   TJUAEUI_ALLOW_REMOTE   : "1"/"true" to expose to LAN
+ *   TJUAEUI_DATA_DIR       : override userData path (default Electron-compatible)
+ *   TJUAEUI_LOG_DIR        : override log dir (default <dataDir>/logs)
+ *   TJUAEUI_STATIC_DIR     : override static dir (default out/renderer)
+ *   TJUAEUI_BACKEND_BIN    : absolute path to tjuaecore binary (else PATH lookup)
+ *   TJUAEUI_BACKEND_BUNDLED_DIR : dir containing bundled-tjuaecore/<plat-arch>/binary
+ *   TJUAEUI_OPEN_BROWSER   : "1"/"true" to force open, "0"/"false" to disable
  */
 
 import { execSync } from 'child_process';
@@ -24,16 +24,16 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { startWebHost } from '@aionui/web-host';
+import { startWebHost } from '@tjuae/web-host';
 import { openBrowserUrl, shouldAutoOpenBrowser } from '../packages/web-cli/src/browser.js';
 
 // Aligned with packages/desktop/src/common/config/constants.ts WEBUI_DEFAULT_PORT.
 const DEFAULT_PORT = (() => {
   if (process.env.NODE_ENV === 'production') return 25808;
-  if (process.env.AIONUI_MULTI_INSTANCE === '1') return 25810;
+  if (process.env.TJUAEUI_MULTI_INSTANCE === '1') return 25810;
   return 25809;
 })();
-const BACKEND_BINARY = process.platform === 'win32' ? 'aioncore.exe' : 'aioncore';
+const BACKEND_BINARY = process.platform === 'win32' ? 'tjuaecore.exe' : 'tjuaecore';
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..');
@@ -48,46 +48,46 @@ const getFlag = (name: string): string | undefined => {
 };
 
 /**
- * Resolve the directory where aioncore persists its SQLite DB.
+ * Resolve the directory where tjuaecore persists its SQLite DB.
  *
  * `bun run webui` runs **independently of the Electron desktop app** — it must
- * work on hosts that never installed AionUi.app, and its default work dir must
+ * work on hosts that never installed TjuaeUI.app, and its default work dir must
  * NOT collide with Electron's.
  *
  *   --data-dir <path>       CLI override (highest priority)
- *   $AIONUI_DATA_DIR        env override (same effect)
- *   otherwise               ~/.aionui-web         (production)
- *                           ~/.aionui-web-dev     (dev, default)
- *                           ~/.aionui-web-dev-2   (dev + AIONUI_MULTI_INSTANCE=1)
+ *   $TJUAEUI_DATA_DIR        env override (same effect)
+ *   otherwise               ~/.tjuaeui-web         (production)
+ *                           ~/.tjuaeui-web-dev     (dev, default)
+ *                           ~/.tjuaeui-web-dev-2   (dev + TJUAEUI_MULTI_INSTANCE=1)
  *
- * Why a dedicated `-web` name, not the same `~/.aionui[-dev]` that Electron
+ * Why a dedicated `-web` name, not the same `~/.tjuaeui[-dev]` that Electron
  * uses: on macOS, Electron's getDataPath() (packages/desktop/src/process/utils/
- * utils.ts) creates `~/.aionui-dev` as a **symlink** to
- * `~/Library/Application Support/AionUi-Dev/aionui` so CLI tools (claude,
+ * utils.ts) creates `~/.tjuaeui-dev` as a **symlink** to
+ * `~/Library/Application Support/TjuaeUI-Dev/tjuaeui` so CLI tools (claude,
  * gemini, qwen…) don't choke on the literal space in "Application Support".
  * If standalone webui runs first on a clean machine, it would create the
  * symlink location as a **real directory** instead. When Electron is later
  * installed, its `ensureCliSafeSymlink` refuses to overwrite a real dir and
  * falls back to returning the space-containing path — and then every ACP
  * agent inside the desktop app starts failing on CLI commands. Using
- * `.aionui-web` keeps standalone webui's data dir off of the path Electron's
+ * `.tjuaeui-web` keeps standalone webui's data dir off of the path Electron's
  * symlink needs.
  *
  * If the user wants the two to share data they opt-in explicitly via
- *   --data-dir ~/.aionui-dev                     (or equivalent on other OSes)
+ *   --data-dir ~/.tjuaeui-dev                     (or equivalent on other OSes)
  * which is safe because by that point Electron has created the symlink and
  * `bun run webui` just follows it.
  */
 function resolveBackendDataDir(): string {
-  const override = getFlag('--data-dir') ?? process.env.AIONUI_DATA_DIR;
+  const override = getFlag('--data-dir') ?? process.env.TJUAEUI_DATA_DIR;
   if (override && override.trim().length > 0) {
     const resolved = path.resolve(override);
     fs.mkdirSync(resolved, { recursive: true });
     return resolved;
   }
   const suffix =
-    process.env.NODE_ENV === 'production' ? '' : process.env.AIONUI_MULTI_INSTANCE === '1' ? '-dev-2' : '-dev';
-  const dir = path.join(os.homedir(), `.aionui-web${suffix}`);
+    process.env.NODE_ENV === 'production' ? '' : process.env.TJUAEUI_MULTI_INSTANCE === '1' ? '-dev-2' : '-dev';
+  const dir = path.join(os.homedir(), `.tjuaeui-web${suffix}`);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -100,46 +100,46 @@ function parseBoolean(v: string | undefined): boolean {
 function resolvePort(): number {
   const cli = getFlag('--port');
   if (cli && /^\d+$/.test(cli)) return Number(cli);
-  const env = process.env.AIONUI_PORT ?? process.env.PORT;
+  const env = process.env.TJUAEUI_PORT ?? process.env.PORT;
   if (env && /^\d+$/.test(env)) return Number(env);
   return DEFAULT_PORT;
 }
 
 function resolveAllowRemote(): boolean {
   if (has('--remote')) return true;
-  const host = process.env.AIONUI_HOST?.trim();
+  const host = process.env.TJUAEUI_HOST?.trim();
   if (host && ['0.0.0.0', '::', '::0'].includes(host)) return true;
-  return parseBoolean(process.env.AIONUI_ALLOW_REMOTE ?? process.env.AIONUI_REMOTE);
+  return parseBoolean(process.env.TJUAEUI_ALLOW_REMOTE ?? process.env.TJUAEUI_REMOTE);
 }
 
 function resolveStaticDir(): string {
-  if (process.env.AIONUI_STATIC_DIR) return process.env.AIONUI_STATIC_DIR;
+  if (process.env.TJUAEUI_STATIC_DIR) return process.env.TJUAEUI_STATIC_DIR;
   const candidate = path.join(repoRoot, 'out', 'renderer');
   if (fs.existsSync(path.join(candidate, 'index.html'))) return candidate;
-  throw new Error(`Renderer assets not found at ${candidate}. Run "bun run package" first, or set AIONUI_STATIC_DIR.`);
+  throw new Error(`在 ${candidate} 未找到渲染资源。请先运行“bun run package”，或设置 TJUAEUI_STATIC_DIR。`);
 }
 
 /**
  * Rebuild renderer/main bundles before launching, so that `bun run webui` always
  * serves the latest source. Skipped when:
  *   --no-build flag           : explicit opt-out (e.g., iterating on this script)
- *   $AIONUI_NO_BUILD=1        : env-level opt-out
- *   $AIONUI_STATIC_DIR is set : caller is pointing us at a prebuilt artifact dir
+ *   $TJUAEUI_NO_BUILD=1        : env-level opt-out
+ *   $TJUAEUI_STATIC_DIR is set : caller is pointing us at a prebuilt artifact dir
  */
 function runPackageIfNeeded(): void {
   if (has('--no-build')) return;
-  if (parseBoolean(process.env.AIONUI_NO_BUILD)) return;
-  if (process.env.AIONUI_STATIC_DIR) return;
-  console.log('[webui] running "bun run package" to refresh out/renderer (pass --no-build to skip)...');
+  if (parseBoolean(process.env.TJUAEUI_NO_BUILD)) return;
+  if (process.env.TJUAEUI_STATIC_DIR) return;
+  console.log('[webui] 正在运行“bun run package”刷新 out/renderer（可传 --no-build 跳过）……');
   const start = Date.now();
   execSync('bun run package', { cwd: repoRoot, stdio: 'inherit' });
-  console.log(`[webui] package finished in ${((Date.now() - start) / 1000).toFixed(1)}s`);
+  console.log(`[webui] 打包完成，耗时 ${((Date.now() - start) / 1000).toFixed(1)} 秒`);
 }
 
 function resolveBackendBinary(): string {
-  if (process.env.AIONUI_BACKEND_BIN) return process.env.AIONUI_BACKEND_BIN;
+  if (process.env.TJUAEUI_BACKEND_BIN) return process.env.TJUAEUI_BACKEND_BIN;
 
-  const bundledBase = process.env.AIONUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-aioncore');
+  const bundledBase = process.env.TJUAEUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-tjuaecore');
   const runtimeKey = `${process.platform}-${process.arch}`;
   const bundled = path.join(bundledBase, runtimeKey, BACKEND_BINARY);
   if (fs.existsSync(bundled)) return bundled;
@@ -149,20 +149,16 @@ function resolveBackendBinary(): string {
     const found = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim().split(/\r?\n/)[0];
     if (found && fs.existsSync(found)) return found;
   } catch {
-    // fall through
+    // 继续尝试其他位置。
   }
 
-  throw new Error(
-    `Cannot find "${BACKEND_BINARY}". Set AIONUI_BACKEND_BIN, put it on PATH, or place it at ${bundled}.`
-  );
+  throw new Error(`未找到“${BACKEND_BINARY}”。请设置 TJUAEUI_BACKEND_BIN、将它加入 PATH，或放到 ${bundled}。`);
 }
 
 /**
- * Prepend all nvm-managed Node bin dirs to PATH. Electron's main process does
- * this (see packages/desktop/src/index.ts), otherwise CLI tools installed under
- * a specific Node version (e.g. gemini under v25) won't be found by the backend
- * spawned by ACP — the `Superset: X not found in PATH` wrapper bails, so the
- * ACP handshake times out after 30s and the UI sees `502 Bad Gateway`.
+ * 将 nvm 管理的全部 Node bin 目录前置到 PATH。Electron 主进程也执行此操作；
+ * 否则安装在特定 Node 版本下的 CLI 可能无法被 ACP 启动的后端找到，最终导致
+ * ACP 握手超时并向界面返回 502。
  */
 function augmentPathWithNvm(): void {
   if (process.platform === 'win32') return;
@@ -212,16 +208,16 @@ async function main(): Promise<void> {
   });
   // One working dir for the whole standalone webui: backend SQLite and chat
   // history live here. Admin credentials live in the backend's users table.
-  // This keeps `bun run webui` fully self-contained on hosts without AionUi.app.
+  // This keeps `bun run webui` fully self-contained on hosts without TjuaeUI.app.
   const workDir = resolveBackendDataDir();
   const staticDir = resolveStaticDir();
   const backendBin = resolveBackendBinary();
-  const logDir = process.env.AIONUI_LOG_DIR ?? path.join(workDir, 'logs');
+  const logDir = process.env.TJUAEUI_LOG_DIR ?? path.join(workDir, 'logs');
 
-  console.log('[webui] work dir   :', workDir);
-  console.log('[webui] static dir :', staticDir);
-  console.log('[webui] backend bin:', backendBin);
-  console.log(`[webui] launching  : port=${port} allowRemote=${allowRemote}`);
+  console.log('[webui] 工作目录：', workDir);
+  console.log('[webui] 静态资源目录：', staticDir);
+  console.log('[webui] 后端二进制文件：', backendBin);
+  console.log(`[webui] 正在启动：端口=${port}，允许远程访问=${allowRemote}`);
 
   const handle = await startWebHost({
     app: {
@@ -250,9 +246,9 @@ async function main(): Promise<void> {
   });
 
   console.log('');
-  console.log('AionUi WebUI is ready');
-  console.log(`  Local  : ${handle.localUrl}`);
-  if (handle.networkUrl) console.log(`  Network: ${handle.networkUrl}`);
+  console.log('TjuaeUI WebUI 已就绪');
+  console.log(`  本机地址：${handle.localUrl}`);
+  if (handle.networkUrl) console.log(`  网络地址：${handle.networkUrl}`);
 
   // If SQLite has no admin yet (fresh install), seed one via backend and print
   // the plaintext credentials. Mirrors webuiBridge.ts:maybeSeedInitialPassword
@@ -275,44 +271,44 @@ async function main(): Promise<void> {
           if (initialPassword) {
             const adminUsername = await fetchAdminUsername(handle.backendPort);
             console.log('');
-            console.log(`Initial admin username: ${adminUsername}`);
-            console.log(`Initial admin password: ${initialPassword}`);
-            console.log('(change them after first login)');
+            console.log(`初始管理员用户名：${adminUsername}`);
+            console.log(`初始管理员密码：${initialPassword}`);
+            console.log('（首次登录后请立即修改）');
           }
         }
       } else {
         // Credentials already exist; just remind the user what username to use.
         const adminUsername = await fetchAdminUsername(handle.backendPort);
         console.log('');
-        console.log(`Login username: ${adminUsername}`);
-        console.log('(forgot the password? run `bun run resetpass` to generate a new one)');
+        console.log(`登录用户名：${adminUsername}`);
+        console.log('（忘记密码时运行 `bun run resetpass` 生成新密码）');
       }
     }
   } catch (err) {
-    console.warn('[webui] could not query admin credentials:', err);
+    console.warn('[webui] 无法查询管理员凭据：', err);
   }
 
   if (autoOpenBrowser) {
     const openResult = openBrowserUrl(handle.localUrl);
     if (openResult.ok) {
-      console.log(`[webui] opened ${handle.localUrl} in your browser.`);
+      console.log(`[webui] 已在浏览器中打开 ${handle.localUrl}`);
     } else {
-      console.warn(`[webui] could not open the browser automatically: ${openResult.reason}`);
+      console.warn(`[webui] 无法自动打开浏览器：${openResult.reason}`);
     }
   }
 
   console.log('');
-  console.log('Press Ctrl+C to stop.');
+  console.log('按 Ctrl+C 停止。');
 
   let shuttingDown = false;
   const shutdown = async (signal: string) => {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.log(`\n[webui] received ${signal}, stopping...`);
+    console.log(`\n[webui] 收到 ${signal}，正在停止……`);
     try {
       await handle.stop();
     } catch (err) {
-      console.error('[webui] stop error:', err);
+      console.error('[webui] 停止失败：', err);
     } finally {
       process.exit(0);
     }
@@ -322,6 +318,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error('[webui] failed to start:', err instanceof Error ? err.message : err);
+  console.error('[webui] 启动失败：', err instanceof Error ? err.message : err);
   process.exit(1);
 });

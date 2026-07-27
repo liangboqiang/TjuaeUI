@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 /**
- * Build builtin MCP server scripts as fully self-contained CJS bundles.
+ * 把内置 MCP 服务脚本构建为完全自包含的 CJS 包。
  *
- * electron-vite's externalizeDepsPlugin leaves all npm packages as require()
- * calls, which works for Electron's main process (ASAR virtual FS patches
- * require()) but fails when an external `node` process runs the script from
- * app.asar.unpacked — there is no ASAR support there.
+ * electron-vite 的 externalizeDepsPlugin 会把 npm 包保留为 require() 调用。
+ * 这对支持 ASAR 虚拟文件系统的 Electron 主进程有效，但外部 node 进程从
+ * app.asar.unpacked 执行脚本时没有 ASAR 支持，因此会失败。
  *
- * This script uses esbuild's programmatic API (instead of CLI flags) to avoid
- * shell-quoting issues with special characters in --define values.
+ * 本脚本使用 esbuild 编程接口，避免 --define 值中的特殊字符引发命令行转义问题。
  */
 
 const esbuild = require('esbuild');
@@ -36,6 +34,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('MCP server build failed:', err);
+  console.error('MCP 服务构建失败：', err);
   process.exit(1);
 });

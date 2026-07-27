@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -24,12 +24,16 @@ describe('buildSkillSlashCommands', () => {
   });
 
   it('maps each loaded skill to an insert-style template command', () => {
-    const commands = buildSkillSlashCommands(['cron', 'officecli'], new Map([['cron', 'Scheduled tasks']]), 'Skill');
+    const commands = buildSkillSlashCommands(
+      ['cron', 'document-tools'],
+      new Map([['cron', 'Scheduled tasks']]),
+      'Skill'
+    );
 
     expect(commands).toEqual([
       { name: 'cron', description: 'Scheduled tasks', kind: 'template', source: 'skill', selectionBehavior: 'insert' },
       // No indexed description → falls back to the provided label.
-      { name: 'officecli', description: 'Skill', kind: 'template', source: 'skill', selectionBehavior: 'insert' },
+      { name: 'document-tools', description: 'Skill', kind: 'template', source: 'skill', selectionBehavior: 'insert' },
     ]);
   });
 });
@@ -63,10 +67,10 @@ describe('buildGuidSlashCommands', () => {
     const commands = buildGuidSlashCommands({
       builtinCommands: [builtin('open')],
       agentCommands: [acp('review'), acp('cron')],
-      selectedSkills: ['cron', 'officecli'],
+      selectedSkills: ['cron', 'document-tools'],
       descriptionByName: new Map([
         ['cron', 'Scheduled tasks'],
-        ['officecli', 'Office automation'],
+        ['document-tools', 'Document tools'],
       ]),
       skillFallbackDescription: 'Skill',
     });

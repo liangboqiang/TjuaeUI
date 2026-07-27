@@ -1,174 +1,164 @@
-# E2E Testing Guide
+# 端到端测试指南
 
-## Quick Start
+本目录使用 Playwright 驱动真实 Electron 窗口，覆盖 UI、主进程桥接和后端协作链路。测试会复用同一个 Electron 实例，因此用例必须清理自己创建的数据，且不能依赖执行顺序。
 
-### 1. Build the App
+## 快速开始
 
-E2E tests launch Electron directly (`electron .`), loading pre-built files from `out/`. **Source code changes require a rebuild before tests can pick them up.**
+### 1. 安装依赖并构建
+
+开发模式通过项目根目录的 Electron 入口加载 `out/` 中的预构建文件。源码有变化时，运行测试前必须重新构建：
 
 ```bash
-# Full build (main + preload + renderer)
-bunx electron-vite build
+bun install
+bun run package
 ```
 
-> `bun run start` (`electron-vite dev`) uses Vite's HMR and hot-reloads automatically.
-> E2E tests do NOT use Vite dev server — they load static files from `out/`.
-
-### 2. Ensure `aioncore` is on PATH
-
-The Electron main process spawns the `aioncore` binary during startup and
-exposes its port to the renderer via `window.__backendPort`. The binary is
-located via `which aioncore`, so it must be reachable from the `PATH`
-inherited by the Playwright runner. If it isn't, `__backendPort` will be `0`
-and every HTTP call from the renderer (or from e2e helpers that use
-`tests/e2e/helpers/httpBridge.ts`) will fail with `Failed to fetch`.
+打包模式需要先生成当前平台的未压缩应用目录：
 
 ```bash
-# Install the backend binary (builds to ~/.cargo/bin/aioncore)
-cd ../AionCore && cargo install --path crates/aionui-app
-
-# Make sure it's on PATH when running tests
-export PATH="$HOME/.cargo/bin:$PATH"
+node scripts/build-with-builder.js auto --win --pack-only
+# macOS: node scripts/build-with-builder.js auto --mac --pack-only
+# Linux: node scripts/build-with-builder.js auto --linux --pack-only
 ```
 
-### 3. Run Tests
+### 2. 准备 TjuaeCore
+
+主进程启动时需要找到 `tjuaecore`。开发环境可在相邻的 TjuaeCore 仓库安装：
 
 ```bash
-# All E2E tests
+cd ../TjuaeCore
+cargo install --path crates/tjuaeui-app
+```
+
+确认 Cargo 的二进制目录已加入启动 Playwright 的 `PATH`。若后端没有启动，`window.__backendPort` 会保持为 `0`，依赖 HTTP 桥接的测试将出现 `Failed to fetch`。
+
+### 3. 运行测试
+
+```bash
+# 全部 E2E
 bun run test:e2e
 
-# Specific test file
-npx playwright test --config playwright.config.ts tests/e2e/specs/team-workspace-migration.e2e.ts --reporter=list
+# 单个文件
+bunx playwright test --config playwright.config.ts tests/e2e/specs/app-launch.e2e.ts --reporter=list
+
+# Team 测试
+bun run test:e2e:team
 ```
 
-### 3. View Results
+Windows PowerShell 设置环境变量的示例：
+
+```powershell
+$env:E2E_PACKAGED = '1'
+$env:TEAM_AGENT = 'codex'
+bun run test:e2e:team
+```
+
+查看 HTML 报告：
 
 ```bash
-# Open HTML report
-npx playwright show-report tests/e2e/report
+bunx playwright show-report tests/e2e/report
 ```
 
-Screenshots, traces, and videos are saved to `tests/e2e/results/`.
+截图、跟踪和视频保存在 `tests/e2e/results/`，HTML 报告保存在 `tests/e2e/report/`。
 
----
+## 启动架构
 
-## Architecture
-
-### App Lifecycle
-
-```
-Playwright launches Electron app (singleton per worker)
-    → App loads out/main/index.js
-    → Main process creates BrowserWindow
-    → Renderer loads out/renderer/index.html (HashRouter)
-    → Tests interact with the renderer page
-    → App persists across ALL test files (no restart between describes)
-    → App closes when worker exits
+```text
+Playwright worker
+    → fixtures.ts 启动一个 Electron 实例
+    → 主进程加载 out/main/index.js
+    → BrowserWindow 加载 out/renderer/index.html
+    → 测试通过 Page 操作渲染进程
+    → 所有测试文件复用该实例
+    → worker 退出时统一关闭应用
 ```
 
-**Key design decision:** One Electron instance shared across all tests. Restarting costs ~25-30 seconds, so tests reuse the same app process.
+`playwright.config.ts` 固定使用单 worker 且关闭文件级并行，因为测试共享应用状态。不要在公共 fixture 中添加 `test.afterAll`；Playwright 会在每个 `test.describe` 后执行它，导致应用反复重启。
 
-### Two Launch Modes
+### 两种启动模式
 
-| Mode                      | Trigger                   | What it runs                   | Use case          |
-| ------------------------- | ------------------------- | ------------------------------ | ----------------- |
-| **Dev** (default locally) | `E2E_DEV=1` or no env var | `electron .` from project root | Local development |
-| **Packaged**              | `E2E_PACKAGED=1` or CI    | Built app from `out/`          | CI pipelines      |
+| 模式     | 选择条件                     | 启动对象                      | 适用场景   |
+| -------- | ---------------------------- | ----------------------------- | ---------- |
+| 开发模式 | 本地默认，或 `E2E_DEV=1`     | 项目根目录的 Electron 入口    | 本地调试   |
+| 打包模式 | CI 默认，或 `E2E_PACKAGED=1` | `out/` 下当前平台的未压缩应用 | 发布前验证 |
 
-Both modes load pre-built files from `out/`. The difference is packaged mode uses `NODE_ENV=production` and the platform-specific executable.
+若同时设置两个变量，`E2E_PACKAGED=1` 优先。
 
-### Directory Structure
+## 目录结构
 
-```
+```text
 tests/e2e/
-├── fixtures.ts         # Electron app launch, page fixture, singleton management
-├── helpers/
-│   ├── index.ts        # Re-exports all helpers
-│   ├── bridge.ts       # invokeBridge() — IPC communication with main process
-│   ├── navigation.ts   # Route helpers (navigateTo, goToGuid, goToSettings)
-│   ├── conversation.ts # Chat helpers (sendMessage, waitForAiReply, selectAgent)
-│   ├── selectors.ts    # CSS selectors for UI elements
-│   ├── assertions.ts   # Custom assertions (expectBodyContainsAny, error collector)
-│   ├── extensions.ts   # Extension snapshot helpers
-│   ├── assistantSettings.ts # Assistant CRUD helpers
-│   ├── teamConfig.ts   # TEAM_SUPPORTED_BACKENDS whitelist
-│   └── screenshots.ts  # Manual screenshot helper
-├── specs/
-│   ├── README.md       # Team E2E spec (rules for team tests)
-│   ├── app-launch.e2e.ts
-│   ├── team-create.e2e.ts
-│   ├── team-workspace-migration.e2e.ts
-│   └── ...             # ~30+ test files
-├── results/            # Test artifacts (gitignored)
-├── report/             # HTML report (gitignored)
-└── screenshots/        # Manual screenshots (gitignored)
+├── fixtures.ts                 # Electron 生命周期与 Page fixture
+├── helpers/                    # 导航、桥接、会话、断言等公共能力
+│   ├── bridge/                 # invokeBridge 路由与调用封装
+│   ├── navigation.ts
+│   ├── conversation.ts
+│   ├── teamConfig.ts
+│   └── ...
+├── specs/                      # 跨域和基础能力用例
+├── features/                   # 按产品功能组织的用例
+├── cases/teams/                # Team 专项用例
+├── docs/                       # 需求、策略和实现映射
+├── results/                    # 运行产物（不提交）
+└── report/                     # HTML 报告（不提交）
 ```
 
----
+Team 专项约束见 [specs/README.md](./specs/README.md)。
 
-## Writing Tests
+## 编写测试
 
-### Basic Pattern
+### 基本模式
 
 ```ts
 import { test, expect } from '../fixtures';
 import { invokeBridge, navigateTo } from '../helpers';
 
-test.describe('Feature Name', () => {
-  test('what it should do', async ({ page, electronApp }) => {
-    // 1. Navigate
+test.describe('功能名称', () => {
+  test('应完成预期行为', async ({ page }) => {
     await navigateTo(page, '#/some-route');
 
-    // 2. Interact
     const input = page.locator('textarea').first();
     await input.fill('Hello');
     await input.press('Enter');
 
-    // 3. Assert UI
-    await expect(page.locator('text=Hello')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Hello')).toBeVisible({ timeout: 10_000 });
 
-    // 4. Assert backend (optional)
-    const data = await invokeBridge(page, 'some.bridge-key', { param: 'value' });
-    expect(data.field).toBe('expected');
+    const state = await invokeBridge<{ field: string }>(page, 'some.bridge-key', {
+      param: 'value',
+    });
+    expect(state.field).toBe('expected');
   });
 });
 ```
 
-### Key Helpers
+### 常用辅助函数
 
-| Helper                           | Purpose                                            | Import from  |
-| -------------------------------- | -------------------------------------------------- | ------------ |
-| `invokeBridge(page, key, data)`  | Call main process IPC                              | `../helpers` |
-| `navigateTo(page, hash)`         | Navigate via sidebar UI                            | `../helpers` |
-| `waitForAiReply(page)`           | Wait for AI response (handles Shadow DOM)          | `../helpers` |
-| `selectAgent(page, backend)`     | Select an available assistant for a backend        | `../helpers` |
-| `sendMessageFromGuid(page, msg)` | Send message and get conversation ID               | `../helpers` |
-| `deleteConversation(page, id)`   | Delete conversation by ID (cleanup)                | `../helpers` |
-| `MODE_SELECTOR`                  | Mode selector pill `[data-testid="mode-selector"]` | `../helpers` |
-| `modeMenuItemByValue(value)`     | Mode dropdown item `[data-mode-value="..."]`       | `../helpers` |
+| 辅助函数                         | 用途                                         |
+| -------------------------------- | -------------------------------------------- |
+| `invokeBridge(page, key, data)`  | 调用主进程桥接，用于准备、契约测试或状态断言 |
+| `navigateTo(page, hash)`         | 通过统一导航逻辑切换页面                     |
+| `waitForAiReply(page)`           | 等待包含 Shadow DOM 的 AI 回复               |
+| `selectAgent(page, backend)`     | 选择指定后端的可用助手                       |
+| `sendMessageFromGuid(page, msg)` | 从首页发送消息并取得会话 ID                  |
+| `deleteConversation(page, id)`   | 清理测试会话                                 |
+| `MODE_SELECTOR`                  | 模式选择器定位符                             |
+| `modeMenuItemByValue(value)`     | 模式菜单项定位符                             |
 
-### invokeBridge Rules
+面向真实用户流程的测试应通过 UI 触发操作；只有明确验证桥接或后端契约的测试才直接调用 `invokeBridge` 执行操作。无论使用哪种方式，文件名和断言都必须准确说明测试层级。
 
-| Allowed                                                 | Forbidden                                         |
-| ------------------------------------------------------- | ------------------------------------------------- |
-| **Setup:** read initial state (`team.list`, `team.get`) | **Trigger operations** (add member, send message) |
-| **Assert:** verify backend matches UI                   | Operations MUST go through UI interaction         |
-| **Cleanup:** delete test data (`team.remove`)           |                                                   |
+### 等待与超时
 
-### Timeout Guidelines
+- 元素可见：通常为 5～15 秒。
+- 页面导航和稳定：通常为 10 秒。
+- 单模型回复：最多约 120 秒。
+- Team 推理与工具调用：通常为 60～120 秒。
+- 成员初始化：通常为 60 秒。
 
-| Operation                                | Timeout            |
-| ---------------------------------------- | ------------------ |
-| UI element visibility                    | 5,000 - 15,000ms   |
-| Navigation + settle                      | 10,000ms           |
-| AI response (single model)               | 120,000ms          |
-| Team operations (leader inference + MCP) | 60,000 - 120,000ms |
-| Member initialization                    | 60,000ms           |
+优先使用 Playwright 的自动等待、`expect.poll()` 和明确的状态条件；不要用固定 `waitForTimeout()` 掩盖竞态。
 
-### Mocking Native Dialogs (Electron)
+### 原生对话框
 
 ```ts
-// Mock file open dialog
 await electronApp.evaluate(async ({ dialog }, targetPath) => {
   dialog.showOpenDialog = () => Promise.resolve({ canceled: false, filePaths: [targetPath] });
 }, '/path/to/target');
@@ -176,126 +166,59 @@ await electronApp.evaluate(async ({ dialog }, targetPath) => {
 
 ### Shadow DOM
 
-AI message text renders inside Shadow DOM (`.markdown-shadow`). Use the `waitForAiReply()` helper which handles this automatically. If you need raw access:
+AI 消息正文位于 `.markdown-shadow` 的 Shadow DOM 中。常规回复等待应使用 `waitForAiReply()`；只有辅助函数无法覆盖的断言才直接访问 `shadowRoot`。
 
-```ts
-const text = await page.evaluate(() => {
-  const el = document.querySelector('.message-item.text.justify-start:last-child');
-  const shadow = el?.querySelector('.markdown-shadow');
-  return shadow?.shadowRoot?.textContent?.trim() ?? '';
-});
-```
+### 失败产物
 
-### Screenshots
+自定义 `page` fixture 会在失败时附加截图。设置 `E2E_TRACE=1` 可保留失败跟踪和视频。
 
-```ts
-// Manual screenshot (saved to tests/e2e/results/)
-await page.screenshot({ path: 'tests/e2e/results/my-step.png' });
-```
+## 环境变量
 
-Failed tests automatically get screenshots attached to the HTML report.
+| 变量             | 默认值                | 作用                                |
+| ---------------- | --------------------- | ----------------------------------- |
+| `E2E_PACKAGED=1` | 未设置                | 强制使用打包模式                    |
+| `E2E_DEV=1`      | 未设置                | 强制使用开发模式                    |
+| `E2E_TRACE=1`    | 未设置                | 保留失败跟踪和视频                  |
+| `TEAM_AGENT`     | `claude,codex,gemini` | 过滤 Team leader 后端，可用逗号分隔 |
+| `CI`             | 未设置                | 启用 CI 重试、报告和打包模式        |
 
----
+fixture 会自动设置 `TJUAEUI_E2E_TEST=1`、`TJUAEUI_DISABLE_AUTO_UPDATE=1`、`TJUAEUI_DISABLE_DEVTOOLS=1` 和 `TJUAEUI_CDP_PORT=0`，并使用临时用户数据目录，避免污染开发者数据。
 
-## Environment Variables
+## 常用命令
 
-| Variable         | Default                     | Purpose                      |
-| ---------------- | --------------------------- | ---------------------------- |
-| `E2E_PACKAGED=1` | unset (dev mode)            | Use packaged app from `out/` |
-| `E2E_DEV=1`      | unset                       | Force dev mode               |
-| `TEAM_AGENT`     | all (`claude,codex,gemini`) | Filter team leader types     |
-| `CI`             | unset                       | Auto-selects packaged mode   |
+| 命令                              | 范围                                |
+| --------------------------------- | ----------------------------------- |
+| `bun run test:e2e`                | 全部 E2E                            |
+| `bun run test:e2e:team`           | `tests/e2e/cases/teams/` 下全部用例 |
+| `bun run test:e2e:team:create`    | Team 创建                           |
+| `bun run test:e2e:team:lifecycle` | Team 成员生命周期                   |
+| `bun run test:e2e:team:whitelist` | leader 白名单                       |
+| `bun run test:e2e:team:comm`      | Team 消息链路                       |
 
-Variables set automatically during test launch:
+## 故障排查
 
-| Variable                     | Value | Purpose                  |
-| ---------------------------- | ----- | ------------------------ |
-| `AIONUI_E2E_TEST`            | `1`   | App recognizes test mode |
-| `AIONUI_DISABLE_AUTO_UPDATE` | `1`   | No update checks         |
-| `AIONUI_DISABLE_DEVTOOLS`    | `1`   | No DevTools windows      |
-| `AIONUI_CDP_PORT`            | `0`   | CDP disabled             |
+### 页面仍是旧版本
 
----
-
-## NPM Scripts
-
-| Command                           | Scope                    |
-| --------------------------------- | ------------------------ |
-| `bun run test:e2e`                | All E2E tests            |
-| `bun run test:e2e:team`           | All `team-*.e2e.ts`      |
-| `bun run test:e2e:team:create`    | Team creation only       |
-| `bun run test:e2e:team:lifecycle` | Add + fire members       |
-| `bun run test:e2e:team:whitelist` | Agent whitelist dropdown |
-| `bun run test:e2e:team:comm`      | Message sending          |
-
-### Examples
-
-```bash
-# Run all E2E locally (dev mode, requires build first)
-bunx electron-vite build && bun run test:e2e
-
-# Run only team tests with list reporter
-bun run test:e2e:team
-
-# Run specific test file
-npx playwright test --config playwright.config.ts tests/e2e/specs/app-launch.e2e.ts
-
-# Only test gemini leader type
-TEAM_AGENT=gemini bun run test:e2e:team
-
-# Run in packaged mode (CI-like)
-E2E_PACKAGED=1 bun run test:e2e
-```
-
----
-
-## Troubleshooting
-
-### Tests fail with stale UI / old behavior
-
-**Cause:** Source changes not rebuilt.
-
-```bash
-bunx electron-vite build
-```
+重新运行 `bun run package`。E2E 不会自动重建源码。
 
 ### `Bridge invoke timeout: xxx`
 
-**Cause:** The IPC provider for `xxx` doesn't exist or wasn't registered.
+1. 在 `packages/desktop/src/common/adapter/ipcBridge.ts` 或 HTTP 桥接定义中确认端点。
+2. 在 `packages/desktop/src/process/bridge/` 中确认 provider 已注册。
+3. 检查 `tjuaecore` 是否可执行、端口是否正常。
+4. 重新构建后再运行。
 
-- Check `src/common/adapter/ipcBridge.ts` for the endpoint definition
-- Check the corresponding bridge file (e.g., `src/process/bridge/teamBridge.ts`) for `.provider()` registration
-- Rebuild: `bunx electron-vite build`
+### 应用启动后白屏
 
-### App launches but page is blank
+检查 `out/main/index.js` 和 `out/renderer/index.html` 是否存在，然后重新运行 `bun run package`。失败报告中的渲染进程诊断会列出脚本、样式和页面错误。
 
-**Cause:** Renderer build is missing or corrupted.
+### AI 回复测试不稳定
 
-```bash
-bunx electron-vite build
-```
+- 确认本地 agent、认证和模型配置可用。
+- 为真实推理设置合理超时。
+- 使用状态轮询替代固定等待。
+- MCP 确认弹窗统一复用已有自动批准辅助函数。
 
-### Tests are flaky with AI responses
+### 测试数据残留
 
-- Increase timeout (AI inference varies by load)
-- Use `expect.poll()` instead of fixed `waitForTimeout()`
-- Add retry logic for MCP confirmation dialogs (see `autoApproveMcpDialogs` pattern)
-
-### Leftover test data in sidebar
-
-```bash
-# Clean via database
-sqlite3 "~/Library/Application Support/AionUi-Dev/aionui/aionui.db" \
-  "DELETE FROM teams WHERE name LIKE 'E2E%';"
-```
-
-Or add cleanup at test start:
-
-```ts
-const teams = await invokeBridge(page, 'team.list', { userId: 'system_default_user' });
-for (const t of teams) {
-  if (t.name.startsWith('E2E')) {
-    await invokeBridge(page, 'team.remove', { id: t.id }).catch(() => {});
-  }
-}
-```
+优先通过桥接清理当前用例创建的数据，并在 `try/finally` 或测试收尾逻辑中执行。不要直接操作开发者数据库；fixture 默认使用临时用户数据目录。

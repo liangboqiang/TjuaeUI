@@ -1,114 +1,112 @@
-# Contributing Guide
+# 贡献指南
 
-> **Chinese version**: [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md)
+## 前置条件
 
-## Prerequisites
-
-See [docs/contributing/development.md](docs/contributing/development.md) for environment setup. You will need:
+环境搭建请参考 [docs/contributing/development.md](docs/contributing/development.md)。你需要：
 
 - Node.js 22+
-- [bun](https://bun.sh)
-- [Rust stable + Cargo](https://rustup.rs) for the local AionCore backend
-- [prek](https://github.com/j178/prek) (`npm install -g @j178/prek`)
+- [Bun](https://bun.sh)
+- [Rust stable 与 Cargo](https://rustup.rs)，用于构建本地 TjuaeCore 后端
+- [prek](https://github.com/j178/prek)（`npm install -g @j178/prek`）
 
-## Rule 1: Atomic PRs
+## 规则一：原子化 PR
 
-Each pull request must contain **exactly one feature or one bug fix** that cannot be further decomposed.
+每个 PR 只能包含**一个不可再拆分的功能或一个缺陷修复**。
 
-**How to check:** Ask yourself (or an AI): _"Can this diff be split into multiple independently mergeable PRs?"_ If yes, split it before submitting.
+**判断方法：** 问自己（或 AI）：_“这个 diff 能否拆成多个可独立合并的 PR？”_ 如果可以，提交前必须拆分。
 
-### Examples
+### 示例
 
-**Acceptable (single PR):**
+**可接受的单个 PR：**
 
-- A bug fix with one root cause, even if it touches multiple files (e.g., fixing toast z-index across modal and chat layers)
-- A single coherent feature (e.g., team creation modal with form validation)
+- 修复一个根因导致的缺陷，即使涉及多个文件（例如统一修复 toast 在 modal 与聊天层的 z-index）
+- 实现一个完整且内聚的功能（例如带表单校验的团队创建弹窗）
 
-**Must be split into separate PRs:**
+**必须拆成多个 PR：**
 
-- Team chat scroll fix + Sentry user tracking + office preview performance optimization = 3 PRs
-- Unrelated bug fixes bundled together (e.g., titlebar navigation fix + i18n missing key + speech input UI fix)
-- Independent technical layers (e.g., IPC bridge refactor + renderer component + worker process change for unrelated features)
+- 团队聊天滚动修复 + 遥测集成 + 文档预览性能优化 = 3 个 PR
+- 将多个无关缺陷打包（例如标题栏导航修复 + i18n 缺失键 + 语音输入 UI 修复）
+- 同时改造彼此无关的技术层（例如 IPC 桥接重构 + 无关的渲染组件 + 无关的 Worker 进程变更）
 
-## Rule 2: Commit and PR Title Format
+## 规则二：Commit 与 PR 标题格式
 
-Commit messages and PR titles must use Conventional Commit format in English:
+Commit message 和 PR 标题必须使用 Conventional Commit 格式。`type` 与可选的 `scope` 使用约定的英文标识，`subject` 使用简体中文：
 
 ```text
 <type>(<scope>): <subject>
 ```
 
-Use one of these types:
+`type` 只能使用以下取值：
 
-| Type       | Meaning                  | Changelog visibility |
-| ---------- | ------------------------ | -------------------- |
-| `feat`     | New user-facing behavior | Visible              |
-| `fix`      | Bug fix                  | Visible              |
-| `perf`     | Performance improvement  | Visible              |
-| `refactor` | Code restructuring       | Visible              |
-| `docs`     | Documentation            | Visible              |
-| `style`    | Formatting or styles     | Hidden               |
-| `chore`    | Maintenance work         | Hidden               |
-| `test`     | Tests                    | Hidden               |
-| `ci`       | CI configuration         | Hidden               |
-| `build`    | Build system             | Hidden               |
+| 类型       | 含义         | Changelog 可见性 |
+| ---------- | ------------ | ---------------- |
+| `feat`     | 新增用户功能 | 可见             |
+| `fix`      | 缺陷修复     | 可见             |
+| `perf`     | 性能优化     | 可见             |
+| `refactor` | 代码重构     | 可见             |
+| `docs`     | 文档         | 可见             |
+| `style`    | 格式或样式   | 隐藏             |
+| `chore`    | 维护工作     | 隐藏             |
+| `test`     | 测试         | 隐藏             |
+| `ci`       | CI 配置      | 隐藏             |
+| `build`    | 构建系统     | 隐藏             |
 
-Examples:
+示例：
 
-- `fix(preview): restore local html loading`
-- `feat(workspace): add file preview shortcuts`
-- `docs(contributing): document pr title format`
+- `fix(preview): 恢复本地 HTML 加载`
+- `feat(workspace): 添加文件预览快捷键`
+- `docs(contributing): 说明 PR 标题格式`
 
-## Rule 3: Pass Local Checks Before Push
+## 规则三：推送前通过本地检查
 
-CI will reject your PR if these checks fail. Run them locally **before pushing** to save time.
+这些检查失败时，CI 会拒绝 PR。请在**推送前**于本地运行，以便尽早发现问题。
 
-### Step-by-step
+### 逐步执行
 
 ```bash
-# 1. Format (always run — covers .ts, .tsx, .css, .json, .md)
+# 1. 格式化（必须运行，覆盖 .ts、.tsx、.css、.json、.md）
 bun run format
 
-# 2. Lint (skip if no .ts/.tsx files changed)
+# 2. Lint（未修改 .ts/.tsx 时可跳过）
 bun run lint
 
-# 3. Type check (skip if no .ts/.tsx files changed)
+# 3. 类型检查（未修改 .ts/.tsx 时可跳过）
 bunx tsc --noEmit
 
-# 4. i18n validation (only if you changed files in src/renderer/, locales/, or src/common/config/i18n/)
+# 4. i18n 校验（仅在修改 renderer、locales 或 i18n 配置时运行）
 bun run i18n:types
 node scripts/check-i18n.js
 
-# 5. Tests
+# 5. 测试
 bunx vitest run
 ```
 
-### One-command alternative
+### 一组命令完成同等检查
 
-This replicates the exact CI quality check, then runs tests:
+以下命令先复刻 CI 质量门禁，再运行测试：
 
 ```bash
 prek run --from-ref origin/main --to-ref HEAD
 bunx vitest run
 ```
 
-> `prek` runs format-check + lint + tsc in read-only mode. If it reports issues, run the auto-fix commands above first, then re-run prek.
+> `prek` 以只读方式运行 format-check、lint 与 tsc。若发现问题，先执行相应的自动修复命令，再重新运行 `prek`。
 
-### Common failures and fixes
+### 常见失败及修复
 
-| Failure       | Fix                                                                  |
-| ------------- | -------------------------------------------------------------------- |
-| Format errors | `bun run format` (auto-fixes)                                        |
-| Lint errors   | `bun run lint:fix` for auto-fixable issues; fix the rest manually    |
-| Type errors   | Fix the TypeScript issue, then re-run `bunx tsc --noEmit`            |
-| i18n errors   | Check for missing keys; run `bun run i18n:types` to regenerate types |
-| Test failures | Fix the failing test or implementation; re-run `bunx vitest run`     |
+| 失败类型  | 修复方法                                             |
+| --------- | ---------------------------------------------------- |
+| 格式错误  | `bun run format`（自动修复）                         |
+| Lint 错误 | 用 `bun run lint:fix` 修复可自动修复项，其余手动处理 |
+| 类型错误  | 修复 TypeScript 问题，再运行 `bunx tsc --noEmit`     |
+| i18n 错误 | 检查缺失键，并运行 `bun run i18n:types` 重新生成类型 |
+| 测试失败  | 修复失败的测试或实现，再运行 `bunx vitest run`       |
 
-## Enforcement
+## 规则执行
 
-When these rules are not followed, maintainers may:
+不符合规则时，维护者可以：
 
-1. **Close and request resubmission** (preferred) — you retain full credit upon proper resubmission.
-2. **Cherry-pick valuable portions** — your authorship is preserved in git history, but the original PR shows as "Closed" rather than "Merged".
+1. **关闭并要求重新提交**（首选）：正确重提后仍保留全部署名。
+2. **Cherry-pick 有价值的部分**：作者信息保留在 git 历史中，但原 PR 会显示为 “Closed” 而非 “Merged”。
 
-Code style, dependency choices, and documentation polish are handled by maintainers post-merge. Focus your PR on the functional change.
+代码风格、依赖选择和文档润色由维护者在合并后统一处理。PR 应始终聚焦其功能变更。

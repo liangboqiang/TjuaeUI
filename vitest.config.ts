@@ -30,6 +30,7 @@ export default defineConfig({
             'packages/web-host/src/**/*.test.ts',
             'tests/unit/**/*.test.ts',
             'tests/unit/**/test_*.ts',
+            'tests/contract/**/*.test.ts',
             'tests/integration/**/*.test.ts',
             'tests/regression/**/*.test.ts',
           ],

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -29,7 +29,7 @@ export class StartupArchitectureMismatchError extends Error {
   readonly details: StartupArchitectureMismatchDetails;
 
   constructor(details: StartupArchitectureMismatchDetails) {
-    super('AionUi package architecture does not match this Mac. Please download the matching package.');
+    super('TjuaeUI package architecture does not match this Mac. Please download the matching package.');
     this.name = 'StartupArchitectureMismatchError';
     this.details = details;
   }

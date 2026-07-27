@@ -12,10 +12,9 @@
     "clearWorkspace": "Remove project",
     "openFolder": "Open Folder",
     "none": "None",
-    "quickActionsTitle": "What can AionUi do?",
-    "quickActionFeedback": "Report Issue",
-    "quickActionStar": "Like us? Give us a star!",
-    "skillsMarket": "AionUi Skills Market",
+    "quickActionsTitle": "What can TjuaeUI do?",
+    "quickActionRepository": "Repository",
+    "skillsMarket": "TjuaeUI Skills Market",
     "skillsMarketDesc": "Search and activate community Skills on demand. Configure once, available for all agents.",
     "skillsMarketDetails": "View More >>"
   },
@@ -124,32 +123,32 @@
       "check_provider_base_url": "Check the model provider Base URL, API path, proxy, and API compatibility.",
       "change_model": "Choose a model that is available for the current account and supports this request.",
       "reduce_context": "Reduce the message content, referenced files, or context size, then retry.",
-      "send_feedback": "Send feedback with logs so the team can investigate."
+      "send_feedback": "Report the problem through GitHub Issues; local data is not uploaded automatically."
     },
     "ownership": {
-      "aionui": "App",
+      "tjuaeui": "App",
       "user_agent": "Agent",
       "user_llm_provider": "Model provider",
       "unknown_upstream": "Upstream"
     },
     "codes": {
-      "AIONUI_STREAM_BROKEN": {
+      "TJUAEUI_STREAM_BROKEN": {
         "title": "Response stream was interrupted",
-        "body": "The app accepted your message but the response stream ended unexpectedly. Please retry; if it happens again, send feedback."
+        "body": "The app accepted your message but the response stream ended unexpectedly. Please retry."
       },
-      "AIONUI_STATE_INCONSISTENT": {
+      "TJUAEUI_STATE_INCONSISTENT": {
         "title": "Conversation state is out of sync",
         "body": "The conversation state is out of sync. Restart this chat or reload the app before retrying."
       },
-      "AIONUI_PERMISSION_ERROR": {
+      "TJUAEUI_PERMISSION_ERROR": {
         "title": "Could not access the requested resource",
         "body": "A local permission or filesystem check failed. Check the project path and app permissions, then retry."
       },
-      "AIONUI_INTERNAL_ERROR": {
+      "TJUAEUI_INTERNAL_ERROR": {
         "title": "Request failed in the app",
-        "body": "The request failed while the app was processing it. Please retry once; if it repeats, send feedback."
+        "body": "The request failed while the app was processing it. Please retry once."
       },
-      "AIONUI_CONVERSATION_BUSY": {
+      "TJUAE_CONVERSATION_BUSY": {
         "title": "Conversation is busy",
         "body": "Another response is still running. Wait for it to finish before sending a new message."
       },
@@ -304,7 +303,7 @@
       },
       "MCP_HTTP_RESPONSE_READ_FAILED": {
         "title": "Failed to read the team helper response",
-        "body": "AionUi could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
+        "body": "TjuaeUI could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
       },
       "MCP_TOOL_REMOTE_ERROR": {
         "title": "The local team helper rejected the request",
@@ -312,11 +311,11 @@
       },
       "MCP_TOOL_RESPONSE_UNEXPECTED": {
         "title": "The team helper returned an unexpected response",
-        "body": "AionUi received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
+        "body": "TjuaeUI received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
       },
       "MCP_TCP_READ_FAILED": {
         "title": "Failed to read from the local team helper",
-        "body": "AionUi could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
+        "body": "TjuaeUI could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
       },
       "TEAM_SERVICE_UNAVAILABLE": {
         "title": "Team service is not ready yet",

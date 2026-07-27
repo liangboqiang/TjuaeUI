@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 import { describe, it, expect, vi } from 'vitest';
@@ -59,7 +59,7 @@ describe('createBrowserNotificationController.onStreamMessage', () => {
     expect(show).toHaveBeenCalledWith({ body: 'confirmation', conversationId: 'c2', kind: 'confirmation' });
   });
 
-  it('shows a confirmation notification on a permission stream message (aionrs)', () => {
+  it('shows a confirmation notification on a permission stream message (tjuaecli)', () => {
     const { show, controller } = makeDeps();
     controller.onStreamMessage({ type: 'permission', conversation_id: 'c3' });
     expect(show).toHaveBeenCalledWith({ body: 'confirmation', conversationId: 'c3', kind: 'confirmation' });

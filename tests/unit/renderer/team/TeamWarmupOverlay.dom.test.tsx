@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -50,19 +50,19 @@ describe('TeamWarmupOverlay failure states', () => {
     render(
       <TeamWarmupOverlay
         phase='error'
-        assistants={[assistant('l', 'leader', 'Codex'), assistant('m', 'teammate', 'Aion CLI')]}
+        assistants={[assistant('l', 'leader', 'Codex'), assistant('m', 'teammate', 'Tjuae CLI')]}
         runtimeStatus={runtime([
           ['l', 'ready'],
-          ['m', 'failed', "Invalid request: Bad request: Provider 'aionrs' not found"],
+          ['m', 'failed', "Invalid request: Bad request: Provider 'tjuaecli' not found"],
         ])}
         colorOf={colorOf}
         onRetry={() => {}}
       />
     );
     // single failure → title names the member
-    expect(screen.getByText('Member Aion CLI failed to start')).toBeInTheDocument();
+    expect(screen.getByText('Member Tjuae CLI failed to start')).toBeInTheDocument();
     // error is simplified (wrapper prefixes stripped)
-    expect(screen.getByTestId('team-warmup-error')).toHaveTextContent("Provider 'aionrs' not found");
+    expect(screen.getByTestId('team-warmup-error')).toHaveTextContent("Provider 'tjuaecli' not found");
     // teammate is removable → hint mentions removal
     expect(screen.getByText(/remove the member/i)).toBeInTheDocument();
   });
@@ -73,12 +73,12 @@ describe('TeamWarmupOverlay failure states', () => {
         phase='error'
         assistants={[
           assistant('l', 'leader', 'Gemini'),
-          assistant('a', 'teammate', 'Aion CLI'),
+          assistant('a', 'teammate', 'Tjuae CLI'),
           assistant('c', 'teammate', 'CodeBuddy'),
         ]}
         runtimeStatus={runtime([
           ['l', 'failed', 'ACP error'],
-          ['a', 'failed', "Bad request: Provider 'aionrs' not found"],
+          ['a', 'failed', "Bad request: Provider 'tjuaecli' not found"],
           ['c', 'ready'],
         ])}
         colorOf={colorOf}
@@ -91,8 +91,8 @@ describe('TeamWarmupOverlay failure states', () => {
     const box = screen.getByTestId('team-warmup-error');
     expect(box).toHaveTextContent('Gemini');
     expect(box).toHaveTextContent('ACP error');
-    expect(box).toHaveTextContent('Aion CLI');
-    expect(box).toHaveTextContent("Provider 'aionrs' not found");
+    expect(box).toHaveTextContent('Tjuae CLI');
+    expect(box).toHaveTextContent("Provider 'tjuaecli' not found");
     // a teammate is among the failures → removal is offered
     expect(screen.getByText(/remove the member/i)).toBeInTheDocument();
   });

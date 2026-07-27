@@ -33,11 +33,12 @@ export interface IHubExtension {
   icon?: string; // Path relative to extension root
   dist: {
     tarball: string; // Relative path e.g. extensions/ext-claude-code.tgz
-    integrity: string; // SHA-512 SRI Hash
+    integrity: string; // 解压后规范内容的 SHA-256。
+    archiveIntegrity: string; // 下载归档字节的 SHA-256。
     unpackedSize: number;
   };
   engines: {
-    aionui: string; // Minimum APP version requirement
+    tjuae: string; // Minimum Tjuae platform version requirement
   };
   hubs: string[]; // Hub categories e.g. ["acpAdapters"]
   contributes?: HubContributes;

@@ -160,7 +160,7 @@ export async function goToGuid(page: Page): Promise<void> {
 }
 
 /** Compatibility helper kept for older specs; Guid selection is now assistant-first and local-state free. */
-export async function resetGuidLastSelectedAgent(page: Page, _agentKey = 'aionrs'): Promise<void> {
+export async function resetGuidLastSelectedAgent(page: Page, _agentKey = 'tjuaecli'): Promise<void> {
   await page.evaluate(() => {
     sessionStorage.removeItem('guid.openAssistantEditorIntent');
   });

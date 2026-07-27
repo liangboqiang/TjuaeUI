@@ -1,7 +1,7 @@
-!ifndef AIONUI_INSTALLER_COMMON_NSH
-!define AIONUI_INSTALLER_COMMON_NSH
+!ifndef TJUAEUI_INSTALLER_COMMON_NSH
+!define TJUAEUI_INSTALLER_COMMON_NSH
 !include "installer-observability.nsh"
-!include "installer-errors-sentry.nsh"
+!include "installer-errors.nsh"
 !include "installer-process-control.nsh"
 !include "installer-remove-registry.nsh"
 !include "installer-repair-heal.nsh"

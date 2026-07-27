@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -124,7 +124,7 @@ describe('FileChangeList', () => {
       <FileChangeList
         {...baseProps}
         workspace={baseProps.workspace}
-        unstaged={[change({ file_path: 'C:\\Temp\\aionui\\src\\app.ts' })]}
+        unstaged={[change({ file_path: 'C:\\Temp\\tjuaeui\\src\\app.ts' })]}
       />
     );
 
@@ -138,7 +138,7 @@ describe('FileChangeList', () => {
       workspace: 'C:\\Users\\demo\\repo',
     });
     expect(ipcBridge.fs.readFile.invoke).toHaveBeenNthCalledWith(2, {
-      path: 'C:\\Temp\\aionui\\src\\app.ts',
+      path: 'C:\\Temp\\tjuaeui\\src\\app.ts',
       workspace: 'C:\\Users\\demo\\repo',
     });
   });

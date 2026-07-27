@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Preview module is the file preview and editing system in AionUi, supporting viewing and editing of multiple file formats. The module adopts a **multi-tab architecture**, allowing multiple files to be opened simultaneously, with each file displayed in its own tab. The Preview module integrates advanced features such as real-time streaming updates, version history, split-screen preview, and keyboard shortcuts, providing users with powerful file handling capabilities.
+The Preview module is the file preview and editing system in TjuaeUI, supporting viewing and editing of multiple file formats. The module adopts a **multi-tab architecture**, allowing multiple files to be opened simultaneously, with each file displayed in its own tab. The Preview module integrates advanced features such as real-time streaming updates, version history, split-screen preview, and keyboard shortcuts, providing users with powerful file handling capabilities.
 
 ## Core Features
 
@@ -63,8 +63,7 @@ preview/
 │   │   ├── ImageViewer.tsx            # Image viewer
 │   │   ├── DiffViewer.tsx             # Diff comparison
 │   │   ├── PDFViewer.tsx              # PDF viewer
-│   │   ├── OfficeDocViewer.tsx        # Office document viewer (Word, PPT)
-│   │   ├── ExcelViewer.tsx            # Excel viewer
+│   │   ├── OfficeFileViewer.tsx       # Safe fallback for Office documents
 │   │   ├── HTMLViewer.tsx             # HTML rendering
 │   │   └── URLViewer.tsx              # URL web page viewer
 │   ├── editors/                       # Editor components
@@ -523,7 +522,9 @@ The following file types do not support editing:
 - PPT
 - Images (view only)
 
-These file types only provide viewing functionality.
+PDF and image files are view-only. Word, Excel, and PPT files use a safe
+fallback that lets the user open the original file in a system application or
+download a copy from the toolbar; no external preview service is launched.
 
 ## Configuration
 
@@ -540,9 +541,6 @@ export const MIN_SPLIT_WIDTH = 30;
 
 // Maximum split width
 export const MAX_SPLIT_WIDTH = 70;
-
-// File types with built-in open button
-export const FILE_TYPES_WITH_BUILTIN_OPEN = ['pdf', 'word', 'excel', 'ppt'];
 ```
 
 ## Related Links

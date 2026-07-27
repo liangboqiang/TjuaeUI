@@ -13,57 +13,12 @@ import { WORKSPACE_STATE_EVENT, dispatchWorkspaceToggleEvent } from '@renderer/u
 import type { WorkspaceStateDetail } from '@renderer/utils/workspace/workspaceEvents';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useNavigationHistory } from '@/renderer/hooks/context/NavigationHistoryContext';
-import { useFeedback } from '@/renderer/hooks/context/FeedbackContext';
-import { resolveFeedbackModule } from '@/renderer/services/feedback/resolveFeedbackModule';
 import { isElectronDesktop, isMacOS } from '@/renderer/utils/platform';
 import './titlebar.css';
 
 interface TitlebarProps {
   workspaceAvailable: boolean;
 }
-
-// Bug-report icon: a speech bubble with a centred "?" mark, reading as "report an
-// issue". Drawn on a 48-unit viewBox with icon-park-like padding and taking the same
-// `strokeWidth` as the neighbouring @icon-park icons / SidebarIcon, so its line weight
-// and footprint match the rest of the titlebar toolbar exactly. (@icon-park doesn't
-// ship this exact shape, so it's rendered inline.)
-//
-// The raw artwork fills less of the viewBox than @icon-park's glyphs do, so at the
-// same `size` it reads optically smaller. Scale the artwork up about the centre to
-// match their footprint, and divide the stroke by the same factor so the rendered
-// line weight stays identical to the neighbouring icons.
-const FEEDBACK_ICON_SCALE = 1.12;
-// The bubble's tail drops to y≈41 (body is y6~38), pulling the optical centre below
-// the viewBox midline, so the icon reads slightly low next to the vertically
-// symmetric @icon-park neighbours. Nudge the whole glyph up a couple of viewBox
-// units to bring its visual centre back onto the shared baseline.
-const FEEDBACK_ICON_RISE = 2;
-const FeedbackIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size = 18, strokeWidth = 4 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox='0 0 48 48'
-    fill='none'
-    stroke='currentColor'
-    strokeWidth={strokeWidth / FEEDBACK_ICON_SCALE}
-    strokeLinecap='round'
-    strokeLinejoin='round'
-    aria-hidden='true'
-    focusable='false'
-  >
-    <g
-      transform={`translate(0 -${FEEDBACK_ICON_RISE}) translate(24 24) scale(${FEEDBACK_ICON_SCALE}) translate(-24 -24)`}
-    >
-      {/* Speech bubble with a tail dropping to the bottom-left. Sized to nearly fill
-          the viewBox so it reads at the same scale as the neighbouring icons. */}
-      <path d='M24 6C34 6 42 13 42 22C42 31 34 38 24 38C21.7 38 19.5 37.7 17.5 37.2L7 41L10 32C7.5 29 6 25.3 6 22C6 13 14 6 24 6Z' />
-      {/* Question mark hook + stem, centred at x=24 inside the bubble cavity. */}
-      <path d='M18.5 17.5C18.5 14 21 12 24 12C27 12 29.5 14 29.5 17C29.5 20.5 26.5 21.5 25 23.5C24 24.8 24 25.5 24 27' />
-      {/* Dot below the stem, drawn as a zero-length round-capped segment. */}
-      <path d='M24 31.5L24 31.55' />
-    </g>
-  </svg>
-);
 
 // Claude-desktop-style sidebar toggle icon: a rounded rectangle with a vertical divider
 // near the left edge, indicating a collapsible side panel. Rendered as inline SVG since
@@ -96,13 +51,12 @@ const SidebarIcon: React.FC<{ size?: number; strokeWidth?: number }> = ({ size =
 
 const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
   const { t } = useTranslation();
-  const appTitle = useMemo(() => 'AionUi', []);
+  const appTitle = useMemo(() => 'TjuaeUI', []);
   const [workspaceCollapsed, setWorkspaceCollapsed] = useState(true);
   const [mobileCenterTitle, setMobileCenterTitle] = useState(appTitle);
   const [mobileCenterOffset, setMobileCenterOffset] = useState(0);
   const layout = useLayoutContext();
   const navigationHistory = useNavigationHistory();
-  const { openFeedback } = useFeedback();
   const location = useLocation();
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -138,7 +92,6 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
     ? t('common.expandMore', { defaultValue: 'Expand workspace' })
     : t('common.collapse', { defaultValue: 'Collapse workspace' });
   const backToChatTooltip = t('common.back', { defaultValue: 'Back to Chat' });
-  const feedbackTooltip = t('conversation.welcome.quickActionFeedback', { defaultValue: 'Report Issue' });
   const isSettingsRoute = location.pathname.startsWith('/settings');
   const iconSize = 18;
   // Desktop uses slimmer strokes to match macOS-native chrome aesthetics;
@@ -187,14 +140,14 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
       const path = `${location.pathname}${location.search}${location.hash}`;
       lastNonSettingsPathRef.current = path;
       try {
-        sessionStorage.setItem('aion:last-non-settings-path', path);
+        sessionStorage.setItem('tjuae:last-non-settings-path', path);
       } catch {
         // ignore
       }
       return;
     }
     try {
-      const stored = sessionStorage.getItem('aion:last-non-settings-path');
+      const stored = sessionStorage.getItem('tjuae:last-non-settings-path');
       if (stored) {
         lastNonSettingsPathRef.current = stored;
       }
@@ -407,15 +360,6 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
       </div>
       <div ref={toolbarRef} className='app-titlebar__toolbar'>
         {layout?.isMobile && <div id='app-titlebar-actions-slot' className='app-titlebar__actions-slot' />}
-        <button
-          type='button'
-          className={classNames('app-titlebar__button', layout?.isMobile && 'app-titlebar__button--mobile')}
-          onClick={() => void openFeedback({ autoScreenshot: true, module: resolveFeedbackModule(location.pathname) })}
-          aria-label={feedbackTooltip}
-          title={feedbackTooltip}
-        >
-          <FeedbackIcon size={iconSize} strokeWidth={desktopIconStroke} />
-        </button>
         {showWorkspaceButton && (
           <button
             type='button'

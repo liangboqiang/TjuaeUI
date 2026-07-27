@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -30,7 +30,7 @@ const isModelKeyAvailable = (key: string | null, providers?: IProvider[]) => {
 };
 
 /** Provider-based agent keys that share the model list UI */
-type ProviderAgentKey = 'aionrs';
+type ProviderAgentKey = 'tjuaecli';
 
 export type GuidModelSelectionResult = {
   modelList: IProvider[];
@@ -45,9 +45,9 @@ export type GuidModelSelectionResult = {
  * Hook that manages the provider-backed model selection state for the Guid page.
  * Assistant-driven defaults are applied by the caller; this hook only owns the
  * transient in-page selection.
- * @param agentKey - current provider-based agent (currently only 'aionrs')
+ * @param agentKey - current provider-based agent (currently only 'tjuaecli')
  */
-export const useGuidModelSelection = (agentKey: ProviderAgentKey = 'aionrs'): GuidModelSelectionResult => {
+export const useGuidModelSelection = (agentKey: ProviderAgentKey = 'tjuaecli'): GuidModelSelectionResult => {
   const { isGoogleAuth } = useGoogleAuthModels();
   const { data: modelConfig } = useProvidersQuery();
 

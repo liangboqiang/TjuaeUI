@@ -1,47 +1,46 @@
-# CODEOWNERS — auto-request review from module owners when a PR touches their paths.
-# Later rules override earlier ones, so keep the default first and
-# nested-directory overrides after their parent rule.
-# Owner mapping source of truth: .github/triage-map.json (issue triage uses the same table).
+# CODEOWNERS：PR 修改相应路径时，自动请求模块负责人审查。
+# 后面的规则覆盖前面的规则，因此默认规则放在最前，
+# 嵌套目录规则必须放在父目录规则之后。
+# 负责人映射的单一事实来源是 .github/triage-map.json，Issue 分类也使用该表。
 
-# ---- Default fallback: everything else ----
-* @IceyLiu
+# ---- 默认负责人：其他所有路径 ----
+* @liangboqiang
 
-# ---- Scheduled tasks (kaizhou-lab) ----
-/packages/desktop/src/renderer/pages/cron/ @kaizhou-lab
+# ---- 定时任务 ----
+/packages/desktop/src/renderer/pages/cron/ @liangboqiang
 
-# ---- Agent detection & connection (kaizhou-lab) ----
-/packages/desktop/src/renderer/pages/settings/AgentSettings/ @kaizhou-lab
-/packages/desktop/src/renderer/hooks/agent/ @kaizhou-lab
+# ---- Agent 检测与连接 ----
+/packages/desktop/src/renderer/pages/settings/AgentSettings/ @liangboqiang
+/packages/desktop/src/renderer/hooks/agent/ @liangboqiang
 
-# ---- Assistants & presets / Skills / Team (piorpua) ----
-/packages/desktop/src/renderer/pages/settings/AssistantSettings/ @piorpua
-/packages/desktop/src/renderer/hooks/assistant/ @piorpua
-/packages/desktop/src/renderer/pages/settings/SkillsSettings/ @piorpua
-/packages/desktop/src/renderer/pages/team/ @piorpua
+# ---- 助手与预设 / 技能 / Team ----
+/packages/desktop/src/renderer/pages/settings/AssistantSettings/ @liangboqiang
+/packages/desktop/src/renderer/hooks/assistant/ @liangboqiang
+/packages/desktop/src/renderer/pages/settings/SkillsSettings/ @liangboqiang
+/packages/desktop/src/renderer/pages/team/ @liangboqiang
 
-# ---- MCP & tools (piorpua) ----
-/packages/desktop/src/renderer/pages/settings/ToolsSettings/ @piorpua
-/packages/desktop/src/renderer/hooks/mcp/ @piorpua
+# ---- MCP 与工具 ----
+/packages/desktop/src/renderer/pages/settings/ToolsSettings/ @liangboqiang
+/packages/desktop/src/renderer/hooks/mcp/ @liangboqiang
 
-# ---- Channel integrations (piorpua) ----
-/packages/desktop/src/common/types/channel/ @piorpua
-/packages/desktop/src/renderer/components/settings/SettingsModal/contents/channels/ @piorpua
+# ---- 渠道集成 ----
+/packages/desktop/src/common/types/channel/ @liangboqiang
+/packages/desktop/src/renderer/components/settings/SettingsModal/contents/channels/ @liangboqiang
 
-# ---- Conversation & sessions (piorpua) ----
-/packages/desktop/src/renderer/pages/conversation/ @piorpua
+# ---- 会话与上下文 ----
+/packages/desktop/src/renderer/pages/conversation/ @liangboqiang
 
-# ---- Search & history / Workspace & preview (tcp404) ----
-# Nested overrides: these subdirectories of conversation/ go to tcp404,
-# so they must stay after the conversation/ rule above.
-/packages/desktop/src/renderer/pages/conversation/GroupedHistory/ @tcp404
-/packages/desktop/src/renderer/pages/conversation/Workspace/ @tcp404
-/packages/desktop/src/renderer/pages/conversation/Preview/ @tcp404
+# ---- 搜索与历史 / 工作区与预览 ----
+# 以下 conversation/ 子目录有独立负责人规则，因此必须放在上方父目录规则之后。
+/packages/desktop/src/renderer/pages/conversation/GroupedHistory/ @liangboqiang
+/packages/desktop/src/renderer/pages/conversation/Workspace/ @liangboqiang
+/packages/desktop/src/renderer/pages/conversation/Preview/ @liangboqiang
 
-# ---- Models & authentication (jiahe0510) ----
-/packages/desktop/src/renderer/utils/model/ @jiahe0510
-/packages/desktop/src/renderer/pages/settings/components/ @jiahe0510
+# ---- 模型与认证 ----
+/packages/desktop/src/renderer/utils/model/ @liangboqiang
+/packages/desktop/src/renderer/pages/settings/components/ @liangboqiang
 
-# ---- WebUI & remote access (kaizhou-lab) ----
-/packages/web-cli/ @kaizhou-lab
-/packages/web-host/ @kaizhou-lab
-/packages/desktop/src/renderer/components/settings/SettingsModal/contents/WebuiModalContent.tsx @kaizhou-lab
+# ---- WebUI 与远程访问 ----
+/packages/web-cli/ @liangboqiang
+/packages/web-host/ @liangboqiang
+/packages/desktop/src/renderer/components/settings/SettingsModal/contents/WebuiModalContent.tsx @liangboqiang

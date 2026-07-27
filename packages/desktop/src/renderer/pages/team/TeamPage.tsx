@@ -13,8 +13,8 @@ import ChatLayout from '@/renderer/pages/conversation/components/ChatLayout';
 import ChatSlider from '@renderer/pages/conversation/components/ChatSlider.tsx';
 import { useTeamPendingPermissions } from './hooks/useTeamPendingPermissions';
 import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
-import AionrsModelSelector from '@/renderer/pages/conversation/platforms/aionrs/AionrsModelSelector';
-import { useAionrsModelSelection } from '@/renderer/pages/conversation/platforms/aionrs/useAionrsModelSelection';
+import TjuaeCliModelSelector from '@/renderer/pages/conversation/platforms/tjuaecli/TjuaeCliModelSelector';
+import { useTjuaeCliModelSelection } from '@/renderer/pages/conversation/platforms/tjuaecli/useTjuaeCliModelSelection';
 import { CronJobManager } from '@/renderer/pages/cron';
 import { resolveCronJobId } from '@/renderer/pages/cron/cronUtils';
 import TeamTabs from './components/TeamTabs';
@@ -38,7 +38,7 @@ type Props = {
   team: TTeam;
 };
 
-const NON_ACP_BACKENDS = new Set(['aionrs', 'openclaw-gateway', 'nanobot', 'remote']);
+const NON_ACP_BACKENDS = new Set(['tjuaecli', 'openclaw-gateway', 'nanobot', 'remote']);
 
 function isAcpLikeBackend(backend: string | undefined): boolean {
   if (!backend) return false;
@@ -61,8 +61,8 @@ const configErrorMessageKey = (error: unknown) => {
   return 'agent.config.failed';
 };
 
-/** Compact aionrs model selector for the agent header */
-const AionrsHeaderModelSelector: React.FC<{ conversation_id: string; initialModel?: TProviderWithModel }> = ({
+/** Compact tjuaecli model selector for the agent header */
+const TjuaeCliHeaderModelSelector: React.FC<{ conversation_id: string; initialModel?: TProviderWithModel }> = ({
   conversation_id,
   initialModel,
 }) => {
@@ -76,7 +76,7 @@ const AionrsHeaderModelSelector: React.FC<{ conversation_id: string; initialMode
     },
     [conversation_id]
   );
-  const modelSelection = useAionrsModelSelection({ initialModel, onSelectModel });
+  const modelSelection = useTjuaeCliModelSelection({ initialModel, onSelectModel });
   const runtimeConfig = useAcpConfigOptions({
     conversation_id,
     prepareSetRuntime: teamPermission?.warmupSession,
@@ -97,7 +97,7 @@ const AionrsHeaderModelSelector: React.FC<{ conversation_id: string; initialMode
     [runtimeConfig, t]
   );
   return (
-    <AionrsModelSelector
+    <TjuaeCliModelSelector
       selection={modelSelection}
       thoughtLevel={runtimeConfig.thoughtLevel}
       setStatus={runtimeConfig.setStatus}
@@ -137,7 +137,7 @@ const AssistantChatSlot: React.FC<{
     () => getConversationOrNull(assistant.conversation_id)
   );
 
-  const isAionrs = conversation?.type === 'aionrs';
+  const isTjuaeCli = conversation?.type === 'tjuaecli';
   const initialModelId = (conversation?.extra as { current_model_id?: string })?.current_model_id;
   const isAcpLike = conversation?.type === 'acp' || isAcpLikeBackend(assistant.assistant_backend);
   const cronJobId = resolveCronJobId(conversation?.extra);
@@ -158,7 +158,7 @@ const AssistantChatSlot: React.FC<{
         />
         <div className='flex items-center gap-8px shrink-0'>
           {conversation && <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />}
-          {!isMobile && assistant.conversation_id && !isAionrs && isAcpLike && (
+          {!isMobile && assistant.conversation_id && !isTjuaeCli && isAcpLike && (
             <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
               <AcpModelSelector
                 key={assistant.conversation_id}
@@ -170,9 +170,9 @@ const AssistantChatSlot: React.FC<{
               />
             </div>
           )}
-          {!isMobile && isAionrs && assistant.conversation_id && (
+          {!isMobile && isTjuaeCli && assistant.conversation_id && (
             <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
-              <AionrsHeaderModelSelector
+              <TjuaeCliHeaderModelSelector
                 key={assistant.conversation_id}
                 conversation_id={assistant.conversation_id}
                 initialModel={conversation?.model as TProviderWithModel | undefined}

@@ -11,7 +11,12 @@ import { useTeammateColor } from '../identity/TeamIdentityContext';
 import { Robot } from '@icon-park/react';
 
 const useAcpDraft = getSendBoxDraftHook('acp', { _type: 'acp', atPath: [], content: '', uploadFile: [] });
-const useAionrsDraft = getSendBoxDraftHook('aionrs', { _type: 'aionrs', atPath: [], content: '', uploadFile: [] });
+const useTjuaeCliDraft = getSendBoxDraftHook('tjuaecli', {
+  _type: 'tjuaecli',
+  atPath: [],
+  content: '',
+  uploadFile: [],
+});
 
 type Props = {
   conversation_id: string;
@@ -33,11 +38,11 @@ const SUGGESTION_DEFAULTS: Record<string, string> = {
   expert_review: 'Have multiple experts analyze the same problem',
 };
 
-type TeamDraftKind = 'acp' | 'aionrs';
+type TeamDraftKind = 'acp' | 'tjuaecli';
 
 /** Map a conversation.type onto the runnable draft store. */
 const toDraftKind = (type: TChatConversation['type']): TeamDraftKind => {
-  return type === 'aionrs' ? 'aionrs' : 'acp';
+  return type === 'tjuaecli' ? 'tjuaecli' : 'acp';
 };
 
 const resolveAssistantName = (
@@ -77,10 +82,10 @@ const TeamChatEmptyState: React.FC<Props> = ({
 
   // Hooks must run unconditionally; the lookup below picks the right draft at call time.
   const acpDraft = useAcpDraft(conversation_id);
-  const aionrsDraft = useAionrsDraft(conversation_id);
+  const tjuaecliDraft = useTjuaeCliDraft(conversation_id);
   const setContentByKind = {
     acp: (text: string) => acpDraft.mutate((prev) => ({ ...prev, content: text })),
-    aionrs: (text: string) => aionrsDraft.mutate((prev) => ({ ...prev, content: text })),
+    tjuaecli: (text: string) => tjuaecliDraft.mutate((prev) => ({ ...prev, content: text })),
   } satisfies Record<TeamDraftKind, (text: string) => void>;
 
   const fillDraft = useCallback(

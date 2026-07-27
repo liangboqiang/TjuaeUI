@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -112,7 +112,7 @@ export type PcmRecorderHandle = {
   stop: () => Promise<{ pcm: Uint8Array; sampleRate: number }>;
 };
 
-const PROCESSOR_NAME = 'aionui-pcm-capture';
+const PROCESSOR_NAME = 'tjuaeui-pcm-capture';
 
 /**
  * Inline AudioWorklet processor source, loaded via a Blob URL so no bundler

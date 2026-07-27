@@ -70,30 +70,14 @@
     "emptySnapshot": "Anlık görüntü içeriği boş"
   },
   "office": {
-    "installLinkText": "officecli kurulum kılavuzunu aç",
-    "errors": {
-      "officecliNotFound": "officecli yüklü değil.",
-      "installFailed": "officecli otomatik olarak yüklenemedi. Arka uç günlüklerini kontrol edip yeniden deneyin.",
-      "portTimeout": "Önizleme servisi başladı ancak zamanında hazır olmadı. Yeniden deneyin.",
-      "startFailed": "Office önizleme servisi başlatılamadı.",
-      "outsideSandbox": "Bu dosya geçerli çalışma alanı sandbox'ının dışında."
-    },
-    "serverInstall": {
-      "hint": "AionUi bir sunucuda çalışıyor. Önizleme bileşeni o sunucuya kurulmalıdır. Aşağıdaki komutu sunucuda çalıştırıp yeniden deneyin:",
-      "icuNote": "Yine de başlamazsa sunucuya ICU kitaplığını kurun (Debian/Ubuntu: apt-get install -y libicu-dev)."
-    }
+    "previewUnavailable": "Bu dosya türü uygulama içi önizlemeyi desteklemiyor.",
+    "openOrDownloadHint": "Araç çubuğunu kullanarak özgün dosyayı sistem uygulamasında açın veya bir kopyasını indirin."
   },
   "word": {
     "title": "Word Belgesi",
     "loading": "Word belgesi yükleniyor...",
     "invalid": "Lütfen dosyanın geçerli bir Word belgesi olduğunu onaylayın",
-    "loadFailed": "Word belgesi yüklenemedi",
-    "watch": {
-      "loading": "Word belgesi yükleniyor...",
-      "installing": "officecli yükleniyor...",
-      "startFailed": "Word önizlemesi başlatılamadı",
-      "installHint": "officecli gereklidir. Otomatik olarak yüklenecektir."
-    }
+    "loadFailed": "Word belgesi yüklenemedi"
   },
   "excel": {
     "title": "Excel Tablosu",
@@ -104,13 +88,7 @@
     "convertFailed": "Excel dönüştürme başarısız",
     "loadFailed": "Excel çalışma kitabı yüklenemedi",
     "emptySheet": "Bu çalışma sayfasında veri yok",
-    "emptySheetHint": "Sayfanın veri veya resim içerip içermediğini kontrol edin",
-    "watch": {
-      "loading": "Excel dosyası yükleniyor...",
-      "installing": "officecli yükleniyor...",
-      "startFailed": "Excel önizlemesi başlatılamadı",
-      "installHint": "officecli gereklidir. Otomatik olarak yüklenecektir."
-    }
+    "emptySheetHint": "Sayfanın veri veya resim içerip içermediğini kontrol edin"
   },
   "pdf": {
     "title": "PDF Belgesi",
@@ -133,11 +111,5 @@
     "inspectElement": "Öğeyi İncele",
     "inspectElementEnable": "Öğe denetçisini etkinleştir",
     "inspectElementDisable": "Öğe denetçisini devre dışı bırak"
-  },
-  "ppt": {
-    "loading": "PPT önizlemesi başlatılıyor...",
-    "installing": "Önizleme bileşeni yükleniyor...",
-    "startFailed": "PPT önizlemesi başlatılamadı",
-    "installHint": "OfficeCLI'yi resmi iOfficeAI/OfficeCLI releases sayfasından yükleyin"
   }
 }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -49,29 +49,12 @@ export interface PlatformConfig {
  *
  * 顺序：
  * 1. 自定义（需要用户输入 base url）
- * 2. Moonshot/Kimi（战略合作，置顶展示）
- * 3. New API / Gemini 官方平台
- * 4+ 预设供应商
+ * 2. New API / Gemini platforms
+ * 3+ Preset providers
  */
 export const MODEL_PLATFORMS: PlatformConfig[] = [
   // 自定义选项（需要用户输入 base url）/ Custom option (requires user to input base url)
   { name: 'Custom', value: 'custom', logo: null, platform: 'custom', i18nKey: 'settings.platformCustom' },
-
-  // Moonshot/Kimi 战略合作伙伴，紧随 Custom 置顶 / Strategic partner pinned right after Custom
-  {
-    name: 'Moonshot (China)',
-    value: 'Moonshot',
-    logo: buildLogoAssetUrl('ai-china/kimi.svg'),
-    platform: 'custom',
-    base_url: 'https://api.moonshot.cn/v1',
-  },
-  {
-    name: 'Moonshot (Global)',
-    value: 'Moonshot-Global',
-    logo: buildLogoAssetUrl('ai-china/kimi.svg'),
-    platform: 'custom',
-    base_url: 'https://api.moonshot.ai/v1',
-  },
 
   // New API 多模型网关 / New API multi-model gateway
   {
@@ -132,6 +115,20 @@ export const MODEL_PLATFORMS: PlatformConfig[] = [
     logo: buildLogoAssetUrl('ai-china/minimax.png'),
     platform: 'custom',
     base_url: 'https://api.minimaxi.com/v1',
+  },
+  {
+    name: 'Moonshot (China)',
+    value: 'Moonshot',
+    logo: buildLogoAssetUrl('ai-china/kimi.svg'),
+    platform: 'custom',
+    base_url: 'https://api.moonshot.cn/v1',
+  },
+  {
+    name: 'Moonshot (Global)',
+    value: 'Moonshot-Global',
+    logo: buildLogoAssetUrl('ai-china/kimi.svg'),
+    platform: 'custom',
+    base_url: 'https://api.moonshot.ai/v1',
   },
   {
     name: 'Novita',

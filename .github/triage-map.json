@@ -1,21 +1,21 @@
 {
-  "$comment": "Issue module → area label → owner mapping. Single source of truth for .github/workflows/issue-triage.yml. The 'module' key must exactly match the dropdown option text in .github/ISSUE_TEMPLATE/bug_report.yml and question.yml. Edit owners here — no workflow change needed.",
+  "$comment": "Issue 模块 → 区域标签 → 负责人映射，是 .github/workflows/issue-triage.yml 的单一事实来源。module 必须与 bug_report.yml 和 question.yml 中的下拉选项完全一致；只需在此修改负责人。",
   "modules": [
-    { "module": "Agent Detection & Connection", "label": "area/agent-detection", "owner": "kaizhou-lab" },
-    { "module": "Assistants & Presets", "label": "area/assistant", "owner": "piorpua" },
-    { "module": "Models & Authentication", "label": "area/model-auth", "owner": "jiahe0510" },
-    { "module": "MCP & Tools", "label": "area/mcp", "owner": "piorpua" },
-    { "module": "Skills & Plugins", "label": "area/skills", "owner": "piorpua" },
-    { "module": "Channel Integrations", "label": "area/channel", "owner": "piorpua" },
-    { "module": "Conversation & Sessions", "label": "area/conversation", "owner": "piorpua" },
-    { "module": "Search & History", "label": "area/history", "owner": "tcp404" },
-    { "module": "Project, Files & Preview", "label": "area/workspace", "owner": "tcp404" },
-    { "module": "WebUI & Remote Access", "label": "area/webui", "owner": "kaizhou-lab" },
-    { "module": "Scheduled Tasks", "label": "area/cron", "owner": "kaizhou-lab" },
-    { "module": "Team Collaboration", "label": "area/team", "owner": "piorpua" },
-    { "module": "Interface, Display & Desktop Pet", "label": "area/display", "owner": "IceyLiu" },
-    { "module": "System Settings", "label": "area/settings", "owner": "IceyLiu" },
-    { "module": "Other", "label": "area/other", "owner": "IceyLiu" }
+    { "module": "Agent 检测与连接", "label": "area/agent-detection", "owner": "liangboqiang" },
+    { "module": "助手与预设", "label": "area/assistant", "owner": "liangboqiang" },
+    { "module": "模型与认证", "label": "area/model-auth", "owner": "liangboqiang" },
+    { "module": "MCP 与工具", "label": "area/mcp", "owner": "liangboqiang" },
+    { "module": "技能与插件", "label": "area/skills", "owner": "liangboqiang" },
+    { "module": "渠道集成", "label": "area/channel", "owner": "liangboqiang" },
+    { "module": "会话与上下文", "label": "area/conversation", "owner": "liangboqiang" },
+    { "module": "搜索与历史", "label": "area/history", "owner": "liangboqiang" },
+    { "module": "项目、文件与预览", "label": "area/workspace", "owner": "liangboqiang" },
+    { "module": "WebUI 与远程访问", "label": "area/webui", "owner": "liangboqiang" },
+    { "module": "定时任务", "label": "area/cron", "owner": "liangboqiang" },
+    { "module": "Team 协作", "label": "area/team", "owner": "liangboqiang" },
+    { "module": "界面、显示与桌面宠物", "label": "area/display", "owner": "liangboqiang" },
+    { "module": "系统设置", "label": "area/settings", "owner": "liangboqiang" },
+    { "module": "其他", "label": "area/other", "owner": "liangboqiang" }
   ],
-  "fallback": { "label": "needs-triage", "owner": "IceyLiu" }
+  "fallback": { "label": "needs-triage", "owner": "liangboqiang" }
 }

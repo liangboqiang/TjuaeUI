@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,7 +12,7 @@ import type { ContextMenuState } from '../types';
 interface UseWorkspaceEventsOptions {
   conversation_id: string;
   workspace: string;
-  eventPrefix: 'acp' | 'codex' | 'aionrs';
+  eventPrefix: 'acp' | 'codex' | 'tjuaecli';
 
   // Dependencies from useWorkspaceTree
   refreshWorkspace: () => void;
@@ -139,7 +139,7 @@ export function useWorkspaceEvents(options: UseWorkspaceEventsOptions) {
    * Listen to agent response stream - auto refresh workspace (throttled)
    */
   useEffect(() => {
-    const isNonFileSystemTool = (name: string) => /^mcp__aionui-team-|^team_/.test(name);
+    const isNonFileSystemTool = (name: string) => /^mcp__tjuaeui-team-|^team_/.test(name);
 
     const handleResponse = (data: { type: string; data?: unknown; conversation_id?: string }) => {
       if (data.conversation_id && data.conversation_id !== conversation_id) return;

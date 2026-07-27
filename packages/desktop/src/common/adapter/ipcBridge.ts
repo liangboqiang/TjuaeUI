@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -8,7 +8,7 @@
  * IPC Bridge → HTTP/WS adapter.
  *
  * This file replaces the original IPC bridge calls with HTTP REST and WebSocket
- * calls routed to aioncore. Electron-native operations (window controls,
+ * calls routed to tjuaecore. Electron-native operations (window controls,
  * native dialogs, auto-update, devtools, zoom, CDP, deep links) remain as IPC.
  */
 
@@ -184,12 +184,12 @@ export const conversation = {
   ),
   createWithConversation: withResponseMap(
     httpPost<TChatConversation, { conversation: TChatConversation }>('/api/conversations/clone', (p) => {
-      const isAionrs = p.conversation.type === 'aionrs';
+      const isTjuaeCli = p.conversation.type === 'tjuaecli';
       const { model: _rawModel, ...rest } = p.conversation as TChatConversation & {
         model?: TProviderWithModel;
       };
       const clonedConversation: Record<string, unknown> = { ...rest };
-      if (isAionrs) {
+      if (isTjuaeCli) {
         const model = toApiModelOptional(_rawModel);
         if (model) clonedConversation.model = model;
       }
@@ -480,7 +480,7 @@ export const application = {
   ),
   getPath: bridge.buildProvider<string, { name: 'desktop' | 'home' | 'downloads' }>('app.get-path'),
   // Electron-local: copies cache dir + persists to ProcessEnv, paired with restart.
-  // The backend reads AIONUI_*_DIR env vars on boot, so it does not own this config.
+  // The backend reads TJUAEUI_*_DIR env vars on boot, so it does not own this config.
   updateSystemInfo: bridge.buildProvider<void, { cacheDir: string; workDir: string; logDir?: string }>(
     'update-system-info'
   ),
@@ -763,7 +763,7 @@ export const googleAuth = {
 };
 
 // ---------------------------------------------------------------------------
-// Google subscription status (Google OAuth provider path, used by aionrs)
+// Google subscription status (Google OAuth provider path, used by tjuaecli)
 // ---------------------------------------------------------------------------
 
 export const google = {
@@ -1148,32 +1148,6 @@ export const document = {
 };
 
 // ---------------------------------------------------------------------------
-// Office Previews — routed to /api/*-preview/*
-// ---------------------------------------------------------------------------
-
-export const pptPreview = {
-  start: httpPost<{ url: string; error?: string }, { file_path: string; workspace?: string }>('/api/ppt-preview/start'),
-  stop: httpPost<void, { file_path: string }>('/api/ppt-preview/stop'),
-  status: wsEmitter<{ state: 'starting' | 'installing' | 'ready' | 'error'; message?: string }>('ppt-preview.status'),
-};
-
-export const wordPreview = {
-  start: httpPost<{ url: string; error?: string }, { file_path: string; workspace?: string }>(
-    '/api/word-preview/start'
-  ),
-  stop: httpPost<void, { file_path: string }>('/api/word-preview/stop'),
-  status: wsEmitter<{ state: 'starting' | 'installing' | 'ready' | 'error'; message?: string }>('word-preview.status'),
-};
-
-export const excelPreview = {
-  start: httpPost<{ url: string; error?: string }, { file_path: string; workspace?: string }>(
-    '/api/excel-preview/start'
-  ),
-  stop: httpPost<void, { file_path: string }>('/api/excel-preview/stop'),
-  status: wsEmitter<{ state: 'starting' | 'installing' | 'ready' | 'error'; message?: string }>('excel-preview.status'),
-};
-
-// ---------------------------------------------------------------------------
 // Deep Link — stays IPC (Electron protocol handler)
 // ---------------------------------------------------------------------------
 
@@ -1504,7 +1478,7 @@ export interface IConfirmMessageParams {
 }
 
 export interface ICreateConversationParams {
-  type?: 'acp' | 'aionrs';
+  type?: 'acp' | 'tjuaecli';
   id?: string;
   name?: string;
   model?: TProviderWithModel;

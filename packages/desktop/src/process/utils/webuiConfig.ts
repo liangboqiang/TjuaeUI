@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,7 +10,7 @@ import * as path from 'path';
 import { networkInterfaces } from 'os';
 import { getSystemDir } from './initStorage';
 import { httpRequest } from '@/common/adapter/httpBridge';
-import { startWebHost, type WebHostHandle } from '@aionui/web-host';
+import { startWebHost, type WebHostHandle } from '@tjuae/web-host';
 import { getDataPath } from './utils';
 
 const WEBUI_CONFIG_FILE = 'webui.config.json';
@@ -130,7 +130,7 @@ export const saveUserWebUIConfig = async (config: WebUIUserConfig): Promise<void
 //   production -> 25808, dev -> 25809, multi-instance dev -> 25810
 const DEFAULT_WEBUI_PORT = (() => {
   if (process.env.NODE_ENV === 'production') return 25808;
-  if (process.env.AIONUI_MULTI_INSTANCE === '1') return 25810;
+  if (process.env.TJUAEUI_MULTI_INSTANCE === '1') return 25810;
   return 25809;
 })();
 
@@ -141,7 +141,7 @@ export const resolveWebUIPort = (
   const cliPort = parsePortValue(getSwitchValue('port') ?? getSwitchValue('webui-port'));
   if (cliPort) return cliPort;
 
-  const envPort = parsePortValue(process.env.AIONUI_PORT ?? process.env.PORT);
+  const envPort = parsePortValue(process.env.TJUAEUI_PORT ?? process.env.PORT);
   if (envPort) return envPort;
 
   const configPort = parsePortValue(config.port);
@@ -151,8 +151,8 @@ export const resolveWebUIPort = (
 };
 
 export const resolveRemoteAccess = (config: WebUIUserConfig, isRemoteMode: boolean): boolean => {
-  const envRemote = parseBooleanEnv(process.env.AIONUI_ALLOW_REMOTE || process.env.AIONUI_REMOTE);
-  const hostHint = process.env.AIONUI_HOST?.trim();
+  const envRemote = parseBooleanEnv(process.env.TJUAEUI_ALLOW_REMOTE || process.env.TJUAEUI_REMOTE);
+  const hostHint = process.env.TJUAEUI_HOST?.trim();
   const hostRequestsRemote = hostHint ? ['0.0.0.0', '::', '::0'].includes(hostHint) : false;
   const configRemote = config.allowRemote === true;
 
@@ -229,7 +229,7 @@ export async function startDesktopWebUI(opts: { port?: number; allowRemote?: boo
   // Spawning a second backend here would race the first on the same SQLite file.
   const backendPort = (globalThis as typeof globalThis & { __backendPort?: number }).__backendPort;
   if (!backendPort) {
-    throw new Error('[WebUI] Cannot start: aioncore is not running (globalThis.__backendPort unset)');
+    throw new Error('[WebUI] Cannot start: tjuaecore is not running (globalThis.__backendPort unset)');
   }
 
   const handle = await startWebHost({
@@ -239,7 +239,7 @@ export async function startDesktopWebUI(opts: { port?: number; allowRemote?: boo
       resourcesPath: app.getAppPath(),
       // webui.config.json must live next to the backend SQLite DB so --resetpass
       // CLI and the runtime settings path read/write the same user record.
-      // getDataPath() returns ~/.aionui[-dev] symlink on macOS to sidestep
+      // getDataPath() returns ~/.tjuaeui[-dev] symlink on macOS to sidestep
       // path-with-spaces issues under Application Support.
       userDataPath: getDataPath(),
     },

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -17,7 +17,7 @@ import type { TFunction } from 'i18next';
 export const MANAGED_AGENTS_SWR_KEY = 'agents.managed';
 
 /** Type of an agent. */
-export type AgentType = 'acp' | 'remote' | 'aionrs' | 'openclaw-gateway' | 'nanobot';
+export type AgentType = 'acp' | 'remote' | 'tjuaecli' | 'openclaw-gateway' | 'nanobot';
 
 /** Source tier of an agent row, mirroring backend `agent_source` enum. */
 export type AgentSource = 'internal' | 'builtin' | 'extension' | 'custom';
@@ -94,7 +94,7 @@ export type AgentMetadata = {
 
   /** Vendor label (e.g. "claude"). Absent for agents without vendor grouping. */
   backend?: string;
-  /** Top-level runtime discriminant: "acp" | "remote" | "nanobot" | "aionrs" | … */
+  /** Top-level runtime discriminant: "acp" | "remote" | "nanobot" | "tjuaecli" | … */
   agent_type: AgentType;
   agent_source: AgentSource;
   agent_source_info?: AgentSourceInfo;
@@ -122,7 +122,7 @@ export type AgentMetadata = {
 
   behavior_policy?: BehaviorPolicy;
 
-  /** Native mode id that AionUi's legacy `yolo` / `yoloNoSandbox`
+  /** Native mode id that TjuaeUI's legacy `yolo` / `yoloNoSandbox`
    *  aliases resolve to before calling `session/set_mode`. Absent
    *  when the backend has no yolo equivalent. */
   yolo_id?: string;

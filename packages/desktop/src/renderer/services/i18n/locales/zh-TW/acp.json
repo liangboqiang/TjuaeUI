@@ -1,7 +1,7 @@
 {
   "auth": {
     "failed": "{{backend}} 認證失敗：\n\n{{error}}\n\n請檢查本地CLI工具的認證狀態",
-    "console_error": "ACP authentication error details:",
+    "console_error": "ACP 驗證錯誤詳細資料：",
     "failed_confirm": "ACP {{backend}} 身份驗證失敗：\n\n{{error}}\n\n是否立即前往設定頁面進行配置？"
   },
   "send": {

@@ -12,10 +12,9 @@
     "clearWorkspace": "Видалити проєкт",
     "openFolder": "Відкрити папку",
     "none": "Немає",
-    "quickActionsTitle": "Що вміє AionUi?",
-    "quickActionFeedback": "Повідомити про проблему",
-    "quickActionStar": "Подобається? Поставте нам зірку!",
-    "skillsMarket": "Маркет навичок AionUi",
+    "quickActionsTitle": "Що вміє TjuaeUI?",
+    "quickActionRepository": "Репозиторій",
+    "skillsMarket": "Маркет навичок TjuaeUI",
     "skillsMarketDesc": "Шукайте та активуйте навички спільноти за запитом. Налаштуйте один раз — доступно для всіх агентів.",
     "skillsMarketDetails": "Докладніше >>"
   },
@@ -124,32 +123,32 @@
       "check_provider_base_url": "Перевірте Base URL, шлях API, проксі та сумісність API постачальника моделі.",
       "change_model": "Виберіть модель, доступну для поточного акаунта та сумісну з цим запитом.",
       "reduce_context": "Зменште вміст повідомлення, кількість файлів або розмір контексту, потім повторіть спробу.",
-      "send_feedback": "Надішліть відгук із логами, щоб команда могла розібратися."
+      "send_feedback": "Повідомте про проблему через GitHub Issues; локальні дані не надсилаються автоматично."
     },
     "ownership": {
-      "aionui": "Застосунок",
+      "tjuaeui": "Застосунок",
       "user_agent": "Агент",
       "user_llm_provider": "Постачальник моделі",
       "unknown_upstream": "Зовнішній сервіс"
     },
     "codes": {
-      "AIONUI_STREAM_BROKEN": {
+      "TJUAEUI_STREAM_BROKEN": {
         "title": "Потік відповіді було перервано",
-        "body": "Застосунок прийняв повідомлення, але потік відповіді несподівано завершився. Повторіть спробу; якщо це повториться, надішліть відгук."
+        "body": "Застосунок прийняв повідомлення, але потік відповіді несподівано завершився. Спробуйте ще раз."
       },
-      "AIONUI_STATE_INCONSISTENT": {
+      "TJUAEUI_STATE_INCONSISTENT": {
         "title": "Стан розмови не синхронізовано",
         "body": "Стан розмови не синхронізовано. Перезапустіть цей чат або перезавантажте застосунок, потім повторіть спробу."
       },
-      "AIONUI_PERMISSION_ERROR": {
+      "TJUAEUI_PERMISSION_ERROR": {
         "title": "Не вдалося отримати доступ до потрібного ресурсу",
         "body": "Перевірка локальних дозволів або файлової системи не вдалася. Перевірте шлях проєкту та дозволи застосунку, потім повторіть спробу."
       },
-      "AIONUI_INTERNAL_ERROR": {
+      "TJUAEUI_INTERNAL_ERROR": {
         "title": "Запит не вдалося обробити в застосунку",
-        "body": "Під час обробки запиту в застосунку сталася помилка. Повторіть спробу один раз; якщо проблема повториться, надішліть відгук."
+        "body": "Під час обробки запиту застосунком сталася помилка. Спробуйте ще раз."
       },
-      "AIONUI_CONVERSATION_BUSY": {
+      "TJUAE_CONVERSATION_BUSY": {
         "title": "Розмова зайнята",
         "body": "Інша відповідь ще виконується. Дочекайтеся її завершення перед надсиланням нового повідомлення."
       },
@@ -304,7 +303,7 @@
       },
       "MCP_HTTP_RESPONSE_READ_FAILED": {
         "title": "Failed to read the team helper response",
-        "body": "AionUi could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
+        "body": "TjuaeUI could not read the local team helper response. Retry once, and if it keeps happening, restart the app."
       },
       "MCP_TOOL_REMOTE_ERROR": {
         "title": "The local team helper rejected the request",
@@ -312,11 +311,11 @@
       },
       "MCP_TOOL_RESPONSE_UNEXPECTED": {
         "title": "The team helper returned an unexpected response",
-        "body": "AionUi received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
+        "body": "TjuaeUI received an unexpected response from the local team helper. Retry once, and report it if the problem persists."
       },
       "MCP_TCP_READ_FAILED": {
         "title": "Failed to read from the local team helper",
-        "body": "AionUi could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
+        "body": "TjuaeUI could not read the local team helper TCP response. Retry once, and restart the app if it keeps failing."
       },
       "TEAM_SERVICE_UNAVAILABLE": {
         "title": "Team service is not ready yet",

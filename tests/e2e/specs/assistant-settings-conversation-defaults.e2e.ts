@@ -25,7 +25,7 @@ import {
 } from '../helpers';
 import { CHAT_INPUT } from '../helpers/selectors';
 import { goToNewChat, waitForAiReply } from '../helpers/conversation';
-import { getAionrsTestModels, type TProviderWithModel } from '../helpers/chatAionrs';
+import { getTjuaeCliTestModels, type TProviderWithModel } from '../helpers/chatTjuaeCli';
 
 type AssistantDetail = {
   id: string;
@@ -94,7 +94,7 @@ type ConversationCreatePayload = {
   };
 };
 
-type EnsuredAionrsModels = {
+type EnsuredTjuaeCliModels = {
   cleanupProviderId: string | null;
   modelA: TProviderWithModel;
   modelB: TProviderWithModel | null;
@@ -118,8 +118,8 @@ async function findAssistantIdByName(page: Page, name: string): Promise<string |
   return null;
 }
 
-async function ensureAionrsTestModels(page: Page): Promise<EnsuredAionrsModels> {
-  const existing = await getAionrsTestModels(page);
+async function ensureTjuaeCliTestModels(page: Page): Promise<EnsuredTjuaeCliModels> {
+  const existing = await getTjuaeCliTestModels(page);
   if (existing?.modelA) {
     return {
       cleanupProviderId: null,
@@ -404,7 +404,7 @@ function normalizeUiText(value: string | null | undefined): string {
 
 function locateConversationModelButton(page: Page) {
   return page
-    .locator('[data-testid="aionrs-model-selector"], [data-testid="chat-model-selector"], .header-model-btn')
+    .locator('[data-testid="tjuaecli-model-selector"], [data-testid="chat-model-selector"], .header-model-btn')
     .first();
 }
 
@@ -540,7 +540,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
       expect(payload.assistant?.conversation_overrides?.mcp_ids).toContain(firstMcp.id);
 
       const userDataPath = await getUserDataPath(electronApp);
-      const dbPath = path.join(userDataPath, 'aionui', 'aionui-backend.db');
+      const dbPath = path.join(userDataPath, 'tjuaeui', 'tjuaeui-backend.db');
       const snapshot = querySnapshotByConversationId(dbPath, conversationId);
 
       expect(snapshot.default_model_mode).toBe('fixed');
@@ -610,7 +610,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
       expect(payload.assistant?.conversation_overrides?.mcp_ids).toContain(firstMcp.id);
 
       const userDataPath = await getUserDataPath(electronApp);
-      const dbPath = path.join(userDataPath, 'aionui', 'aionui-backend.db');
+      const dbPath = path.join(userDataPath, 'tjuaeui', 'tjuaeui-backend.db');
       const snapshot = querySnapshotByConversationId(dbPath, conversationId);
       const preferences = queryPreferencesByAssistantKey(dbPath, assistantId);
 
@@ -666,7 +666,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     await waitForAiReply(page);
 
     const userDataPath = await getUserDataPath(electronApp);
-    const dbPath = path.join(userDataPath, 'aionui', 'aionui-backend.db');
+    const dbPath = path.join(userDataPath, 'tjuaeui', 'tjuaeui-backend.db');
 
     try {
       const beforeSwitch = querySnapshotByConversationId(dbPath, conversationId);
@@ -742,7 +742,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     await waitForAiReply(page);
 
     const userDataPath = await getUserDataPath(electronApp);
-    const dbPath = path.join(userDataPath, 'aionui', 'aionui-backend.db');
+    const dbPath = path.join(userDataPath, 'tjuaeui', 'tjuaeui-backend.db');
 
     try {
       const beforeSwitch = querySnapshotByConversationId(dbPath, conversationId);
@@ -780,7 +780,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     electronApp,
   }) => {
     const assistantName = `Auto Fixed Switch ${Date.now()}`;
-    const aionrsModels = await ensureAionrsTestModels(page);
+    const tjuaecliModels = await ensureTjuaeCliTestModels(page);
 
     await goToAssistantSettings(page);
     const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
@@ -802,15 +802,15 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     if (!assistantId) return;
 
     const userDataPath = await getUserDataPath(electronApp);
-    const dbPath = path.join(userDataPath, 'aionui', 'aionui-backend.db');
+    const dbPath = path.join(userDataPath, 'tjuaeui', 'tjuaeui-backend.db');
     try {
       await httpInvoke(page, 'PUT', `/api/assistants/${assistantId}`, {
         id: assistantId,
-        preset_agent_type: 'aionrs',
+        preset_agent_type: 'tjuaecli',
         defaults: {
           model: {
             mode: 'fixed',
-            value: aionrsModels.modelA.useModel,
+            value: tjuaecliModels.modelA.useModel,
           },
           permission: {
             mode: 'fixed',
@@ -853,8 +853,8 @@ test.describe('Assistant Settings Conversation Defaults', () => {
       await httpDelete(page, `/api/conversations/${fixedConversationId}`).catch(() => {});
     } finally {
       await httpDelete(page, `/api/assistants/${assistantId}`).catch(() => {});
-      if (aionrsModels.cleanupProviderId) {
-        await httpDelete(page, `/api/providers/${aionrsModels.cleanupProviderId}`).catch(() => {});
+      if (tjuaecliModels.cleanupProviderId) {
+        await httpDelete(page, `/api/providers/${tjuaecliModels.cleanupProviderId}`).catch(() => {});
       }
     }
   });
@@ -864,7 +864,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     electronApp,
   }) => {
     const assistantName = `Fixed Auto Switch ${Date.now()}`;
-    const aionrsModels = await ensureAionrsTestModels(page);
+    const tjuaecliModels = await ensureTjuaeCliTestModels(page);
 
     await goToAssistantSettings(page);
     const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
@@ -886,16 +886,16 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     if (!assistantId) return;
 
     const userDataPath = await getUserDataPath(electronApp);
-    const dbPath = path.join(userDataPath, 'aionui', 'aionui-backend.db');
+    const dbPath = path.join(userDataPath, 'tjuaeui', 'tjuaeui-backend.db');
 
     try {
       await httpInvoke(page, 'PUT', `/api/assistants/${assistantId}`, {
         id: assistantId,
-        preset_agent_type: 'aionrs',
+        preset_agent_type: 'tjuaecli',
         defaults: {
           model: {
             mode: 'fixed',
-            value: aionrsModels.modelA.useModel,
+            value: tjuaecliModels.modelA.useModel,
           },
           permission: {
             mode: 'fixed',
@@ -971,8 +971,8 @@ test.describe('Assistant Settings Conversation Defaults', () => {
       await httpDelete(page, `/api/conversations/${autoConversationId}`).catch(() => {});
     } finally {
       await httpDelete(page, `/api/assistants/${assistantId}`).catch(() => {});
-      if (aionrsModels.cleanupProviderId) {
-        await httpDelete(page, `/api/providers/${aionrsModels.cleanupProviderId}`).catch(() => {});
+      if (tjuaecliModels.cleanupProviderId) {
+        await httpDelete(page, `/api/providers/${tjuaecliModels.cleanupProviderId}`).catch(() => {});
       }
     }
   });

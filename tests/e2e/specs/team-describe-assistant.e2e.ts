@@ -47,7 +47,7 @@ type StdioEnvEntry = { name?: string; value?: string };
 type StdioConfig = { env?: StdioEnvEntry[] };
 type LeaderConversation = { id?: string; extra?: { teamMcpStdioConfig?: StdioConfig } } | null;
 
-/** Backend /api/teams/:id GET response shape — aligns with aioncore schema. */
+/** Backend /api/teams/:id GET response shape — aligns with tjuaecore schema. */
 type TTeamBackendAgent = {
   slot_id: string;
   conversation_id: string;
@@ -273,7 +273,7 @@ test.describe('Team MCP - team_describe_assistant', () => {
         }
         expect(presetId, `no preferred preset was enabled (tried: ${describeErrors.join('; ')})`).toBeTruthy();
         expect(describeText).toContain(presetId!);
-        expect(describeText).toContain('Backend: aionrs');
+        expect(describeText).toContain('Backend: tjuaecli');
         expect(describeText).toContain('## Description');
         expect(describeText).toContain('## Skills');
         expect(describeText).toContain('## Example tasks');
@@ -325,7 +325,7 @@ test.describe('Team MCP - team_describe_assistant', () => {
         expect(spawned, 'spawned teammate must be present').toBeTruthy();
         expect(spawned!.assistant_id).toBe(presetId);
         expect(spawned!.custom_agent_id).toBeUndefined();
-        expect(spawned!.assistant_backend ?? spawned!.backend).toBe('aionrs'); // preset backend wins
+        expect(spawned!.assistant_backend ?? spawned!.backend).toBe('tjuaecli'); // preset backend wins
       } finally {
         client.close();
       }

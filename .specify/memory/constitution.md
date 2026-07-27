@@ -1,112 +1,126 @@
-# AionUi Constitution
+# TjuaeUI 项目章程
 
-## Core Principles
+## 核心原则
 
-### I. Multi-Agent AI Integration
+### 一、多 Agent 统一接入
 
-AionUi serves as a unified desktop interface for multiple AI terminal agents (Gemini CLI, Claude Code, Qwen Code, etc.). Each AI agent integration must be:
+TjuaeUI 为多种 AI 终端 Agent 提供统一的桌面与 Web 界面。每个 Agent 接入必须：
 
-- Protocol-agnostic with standardized adapters
-- Independently manageable and configurable
-- Cross-platform compatible (macOS, Windows, Linux)
-- Real-time streaming capable for live interaction
+- 通过标准适配器隔离具体协议；
+- 能够独立发现、配置、启停和诊断；
+- 支持 macOS、Windows 和 Linux；
+- 支持流式事件与实时交互；
+- 不把某个供应商的专用约束泄漏到公共接口。
 
-### II. Modular Architecture First
+### 二、模块化架构优先
 
-Every major feature is implemented as an independent, testable module:
+主要能力应作为边界清晰、可替换、可测试的模块实现：
 
-- Bridge pattern for IPC communication (dialog, fs, conversation, auth, etc.)
-- Agent managers as separate, swappable components
-- UI components with clear separation of concerns
-- Shared utilities and common interfaces
+- 渲染进程、预加载脚本和主进程严格分层；
+- IPC/HTTP 桥接负责跨边界通信，不绕过契约直接访问实现；
+- Agent、Team、会话、文件、扩展和更新等服务各自维护职责；
+- 公共类型、适配器和工具放在明确的共享层；
+- TjuaeUI、TjuaeCore、TjuaeCLI 与 TjuaeHub 通过版本化契约协作，不复制彼此源码。
 
-### III. User Experience Excellence
+### 三、用户体验
 
-User interaction must be intuitive and efficient:
+交互必须直观、可恢复且能清楚表达当前状态：
 
-- Chat-based interface with file drag-and-drop support
-- Multi-conversation management with context isolation
-- Workspace integration for seamless file operations
-- Responsive UI with proper loading states and error handling
+- 会话界面支持文件、工作区和多会话上下文隔离；
+- 长耗时操作显示加载、进度、取消或重试能力；
+- 错误信息说明发生了什么以及用户可以采取的下一步；
+- 桌面端和 WebUI 在能力允许范围内保持一致；
+- 窄屏、键盘操作、明暗模式和可访问性是功能验收的一部分。
 
-### IV. Security and Privacy First
+### 四、安全与隐私
 
-All user data and AI interactions must be secure:
+用户数据和 AI 交互必须受到保护：
 
-- Local storage of conversation history and settings
-- Secure API key management with encryption
-- No data transmission without explicit user consent
-- Proper credential isolation between different AI providers
+- 会话、设置和凭据默认保存在本地；
+- API 密钥使用受控存储与最小暴露范围；
+- 未经明确授权不得发送遥测、诊断或用户内容；
+- 不同供应商、工作区和用户之间必须隔离凭据与状态；
+- 外部 URL、文件路径、压缩包和扩展输入必须验证；
+- 日志、错误报告和 CI 输出不得泄露 Secret。
 
-### V. Developer Experience and Maintainability
+### 五、可维护性与开发体验
 
-Code must be maintainable and extensible:
+代码和流程必须让后续修改容易理解、验证和回滚：
 
-- TypeScript for type safety across the entire stack
-- ESLint and Prettier for consistent code quality
-- Modular commit message format (feat/fix/chore/docs/refactor)
-- Clear documentation for architectural decisions
+- 全栈使用严格 TypeScript，Rust 边界使用明确的数据结构与错误类型；
+- 使用 oxlint、oxfmt、TypeScript 和测试门禁保持一致性；
+- Commit 与 PR 使用 Conventional Commits；
+- 架构、协议、发布和迁移决策必须有中文文档；
+- 删除功能时同步删除桥接、类型、语言包、测试和文档残留。
 
-## Technology Standards
+## 技术标准
 
-### Electron Framework
+### Electron
 
-- Use Electron Forge for build and packaging management
-- Maintain main process and renderer process separation
-- Leverage IPC bridges for secure communication
-- Support hot reload in development for rapid iteration
+- 使用 electron-vite 进行开发与编译，使用 electron-builder 生成安装产物；
+- 主进程不得信任来自渲染进程的未验证输入；
+- 预加载脚本只暴露最小、类型化的安全接口；
+- 开发模式支持 HMR，生产构建不得依赖开发服务器；
+- 桌面包中必须验证 TjuaeCore 和 TjuaeHub 等本地资源的完整性。
 
-### React and TypeScript
+### React 与 TypeScript
 
-- React with functional components and hooks
-- Strict TypeScript configuration with comprehensive type checking
-- UnoCSS for atomic CSS styling
-- Arco Design components for consistent UI patterns
+- 使用 React 函数组件和 Hook；
+- 保持严格类型检查，避免以 `any` 绕过边界；
+- 使用 UnoCSS 与主题变量表达样式；
+- 优先复用 Arco Design 和项目基础组件；
+- 用户可见文案必须进入 i18n，不在组件中硬编码。
 
-### State Management
+### 状态与数据
 
-- React Context + SWR for data fetching and caching
-- Local electron-store for persistent application settings
-- File-system based storage for conversation history
-- Event-driven communication between components
+- React Context 管理跨组件上下文，SWR 负责远程数据获取与缓存；
+- 持久化设置通过受控存储适配器访问；
+- 会话与业务数据由后端存储和迁移层管理；
+- 组件间使用明确的事件或状态接口，不依赖隐式全局变量；
+- 数据库与配置迁移必须可重复、可测试，并有失败恢复路径。
 
-## Development Workflow
+## 开发流程
 
-### Code Quality Gates
+### 代码质量门禁
 
-- Pre-commit hooks with lint-staged for automatic formatting
-- ESLint warnings must be addressed before merge
-- No console.log statements in production code
-- All public interfaces must have TypeScript documentation
+- 提交前运行格式化、lint、类型检查、i18n 检查和相关测试；
+- 生产代码不得遗留调试输出；
+- 公共接口必须有清晰的类型和用途说明；
+- 变更跨越进程或仓库边界时必须增加契约测试；
+- 修复缺陷时优先增加能复现问题的测试。
 
-### Version Management
+### 版本与发布
 
-- Semantic versioning (MAJOR.MINOR.PATCH) strictly enforced
-- Automated version updates via release scripts
-- CI/CD pipeline handles building and code signing
-- Git tag creation automated on version changes
+- 使用语义化版本 `MAJOR.MINOR.PATCH`；
+- UI、Core、CLI 和 Hub 的依赖版本必须显式锁定；
+- CI/CD 负责可重复构建、签名、产物校验和草稿 Release；
+- 正式发布前必须验证安装、启动、升级、卸载和回滚路径；
+- Tag、Release 和产物中的版本与品牌信息必须一致。
 
-### Branching Strategy
+### 分支与审查
 
-- Feature branches for new functionality development
-- Main branch for production-ready code
-- No direct commits to main branch
-- Pull request reviews required for all changes
+- 新功能和修复在独立分支完成；
+- `main` 保持可发布状态，`dev` 用于集成与开发版构建；
+- 禁止绕过审查直接向受保护分支提交；
+- PR 应保持原子性，说明风险、测试和运行验证；
+- 破坏性变更必须明确迁移和清理范围。
 
-## Governance
+## 治理
 
-### Architecture Decisions
+### 架构决策
 
-- Constitutional principles supersede implementation preferences
-- Breaking changes require architectural review and migration plan
-- New AI agent integrations must follow established adapter patterns
-- Performance regressions require justification and timeline for resolution
+- 本章程高于局部实现偏好；
+- 破坏性变更需要架构审查、迁移方案和验收条件；
+- 新 Agent 接入必须遵循既有适配器与扩展边界；
+- 性能或稳定性回退必须有量化证据、处理方案和期限；
+- 引入新的外部黑盒依赖前必须说明源码、许可证、版本锁定和故障降级策略。
 
-### Compliance Requirements
+### 合规要求
 
-- All features must work across supported platforms (macOS, Windows, Linux)
-- User data privacy and security standards are non-negotiable
-- Accessibility considerations for all UI components
-- Regular dependency updates for security patches
+- 所有正式功能必须明确支持的平台范围；
+- 安全、隐私和 Secret 管理要求不可豁免；
+- UI 组件必须考虑可访问性和本地化；
+- 依赖需要定期更新并处理安全公告；
+- 上游许可证和必要署名保留在隔离的法律文件中，不进入产品宣传。
 
-**Version**: 1.0.0 | **Ratified**: 2025-01-22 | **Last Amended**: 2025-01-22
+**版本**：2.0.0｜**批准日期**：2025-01-22｜**最后修订**：2026-07-27

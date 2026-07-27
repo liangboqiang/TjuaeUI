@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -10,8 +10,8 @@ import { simplifyWarmupError } from '@/renderer/pages/team/components/TeamWarmup
 describe('simplifyWarmupError', () => {
   it('strips the rebuild noise and generic wrapper prefixes', () => {
     const raw =
-      "Invalid request: failed to warm up rebuilt agent 019f459c-1f5c-7652-b996-33782c32418e: Invalid request: Bad request: Provider 'aionrs' not found";
-    expect(simplifyWarmupError(raw)).toBe("Provider 'aionrs' not found");
+      "Invalid request: failed to warm up rebuilt agent 019f459c-1f5c-7652-b996-33782c32418e: Invalid request: Bad request: Provider 'tjuaecli' not found";
+    expect(simplifyWarmupError(raw)).toBe("Provider 'tjuaecli' not found");
   });
 
   it('keeps a plain error untouched', () => {

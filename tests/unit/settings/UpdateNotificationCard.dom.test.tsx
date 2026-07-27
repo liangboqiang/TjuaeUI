@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2026 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -27,7 +27,6 @@ const mocks = vi.hoisted(() => ({
   updateCheckMock: vi.fn(),
   updateDownloadMock: vi.fn(),
   updateCancelDownloadMock: vi.fn(),
-  openFeedbackMock: vi.fn(),
   shellOpenExternalMock: vi.fn(),
   shellOpenFileMock: vi.fn(),
   shellShowItemInFolderMock: vi.fn(),
@@ -39,10 +38,6 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/renderer/components/Markdown', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock('@/renderer/hooks/context/FeedbackContext', () => ({
-  useFeedback: () => ({ openFeedback: mocks.openFeedbackMock }),
 }));
 
 vi.mock('@/common', () => ({
@@ -111,14 +106,13 @@ describe('UpdateNotificationCard', () => {
           version: '2.1.14',
           name: 'v2.1.14',
           body: 'notes',
-          htmlUrl: 'https://github.com/iOfficeAI/AionUi/releases/tag/v2.1.14',
+          htmlUrl: 'https://github.com/liangboqiang/TjuaeUI/releases/tag/v2.1.14',
           prerelease: false,
           draft: false,
           assets: [],
           recommendedAsset: {
-            name: 'AionUi-2.1.14-mac-arm64.dmg',
-            url: 'https://static.aionui.com/releases/2.1.14/AionUi-2.1.14-mac-arm64.dmg',
-            fallbackUrl: 'https://github.com/iOfficeAI/AionUi/releases/download/v2.1.14/AionUi-2.1.14-mac-arm64.dmg',
+            name: 'TjuaeUI-2.1.14-mac-arm64.dmg',
+            url: 'https://github.com/liangboqiang/TjuaeUI/releases/2.1.14/TjuaeUI-2.1.14-mac-arm64.dmg',
             size: 123,
           },
         },
@@ -128,7 +122,7 @@ describe('UpdateNotificationCard', () => {
       success: true,
       data: {
         downloadId: request.downloadId ?? 'manual-download',
-        file_path: '/tmp/AionUi-2.1.14-mac-arm64.dmg',
+        file_path: '/tmp/TjuaeUI-2.1.14-mac-arm64.dmg',
       },
     }));
   });
@@ -177,7 +171,7 @@ describe('UpdateNotificationCard', () => {
       data: {
         ready: true,
         version: '2.1.14',
-        filePath: '/cache/pending/AionUi-2.1.14-mac.zip',
+        filePath: '/cache/pending/TjuaeUI-2.1.14-mac.zip',
       },
     });
 
@@ -599,7 +593,7 @@ describe('UpdateNotificationCard', () => {
     expect(screen.queryByLabelText('common.close')).not.toBeInTheDocument();
   });
 
-  it('shows consumed silent installer failure marker with retry, log, and feedback actions', async () => {
+  it('shows consumed silent installer failure marker with retry and local log actions', async () => {
     const marker: InstallerLastFailureMarker = {
       schemaVersion: 1,
       kind: 'app-cannot-be-closed',
@@ -607,8 +601,8 @@ describe('UpdateNotificationCard', () => {
       silent: true,
       updated: true,
       retryCount: 3,
-      instDir: 'D:\\AionUi',
-      logPath: 'C:\\Users\\me\\AppData\\Local\\Temp\\aionui-installer-2.1.27-20260702-151830-ab12cd34ef56.log',
+      instDir: 'D:\\TjuaeUI',
+      logPath: 'C:\\Users\\me\\AppData\\Local\\Temp\\tjuaeui-installer-2.1.27-20260702-151830-ab12cd34ef56.log',
       at: '2026-07-01T00:00:00.000Z',
     };
     mocks.consumeInstallerLastFailureMock.mockResolvedValue({ success: true, data: marker });
@@ -619,26 +613,10 @@ describe('UpdateNotificationCard', () => {
     expect(screen.getByText('update.installerLastFailure.description')).toBeInTheDocument();
     expect(screen.getByText('update.installerLastFailure.retryUpdate')).toBeInTheDocument();
     expect(screen.getByText('update.installerLastFailure.viewLog')).toBeInTheDocument();
-    expect(screen.getByText('settings.oneClickFeedback')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('update.installerLastFailure.viewLog'));
     await waitFor(() => {
       expect(mocks.shellShowItemInFolderMock).toHaveBeenCalledWith(marker.logPath);
-    });
-
-    fireEvent.click(screen.getByText('settings.oneClickFeedback'));
-    await waitFor(() => {
-      expect(mocks.openFeedbackMock).toHaveBeenCalledWith({
-        module: 'installer-update',
-        autoScreenshot: true,
-        tags: {
-          kind: 'app-cannot-be-closed',
-          message: 'installer-last-failure',
-        },
-        extra: {
-          installerLastFailure: marker,
-        },
-      });
     });
 
     fireEvent.click(screen.getByText('update.installerLastFailure.retryUpdate'));

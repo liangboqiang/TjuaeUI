@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -42,7 +42,7 @@ vi.mock('@arco-design/web-react', () => ({
 }));
 
 vi.mock('@/renderer/hooks/context/ConversationContext', () => ({
-  useConversationContextSafe: () => ({ conversation_id: 'conversation-1', type: 'aionrs' }),
+  useConversationContextSafe: () => ({ conversation_id: 'conversation-1', type: 'tjuaecli' }),
 }));
 
 vi.mock('@/renderer/pages/team/hooks/TeamPermissionContext', () => ({

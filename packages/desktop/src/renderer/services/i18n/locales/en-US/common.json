@@ -61,10 +61,10 @@
   "more": "More",
   "refresh": "Refresh",
   "readOnly": "Read only",
-  "tray.showWindow": "Show AionUi",
+  "tray.showWindow": "Show TjuaeUI",
   "tray.newChat": "New Chat",
   "tray.closeToTray": "Hide to Tray",
-  "tray.about": "About AionUi",
+  "tray.about": "About TjuaeUI",
   "tray.restart": "Restart App",
   "tray.quit": "Quit",
   "tray.runningTasks": "Running Tasks",
@@ -75,66 +75,40 @@
   "backendStartup": {
     "incompatibleRuntime": {
       "title": "This system is not supported by the bundled backend",
-      "description": "AionUi opened, but the local AionCore backend cannot run on this Linux version. Please upgrade to a supported Linux distribution and restart AionUi.",
+      "description": "TjuaeUI opened, but the local TjuaeCore backend cannot run on this Linux version. Please upgrade to a supported Linux distribution and restart TjuaeUI.",
       "requiredVersions": "Required runtime symbols: {{versions}}"
     },
     "incompleteInstallation": {
-      "title": "AionUi installation is incomplete",
-      "description": "This installation is missing required local resources, so AionCore cannot start. Please download and reinstall the latest AionUi. If the issue returns after reinstalling, check whether security or antivirus software quarantined AionCore.",
+      "title": "TjuaeUI installation is incomplete",
+      "description": "This installation is missing required local resources, so TjuaeCore cannot start. Please download and reinstall the latest TjuaeUI. If the issue returns after reinstalling, check whether security or antivirus software quarantined TjuaeCore.",
       "downloadLatest": "Download latest",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report",
-      "runtimeComponentDescription": "This installation is missing required bundled runtime components, so {{resource}} cannot start. Reinstall the latest AionUi package. If it still happens after reinstalling, check whether security or antivirus software quarantined AionUi components."
+      "runtimeComponentDescription": "This installation is missing required bundled runtime components, so {{resource}} cannot start. Reinstall the latest TjuaeUI package. If it still happens after reinstalling, check whether security or antivirus software quarantined TjuaeUI components."
     },
     "packageArchitectureMismatch": {
-      "title": "AionUi package architecture mismatch",
-      "description": "This AionUi package is for {{packageArch}}, but this Mac is {{deviceArch}}. You may have downloaded the wrong package. Please download and install the {{expectedArch}} package."
+      "title": "TjuaeUI package architecture mismatch",
+      "description": "This TjuaeUI package is for {{packageArch}}, but this Mac is {{deviceArch}}. You may have downloaded the wrong package. Please download and install the {{expectedArch}} package."
     },
     "dataMigration": {
       "title": "Local data migration failed",
-      "description": "AionUi opened, but AionCore stopped while initializing local data. Reinstalling AionUi may not fix this. Send a diagnostics report or contact support so the local database migration can be inspected.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report"
+      "description": "TjuaeUI opened, but TjuaeCore stopped while initializing local data. Reinstalling TjuaeUI may not fix this. Send a diagnostics report or contact support so the local database migration can be inspected."
     },
     "localDataRepair": {
       "title": "Local data repair failed",
-      "description": "AionUi opened, but AionCore stopped while preparing local startup data such as assistant or agent records. Reinstalling AionUi may not fix this. Send a diagnostics report or contact support so the local database can be inspected.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report"
+      "description": "TjuaeUI opened, but TjuaeCore stopped while preparing local startup data such as assistant or agent records. Reinstalling TjuaeUI may not fix this. Send a diagnostics report or contact support so the local database can be inspected."
     },
     "startupDirectory": {
       "title": "Startup directory is unavailable",
-      "description": "AionUi opened, but AionCore could not start because the configured work or log directory is missing, unavailable, or blocked by permissions. Check that the configured directories exist and are writable, then restart AionUi.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report"
+      "description": "TjuaeUI opened, but TjuaeCore could not start because the configured work or log directory is missing, unavailable, or blocked by permissions. Check that the configured directories exist and are writable, then restart TjuaeUI."
     },
     "recoverableDatabaseCorruption": {
       "title": "Local data is corrupted",
-      "description": "AionUi detected that the local database is corrupted and cannot continue startup. After confirmation, AionUi will back up the old database and create a new local database to continue startup. Historical local data will not be shown for now, and the old database will be kept as a backup.",
+      "description": "TjuaeUI detected that the local database is corrupted and cannot continue startup. After confirmation, TjuaeUI will back up the old database and create a new local database to continue startup. Historical local data will not be shown for now, and the old database will be kept as a backup.",
       "confirmRebuild": "Back up old DB and rebuild new DB",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsHint": "Sending diagnostics will not modify the local database.",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report",
       "rebuildFailed": "Failed to back up old DB and rebuild new DB"
     },
     "transientConcurrentStartup": {
-      "title": "AionUi is starting up",
-      "description": "Another AionUi startup was still using the local data when this window opened. This is temporary and your data is safe — no reinstall is needed. Please wait a moment and try again, or restart AionUi.",
-      "sendDiagnostics": "Send diagnostics",
-      "diagnosticsSent": "Diagnostics sent",
-      "diagnosticsReportSuccess": "Diagnostics report sent",
-      "diagnosticsReportFailed": "Failed to send diagnostics report",
-      "diagnosticsHint": "If this keeps happening, you can send a diagnostics report."
+      "title": "TjuaeUI is starting up",
+      "description": "Another TjuaeUI startup was still using the local data when this window opened. This is temporary and your data is safe — no reinstall is needed. Please wait a moment and try again, or restart TjuaeUI."
     }
   },
   "fileAttach.addFiles": "Add files",

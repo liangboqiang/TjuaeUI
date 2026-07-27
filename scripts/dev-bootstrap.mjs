@@ -4,10 +4,10 @@ import path from 'node:path';
 import process from 'node:process';
 
 const DEFAULT_PORTS = [5173, 9230];
-const KILLABLE_NAMES = new Set(['electron', 'aionui', 'aionui.exe']);
+const KILLABLE_NAMES = new Set(['electron', 'tjuaeui', 'tjuaeui.exe']);
 
-const log = (...args) => console.log('[dev-bootstrap]', ...args);
-const warn = (...args) => console.warn('[dev-bootstrap]', ...args);
+const log = (...args) => console.log('[开发引导]', ...args);
+const warn = (...args) => console.warn('[开发引导]', ...args);
 
 function run(command) {
   return execSync(command, { stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' }).trim();
@@ -68,13 +68,13 @@ function listLikelyConflictingProcesses() {
   try {
     if (isWindows()) {
       const output = run(
-        "powershell -NoProfile -Command \"Get-Process | Where-Object { $_.ProcessName -in @('electron','AionUi','node','bun') } | Select-Object ProcessName,Id | ConvertTo-Json -Compress\""
+        "powershell -NoProfile -Command \"Get-Process | Where-Object { $_.ProcessName -in @('electron','TjuaeUI','node','bun') } | Select-Object ProcessName,Id | ConvertTo-Json -Compress\""
       );
       const parsed = output ? JSON.parse(output) : [];
       return Array.isArray(parsed) ? parsed : [parsed];
     }
 
-    const output = run(`ps -A -o pid=,comm= | egrep "electron|AionUi|node|bun" || true`);
+    const output = run(`ps -A -o pid=,comm= | egrep "electron|TjuaeUI|node|bun" || true`);
     return output
       .split(/\r?\n/)
       .filter(Boolean)
@@ -121,7 +121,7 @@ function cleanupByName() {
     const pid = Number(proc.Id ?? proc.id);
     const rawName = String(proc.ProcessName ?? proc.name ?? '').toLowerCase();
     if (!pid || pid === process.pid) continue;
-    if (!['electron', 'aionui'].some((k) => rawName.includes(k))) continue;
+    if (!['electron', 'tjuaeui'].some((k) => rawName.includes(k))) continue;
     if (killPid(pid)) {
       killed.push({ pid, name: rawName });
     }
@@ -130,11 +130,11 @@ function cleanupByName() {
 }
 
 function doctor() {
-  log(`platform=${process.platform} node=${process.version}`);
+  log(`平台=${process.platform} Node.js=${process.version}`);
   try {
     log(`bun=${run('bun --version')}`);
   } catch {
-    warn('bun not found in PATH');
+    warn('PATH 中未找到 Bun');
   }
   const listeners = DEFAULT_PORTS.map((port) => ({
     port,
@@ -142,31 +142,29 @@ function doctor() {
   }));
   for (const item of listeners) {
     if (item.pids.length === 0) {
-      log(`port ${item.port}: free`);
+      log(`端口 ${item.port}：空闲`);
       continue;
     }
-    const names = item.pids.map((pid) => `${pid}:${getProcessName(pid) || 'unknown'}`).join(', ');
-    warn(`port ${item.port}: occupied by ${names}`);
+    const names = item.pids.map((pid) => `${pid}:${getProcessName(pid) || '未知进程'}`).join(', ');
+    warn(`端口 ${item.port}：被 ${names} 占用`);
   }
 }
 
 function launch(scriptName, withExtensions) {
   if (!scriptName) {
-    throw new Error(
-      'Missing script name. Usage: node scripts/dev-bootstrap.mjs launch <start|webui|cli> [--extensions]'
-    );
+    throw new Error('缺少脚本名称。用法：node scripts/dev-bootstrap.mjs launch <start|webui|cli> [--extensions]');
   }
 
   const killedByName = cleanupByName();
   const killedByPort = cleanupPorts(DEFAULT_PORTS);
   if (killedByName.length > 0 || killedByPort.length > 0) {
-    log(`killed ${killedByName.length + killedByPort.length} stale process(es)`);
+    log(`已终止 ${killedByName.length + killedByPort.length} 个残留进程`);
   }
 
   const env = { ...process.env };
   if (withExtensions) {
-    env.AIONUI_EXTENSIONS_PATH = path.resolve(process.cwd(), 'examples');
-    log(`AIONUI_EXTENSIONS_PATH=${env.AIONUI_EXTENSIONS_PATH}`);
+    env.TJUAE_EXTENSIONS_PATH = path.resolve(process.cwd(), 'examples');
+    log(`TJUAE_EXTENSIONS_PATH=${env.TJUAE_EXTENSIONS_PATH}`);
   }
 
   const child = spawn('bun', ['run', scriptName], {
@@ -198,7 +196,7 @@ function main() {
     return;
   }
 
-  throw new Error(`Unknown command: ${command}`);
+  throw new Error(`未知命令：${command}`);
 }
 
 main();

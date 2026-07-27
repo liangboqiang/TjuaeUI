@@ -1,10 +1,10 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Mirror of aionui-api-types/src/assistant.rs.
+// Mirror of tjuaeui-api-types/src/assistant.rs.
 // Any shape change on either side requires a same-PR update on the other.
 
 export type AssistantSource = 'builtin' | 'generated' | 'user';
@@ -21,8 +21,8 @@ export function assistantRuntimeKey(assistant?: Pick<Assistant, 'agent'> | null)
   return assistant?.agent?.acp_backend || assistant?.agent?.type || '';
 }
 
-export function isAionrsAssistant(assistant?: Pick<Assistant, 'agent'> | null): boolean {
-  return assistant?.agent?.type === 'aionrs';
+export function isTjuaeCliAssistant(assistant?: Pick<Assistant, 'agent'> | null): boolean {
+  return assistant?.agent?.type === 'tjuaecli';
 }
 
 export interface Assistant {

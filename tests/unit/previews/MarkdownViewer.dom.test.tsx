@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -230,10 +230,10 @@ describe('MarkdownViewer', () => {
   });
 
   it('keeps remote links as browser anchors', () => {
-    render(<MarkdownViewer content='[docs](https://aionui.com/docs)' />);
+    render(<MarkdownViewer content='[docs](https://github.com/liangboqiang/TjuaeUI/docs)' />);
 
     const link = screen.getByRole('link', { name: 'docs' });
-    expect(link).toHaveAttribute('href', 'https://aionui.com/docs');
+    expect(link).toHaveAttribute('href', 'https://github.com/liangboqiang/TjuaeUI/docs');
   });
 
   it('continues rendering local image markdown inline', async () => {

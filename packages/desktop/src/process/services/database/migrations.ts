@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -234,7 +234,7 @@ const migration_v8: IMigration = {
       (db.prepare('PRAGMA table_info(conversations)').all() as Array<{ name: string }>).map((c) => c.name)
     );
     if (!columns.has('source')) {
-      db.exec(`ALTER TABLE conversations ADD COLUMN source TEXT CHECK(source IN ('aionui', 'telegram'))`);
+      db.exec(`ALTER TABLE conversations ADD COLUMN source TEXT CHECK(source IN ('tjuaeui', 'telegram'))`);
       console.log('[Migration v8] Added source column to conversations table');
     } else {
       console.log('[Migration v8] source column already exists, skipping ALTER');
@@ -372,7 +372,9 @@ const migration_v11: IMigration = {
     // so DROP TABLE will NOT trigger ON DELETE CASCADE on the messages table.
 
     // Clean up any invalid source values before copying
-    db.exec(`UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('aionui', 'telegram')`);
+    db.exec(
+      `UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('tjuaeui', 'telegram')`
+    );
 
     db.exec(`CREATE TABLE IF NOT EXISTS conversations_new (
         id TEXT PRIMARY KEY,
@@ -382,7 +384,7 @@ const migration_v11: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -412,7 +414,7 @@ const migration_v11: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -446,7 +448,7 @@ const migration_v12: IMigration = {
 
     // Clean up any invalid source values before copying
     db.exec(
-      `UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('aionui', 'telegram', 'lark')`
+      `UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('tjuaeui', 'telegram', 'lark')`
     );
 
     db.exec(`CREATE TABLE IF NOT EXISTS conversations_new (
@@ -457,7 +459,7 @@ const migration_v12: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -490,7 +492,7 @@ const migration_v12: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -530,7 +532,7 @@ const migration_v13: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -563,7 +565,7 @@ const migration_v13: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -612,7 +614,7 @@ const migration_v14: IMigration = {
     // NOTE: The migration runner disables foreign_keys before the transaction,
     // so DROP TABLE will NOT trigger ON DELETE CASCADE on the messages table.
     db.exec(
-      `UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('aionui', 'telegram', 'lark', 'dingtalk')`
+      `UPDATE conversations SET source = NULL WHERE source IS NOT NULL AND source NOT IN ('tjuaeui', 'telegram', 'lark', 'dingtalk')`
     );
 
     db.exec(`CREATE TABLE IF NOT EXISTS conversations_new (
@@ -623,7 +625,7 @@ const migration_v14: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark', 'dingtalk')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram', 'lark', 'dingtalk')),
         channel_chat_id TEXT,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
@@ -683,7 +685,7 @@ const migration_v14: IMigration = {
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
-        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark')),
+        source TEXT CHECK(source IS NULL OR source IN ('tjuaeui', 'telegram', 'lark')),
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -977,17 +979,17 @@ const migration_v20: IMigration = {
 };
 
 /**
- * Migration v20 -> v21: Add 'aionrs' to conversations type CHECK constraint
+ * Migration v20 -> v21: Add 'tjuaecli' to conversations type CHECK constraint
  */
 const migration_v21: IMigration = {
   version: 21,
-  name: "Add 'aionrs' to conversations type CHECK",
+  name: "Add 'tjuaecli' to conversations type CHECK",
   up: (db) => {
     db.exec(`CREATE TABLE IF NOT EXISTS conversations_new (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
-        type TEXT NOT NULL CHECK(type IN ('gemini', 'acp', 'codex', 'openclaw-gateway', 'nanobot', 'remote', 'aionrs')),
+        type TEXT NOT NULL CHECK(type IN ('gemini', 'acp', 'codex', 'openclaw-gateway', 'nanobot', 'remote', 'tjuaecli')),
         extra TEXT NOT NULL,
         model TEXT,
         status TEXT CHECK(status IN ('pending', 'running', 'finished')),
@@ -1010,12 +1012,12 @@ const migration_v21: IMigration = {
     db.exec(
       'CREATE INDEX IF NOT EXISTS idx_conversations_source_chat ON conversations(source, channel_chat_id, updated_at DESC)'
     );
-    console.log("[Migration v21] Added 'aionrs' to conversations type CHECK");
+    console.log("[Migration v21] Added 'tjuaecli' to conversations type CHECK");
   },
   down: (db) => {
-    // Remove aionrs conversations before copying to table with stricter constraint
-    db.exec(`DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE type = 'aionrs')`);
-    db.exec(`DELETE FROM conversations WHERE type = 'aionrs'`);
+    // Remove tjuaecli conversations before copying to table with stricter constraint
+    db.exec(`DELETE FROM messages WHERE conversation_id IN (SELECT id FROM conversations WHERE type = 'tjuaecli')`);
+    db.exec(`DELETE FROM conversations WHERE type = 'tjuaecli'`);
 
     db.exec(`CREATE TABLE IF NOT EXISTS conversations_rollback (
         id TEXT PRIMARY KEY,
@@ -1045,7 +1047,7 @@ const migration_v21: IMigration = {
       'CREATE INDEX IF NOT EXISTS idx_conversations_source_chat ON conversations(source, channel_chat_id, updated_at DESC)'
     );
 
-    console.log("[Migration v21] Rolled back: Removed 'aionrs' from conversations type CHECK");
+    console.log("[Migration v21] Rolled back: Removed 'tjuaecli' from conversations type CHECK");
   },
 };
 

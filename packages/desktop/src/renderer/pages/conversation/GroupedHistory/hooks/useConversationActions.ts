@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -259,8 +259,8 @@ export const useConversationActions = ({
   );
 
   /**
-   * Remove project state — rendered via AionModal in the GroupedHistory component.
-   * Uses project's design system: AionModal component with danger-styled action button.
+   * Remove project state — rendered via TjuaeModal in the GroupedHistory component.
+   * Uses project's design system: TjuaeModal component with danger-styled action button.
    */
   const [removeProjectTarget, setRemoveProjectTarget] = useState<{
     name: string;

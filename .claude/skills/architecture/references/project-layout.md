@@ -1,79 +1,78 @@
-# Project Layout
+# 项目布局
 
-## Root Directory
+## 根目录
 
-### Rules
+### 规则
 
-- **Workspace root stays minimal**: root keeps shared config, scripts, tests, docs, assets, and package manager files.
-- **Desktop app source lives under `packages/desktop/`**: do not add new app runtime code back to the root.
-- **README translations** → `docs/readme/`, not root. Only main `readme.md` stays at root.
-- **Guide documents** (`*_GUIDE.md`, `CODE_STYLE.md`) → `docs/`
-- **Build artifacts** (`out/`, `node_modules/`) are gitignored
+- **工作区根目录保持精简**：只放共享配置、脚本、测试、文档、资源和包管理文件。
+- **桌面应用源码统一位于 `packages/desktop/`**：不得将新的应用运行时代码放回根目录。
+- **README 的其他语言版本**放入 `docs/readme/`；根目录只保留主 `readme.md`。
+- **指南文档**（`*_GUIDE.md`、`CODE_STYLE.md`）放入 `docs/` 对应子目录。
+- **构建产物**（`out/`、`node_modules/`）由 gitignore 排除。
 
-### Current Root Structure (M1)
+### 当前根目录结构（M1）
 
-```
+```text
 project-root/
 ├── packages/
-│   └── desktop/            # Electron desktop workspace
-├── tests/                  # Shared test suites
-├── docs/                   # All documentation
-├── scripts/                # Build and tooling scripts
-├── resources/              # Static resources (icons, images, installers)
-├── public/                 # Shared Vite public assets
-├── patches/                # npm/bun patches
-├── homebrew/               # Homebrew formula
-├── package.json            # Workspace root config
-├── tsconfig.json           # Shared TS config
-├── vitest.config.ts        # Shared test config
-├── AGENTS.md               # Agent conventions
-├── CLAUDE.md               # Claude-specific config
-└── ...                     # Other root-level tooling config
+│   └── desktop/            # Electron 桌面工作区
+├── tests/                  # 共享测试套件
+├── docs/                   # 全部文档
+├── scripts/                # 构建与工具脚本
+├── resources/              # 静态资源（图标、图片、安装资源）
+├── public/                 # 共享 Vite public 资源
+├── patches/                # npm/Bun patches
+├── package.json            # Workspace 根配置
+├── tsconfig.json           # 共享 TypeScript 配置
+├── vitest.config.ts        # 共享测试配置
+├── AGENTS.md               # 智能体与贡献者规范
+├── CLAUDE.md               # Claude 专用入口
+└── ...                     # 其他根级工具配置
 ```
 
-> **Migration rule**: New desktop runtime modules go under `packages/desktop/`, not the repository root.
+> **迁移规则**：新的桌面运行时模块必须进入 `packages/desktop/`，不得放在仓库根目录。
 
 ---
 
-## `packages/desktop/` Layout
+## `packages/desktop/` 布局
 
-### Workspace Structure
+### Workspace 结构
 
-```
+```text
 packages/desktop/
 ├── src/
-│   ├── renderer/          # Renderer layer — React UI, no Node.js APIs
-│   ├── process/           # Main process layer — Node.js / Electron business logic
-│   ├── common/            # Shared cross-process code
-│   ├── preload/           # IPC bridge entrypoints
-│   ├── index.ts           # Main process entry
-│   └── types.d.ts         # Ambient declarations
+│   ├── renderer/          # 渲染层：React UI，不使用 Node.js API
+│   ├── process/           # 主进程层：Node.js / Electron 业务逻辑
+│   ├── common/            # 跨进程共享代码
+│   ├── preload/           # IPC 桥接入口
+│   ├── index.ts           # 主进程入口
+│   └── types.d.ts         # 环境类型声明
 ├── electron.vite.config.ts
 ├── electron-builder.yml
 └── package.json
 ```
 
-### `packages/desktop/src/` Structure
+### `packages/desktop/src/` 结构
 
-```
+```text
 packages/desktop/src/
-├── renderer/              # React UI, browser-only code
-├── process/               # Electron main-process and worker code
-│   ├── bridge/            # IPC handlers
-│   ├── services/          # Business logic
-│   ├── agent/             # AI platform connections
-│   ├── channels/          # Multi-channel messaging
-│   ├── extensions/        # Plugin system
-│   ├── webserver/         # WebUI server
-│   └── worker/            # Background workers
-├── common/                # Shared types, adapters, utilities
-├── preload/               # contextBridge / ipcRenderer exposure
-├── index.ts               # Main process entry point
-└── types.d.ts             # Ambient declarations
+├── renderer/              # React UI，仅浏览器环境代码
+├── process/               # Electron 主进程与 Worker 代码
+│   ├── bridge/            # IPC handler
+│   ├── services/          # 业务逻辑
+│   ├── agent/             # AI 平台连接
+│   ├── channels/          # 多渠道消息
+│   ├── extensions/        # 插件系统
+│   ├── webserver/         # WebUI 服务
+│   └── worker/            # 后台 Worker
+├── common/                # 共享类型、adapter 与工具
+├── preload/               # contextBridge / ipcRenderer 暴露层
+├── index.ts               # 主进程入口
+└── types.d.ts             # 环境类型声明
 ```
 
-### Placement Rules
+### 放置规则
 
-- New Electron runtime code belongs in `packages/desktop/src/**`.
-- Root-level scripts and config may reference `packages/desktop/**`, but should not duplicate app source.
-- Tests remain under `tests/**` and should reference desktop source through aliases or `packages/desktop/...` paths.
+- 新 Electron 运行时代码必须位于 `packages/desktop/src/**`。
+- 根目录脚本和配置可以引用 `packages/desktop/**`，但不得复制一份应用源码。
+- 测试继续放在 `tests/**`，并通过路径别名或 `packages/desktop/...` 路径引用桌面源码。

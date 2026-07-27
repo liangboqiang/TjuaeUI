@@ -50,7 +50,7 @@ function findMakensis() {
     }
   }
 
-  throw new Error('makensis.exe not found. Run a Windows build once or set MAKENSIS=C:\\path\\to\\makensis.exe');
+  throw new Error('未找到 makensis.exe。请先执行一次 Windows 构建，或设置 MAKENSIS=C:\\path\\to\\makensis.exe');
 }
 
 function spawnLocker(lockedFile) {
@@ -74,95 +74,95 @@ try {
 
 function main() {
   if (process.platform !== 'win32') {
-    throw new Error('This smoke test only runs on Windows.');
+    throw new Error('此冒烟测试仅支持 Windows。');
   }
 
   const compileOnly = process.argv.includes('--compile-only');
   const makensis = findMakensis();
-  const root = mkdtempSync(path.join(tmpdir(), 'aionui-rm-ui-'));
+  const root = mkdtempSync(path.join(tmpdir(), 'tjuaeui-rm-ui-'));
   const installDir = path.join(root, 'install-dir');
   mkdirSync(installDir, { recursive: true });
   const lockedFile = path.join(installDir, 'locked-by-smoke.txt');
-  writeFileSync(lockedFile, 'AionUi Restart Manager UI smoke lock\n', 'utf8');
+  writeFileSync(lockedFile, 'TjuaeUI Restart Manager UI smoke lock\n', 'utf8');
 
   let locker = null;
-  const nsiPath = path.join(root, 'aionui-rstrtmgr-ui-smoke.nsi');
-  const exePath = path.join(root, 'aionui-rstrtmgr-ui-smoke.exe');
+  const nsiPath = path.join(root, 'tjuaeui-rstrtmgr-ui-smoke.nsi');
+  const exePath = path.join(root, 'tjuaeui-rstrtmgr-ui-smoke.exe');
   const logPath = path.join(
     process.env.TEMP || tmpdir(),
-    `aionui-installer-smoke-${new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, '').replace('T', '-')}.log`
+    `tjuaeui-installer-smoke-${new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, '').replace('T', '-')}.log`
   );
   const processControlPath = path.join(repoRoot, 'resources', 'windows', 'installer-process-control.nsh');
   const messagesPath = path.join(repoRoot, 'resources', 'windows', 'installer-messages.nsh');
 
   const nsi = `
 Unicode true
-Name "AionUi Restart Manager UI Smoke"
+Name "TjuaeUI Restart Manager UI Smoke"
 OutFile "${nsisQuote(exePath)}"
 RequestExecutionLevel user
 SilentInstall normal
-!define AIONUI_FALLBACK_LOG "aionui-installer-smoke-fallback.log"
+!define TJUAEUI_FALLBACK_LOG "tjuaeui-installer-smoke-fallback.log"
 !define VERSION "rstrtmgr-ui-smoke"
-!define AIONUI_TARGET_ARCH "x64"
-!define AIONUI_APP_EXECUTABLE_FILENAME "AionUi.exe"
-!define UNINSTALL_FILENAME "Uninstall AionUi.exe"
+!define TJUAEUI_TARGET_ARCH "x64"
+!define TJUAEUI_APP_EXECUTABLE_FILENAME "TjuaeUI.exe"
+!define UNINSTALL_FILENAME "Uninstall TjuaeUI.exe"
 !define PROJECT_DIR "${nsisQuote(repoRoot)}"
 !include LogicLib.nsh
 !include "${nsisQuote(messagesPath)}"
 !include "${nsisQuote(processControlPath)}"
 
-Var AionUiSessionLogPath
-Var AionUiSessionId
-Var AionUiIsUpdated
+Var TjuaeUISessionLogPath
+Var TjuaeUISessionId
+Var TjuaeUIIsUpdated
 
 Section
   StrCpy $INSTDIR "${nsisQuote(installDir)}"
-  StrCpy $AionUiSessionLogPath "${nsisQuote(logPath)}"
-  StrCpy $AionUiSessionId "rstrtmgrui"
-  StrCpy $AionUiIsUpdated "1"
+  StrCpy $TjuaeUISessionLogPath "${nsisQuote(logPath)}"
+  StrCpy $TjuaeUISessionId "rstrtmgrui"
+  StrCpy $TjuaeUIIsUpdated "1"
   InitPluginsDir
   BringToFront
 
-  aionui_query_lockers:
-    !insertmacro AIONUI_QUERY_LOCKERS "${nsisQuote(lockedFile)}" $AionUiLockerResult
-    StrCpy $AionUiLockerList ""
+  tjuaeui_query_lockers:
+    !insertmacro TJUAEUI_QUERY_LOCKERS "${nsisQuote(lockedFile)}" $TjuaeUILockerResult
+    StrCpy $TjuaeUILockerList ""
     ClearErrors
     SetDetailsPrint none
-    FileOpen $AionUiLockerListFile "$PLUGINSDIR\\aionui-rm-lockers.txt" r
+    FileOpen $TjuaeUILockerListFile "$PLUGINSDIR\\tjuaeui-rm-lockers.txt" r
     \${IfNot} \${Errors}
-      FileRead $AionUiLockerListFile $AionUiLockerList
-      FileClose $AionUiLockerListFile
+      FileRead $TjuaeUILockerListFile $TjuaeUILockerList
+      FileClose $TjuaeUILockerListFile
     \${EndIf}
     SetDetailsPrint lastused
-    \${If} $AionUiLockerList == ""
-      StrCpy $AionUiLockerList "\${AIONUI_MSG_UNKNOWN_PROCESS_EN}"
-      StrCpy $AionUiLockerListZh "\${AIONUI_MSG_UNKNOWN_PROCESS_ZH}"
-      StrCpy $AionUiLockerListEn "\${AIONUI_MSG_UNKNOWN_PROCESS_EN}"
+    \${If} $TjuaeUILockerList == ""
+      StrCpy $TjuaeUILockerList "\${TJUAEUI_MSG_UNKNOWN_PROCESS_EN}"
+      StrCpy $TjuaeUILockerListZh "\${TJUAEUI_MSG_UNKNOWN_PROCESS_ZH}"
+      StrCpy $TjuaeUILockerListEn "\${TJUAEUI_MSG_UNKNOWN_PROCESS_EN}"
     \${Else}
-      StrCpy $AionUiLockerListZh "$AionUiLockerList"
-      StrCpy $AionUiLockerListEn "$AionUiLockerList"
+      StrCpy $TjuaeUILockerListZh "$TjuaeUILockerList"
+      StrCpy $TjuaeUILockerListEn "$TjuaeUILockerList"
     \${EndIf}
-    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "\${AIONUI_MSG_FILE_OR_FOLDER_IN_USE_ZH}$\\r$\\n${nsisQuote(lockedFile)}$\\r$\\n$\\r$\\n\${AIONUI_MSG_APPLICATION_USING_IT_ZH}$\\r$\\n$AionUiLockerListZh$\\r$\\n$\\r$\\n\${AIONUI_MSG_CLOSE_LISTED_RETRY_ZH}$\\r$\\n$\\r$\\n\${AIONUI_MSG_INSTALLER_LOG_ZH}:$\\r$\\n$AionUiSessionLogPath$\\r$\\n$\\r$\\n\${AIONUI_MSG_BLOCK_SEPARATOR}$\\r$\\n$\\r$\\n\${AIONUI_MSG_FILE_OR_FOLDER_IN_USE_EN}$\\r$\\n${nsisQuote(lockedFile)}$\\r$\\n$\\r$\\n\${AIONUI_MSG_APPLICATION_USING_IT_EN}$\\r$\\n$AionUiLockerListEn$\\r$\\n$\\r$\\n\${AIONUI_MSG_CLOSE_LISTED_RETRY_EN}$\\r$\\n$\\r$\\n\${AIONUI_MSG_INSTALLER_LOG_EN}:$\\r$\\n$AionUiSessionLogPath" /SD IDCANCEL IDRETRY aionui_query_lockers
+    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "\${TJUAEUI_MSG_FILE_OR_FOLDER_IN_USE_ZH}$\\r$\\n${nsisQuote(lockedFile)}$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_APPLICATION_USING_IT_ZH}$\\r$\\n$TjuaeUILockerListZh$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_CLOSE_LISTED_RETRY_ZH}$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_INSTALLER_LOG_ZH}:$\\r$\\n$TjuaeUISessionLogPath$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_BLOCK_SEPARATOR}$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_FILE_OR_FOLDER_IN_USE_EN}$\\r$\\n${nsisQuote(lockedFile)}$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_APPLICATION_USING_IT_EN}$\\r$\\n$TjuaeUILockerListEn$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_CLOSE_LISTED_RETRY_EN}$\\r$\\n$\\r$\\n\${TJUAEUI_MSG_INSTALLER_LOG_EN}:$\\r$\\n$TjuaeUISessionLogPath" /SD IDCANCEL IDRETRY tjuaeui_query_lockers
 SectionEnd
 `;
 
   writeFileSync(nsiPath, nsi, 'utf8');
 
   try {
-    console.log(`[rstrtmgr-ui] makensis: ${makensis}`);
-    console.log(`[rstrtmgr-ui] install dir: ${installDir}`);
-    console.log(`[rstrtmgr-ui] locked file: ${lockedFile}`);
-    console.log('[rstrtmgr-ui] compiling harness...');
+    console.log(`[重启管理器界面] makensis：${makensis}`);
+    console.log(`[重启管理器界面] 安装目录：${installDir}`);
+    console.log(`[重启管理器界面] 锁定文件：${lockedFile}`);
+    console.log('[重启管理器界面] 正在编译测试程序……');
 
     const compile = spawnSync(makensis, [nsiPath], { encoding: 'utf8' });
     if (compile.status !== 0) {
       process.stdout.write(compile.stdout || '');
       process.stderr.write(compile.stderr || '');
-      throw new Error(`makensis failed with exit ${compile.status}`);
+      throw new Error(`makensis 执行失败，退出码：${compile.status}`);
     }
 
     if (compileOnly) {
-      console.log(`[rstrtmgr-ui] compile-only ok: ${exePath}`);
+      console.log(`[重启管理器界面] 仅编译检查通过：${exePath}`);
     } else {
       locker = spawnLocker(lockedFile);
       require('node:child_process').spawnSync(
@@ -173,17 +173,17 @@ SectionEnd
           windowsHide: true,
         }
       );
-      console.log('[rstrtmgr-ui] launching harness. Click Cancel to finish; Retry re-runs locker detection.');
+      console.log('[重启管理器界面] 正在启动测试程序。单击“取消”结束；单击“重试”会重新检测占用进程。');
       const run = spawnSync(exePath, [], { stdio: 'inherit' });
       if (run.status !== 0) {
-        throw new Error(`harness exited with ${run.status}`);
+        throw new Error(`测试程序退出码为 ${run.status}`);
       }
     }
 
     if (!compileOnly && existsSync(logPath)) {
       const tail = readFileSync(logPath, 'utf8').trim().split(/\r?\n/).slice(-5).join('\n');
       if (tail) {
-        console.log('[rstrtmgr-ui] log tail:');
+        console.log('[重启管理器界面] 日志末尾：');
         console.log(tail);
       }
     }
@@ -200,6 +200,6 @@ SectionEnd
 try {
   main();
 } catch (err) {
-  console.error(`[rstrtmgr-ui] ${err instanceof Error ? err.message : String(err)}`);
+  console.error(`[重启管理器界面] ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 }

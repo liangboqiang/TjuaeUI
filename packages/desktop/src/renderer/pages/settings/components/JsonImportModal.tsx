@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
-import AionModal from '@/renderer/components/base/AionModal';
+import TjuaeModal from '@/renderer/components/base/TjuaeModal';
 import { parseMcpJsonImport, type ParsedMcpJsonServer } from '../ToolsSettings/mcpJsonImport';
 
 interface JsonImportModalProps {
@@ -323,7 +323,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
   if (!visible) return null;
 
   return (
-    <AionModal
+    <TjuaeModal
       variant='standard'
       visible={visible}
       onCancel={onCancel}
@@ -437,7 +437,7 @@ const JsonImportModal: React.FC<JsonImportModalProps> = ({ visible, server, onCa
           }
         />
       </div>
-    </AionModal>
+    </TjuaeModal>
   );
 };
 

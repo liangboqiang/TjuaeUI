@@ -70,30 +70,14 @@
     "emptySnapshot": "El contenido de la instantánea está vacío"
   },
   "office": {
-    "installLinkText": "Abrir guía de instalación de officecli",
-    "errors": {
-      "officecliNotFound": "officecli no está instalado.",
-      "installFailed": "Error al instalar officecli automáticamente. Revisa los registros del backend y reintenta.",
-      "portTimeout": "El servicio de vista previa inició pero no estuvo listo a tiempo. Reintenta.",
-      "startFailed": "Error al iniciar el servicio de vista previa de Office.",
-      "outsideSandbox": "Este archivo está fuera del sandbox del proyecto actual."
-    },
-    "serverInstall": {
-      "hint": "AionUi se está ejecutando en un servidor. Instala el componente de vista previa en ese servidor y reintenta:",
-      "icuNote": "Si sigue sin iniciar, instala la biblioteca ICU en el servidor (Debian/Ubuntu: apt-get install -y libicu-dev)."
-    }
+    "previewUnavailable": "La vista previa de este tipo de archivo no está disponible en la aplicación.",
+    "openOrDownloadHint": "Usa la barra de herramientas para abrir el archivo original con una aplicación del sistema o descargar una copia."
   },
   "word": {
     "title": "Documento Word",
     "loading": "Cargando documento Word...",
     "invalid": "Confirma que el archivo es un documento Word válido",
-    "loadFailed": "Error al cargar el documento Word",
-    "watch": {
-      "loading": "Cargando documento Word...",
-      "installing": "Instalando officecli...",
-      "startFailed": "Error al iniciar la vista previa de Word",
-      "installHint": "Requiere officecli. Se instalará automáticamente."
-    }
+    "loadFailed": "Error al cargar el documento Word"
   },
   "excel": {
     "title": "Hoja de cálculo Excel",
@@ -104,13 +88,7 @@
     "convertFailed": "Error de conversión de Excel",
     "loadFailed": "Error al cargar el libro de Excel",
     "emptySheet": "Esta hoja no tiene datos",
-    "emptySheetHint": "Verifica si la hoja contiene datos o imágenes",
-    "watch": {
-      "loading": "Cargando archivo Excel...",
-      "installing": "Instalando officecli...",
-      "startFailed": "Error al iniciar la vista previa de Excel",
-      "installHint": "Requiere officecli. Se instalará automáticamente."
-    }
+    "emptySheetHint": "Verifica si la hoja contiene datos o imágenes"
   },
   "pdf": {
     "title": "Documento PDF",
@@ -133,11 +111,5 @@
     "inspectElement": "Inspeccionar elemento",
     "inspectElementEnable": "Activar inspector de elementos",
     "inspectElementDisable": "Desactivar inspector de elementos"
-  },
-  "ppt": {
-    "loading": "Iniciando vista previa de PPT...",
-    "installing": "Instalando componente de vista previa...",
-    "startFailed": "Error al iniciar la vista previa de PPT",
-    "installHint": "Instala OfficeCLI desde la página oficial de versiones de iOfficeAI/OfficeCLI"
   }
 }

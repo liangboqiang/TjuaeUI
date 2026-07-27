@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -162,8 +162,8 @@ describe('ClientFactory', () => {
       const calls = (OpenAIRotatingClient as any).mock.calls;
       const config = calls[0][1];
       expect(config.defaultHeaders).toEqual({
-        'HTTP-Referer': 'https://aionui.com',
-        'X-Title': 'AionUi',
+        'HTTP-Referer': 'https://github.com/liangboqiang/TjuaeUI',
+        'X-Title': 'TjuaeUI',
       });
     });
 

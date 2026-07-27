@@ -1,11 +1,11 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import type { IMessageText } from '@/common/chat/chatLib';
-import { AIONUI_FILES_MARKER } from '@/common/config/constants';
+import { TJUAE_FILES_MARKER } from '@/common/config/constants';
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useLocalFilePreview } from '@/renderer/pages/conversation/Preview/hooks/useLocalFilePreview';
@@ -68,7 +68,7 @@ const parseFileMarker = (content: string, canParseFileMarker: boolean): ParsedFi
   const lines = content.split(/\r?\n/);
   let markerLineIndex = -1;
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    if (lines[index].trim() === AIONUI_FILES_MARKER) {
+    if (lines[index].trim() === TJUAE_FILES_MARKER) {
       markerLineIndex = index;
       break;
     }

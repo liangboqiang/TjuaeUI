@@ -70,30 +70,14 @@
     "emptySnapshot": "O conteúdo do instantâneo está vazio"
   },
   "office": {
-    "installLinkText": "Abrir guia de instalação do officecli",
-    "errors": {
-      "officecliNotFound": "officecli não está instalado.",
-      "installFailed": "Falha ao instalar o officecli automaticamente. Verifique os logs do backend e tente novamente.",
-      "portTimeout": "O serviço de visualização iniciou, mas não ficou pronto a tempo. Tente novamente.",
-      "startFailed": "Falha ao iniciar o serviço de visualização do Office.",
-      "outsideSandbox": "Este arquivo está fora da sandbox atual do projeto."
-    },
-    "serverInstall": {
-      "hint": "O AionUi está sendo executado em um servidor. O componente de pré-visualização precisa ser instalado nesse servidor. Execute o comando abaixo no servidor e tente novamente:",
-      "icuNote": "Se ainda não iniciar, instale a biblioteca ICU no servidor (Debian/Ubuntu: apt-get install -y libicu-dev)."
-    }
+    "previewUnavailable": "A visualização deste tipo de arquivo não está disponível no aplicativo.",
+    "openOrDownloadHint": "Use a barra de ferramentas para abrir o arquivo original em um aplicativo do sistema ou baixar uma cópia."
   },
   "word": {
     "title": "Documento Word",
     "loading": "Carregando documento Word...",
     "invalid": "Por favor, confirme se o arquivo é um documento Word válido",
-    "loadFailed": "Falha ao carregar o documento Word",
-    "watch": {
-      "loading": "Carregando documento Word...",
-      "installing": "Instalando officecli...",
-      "startFailed": "Falha ao iniciar a visualização do Word",
-      "installHint": "Requer officecli. Será instalado automaticamente."
-    }
+    "loadFailed": "Falha ao carregar o documento Word"
   },
   "excel": {
     "title": "Planilha Excel",
@@ -104,13 +88,7 @@
     "convertFailed": "A conversão do Excel falhou",
     "loadFailed": "Falha ao carregar a pasta de trabalho do Excel",
     "emptySheet": "Esta planilha não possui dados",
-    "emptySheetHint": "Verifique se a planilha contém dados ou imagens",
-    "watch": {
-      "loading": "Carregando arquivo Excel...",
-      "installing": "Instalando officecli...",
-      "startFailed": "Falha ao iniciar a visualização do Excel",
-      "installHint": "Requer officecli. Será instalado automaticamente."
-    }
+    "emptySheetHint": "Verifique se a planilha contém dados ou imagens"
   },
   "pdf": {
     "title": "Documento PDF",
@@ -133,11 +111,5 @@
     "inspectElement": "Inspecionar elemento",
     "inspectElementEnable": "Habilitar inspecionador de elemento",
     "inspectElementDisable": "Desabilitar inspecionador de elemento"
-  },
-  "ppt": {
-    "loading": "Iniciando visualização do PPT...",
-    "installing": "Instalando componente de visualização...",
-    "startFailed": "Falha ao iniciar a visualização do PPT",
-    "installHint": "Instale o OfficeCLI pela página oficial de releases iOfficeAI/OfficeCLI"
   }
 }

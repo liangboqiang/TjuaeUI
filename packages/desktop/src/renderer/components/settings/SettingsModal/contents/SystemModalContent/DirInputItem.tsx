@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AionUi (aionui.com)
+ * Copyright 2026 Tjuae
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -50,7 +50,7 @@ const DirInputItem: React.FC<{
 
         return (
           <div
-            className='aion-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)] cursor-pointer'
+            className='tjuae-dir-input h-[32px] flex items-center rounded-8px border border-solid border-transparent pl-14px bg-[var(--fill-0)] cursor-pointer'
             tabIndex={0}
             onClick={handlePick}
             onKeyDown={handleKeyDown}

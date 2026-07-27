@@ -1,5 +1,5 @@
 /**
- * Lifecycle manager for the aioncore subprocess (web-host version).
+ * Lifecycle manager for the tjuaecore subprocess (web-host version).
  *
  * Migrated from packages/desktop/src/process/backend/lifecycleManager.ts in M4.
  * Electron dependency removed: `app.*` replaced with constructor-injected
@@ -90,7 +90,7 @@ export type BackendLaunchOptions = {
   dataDir?: string;
   logDir?: string;
   /**
-   * System dirs exposed to the backend via AIONUI_{CACHE,WORK,LOG}_DIR env.
+   * System dirs exposed to the backend via TJUAEUI_{CACHE,WORK,LOG}_DIR env.
    * Surfaces on `/api/system/info`. If omitted, the backend inherits
    * process.env and will likely report wrong/empty dirs.
    */
@@ -179,14 +179,14 @@ export class BackendStartupError extends Error {
 }
 
 export class BackendStartupCancelledError extends Error {
-  constructor(message = 'aioncore startup cancelled') {
+  constructor(message = 'tjuaecore startup cancelled') {
     super(message);
     this.name = 'BackendStartupCancelledError';
   }
 }
 
 export function buildSpawnArgs(config: SpawnConfig): string[] {
-  const logLevel = process.env.AIONUI_LOG_LEVEL || (config.isPackaged ? 'info' : 'debug');
+  const logLevel = process.env.TJUAEUI_LOG_LEVEL || (config.isPackaged ? 'info' : 'debug');
   const args = [
     '--port',
     String(config.port),
@@ -199,7 +199,7 @@ export function buildSpawnArgs(config: SpawnConfig): string[] {
     config.appVersion,
   ];
   if (config.isPackaged) args.push('--managed-resources-mode', 'bundled');
-  if (!config.isPackaged && process.env.AIONUI_DUMP_PROMPTS === '1') args.push('--dump-prompts');
+  if (!config.isPackaged && process.env.TJUAEUI_DUMP_PROMPTS === '1') args.push('--dump-prompts');
   if (config.logDir) args.push('--log-dir', config.logDir);
   if (config.workDir) args.push('--work-dir', config.workDir);
   if (config.local) args.push('--local');
@@ -208,17 +208,18 @@ export function buildSpawnArgs(config: SpawnConfig): string[] {
 }
 
 /**
- * Backend reads AIONUI_{CACHE,WORK,LOG}_DIR env vars to report system dirs
- * (see AionCore/crates/aionui-system/src/sysinfo.rs). Inject them so the
+ * Backend reads TJUAE_{CACHE,WORK,LOG}_DIR env vars to report system dirs
+ * (see TjuaeCore/crates/tjuaeui-system/src/sysinfo.rs). Inject them so the
  * backend's `/api/system/info` matches what Electron main persists in
- * ProcessEnv('aionui.dir').
+ * ProcessEnv('tjuaeui.dir').
  */
 export function buildSpawnEnv(dirs: BackendDirConfig): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    AIONUI_CACHE_DIR: dirs.cacheDir,
-    AIONUI_WORK_DIR: dirs.workDir,
-    AIONUI_LOG_DIR: dirs.logDir,
+    TJUAE_CACHE_DIR: dirs.cacheDir,
+    TJUAE_WORK_DIR: dirs.workDir,
+    TJUAE_LOG_DIR: dirs.logDir,
+    TJUAE_E2E_TEST: process.env.TJUAEUI_E2E_TEST,
   };
 }
 
@@ -230,11 +231,11 @@ const FETCH_FORBIDDEN_PORTS = new Set([
 ]);
 
 const FETCH_COMPATIBLE_PORT_MAX_ATTEMPTS = 50;
-const AIONCORE_LISTENING_PREFIX = 'AIONCORE_LISTENING ';
+const TJUAECORE_LISTENING_PREFIX = 'TJUAECORE_LISTENING ';
 const BACKEND_PORT_REPORT_TIMEOUT_MS = 30_000;
 
-// Benign boundary code emitted by an aioncore instance that yielded the
-// data-dir instance guard to a peer that already owns it (Sentry 135525166).
+// Benign boundary code emitted by an tjuaecore instance that yielded the
+// data-dir instance guard to a peer that already owns it.
 // This is a transient, self-recoverable condition — the owning peer is expected
 // to finish (or a crash-orphan is expected to self-exit and release the guard),
 // so the launcher retries with bounded backoff rather than surfacing a fatal
@@ -261,7 +262,7 @@ export function findAvailablePort(
 
   const firstRequestedPort = preferredPort && !isFetchForbiddenPort(preferredPort) ? preferredPort : 0;
   if (preferredPort && firstRequestedPort === 0) {
-    console.info(`[aioncore] skipped fetch-blocked backend port ${preferredPort}`);
+    console.info(`[tjuaecore] skipped fetch-blocked backend port ${preferredPort}`);
   }
 
   const tryPort = (requestedPort: number, remainingAttempts: number, attempt: number): Promise<number> =>
@@ -288,12 +289,12 @@ export function findAvailablePort(
         server.close(() => {
           cleanup();
           if (resolvedPort > 0 && !isFetchForbiddenPort(resolvedPort)) {
-            console.info(`[aioncore] selected backend port ${resolvedPort} after ${attempt} attempts`);
+            console.info(`[tjuaecore] selected backend port ${resolvedPort} after ${attempt} attempts`);
             resolve(resolvedPort);
             return;
           }
           if (resolvedPort > 0 && remainingAttempts > 1) {
-            console.info(`[aioncore] skipped fetch-blocked backend port ${resolvedPort}`);
+            console.info(`[tjuaecore] skipped fetch-blocked backend port ${resolvedPort}`);
             tryPort(0, remainingAttempts - 1, attempt + 1).then(resolve, reject);
             return;
           }
@@ -360,10 +361,10 @@ function clearHealthCheckErrorDiagnostics(diagnostics: HealthCheckDiagnostics): 
   delete diagnostics.healthCheckLastErrorCauseCode;
 }
 
-function parseAioncoreListeningPort(line: string): number | undefined {
-  if (!line.startsWith(AIONCORE_LISTENING_PREFIX)) return undefined;
+function parseTjuaeCoreListeningPort(line: string): number | undefined {
+  if (!line.startsWith(TJUAECORE_LISTENING_PREFIX)) return undefined;
   try {
-    const parsed = JSON.parse(line.slice(AIONCORE_LISTENING_PREFIX.length)) as { port?: unknown };
+    const parsed = JSON.parse(line.slice(TJUAECORE_LISTENING_PREFIX.length)) as { port?: unknown };
     if (typeof parsed.port !== 'number' || !Number.isInteger(parsed.port)) return undefined;
     if (parsed.port <= 0 || parsed.port > 65535) return undefined;
     return parsed.port;
@@ -521,8 +522,8 @@ export class BackendLifecycleManager {
     preferredPort?: number,
     launchFlags: BackendLaunchFlags = {}
   ): Promise<number> {
-    // Bounded retry loop for the transient "a peer aioncore already owns this
-    // data directory" case (Sentry 135525166). The owning peer either finishes
+    // Bounded retry loop for the transient "a peer tjuaecore already owns this
+    // data directory" case. The owning peer either finishes
     // startup and keeps running, or a crash-orphan self-exits and releases the
     // data-dir instance guard. Non-peer errors are thrown immediately with no
     // retry. Runtime crash restarts (handleCrash / maxRestarts) are a separate,
@@ -538,14 +539,14 @@ export class BackendLifecycleManager {
         lastPeerError = error;
         const backoff = PEER_RETRY_BACKOFF_MS[Math.min(attempt, PEER_RETRY_BACKOFF_MS.length - 1)];
         console.warn(
-          `[aioncore] a peer already owns the data directory; retrying startup in ${backoff}ms (attempt ${attempt + 1}/${PEER_RETRY_MAX_ATTEMPTS})`
+          `[tjuaecore] a peer already owns the data directory; retrying startup in ${backoff}ms (attempt ${attempt + 1}/${PEER_RETRY_MAX_ATTEMPTS})`
         );
         await delayMs(backoff);
       }
     }
     // Unreachable in practice: the loop either returns on success or throws on
     // the final attempt. Kept as an explicit safety net for the peer path.
-    throw lastPeerError ?? new Error('aioncore startup failed after peer retries');
+    throw lastPeerError ?? new Error('tjuaecore startup failed after peer retries');
   }
 
   private async attemptStart(
@@ -563,7 +564,7 @@ export class BackendLifecycleManager {
     } catch (error) {
       const diagnostics = getResolveDiagnostics(error);
       throw new BackendStartupError(
-        'aioncore startup failed while resolving backend binary',
+        'tjuaecore startup failed while resolving backend binary',
         {
           stage: 'resolve_binary',
           appVersion,
@@ -635,7 +636,7 @@ export class BackendLifecycleManager {
       isPackaged: this.appMeta.isPackaged,
       recoverCorruptedDatabase: launchFlags.recoverCorruptedDatabase === true,
     });
-    console.log(`[aioncore] starting: ${binaryPath} ${args.join(' ')}`);
+    console.log(`[tjuaecore] starting: ${binaryPath} ${args.join(' ')}`);
 
     try {
       ensureBackendStartupDirectory(dbPath);
@@ -645,7 +646,7 @@ export class BackendLifecycleManager {
       ensureBackendStartupDirectory(dirs?.logDir);
     } catch (error) {
       this._status = 'error';
-      throw makeStartupError('spawn', 'aioncore startup directory preparation failed', error);
+      throw makeStartupError('spawn', 'tjuaecore startup directory preparation failed', error);
     }
 
     try {
@@ -657,7 +658,7 @@ export class BackendLifecycleManager {
       });
     } catch (error) {
       this._status = 'error';
-      throw makeStartupError('spawn', 'aioncore process spawn threw before startup', error);
+      throw makeStartupError('spawn', 'tjuaecore process spawn threw before startup', error);
     }
 
     this.childProcess.stdin?.end();
@@ -688,7 +689,7 @@ export class BackendLifecycleManager {
       this.childProcess?.once('error', (error) => {
         if (startupSettled) return;
         this._status = 'error';
-        rejectOnce(makeStartupError('spawn_error', 'aioncore process emitted an error before startup', error));
+        rejectOnce(makeStartupError('spawn_error', 'tjuaecore process emitted an error before startup', error));
       });
 
       this.childProcess?.once('exit', (code, signal) => {
@@ -712,11 +713,11 @@ export class BackendLifecycleManager {
         const exitSignal = pendingStartupExit.signal ?? signal;
         if (!pendingStartupExit.startupSettledAtExit) {
           if (pendingStartupExit.statusAtExit === 'stopped') {
-            rejectOnce(new BackendStartupCancelledError('aioncore startup cancelled before health check passed'));
+            rejectOnce(new BackendStartupCancelledError('tjuaecore startup cancelled before health check passed'));
             return;
           }
           rejectOnce(
-            makeStartupError('early_exit', 'aioncore exited before health check passed', undefined, {
+            makeStartupError('early_exit', 'tjuaecore exited before health check passed', undefined, {
               exitCode: exitCode ?? undefined,
               signal: exitSignal ?? undefined,
             })
@@ -726,13 +727,13 @@ export class BackendLifecycleManager {
         if (pendingStartupExit.statusAtExit === 'starting') {
           void Promise.resolve(
             options?.onPendingExit?.(
-              makeStartupError('early_exit', 'aioncore exited after startup health timeout', undefined, {
+              makeStartupError('early_exit', 'tjuaecore exited after startup health timeout', undefined, {
                 exitCode: exitCode ?? undefined,
                 signal: exitSignal ?? undefined,
               })
             )
           ).catch((error) => {
-            console.error('[aioncore] pending exit handler failed:', error);
+            console.error('[tjuaecore] pending exit handler failed:', error);
           });
         }
       });
@@ -756,7 +757,7 @@ export class BackendLifecycleManager {
       };
       reportedPortTimer = setTimeout(() => {
         rejectReportedPort(
-          makeStartupError('listen_timeout', 'aioncore did not report its listening port before timeout', undefined, {
+          makeStartupError('listen_timeout', 'tjuaecore did not report its listening port before timeout', undefined, {
             healthCheckTimeoutMs: BACKEND_PORT_REPORT_TIMEOUT_MS,
             healthCheckElapsedMs: Date.now() - startupStartedAt,
           })
@@ -768,7 +769,7 @@ export class BackendLifecycleManager {
       stdoutTail = appendOutputTail(stdoutTail, data);
       for (const line of data.toString().split('\n')) {
         const trimmed = line.trim();
-        const port = parseAioncoreListeningPort(trimmed);
+        const port = parseTjuaeCoreListeningPort(trimmed);
         if (port !== undefined) {
           this._port = port;
           serverListeningObserved = true;
@@ -784,14 +785,14 @@ export class BackendLifecycleManager {
           serverListeningObservedAfterMs = Date.now() - startupStartedAt;
           serverListeningLine = trimmed;
         }
-        if (trimmed) console.log(`[aioncore] ${line}`);
+        if (trimmed) console.log(`[tjuaecore] ${line}`);
       }
     });
 
     this.childProcess.stderr?.on('data', (data: Buffer) => {
       stderrTail = appendOutputTail(stderrTail, data);
       for (const line of data.toString().split('\n')) {
-        if (line.trim()) console.error(`[aioncore] ${line}`);
+        if (line.trim()) console.error(`[tjuaecore] ${line}`);
       }
     });
 
@@ -811,7 +812,7 @@ export class BackendLifecycleManager {
     if (!health.ok) {
       const healthTimeoutError = makeStartupError(
         'health_timeout',
-        'aioncore failed to start within timeout',
+        'tjuaecore failed to start within timeout',
         undefined,
         {
           ...health.diagnostics,
@@ -819,9 +820,9 @@ export class BackendLifecycleManager {
       );
       if (options?.allowPendingOnHealthTimeout && this.childProcess) {
         startupSettled = true;
-        console.warn(`[aioncore] health check timed out; keeping process alive on port ${this._port}`);
+        console.warn(`[tjuaecore] health check timed out; keeping process alive on port ${this._port}`);
         void Promise.resolve(options.onHealthTimeout?.(healthTimeoutError)).catch((error) => {
-          console.error('[aioncore] health timeout handler failed:', error);
+          console.error('[tjuaecore] health timeout handler failed:', error);
         });
         this.continueWaitingForHealth(this._port, this.childProcess, startupStartedAt, options.onReady);
         return this._port;
@@ -837,7 +838,7 @@ export class BackendLifecycleManager {
     this._status = 'running';
     this.restartCount = 0;
     console.info(
-      `[aioncore] health ready on port ${this._port} after ${health.diagnostics.healthCheckAttempts} attempts, elapsed_ms=${health.diagnostics.healthCheckElapsedMs}, data-dir: ${dbPath}`
+      `[tjuaecore] health ready on port ${this._port} after ${health.diagnostics.healthCheckAttempts} attempts, elapsed_ms=${health.diagnostics.healthCheckElapsedMs}, data-dir: ${dbPath}`
     );
     return this._port;
   }
@@ -941,11 +942,11 @@ export class BackendLifecycleManager {
       this.restartCount = 0;
       const elapsedMs = health.diagnostics.healthCheckElapsedMs ?? Date.now() - startupStartedAt;
       console.info(
-        `[aioncore] late health ready on port ${port} after ${health.diagnostics.healthCheckAttempts} attempts, elapsed_ms=${elapsedMs}, data-dir: ${this._lastDbPath}`
+        `[tjuaecore] late health ready on port ${port} after ${health.diagnostics.healthCheckAttempts} attempts, elapsed_ms=${elapsedMs}, data-dir: ${this._lastDbPath}`
       );
       await onReady?.(port);
     })().catch((error) => {
-      console.error('[aioncore] background health wait failed:', error);
+      console.error('[tjuaecore] background health wait failed:', error);
     });
   }
 
@@ -967,12 +968,12 @@ export class BackendLifecycleManager {
 
     if (this.restartCount > this.maxRestarts) {
       this._status = 'error';
-      console.error('[aioncore] child exited unexpectedly; restart limit exceeded', crashContext);
+      console.error('[tjuaecore] child exited unexpectedly; restart limit exceeded', crashContext);
       return;
     }
 
     const delay = Math.pow(2, this.restartCount - 1) * 1000;
-    console.warn('[aioncore] child exited unexpectedly; scheduling restart', {
+    console.warn('[tjuaecore] child exited unexpectedly; scheduling restart', {
       ...crashContext,
       delayMs: delay,
     });
@@ -988,7 +989,7 @@ export class BackendLifecycleManager {
         })
         .catch((error) => {
           this._status = 'error';
-          console.error('[aioncore] restart after crash failed', {
+          console.error('[tjuaecore] restart after crash failed', {
             port: this._port,
             restartCount: this.restartCount,
             maxRestarts: this.maxRestarts,

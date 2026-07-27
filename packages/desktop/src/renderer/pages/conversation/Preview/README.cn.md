@@ -2,7 +2,7 @@
 
 ## 概述
 
-Preview 模块是 AionUi 中的文件预览和编辑系统，支持多种文件格式的查看和编辑。该模块采用**多 Tab 架构**，支持同时打开多个文件，每个文件在独立的 Tab 中显示。Preview 模块集成了实时流式更新、版本历史、分屏预览、快捷键等高级功能，为用户提供强大的文件处理能力。
+Preview 模块是 TjuaeUI 中的文件预览和编辑系统，支持多种文件格式的查看和编辑。该模块采用**多 Tab 架构**，支持同时打开多个文件，每个文件在独立的 Tab 中显示。Preview 模块集成了实时流式更新、版本历史、分屏预览、快捷键等高级功能，为用户提供强大的文件处理能力。
 
 ## 核心特性
 
@@ -63,8 +63,7 @@ preview/
 │   │   ├── ImageViewer.tsx            # 图片查看
 │   │   ├── DiffViewer.tsx             # Diff 对比
 │   │   ├── PDFViewer.tsx              # PDF 查看
-│   │   ├── OfficeDocViewer.tsx        # Office 文档查看（Word、PPT）
-│   │   ├── ExcelViewer.tsx            # Excel 查看
+│   │   ├── OfficeFileViewer.tsx       # Office 文档安全退化提示
 │   │   ├── HTMLViewer.tsx             # HTML 渲染
 │   │   └── URLViewer.tsx              # URL 网页查看
 │   ├── editors/                       # 编辑器组件
@@ -523,7 +522,7 @@ useEffect(() => {
 - PPT
 - 图片（但可以查看）
 
-这些文件类型只提供查看功能。
+PDF 和图片为只读预览。Word、Excel 与 PPT 使用安全退化界面，用户可通过工具栏调用系统应用打开原文件或下载副本；程序不会启动外部预览服务。
 
 ## 配置项
 
@@ -540,9 +539,6 @@ export const MIN_SPLIT_WIDTH = 30;
 
 // 分屏最大宽度
 export const MAX_SPLIT_WIDTH = 70;
-
-// 内置打开按钮的文件类型
-export const FILE_TYPES_WITH_BUILTIN_OPEN = ['pdf', 'word', 'excel', 'ppt'];
 ```
 
 ## 相关链接
