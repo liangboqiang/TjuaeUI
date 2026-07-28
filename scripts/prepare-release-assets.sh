@@ -15,6 +15,7 @@ set -euo pipefail
 
 ARTIFACTS_DIR="${1:-build-artifacts}"
 OUTPUT_DIR="${2:-release-assets}"
+VERSION="${MOCK_VERSION:-$(node -p "require('./package.json').version")}"
 
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
@@ -44,6 +45,17 @@ fi
 for file in "${DISTRIBUTABLES[@]}"; do
   cp -f "$file" "$OUTPUT_DIR/"
 done
+
+# electron-builder 按 Debian 约定把 x64 命名为 amd64；公开发布统一使用 x64。
+LINUX_AMD64_ASSET="$OUTPUT_DIR/TjuaeUI-${VERSION}-linux-amd64.deb"
+LINUX_X64_ASSET="$OUTPUT_DIR/TjuaeUI-${VERSION}-linux-x64.deb"
+if [ -f "$LINUX_AMD64_ASSET" ]; then
+  if [ -e "$LINUX_X64_ASSET" ]; then
+    echo "::error::Linux x64 与 amd64 产物同时存在，无法确定规范文件"
+    exit 1
+  fi
+  mv "$LINUX_AMD64_ASSET" "$LINUX_X64_ASSET"
+fi
 
 # ---------------------------------------------------------------------------
 # 1b）复制 Web CLI 压缩包和 SHA-256 校验和。
@@ -100,6 +112,11 @@ echo "==> 正在写入规范更新元数据……"
 [ -n "$LINUX_X64_LATEST" ]  && cp -f "$LINUX_X64_LATEST"  "$OUTPUT_DIR/latest-linux.yml"
 [ -n "$LINUX_ARM64_LATEST" ] && cp -f "$LINUX_ARM64_LATEST" "$OUTPUT_DIR/latest-linux-arm64.yml"
 
+if [ -f "$OUTPUT_DIR/latest-linux.yml" ]; then
+  sed -i "s/TjuaeUI-${VERSION}-linux-amd64\.deb/TjuaeUI-${VERSION}-linux-x64.deb/g" \
+    "$OUTPUT_DIR/latest-linux.yml"
+fi
+
 # ---------------------------------------------------------------------------
 # 4）写入 electron-updater 所需的架构专属元数据。
 # ---------------------------------------------------------------------------
@@ -116,7 +133,6 @@ echo "==> 正在写入架构专属更新元数据……"
 # ---------------------------------------------------------------------------
 echo "==> 正在验证必要元数据……"
 
-VERSION="${MOCK_VERSION:-$(node -p "require('./package.json').version")}"
 MISSING=0
 for required in latest.yml latest-mac.yml latest-linux.yml latest-linux-arm64.yml; do
   if [ ! -f "$OUTPUT_DIR/$required" ]; then

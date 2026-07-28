@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -90,6 +90,36 @@ describe('发布打包配置', () => {
 
       expect(prepareResult.status).not.toBe(0);
       expect(`${prepareResult.stdout}\n${prepareResult.stderr}`).toContain('缺少 macOS ZIP 产物');
+    } finally {
+      rmSync(tempDir, { force: true, recursive: true });
+    }
+  });
+
+  itWithBash('将 Debian amd64 文件名规范化为 x64 并同步更新元数据', () => {
+    const tempDir = mkdtempSync(resolve(tmpdir(), 'tjuaeui-release-linux-arch-'));
+    const artifactsDir = resolve(tempDir, 'build-artifacts');
+    const outputDir = resolve(tempDir, 'release-assets');
+
+    try {
+      const env = { ...process.env, MOCK_VERSION: '1.0.0' };
+      expect(
+        spawnSync('bash', ['scripts/create-mock-release-artifacts.sh', artifactsDir], {
+          cwd: projectRoot,
+          env,
+          encoding: 'utf8',
+        }).status
+      ).toBe(0);
+
+      const prepareResult = spawnSync('bash', ['scripts/prepare-release-assets.sh', artifactsDir, outputDir], {
+        cwd: projectRoot,
+        env,
+        encoding: 'utf8',
+      });
+
+      expect(prepareResult.status).toBe(0);
+      expect(existsSync(resolve(outputDir, 'TjuaeUI-1.0.0-linux-x64.deb'))).toBe(true);
+      expect(existsSync(resolve(outputDir, 'TjuaeUI-1.0.0-linux-amd64.deb'))).toBe(false);
+      expect(readFileSync(resolve(outputDir, 'latest-linux.yml'), 'utf8')).toContain('TjuaeUI-1.0.0-linux-x64.deb');
     } finally {
       rmSync(tempDir, { force: true, recursive: true });
     }
