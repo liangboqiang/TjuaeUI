@@ -45,6 +45,7 @@ const buildRetiredIntegrationTokens = (): string[] => [
   ['install --global ', 'node-gyp'].join(''),
   ['dist-', 'latest'].join(''),
   ['tjuaeui_hub_', 'tag'].join(''),
+  ['bun-version: ', 'latest'].join(''),
 ];
 
 describe('repository identity contract', () => {

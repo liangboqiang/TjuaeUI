@@ -45,6 +45,21 @@ describe('发布打包配置', () => {
     expect(workflow).not.toContain('out/TjuaeUI-*-win32-*.zip');
   });
 
+  it('Windows 构建失败会阻断发布且缺少产物会报错', () => {
+    const workflow = readProjectFile('.github/workflows/_build-reusable.yml');
+
+    expect(workflow).not.toContain('构建失败，但不会阻断工作流');
+    expect(workflow).not.toContain('steps.windows-build.outputs.result');
+    expect(workflow).toContain('if-no-files-found: error');
+    expect(workflow).toContain('至少一个目标平台构建失败');
+  });
+
+  it('使用固定的 Bun 工具链版本', () => {
+    const packageJson = JSON.parse(readProjectFile('package.json')) as { packageManager?: string };
+
+    expect(packageJson.packageManager).toBe('bun@1.3.14');
+  });
+
   it('重试 macOS 预打包构建时同时生成 DMG 与 ZIP', () => {
     const script = readProjectFile('scripts/build-with-builder.js');
 
