@@ -21,8 +21,8 @@ function yamlBlock(content: string, key: string): string {
   return nextTopLevelKey === -1 ? rest : rest.slice(0, nextTopLevelKey);
 }
 
-describe('release packaging configuration', () => {
-  it('keeps mac zip artifacts enabled', () => {
+describe('发布打包配置', () => {
+  it('保留 macOS ZIP 产物', () => {
     const config = readProjectFile('packages/desktop/electron-builder.yml');
     const macBlock = yamlBlock(config, 'mac');
 
@@ -30,7 +30,7 @@ describe('release packaging configuration', () => {
     expect(macBlock).toContain('    - zip');
   });
 
-  it('does not build Windows zip artifacts', () => {
+  it('不构建 Windows ZIP 产物', () => {
     const config = readProjectFile('packages/desktop/electron-builder.yml');
     const winBlock = yamlBlock(config, 'win');
 
@@ -38,20 +38,20 @@ describe('release packaging configuration', () => {
     expect(winBlock).not.toContain('    - zip');
   });
 
-  it('uploads mac zip artifacts without a stale Windows zip glob', () => {
+  it('上传 macOS ZIP 产物且不保留旧 Windows ZIP 通配符', () => {
     const workflow = readProjectFile('.github/workflows/_build-reusable.yml');
 
     expect(workflow).toContain('out/TjuaeUI-*-mac-*.zip');
     expect(workflow).not.toContain('out/TjuaeUI-*-win32-*.zip');
   });
 
-  it('retries mac prepackaged builds with both dmg and zip targets', () => {
+  it('重试 macOS 预打包构建时同时生成 DMG 与 ZIP', () => {
     const script = readProjectFile('scripts/build-with-builder.js');
 
     expect(script).toMatch(/--mac\s+dmg\s+zip\s+--\$\{targetArch\}\s+--prepackaged/);
   });
 
-  itWithBash('fails release asset preparation when a mac zip is missing', () => {
+  itWithBash('缺少 macOS ZIP 时终止发布资产准备', () => {
     const tempDir = mkdtempSync(resolve(tmpdir(), 'tjuaeui-release-assets-'));
     const artifactsDir = resolve(tempDir, 'build-artifacts');
     const outputDir = resolve(tempDir, 'release-assets');
@@ -74,7 +74,7 @@ describe('release packaging configuration', () => {
       });
 
       expect(prepareResult.status).not.toBe(0);
-      expect(`${prepareResult.stdout}\n${prepareResult.stderr}`).toContain('Missing macOS zip artifact');
+      expect(`${prepareResult.stdout}\n${prepareResult.stderr}`).toContain('缺少 macOS ZIP 产物');
     } finally {
       rmSync(tempDir, { force: true, recursive: true });
     }
