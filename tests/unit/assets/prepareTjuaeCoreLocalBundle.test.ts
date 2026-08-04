@@ -24,6 +24,7 @@ describe('prepare-tjuaecore local bundle input', () => {
     writeFileSync(join(localBundle, 'tjuaecore.exe'), '');
 
     const previous = process.env.TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR;
+    process.env.TJUAEUI_BACKEND_BUILD_MODE = 'development';
     process.env.TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR = localBundle;
     try {
       expect(() =>

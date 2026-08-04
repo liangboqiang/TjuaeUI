@@ -98,6 +98,7 @@ chmod +x "$out/tjuaecore"
 
 afterEach(() => {
   delete process.env.TJUAEUI_BACKEND_RUN_ID;
+  delete process.env.TJUAEUI_BACKEND_BUILD_MODE;
   delete process.env.TJUAEUI_BACKEND_LOCAL_BINARY;
   rmSync(join(tmpdir(), 'tjuaecore-prepare', 'v0.1.46'), { recursive: true, force: true });
   rmSync(join(tmpdir(), 'tjuaecore-prepare-actions', '123'), { recursive: true, force: true });
@@ -187,6 +188,7 @@ describe('prepare-tjuaecore GitHub Actions artifact resolver', () => {
     const fakeBin = createFakeToolchain(tmp, { curlFails: true });
     const previousPath = process.env.PATH;
     process.env.PATH = `${fakeBin}${delimiter}${previousPath || ''}`;
+    process.env.TJUAEUI_BACKEND_BUILD_MODE = 'development';
     process.env.TJUAEUI_BACKEND_LOCAL_BINARY = localBinary;
 
     try {
