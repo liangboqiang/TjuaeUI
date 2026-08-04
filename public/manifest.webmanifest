@@ -1,0 +1,23 @@
+{
+  "name": "TjuaeUI",
+  "short_name": "TjuaeUI",
+  "description": "TjuaeUI WebUI for mobile and desktop browsers.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#4E5969",
+  "icons": [
+    {
+      "src": "./pwa/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./pwa/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

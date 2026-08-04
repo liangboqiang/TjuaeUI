@@ -1,0 +1,46 @@
+# CODEOWNERS：PR 修改相应路径时，自动请求模块负责人审查。
+# 后面的规则覆盖前面的规则，因此默认规则放在最前，
+# 嵌套目录规则必须放在父目录规则之后。
+# 负责人映射的单一事实来源是 .github/triage-map.json，Issue 分类也使用该表。
+
+# ---- 默认负责人：其他所有路径 ----
+* @liangboqiang
+
+# ---- 定时任务 ----
+/packages/desktop/src/renderer/pages/cron/ @liangboqiang
+
+# ---- Agent 检测与连接 ----
+/packages/desktop/src/renderer/pages/settings/AgentSettings/ @liangboqiang
+/packages/desktop/src/renderer/hooks/agent/ @liangboqiang
+
+# ---- 助手与预设 / 技能 / Team ----
+/packages/desktop/src/renderer/pages/settings/AssistantSettings/ @liangboqiang
+/packages/desktop/src/renderer/hooks/assistant/ @liangboqiang
+/packages/desktop/src/renderer/pages/settings/SkillsSettings/ @liangboqiang
+/packages/desktop/src/renderer/pages/team/ @liangboqiang
+
+# ---- MCP 与工具 ----
+/packages/desktop/src/renderer/pages/settings/ToolsSettings/ @liangboqiang
+/packages/desktop/src/renderer/hooks/mcp/ @liangboqiang
+
+# ---- 渠道集成 ----
+/packages/desktop/src/common/types/channel/ @liangboqiang
+/packages/desktop/src/renderer/components/settings/SettingsModal/contents/channels/ @liangboqiang
+
+# ---- 会话与上下文 ----
+/packages/desktop/src/renderer/pages/conversation/ @liangboqiang
+
+# ---- 搜索与历史 / 工作区与预览 ----
+# 以下 conversation/ 子目录有独立负责人规则，因此必须放在上方父目录规则之后。
+/packages/desktop/src/renderer/pages/conversation/GroupedHistory/ @liangboqiang
+/packages/desktop/src/renderer/pages/conversation/Workspace/ @liangboqiang
+/packages/desktop/src/renderer/pages/conversation/Preview/ @liangboqiang
+
+# ---- 模型与认证 ----
+/packages/desktop/src/renderer/utils/model/ @liangboqiang
+/packages/desktop/src/renderer/pages/settings/components/ @liangboqiang
+
+# ---- WebUI 与远程访问 ----
+/packages/web-cli/ @liangboqiang
+/packages/web-host/ @liangboqiang
+/packages/desktop/src/renderer/components/settings/SettingsModal/contents/WebuiModalContent.tsx @liangboqiang

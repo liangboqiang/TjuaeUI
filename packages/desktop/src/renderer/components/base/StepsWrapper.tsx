@@ -1,0 +1,16 @@
+
+import { Steps } from '@arco-design/web-react';
+import type { StepsProps } from '@arco-design/web-react/es/Steps';
+import React from 'react';
+
+interface StepsWrapperProps extends StepsProps {
+  className?: string;
+}
+
+const StepsWrapper: React.FC<StepsWrapperProps> & { Step: typeof Steps.Step } = ({ className, ...props }) => {
+  return <Steps {...props} className={`tjuaeui-steps ${className || ''}`} />;
+};
+
+StepsWrapper.Step = Steps.Step;
+
+export default StepsWrapper;

@@ -1,0 +1,66 @@
+name: 'PR 检查（仅文档）'
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, ready_for_review]
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'docs/**'
+      - '.vscode/**'
+      - '.github/ISSUE_TEMPLATE/**'
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    name: 代码质量
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 配置 bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: 安装依赖
+        run: bun install --frozen-lockfile
+
+      - name: 运行 postinstall
+        run: bun run postinstall
+
+      - name: 安装 prek
+        run: npm install -g @j178/prek
+
+      - name: 运行 prek 检查
+        run: prek run --from-ref origin/${{ github.base_ref }} --to-ref HEAD
+
+  unit-tests-ubuntu:
+    name: 单元测试（ubuntu-latest）
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only PR, skipping unit tests."
+
+  unit-tests-macos:
+    name: 单元测试（macos-14）
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only PR, skipping unit tests."
+
+  unit-tests-windows:
+    name: 单元测试（windows-2022）
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs-only PR, skipping unit tests."

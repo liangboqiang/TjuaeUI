@@ -1,0 +1,10 @@
+{
+  "name": "@tjuae/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TjuaeUI Electron 桌面应用",
+  "main": "../../out/main/index.js",
+  "dependencies": {
+    "@tjuae/web-host": "workspace:*"
+  }
+}

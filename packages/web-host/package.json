@@ -1,0 +1,22 @@
+{
+  "name": "@tjuae/web-host",
+  "version": "0.0.0",
+  "private": true,
+  "description": "WebUI 宿主包：启动后端、提供反向代理并托管静态文件，不依赖 Electron",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "serve-handler": "^6.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/serve-handler": "^6.1.4",
+    "vitest": "^4.1.0"
+  }
+}
