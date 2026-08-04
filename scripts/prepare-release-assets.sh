@@ -113,8 +113,16 @@ echo "==> 正在写入规范更新元数据……"
 [ -n "$LINUX_ARM64_LATEST" ] && cp -f "$LINUX_ARM64_LATEST" "$OUTPUT_DIR/latest-linux-arm64.yml"
 
 if [ -f "$OUTPUT_DIR/latest-linux.yml" ]; then
-  sed -i "s/TjuaeUI-${VERSION}-linux-amd64\.deb/TjuaeUI-${VERSION}-linux-x64.deb/g" \
-    "$OUTPUT_DIR/latest-linux.yml"
+  node - "$OUTPUT_DIR/latest-linux.yml" "$VERSION" <<'NODE'
+const fs = require('node:fs');
+
+const metadataPath = process.argv[2];
+const version = process.argv[3];
+const amd64Name = `TjuaeUI-${version}-linux-amd64.deb`;
+const x64Name = `TjuaeUI-${version}-linux-x64.deb`;
+const content = fs.readFileSync(metadataPath, 'utf8');
+fs.writeFileSync(metadataPath, content.replaceAll(amd64Name, x64Name));
+NODE
 fi
 
 # ---------------------------------------------------------------------------
