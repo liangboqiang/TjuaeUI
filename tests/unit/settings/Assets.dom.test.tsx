@@ -183,6 +183,26 @@ describe('Core 本地资产发布', () => {
     expect(document.body.textContent).not.toContain('access_token');
   });
 
+  it('缺少 GitHub App 安装时提供受控安装入口并支持原地复检', async () => {
+    mocks.getConnection.mockResolvedValueOnce({
+      state: 'insufficientPermissions',
+      account: 'octocat',
+      reasonCode: 'GITHUB_APP_INSTALLATION_REQUIRED',
+      installationUri: 'https://github.com/apps/tjuae-publisher/installations/new',
+    });
+    render(<AssetPublishDialog asset={asset} />);
+
+    fireEvent.click(screen.getByText('settings.assetPublish.action'));
+    expect(await screen.findByText('settings.assetPublish.installationRequired')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('settings.assetPublish.installGitHubApp'));
+    await waitFor(() =>
+      expect(mocks.openExternal).toHaveBeenCalledWith('https://github.com/apps/tjuae-publisher/installations/new')
+    );
+    fireEvent.click(screen.getByText('settings.assetPublish.checkInstallation'));
+    expect(await screen.findByText('settings.assetPublish.connectedAs:octocat')).toBeInTheDocument();
+    expect(mocks.startAuthorization).not.toHaveBeenCalled();
+  });
+
   it('先生成 Core 安全预览，再支持手动 PR 或 REST 发布', async () => {
     render(<AssetPublishDialog asset={asset} />);
     fireEvent.click(screen.getByText('settings.assetPublish.action'));

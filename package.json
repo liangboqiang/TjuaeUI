@@ -280,6 +280,6 @@
     "app-builder-lib@26.15.2": "patches/app-builder-lib@26.15.2.patch"
   },
   "productName": "TjuaeUI",
-  "tjuaeCoreVersion": "v0.3.0",
+  "tjuaeCoreVersion": "v0.3.1",
   "tjuaeHubRef": "e171944d47b9747f96d4b64ec1fac4203969e354"
 }

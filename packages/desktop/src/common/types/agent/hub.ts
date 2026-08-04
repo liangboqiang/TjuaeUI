@@ -33,6 +33,7 @@ export type HubPublishConnectionStatus = {
   account?: string;
   userCode?: string;
   verificationUri?: string;
+  installationUri?: string;
   expiresAt?: number;
   pollAfterMs?: number;
   reasonCode?: string;

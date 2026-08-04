@@ -210,6 +210,11 @@ const AssetPublishDialog: React.FC<AssetPublishDialogProps> = ({ asset }) => {
     await shell.openExternal.invoke(connection.verificationUri);
   }, [connection?.verificationUri]);
 
+  const openInstallation = useCallback(async () => {
+    if (!connection?.installationUri) return;
+    await shell.openExternal.invoke(connection.installationUri);
+  }, [connection?.installationUri]);
+
   const publish = useCallback(async () => {
     if (!asset || !preview || connection?.state !== 'connected') return;
     let values: PublishForm;
@@ -315,6 +320,36 @@ const AssetPublishDialog: React.FC<AssetPublishDialogProps> = ({ asset }) => {
           </div>
         );
       case 'insufficientPermissions':
+        if (connection.reasonCode === 'GITHUB_APP_INSTALLATION_REQUIRED') {
+          return (
+            <Alert
+              type='warning'
+              showIcon
+              title={t('settings.assetPublish.installationRequired')}
+              content={
+                <div>
+                  <div className='mb-8px text-12px text-t-secondary'>
+                    {t('settings.assetPublish.installationDescription')}
+                  </div>
+                  <Space wrap>
+                    <Button
+                      size='small'
+                      type='primary'
+                      icon={<Link aria-hidden='true' />}
+                      disabled={!connection.installationUri}
+                      onClick={() => void openInstallation()}
+                    >
+                      {t('settings.assetPublish.installGitHubApp')}
+                    </Button>
+                    <Button size='small' type='outline' loading={authorizing} onClick={() => void pollAuthorization()}>
+                      {t('settings.assetPublish.checkInstallation')}
+                    </Button>
+                  </Space>
+                </div>
+              }
+            />
+          );
+        }
         return (
           <Alert
             type='warning'
@@ -334,6 +369,7 @@ const AssetPublishDialog: React.FC<AssetPublishDialogProps> = ({ asset }) => {
     copyCode,
     disconnect,
     loadingConnection,
+    openInstallation,
     openVerification,
     pollAuthorization,
     startAuthorization,
