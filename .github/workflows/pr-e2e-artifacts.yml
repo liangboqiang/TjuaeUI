@@ -1,0 +1,68 @@
+name: '✓ PR E2E 产物'
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: pr-e2e-artifacts-${{ github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
+
+jobs:
+  e2e-artifacts:
+    name: E2E 产物（Linux）
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 配置 bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: 配置 just
+        uses: extractions/setup-just@v2
+
+      - name: 安装依赖
+        run: bun install --frozen-lockfile
+
+      - name: 运行 postinstall
+        run: bun run postinstall
+
+      - name: 安装 Linux 显示依赖（E2E）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgbm-dev xvfb
+
+      - name: 运行 E2E 测试（含截图）
+        run: xvfb-run --auto-servernum just e2e-test
+        env:
+          CI: true
+          E2E_DEV: '1'
+          E2E_SCREENSHOTS: '1'
+          TJUAE_EXTENSIONS_PATH: ${{ github.workspace }}/examples
+
+      - name: 上传 E2E 报告（包含截图与跟踪）
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-report-linux-pr
+          path: |
+            tests/e2e/report/
+            tests/e2e/results/
+            tests/e2e/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore

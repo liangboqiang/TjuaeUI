@@ -1,0 +1,21 @@
+{
+  "$comment": "Issue 模块 → 区域标签 → 负责人映射，是 .github/workflows/issue-triage.yml 的单一事实来源。module 必须与 bug_report.yml 和 question.yml 中的下拉选项完全一致；只需在此修改负责人。",
+  "modules": [
+    { "module": "Agent 检测与连接", "label": "area/agent-detection", "owner": "liangboqiang" },
+    { "module": "助手与预设", "label": "area/assistant", "owner": "liangboqiang" },
+    { "module": "模型与认证", "label": "area/model-auth", "owner": "liangboqiang" },
+    { "module": "MCP 与工具", "label": "area/mcp", "owner": "liangboqiang" },
+    { "module": "技能与插件", "label": "area/skills", "owner": "liangboqiang" },
+    { "module": "渠道集成", "label": "area/channel", "owner": "liangboqiang" },
+    { "module": "会话与上下文", "label": "area/conversation", "owner": "liangboqiang" },
+    { "module": "搜索与历史", "label": "area/history", "owner": "liangboqiang" },
+    { "module": "项目、文件与预览", "label": "area/workspace", "owner": "liangboqiang" },
+    { "module": "WebUI 与远程访问", "label": "area/webui", "owner": "liangboqiang" },
+    { "module": "定时任务", "label": "area/cron", "owner": "liangboqiang" },
+    { "module": "Team 协作", "label": "area/team", "owner": "liangboqiang" },
+    { "module": "界面、显示与桌面宠物", "label": "area/display", "owner": "liangboqiang" },
+    { "module": "系统设置", "label": "area/settings", "owner": "liangboqiang" },
+    { "module": "其他", "label": "area/other", "owner": "liangboqiang" }
+  ],
+  "fallback": { "label": "needs-triage", "owner": "liangboqiang" }
+}

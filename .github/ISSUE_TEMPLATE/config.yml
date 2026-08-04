@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 文档
+    url: https://github.com/liangboqiang/TjuaeUI/tree/main/docs
+    about: 阅读与当前版本对应的安装、配置和故障排查文档
+  - name: 🔒 安全问题
+    url: https://github.com/liangboqiang/TjuaeUI/security/advisories/new
+    about: 私密报告安全漏洞（请勿创建公开 Issue）

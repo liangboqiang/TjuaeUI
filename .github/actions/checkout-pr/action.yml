@@ -1,0 +1,28 @@
+name: '🔍 解析 PR 上下文'
+description: '为 pull_request 和 workflow_dispatch 触发方式解析正确的 ref 与基础分支；必须在 actions/checkout 之后调用。'
+inputs:
+  pr_number:
+    description: 'PR 编号（仅用于 workflow_dispatch 手动触发）'
+    required: false
+    default: ''
+  github_token:
+    description: '调用 gh API 所需的 GitHub Token'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: 解析 PR 上下文
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          PR_INFO=$(gh api repos/${{ github.repository }}/pulls/${{ inputs.pr_number }})
+          HEAD_SHA=$(echo "$PR_INFO" | jq -r '.head.sha')
+          BASE_REF=$(echo "$PR_INFO" | jq -r '.base.ref')
+          git fetch origin "refs/pull/${{ inputs.pr_number }}/head"
+          git checkout "$HEAD_SHA"
+          echo "PR_BASE_REF=$BASE_REF" >> $GITHUB_ENV
+        else
+          echo "PR_BASE_REF=${{ github.base_ref }}" >> $GITHUB_ENV
+        fi

@@ -1,0 +1,120 @@
+{
+  "sider": {
+    "title": "Équipes",
+    "createTeam": "Nouvelle équipe",
+    "pin": "Épingler",
+    "unpin": "Désépingler",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "renameTitle": "Renommer l'équipe",
+    "renamePlaceholder": "Nom de l'équipe",
+    "deleteConfirm": "Supprimer cette équipe ?",
+    "deleteConfirmContent": "Cette action est irréversible.",
+    "deleteOk": "Supprimer",
+    "deleteCancel": "Annuler",
+    "renameOk": "Enregistrer",
+    "renameCancel": "Annuler",
+    "renameSuccess": "Équipe renommée",
+    "deleteSuccess": "Équipe supprimée"
+  },
+  "newAgent": "Nouvel agent",
+  "noMessages": "Aucun message pour l'instant.",
+  "agentNotConfigured": "Agent non configuré.",
+  "stopAgentFailed": "Échec de l'arrêt de cet assistant. Veuillez réessayer.",
+  "work": {
+    "processingWithQueued": "Traitement en cours… {{count}} en attente",
+    "queued": "{{count}} en attente",
+    "runtimeStarting": "En attente du démarrage de cet assistant…",
+    "runtimeFailed": "Cet assistant n'a pas pu démarrer.",
+    "removing": "Suppression de cet assistant…",
+    "sessionStopped": "La session d'équipe est arrêtée.",
+    "retryStart": "Réessayer le démarrage"
+  },
+  "sendBox": {
+    "placeholder": "Envoyer un message à l'agent coordinateur..."
+  },
+  "create": {
+    "title": "Créer une équipe",
+    "namePlaceholder": "Nom de l'équipe",
+    "dispatchAgentPlaceholder": "Sélectionner le chef d'équipe",
+    "subAgentsPlaceholder": "Sélectionner les sous-agents",
+    "confirm": "Créer l'équipe",
+    "noSupportedAgents": "Aucun agent compatible installé",
+    "supportedAgentsHint": "Supporte actuellement Claude et Codex. D'autres agents bientôt disponibles.",
+    "leaderDesc": "Comprend vos objectifs et coordonne les agents pour accomplir les tâches",
+    "searchPlaceholder": "Assistants de recherche...",
+    "noSearchResults": "Aucun résultat trouvé",
+    "step": {
+      "dispatch": "Chef d'équipe",
+      "subAgents": "Sous-agents",
+      "workspace": "Espace de travail"
+    },
+    "nameRequired": "Veuillez entrer un nom d'équipe",
+    "leaderRequired": "Veuillez sélectionner un chef d'équipe",
+    "selectFolder": "Sélectionner un dossier",
+    "recentLabel": "Récents",
+    "chooseDifferentFolder": "Choisir un autre dossier",
+    "error": "Échec de la création de l'équipe",
+    "selectedMembers": "Membres sélectionnés",
+    "teamLeader": "Chef d'équipe",
+    "currentLeader": "Chef d'équipe actuel",
+    "setAsLeader": "Définir comme chef d'équipe",
+    "teammate": "Membre de l'équipe",
+    "selectAtLeastOneMember": "Sélectionnez au moins un assistant comme chef d'équipe.",
+    "selectOneLeader": "Sélectionnez un chef d'équipe",
+    "subtitle": "Faites collaborer plusieurs assistants IA en équipe. Nous vous conseillons de consacrer chaque équipe à un seul objectif et de créer des équipes distinctes pour les différentes tâches.",
+    "nameLabel": "Nom de l'équipe",
+    "workspaceLabel": "Espace de travail",
+    "allAssistantsWithCount": "Tous les assistants ({{count}})",
+    "selectedMembersWithCount": "Membres sélectionnés : {{count}} · ⚑ = chef d'équipe",
+    "selectedMembersTitleWithCount": "Membres sélectionnés : {{count}}",
+    "leaderLegend": "= chef d'équipe",
+    "membersHelper": "Choisissez les membres de l'équipe et désignez un chef d'équipe. Un même assistant peut être sélectionné plusieurs fois.",
+    "memberHint": "Vous ne trouvez aucun assistant adapté comme membre ? Après la création, demandez au chef d'équipe de créer des membres temporaires dans le chat."
+  },
+  "removeAgent": {
+    "confirmTitle": "Retirer un membre de l'équipe",
+    "confirmContent": "Ce membre est actuellement actif. Forcer la suppression ?",
+    "confirmContentActive": "Ce membre travaille actuellement. Voulez-vous quand même le retirer ? Son travail en cours sera interrompu."
+  },
+  "emptyState": {
+    "subtitle": "Décrivez votre objectif et je mettrai l'équipe au travail",
+    "suggestions": {
+      "debate": "Organiser un débat avec des agents prenant des positions différentes",
+      "interview": "Planifier une interview approfondie entre agents",
+      "expert_review": "Faire analyser le même problème par plusieurs experts",
+      "add_member": "Aidez-moi à ajouter à l'équipe un membre spécialisé en ___"
+    },
+    "leaderGreeting": "Bonjour, je suis le chef d'équipe. Je comprends votre objectif et coordonne l'équipe : décrivez-moi ce que vous souhaitez et je m'occupe de l'organiser.",
+    "memberGreeting": "Bonjour, je suis membre de l'équipe. Je suis les directives du chef d'équipe et les vôtres."
+  },
+  "addMember": {
+    "title": "Ajouter un membre",
+    "subtitle": "Un même assistant peut être ajouté plusieurs fois",
+    "searchAssistants": "Rechercher des assistants...",
+    "addFailed": "Échec de l'ajout du membre",
+    "noSearchResults": "Aucun résultat trouvé",
+    "tellLeaderHint": "Aucun assistant ne convient ? Vous pouvez aussi demander au chef d'équipe de s'en charger.",
+    "tellLeaderCta": "Demander au chef d'équipe →",
+    "tellLeaderPrefill": "Aidez-moi à ajouter à l'équipe un membre spécialisé en ___"
+  },
+  "view": {
+    "label": "Vue",
+    "parallel": "Parallèle",
+    "single": "Individuelle"
+  },
+  "warmup": {
+    "title": "Réveil de l'équipe…",
+    "subtitle": "Préparation des membres",
+    "memberFailedTitle": "Le membre {{name}} n'a pas pu démarrer",
+    "leaderFailedTitle": "Le chef d'équipe {{name}} n'a pas pu démarrer",
+    "genericFailedTitle": "L'équipe n'a pas pu démarrer",
+    "multiFailedTitle": "{{count}} membres n'ont pas pu démarrer",
+    "leaderSuffix": " (chef d'équipe)",
+    "unknownError": "échec du démarrage",
+    "memberFailedHint": "Changez son modèle ci-dessus ou retirez-le de la barre supérieure, puis réessayez.",
+    "leaderFailedHint": "Changez son modèle ci-dessus, puis réessayez.",
+    "retry": "Réessayer"
+  },
+  "reorderMember": "Faites glisser pour réorganiser le membre"
+}

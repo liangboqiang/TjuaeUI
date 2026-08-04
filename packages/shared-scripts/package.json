@@ -1,0 +1,19 @@
+{
+  "name": "@tjuae/shared-scripts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TjuaeUI 各软件包共用的构建脚本",
+  "type": "commonjs",
+  "exports": {
+    "./prepare-tjuaecore": "./src/prepare-tjuaecore.js"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "vitest": "^4.1.0"
+  }
+}

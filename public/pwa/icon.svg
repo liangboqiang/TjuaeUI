@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="tjuae-pwa-title">
+  <title id="tjuae-pwa-title">TjuaeUI</title>
+  <defs>
+    <linearGradient id="tjuae-pwa-blue" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b63ce"/>
+      <stop offset="1" stop-color="#06358f"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="116" fill="#fff" stroke="url(#tjuae-pwa-blue)" stroke-width="8"/>
+  <path d="M128 30 151 83 207 92 166 131 176 188 128 160 80 188 90 131 49 92 105 83Z" fill="none" stroke="url(#tjuae-pwa-blue)" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M62 151c22-18 43-25 66-22 23 3 42 16 66 11M67 174c23-14 43-18 64-13 19 5 34 14 57 10" fill="none" stroke="#1688e8" stroke-width="8" stroke-linecap="round"/>
+  <path d="M92 101h72M128 101v54" fill="none" stroke="#06358f" stroke-width="10" stroke-linecap="round"/>
+</svg>

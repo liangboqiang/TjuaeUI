@@ -1,0 +1,29 @@
+
+export const UPDATE_READY_STATE_EVENT = 'tjuaeui-update-ready-state-changed';
+
+export type UpdateReadyState = {
+  ready: boolean;
+  version: string;
+  filePath?: string;
+  preparing?: boolean;
+};
+
+let currentUpdateReadyState: UpdateReadyState = {
+  ready: false,
+  version: '',
+};
+
+export const getUpdateReadyState = () => currentUpdateReadyState;
+
+export const setUpdateReadyState = (state: UpdateReadyState) => {
+  currentUpdateReadyState = state;
+  window.dispatchEvent(new CustomEvent<UpdateReadyState>(UPDATE_READY_STATE_EVENT, { detail: state }));
+};
+
+export const subscribeUpdateReadyState = (listener: (state: UpdateReadyState) => void) => {
+  const handler = (evt: Event) => {
+    listener((evt as CustomEvent<UpdateReadyState>).detail);
+  };
+  window.addEventListener(UPDATE_READY_STATE_EVENT, handler);
+  return () => window.removeEventListener(UPDATE_READY_STATE_EVENT, handler);
+};
