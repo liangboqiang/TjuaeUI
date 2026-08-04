@@ -663,7 +663,11 @@ class AutoUpdaterService extends EventEmitter {
   }> {
     try {
       if (!this._isInitialized) {
-        throw new Error('AutoUpdaterService not initialized');
+        // Local acceptance, CI and explicitly disabled update modes never
+        // initialize electron-updater. The renderer still performs its
+        // one-shot restore probe, so treat this expected state as an empty
+        // result instead of emitting a false startup error.
+        return { success: true, data: { ready: false } };
       }
 
       const checkResult = await this.checkForUpdates();

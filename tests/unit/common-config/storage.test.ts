@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Unit tests for common/config/storage.ts runtime exports (T5 in N3 test checklist).
- * Tests ConfigStorage/EnvStorage namespaces and BUILTIN_IMAGE_GEN_ID constant.
+ * Tests ConfigStorage/EnvStorage namespaces.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -30,15 +30,9 @@ vi.mock('@/common/platform/storage', () => {
 });
 
 // Import after mock is registered
-import { ConfigStorage, EnvStorage, BUILTIN_IMAGE_GEN_ID } from '@/common/config/storage';
+import { ConfigStorage, EnvStorage } from '@/common/config/storage';
 
 describe('storage runtime exports', () => {
-  describe('BUILTIN_IMAGE_GEN_ID', () => {
-    it('is "builtin-image-gen" constant', () => {
-      expect(BUILTIN_IMAGE_GEN_ID).toBe('builtin-image-gen');
-    });
-  });
-
   describe('ConfigStorage', () => {
     it('exposes storage.buildStorage shape (get/set/remove)', () => {
       expect(typeof ConfigStorage.get).toBe('function');

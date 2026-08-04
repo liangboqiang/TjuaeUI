@@ -113,7 +113,7 @@ test.describe('Team Assistant Leader Options', () => {
     let customAgentId: string | undefined;
 
     try {
-      const agent = await httpPost<AgentMetadata>(page, '/api/agents/custom', {
+      const agent = await httpPost<AgentMetadata>(page, '/api/engines/custom', {
         name: `E2E Team Selectable Agent ${suffix}`,
         command: process.execPath,
         args: [],
@@ -150,7 +150,7 @@ test.describe('Team Assistant Leader Options', () => {
       await expect(confirmBtn).toBeEnabled({ timeout: 5_000 });
     } finally {
       if (customAgentId) {
-        await httpDelete(page, `/api/agents/custom/${customAgentId}`).catch(() => {});
+        await httpDelete(page, `/api/engines/custom/${customAgentId}`).catch(() => {});
       }
     }
   });

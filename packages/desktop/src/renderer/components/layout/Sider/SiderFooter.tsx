@@ -64,7 +64,7 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
           <div
             onClick={onSettingsClick}
             className={classNames(
-              'group h-34px flex items-center rd-0.5rem cursor-pointer transition-colors',
+              'group h-34px flex items-center rd-0.5rem cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-6',
               collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-8px pl-10px pr-8px',
               isMobile && 'sider-footer-btn-mobile',
               {
@@ -72,6 +72,14 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
                 'hover:bg-fill-3 active:bg-fill-4': !isSettings,
               }
             )}
+            role='button'
+            tabIndex={0}
+            aria-current={isSettings ? 'page' : undefined}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              onSettingsClick();
+            }}
           >
             <span className='size-22px flex items-center justify-center shrink-0 text-t-secondary'>{settingsIcon}</span>
             <span className='collapsed-hidden text-t-primary text-14px font-[500] leading-24px truncate'>
@@ -84,10 +92,17 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
             <div
               onClick={onLogoutClick}
               className={classNames(
-                'h-32px flex items-center rd-0.5rem cursor-pointer transition-colors hover:bg-[rgba(var(--primary-6),0.14)] active:bg-fill-2',
+                'h-32px flex items-center rd-0.5rem cursor-pointer outline-none transition-colors hover:bg-[rgba(var(--primary-6),0.14)] active:bg-fill-2 focus-visible:ring-2 focus-visible:ring-primary-6',
                 collapsed ? 'w-full justify-center' : 'flex-1 min-w-0 justify-start gap-10px px-14px',
                 isMobile && 'sider-footer-btn-mobile'
               )}
+              role='button'
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                onLogoutClick();
+              }}
             >
               <span className='size-20px flex items-center justify-center shrink-0'>
                 <CloseOne
@@ -110,10 +125,17 @@ const SiderFooter: React.FC<SiderFooterProps> = ({
             <div
               onClick={onThemeToggle}
               className={classNames(
-                'h-32px w-40px shrink-0 flex items-center justify-center cursor-pointer rd-0.5rem transition-colors text-t-secondary hover:bg-fill-2 hover:text-t-primary active:bg-fill-3',
+                'h-32px w-40px shrink-0 flex items-center justify-center cursor-pointer rd-0.5rem outline-none transition-colors text-t-secondary hover:bg-fill-2 hover:text-t-primary active:bg-fill-3 focus-visible:ring-2 focus-visible:ring-primary-6',
                 isMobile && 'sider-footer-btn-mobile'
               )}
+              role='button'
+              tabIndex={0}
               aria-label={themeTooltip}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                onThemeToggle();
+              }}
             >
               <span className='w-28px h-28px flex items-center justify-center shrink-0'>
                 {theme === 'dark' ? (

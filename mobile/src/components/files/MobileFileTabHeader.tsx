@@ -54,11 +54,24 @@ export function MobileFileTabHeader({ onOpenDrawer }: MobileFileTabHeaderProps) 
     <>
       <GestureDetector gesture={swipeGesture}>
         <View style={[styles.header, { backgroundColor: background, borderBottomColor: border }]}>
-          <TouchableOpacity style={styles.menuButton} onPress={onOpenDrawer}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={onOpenDrawer}
+            accessibilityRole='button'
+            accessibilityLabel={t('workspace.openFiles')}
+          >
             <Ionicons name='menu-outline' size={26} color={tint} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.titleArea} onPress={() => tabs.length > 0 && setShowTabList(true)}>
+          <TouchableOpacity
+            style={styles.titleArea}
+            onPress={() => setShowTabList(true)}
+            disabled={tabs.length === 0}
+            accessibilityRole='button'
+            accessibilityLabel={currentTab?.title || t('files.title')}
+            accessibilityHint={tabs.length > 0 ? t('workspace.openFiles') : undefined}
+            accessibilityState={{ disabled: tabs.length === 0 }}
+          >
             {currentTab ? (
               <ThemedText style={styles.title} numberOfLines={1}>
                 {currentTab.title}
@@ -73,6 +86,8 @@ export function MobileFileTabHeader({ onOpenDrawer }: MobileFileTabHeaderProps) 
               <TouchableOpacity
                 style={[styles.tabCount, { backgroundColor: tint + '18' }]}
                 onPress={() => setShowTabList(true)}
+                accessibilityRole='button'
+                accessibilityLabel={t('workspace.openFiles')}
               >
                 <ThemedText style={[styles.tabCountText, { color: tint }]}>
                   {activeTabIndex + 1}/{tabs.length}
@@ -85,11 +100,16 @@ export function MobileFileTabHeader({ onOpenDrawer }: MobileFileTabHeaderProps) 
 
       <Modal visible={showTabList} animationType='slide' transparent onRequestClose={() => setShowTabList(false)}>
         <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setShowTabList(false)} />
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowTabList(false)} accessible={false} />
           <View style={[styles.modalContent, { backgroundColor: background }]}>
             <View style={[styles.modalHeader, { borderBottomColor: border }]}>
               <ThemedText style={styles.modalTitle}>{t('workspace.openFiles')}</ThemedText>
-              <TouchableOpacity onPress={() => setShowTabList(false)}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setShowTabList(false)}
+                accessibilityRole='button'
+                accessibilityLabel={t('common.close')}
+              >
                 <Ionicons name='close' size={24} color={text} />
               </TouchableOpacity>
             </View>
@@ -109,6 +129,7 @@ export function MobileFileTabHeader({ onOpenDrawer }: MobileFileTabHeaderProps) 
                     setShowTabList(false);
                   }}
                   onClose={() => closeTab(index)}
+                  closeLabel={`${t('common.close')} ${item.title}`}
                 />
               )}
               style={styles.tabList}
@@ -121,6 +142,8 @@ export function MobileFileTabHeader({ onOpenDrawer }: MobileFileTabHeaderProps) 
                 setShowTabList(false);
                 onOpenDrawer?.();
               }}
+              accessibilityRole='button'
+              accessibilityLabel={t('workspace.openNewFile')}
             >
               <Ionicons name='add-circle-outline' size={20} color={tint} />
               <ThemedText style={{ color: tint }}>{t('workspace.openNewFile')}</ThemedText>
@@ -139,13 +162,18 @@ type TabListItemProps = {
   border: string;
   onPress: () => void;
   onClose: () => void;
+  closeLabel: string;
 };
 
-function TabListItem({ tab, isActive, tint, border, onPress, onClose }: TabListItemProps) {
+function TabListItem({ tab, isActive, tint, border, onPress, onClose, closeLabel }: TabListItemProps) {
   return (
     <TouchableOpacity
       style={[styles.tabItem, { borderBottomColor: border }, isActive && { backgroundColor: tint + '10' }]}
       onPress={onPress}
+      accessibilityRole='button'
+      accessibilityState={{ selected: isActive }}
+      accessibilityLabel={tab.title}
+      accessibilityHint={tab.path}
     >
       <View style={styles.tabItemContent}>
         <ThemedText style={[styles.tabItemText, isActive && { fontWeight: '600', color: tint }]} numberOfLines={1}>
@@ -155,7 +183,15 @@ function TabListItem({ tab, isActive, tint, border, onPress, onClose }: TabListI
           {tab.path}
         </ThemedText>
       </View>
-      <TouchableOpacity style={styles.tabItemClose} onPress={onClose}>
+      <TouchableOpacity
+        style={styles.tabItemClose}
+        onPress={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+        accessibilityRole='button'
+        accessibilityLabel={closeLabel}
+      >
         <Ionicons name='close-circle' size={20} color={tint + '80'} />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -171,11 +207,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   menuButton: {
-    padding: 8,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 8,
   },
   titleArea: {
     flex: 1,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 16,
@@ -188,7 +229,8 @@ const styles = StyleSheet.create({
   },
   tabCount: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: 12,
   },
   tabCountText: {
@@ -220,6 +262,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  iconButton: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   tabList: {
     flexGrow: 0,
   },
@@ -237,7 +285,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   tabItemClose: {
-    padding: 4,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   openNewButton: {
     flexDirection: 'row',

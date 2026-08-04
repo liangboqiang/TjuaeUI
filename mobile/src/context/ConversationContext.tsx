@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { bridge } from '../services/bridge';
 import { setPendingInitialMessage } from '../services/pendingInitialMessages';
@@ -182,9 +182,7 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
   const fetchAgents = useCallback(async () => {
     if (connectionState !== 'connected') return;
     try {
-      const response = await bridge.request<{ success: boolean; data?: AgentInfo[] }>(
-        'acp.get-available-agents',
-      );
+      const response = await bridge.request<{ success: boolean; data?: AgentInfo[] }>('acp.get-available-agents');
       if (response?.success && Array.isArray(response.data)) {
         setAvailableAgents(response.data);
       }
@@ -198,13 +196,10 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
       try {
         // Most agents are ACP type; only a few special types map directly
         const SPECIAL_TYPES = new Set(['gemini', 'codex', 'openclaw-gateway', 'nanobot']);
-        const conversationType = SPECIAL_TYPES.has(params.agentBackend)
-          ? params.agentBackend
-          : 'acp';
+        const conversationType = SPECIAL_TYPES.has(params.agentBackend) ? params.agentBackend : 'acp';
 
         // Use provided workspace, or infer from most recent conversation that has one
-        const workspace =
-          params.workspace ?? conversations.find((c) => c.extra?.workspace)?.extra?.workspace;
+        const workspace = params.workspace ?? conversations.find((c) => c.extra?.workspace)?.extra?.workspace;
 
         const fullParams = {
           type: conversationType,
@@ -254,7 +249,7 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
         setActiveConversationIdRaw(result.id);
       }
     },
-    [pendingAgent, createConversation],
+    [pendingAgent, createConversation]
   );
 
   const cancelNewChat = useCallback(() => {
@@ -277,7 +272,7 @@ export function ConversationProvider({ children }: { children: React.ReactNode }
         return false;
       }
     },
-    [refresh, activeConversationId, conversations]
+    [refresh, activeConversationId, conversations, setActiveConversationId]
   );
 
   const renameConversation = useCallback(

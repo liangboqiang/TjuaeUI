@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -9,14 +9,15 @@ import { useConversations, type Conversation } from '../../context/ConversationC
 
 export function ConversationList() {
   const { t } = useTranslation();
-  const { conversations, isLoading, refresh, deleteConversation } = useConversations();
+  const { conversations, isLoading, refresh, deleteConversation, setActiveConversationId } = useConversations();
   const router = useRouter();
 
   const handlePress = useCallback(
     (conversation: Conversation) => {
-      router.push(`/conversation/${conversation.id}`);
+      setActiveConversationId(conversation.id);
+      router.push('/(tabs)/chat');
     },
-    [router]
+    [router, setActiveConversationId]
   );
 
   const handleDelete = useCallback(

@@ -40,3 +40,11 @@ export function downloadTextContent(content: string, file_name: string, mimeType
   const blob = new Blob([content], { type: mimeType });
   triggerBlobDownload(blob, file_name);
 }
+
+/**
+ * Download a standard-base64 payload supplied in memory.
+ */
+export function downloadBase64Content(base64: string, file_name: string, mimeType: string): void {
+  const blob = base64ToBlob(`data:${mimeType};base64,${base64}`, mimeType);
+  triggerBlobDownload(blob, file_name);
+}

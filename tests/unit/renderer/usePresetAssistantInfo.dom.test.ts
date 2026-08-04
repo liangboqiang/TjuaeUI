@@ -5,31 +5,12 @@
  */
 
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import type { TChatConversation } from '@/common/config/storage';
-import { resolveAssistantConfigId, usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { TChatConversation, TConversationAssistantIdentity } from '@/common/config/storage';
+import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
 
 const useSWRMock = vi.fn();
 let currentLanguage = 'en-US';
-
-// Backend logo catalog stub. The hook resolves generated/legacy backends to their
-// logo via `resolveAgentLogo(useAgentLogos(), ...)`, so the test mirrors the
-// backend-provided map here.
-const TEST_LOGOS: Record<string, string> = {
-  codex: '/api/assets/logos/tools/coding/codex.svg',
-  gemini: '/api/assets/logos/ai-major/gemini.svg',
-  'openclaw-gateway': '/api/assets/logos/tools/openclaw.svg',
-};
-const getAgentLogo = (backend: string): string | null => TEST_LOGOS[backend.toLowerCase()] ?? null;
-
-vi.mock('@/renderer/utils/model/agentLogo', () => ({
-  useAgentLogos: () => TEST_LOGOS,
-  resolveAgentLogo: (logos: Record<string, string>, opts: { icon?: string | null; backend?: string | null }) => {
-    if (opts.icon) return opts.icon;
-    if (!opts.backend) return null;
-    return logos[opts.backend.toLowerCase()] ?? null;
-  },
-}));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -41,12 +22,6 @@ vi.mock('@/common', () => ({
   ipcBridge: {
     assistants: {
       list: { invoke: vi.fn() },
-    },
-    extensions: {
-      getAcpAdapters: { invoke: vi.fn() },
-    },
-    remoteAgent: {
-      get: { invoke: vi.fn() },
     },
   },
 }));
@@ -65,219 +40,150 @@ describe('usePresetAssistantInfo', () => {
   beforeEach(() => {
     useSWRMock.mockReset();
     currentLanguage = 'en-US';
+    useSWRMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
-  it('prefers preset assistant avatar over custom runtime metadata when both identities exist', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
-        return {
-          data: [
-            {
-              id: 'assistant-social',
-              name: 'Social Job Publisher',
-              avatar: 'http://127.0.0.1:56663/api/assistants/social-job-publisher/avatar',
-              name_i18n: {},
-            },
-          ],
-          isLoading: false,
-        };
-      }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
+  it('uses the explicit conversation assistant snapshot as the sole identity source', () => {
     const conversation = makeConversation({
-      agent_id: 'runtime-social',
-      custom_agent_id: 'assistant-social',
-      preset_assistant_id: 'assistant-social',
-      backend: 'gemini',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Social Job Publisher',
-      logo: 'http://127.0.0.1:56663/api/assistants/social-job-publisher/avatar',
-      isEmoji: false,
-      backend: undefined,
-      assistantId: 'assistant-social',
-    });
-  });
-
-  it('prefers localized assistant names for the active language', () => {
-    currentLanguage = 'zh-CN';
-
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
-        return {
-          data: [
-            {
-              id: 'academic-paper',
-              name: 'Academic Paper',
-              avatar: '📚',
-              name_i18n: {
-                'zh-CN': '学术论文助手',
-              },
-            },
-          ],
-          isLoading: false,
-        };
-      }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      assistant_id: 'academic-paper',
-      preset_assistant_id: 'academic-paper',
-      backend: 'claude',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: '学术论文助手',
-      logo: '📚',
-      isEmoji: true,
-      backend: undefined,
-      assistantId: 'academic-paper',
-    });
-  });
-
-  it('prefers explicit conversation assistant payload before catalog fallbacks', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = {
-      ...makeConversation({
-        assistant_id: 'assistant-social',
-        backend: 'claude',
-      }),
       assistant: {
         id: 'assistant-social',
-        source: 'generated',
+        source: 'user',
         name: 'Social Job Publisher',
-        avatar: '/api/assistants/assistant-social/avatar',
+        avatar: '🦜',
         backend: 'gemini',
       },
-    } as TChatConversation;
+      extra: {
+        unrelated_id: 'ignored-assistant',
+        unrelated_context: '# Ignored Assistant',
+      },
+    });
 
     const { result } = renderHook(() => usePresetAssistantInfo(conversation));
 
-    expect(result.current.info).toEqual({
-      name: 'Social Job Publisher',
-      logo: '/api/assistants/assistant-social/avatar',
-      isEmoji: false,
-      backend: 'gemini',
-      assistantId: 'assistant-social',
+    expect(result.current).toEqual({
+      info: {
+        name: 'Social Job Publisher',
+        logo: '🦜',
+        isEmoji: true,
+        backend: 'gemini',
+        assistantId: 'assistant-social',
+      },
+      isLoading: false,
     });
+    expect(useSWRMock).toHaveBeenCalledWith(null, expect.any(Function));
   });
 
-  it('restores local absolute assistant snapshot avatars from the backend assistant catalog', () => {
+  it('restores an unsafe local avatar by exact current assistant id', () => {
+    currentLanguage = 'zh-CN';
     useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
+      if (key === 'assistants.list') {
         return {
           data: [
             {
               id: 'assistant-local-avatar',
+              source: 'user',
               name: 'Local Avatar',
+              name_i18n: { 'zh-CN': '本地头像助手' },
               avatar: '/api/assistants/assistant-local-avatar/avatar',
-              name_i18n: {},
+              engine: { type: 'acp', ownership: 'custom', acp_backend: 'codex' },
             },
           ],
           isLoading: false,
         };
       }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
       return { data: undefined, isLoading: false };
     });
 
-    const conversation = {
-      ...makeConversation({
-        assistant_id: 'assistant-local-avatar',
-        backend: 'codex',
-      }),
+    const conversation = makeConversation({
       assistant: {
         id: 'assistant-local-avatar',
         source: 'user',
         name: 'Local Avatar',
-        avatar: '/Users/demo/.tjuaeui/assistant-avatars/assistant-local-avatar.jpg',
+        avatar: 'C:\\Users\\demo\\.tjuaeui\\assistant-avatars\\avatar.jpg',
         backend: 'codex',
       },
-    } as TChatConversation;
+    });
 
     const { result } = renderHook(() => usePresetAssistantInfo(conversation));
 
     expect(result.current.info).toEqual({
-      name: 'Local Avatar',
+      name: '本地头像助手',
       logo: '/api/assistants/assistant-local-avatar/avatar',
       isEmoji: false,
-      backend: undefined,
-      assistantId: 'assistant-local-avatar',
-    });
-  });
-
-  it('does not expose local absolute assistant snapshot avatars when the catalog cannot restore them', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = {
-      ...makeConversation({
-        assistant_id: 'assistant-local-avatar',
-        backend: 'codex',
-      }),
-      assistant: {
-        id: 'assistant-local-avatar',
-        source: 'user',
-        name: 'Local Avatar',
-        avatar: '/Users/demo/.tjuaeui/assistant-avatars/assistant-local-avatar.jpg',
-        backend: 'codex',
-      },
-    } as TChatConversation;
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Local Avatar',
-      logo: '',
-      isEmoji: false,
-      isFallback: true,
       backend: 'codex',
       assistantId: 'assistant-local-avatar',
     });
   });
 
-  it('returns assistant fallback for generated assistants whose avatar is empty', () => {
+  it('does not match a catalog assistant through a removed id prefix', () => {
     useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
+      if (key === 'assistants.list') {
+        return {
+          data: [
+            {
+              id: 'assistant-local-avatar',
+              source: 'user',
+              name: 'Wrong Prefix Match',
+              name_i18n: {},
+              avatar: '/api/assistants/assistant-local-avatar/avatar',
+            },
+          ],
+          isLoading: false,
+        };
+      }
       return { data: undefined, isLoading: false };
     });
 
-    const conversation = {
-      ...makeConversation({
-        assistant_id: 'bare-codex',
-        backend: 'codex',
-      }),
+    const conversation = makeConversation({
       assistant: {
-        id: 'bare-codex',
+        id: 'builtin-assistant-local-avatar',
         source: 'generated',
-        name: 'codex',
-        avatar: '',
+        name: 'Generated Assistant',
+        avatar: 'C:\\Users\\demo\\.tjuaeui\\assistant-avatars\\avatar.jpg',
         backend: 'codex',
       },
-    } as TChatConversation;
+    });
 
     const { result } = renderHook(() => usePresetAssistantInfo(conversation));
 
     expect(result.current.info).toEqual({
-      name: 'codex',
+      name: 'Generated Assistant',
+      logo: '',
+      isEmoji: false,
+      isFallback: true,
+      backend: 'codex',
+      assistantId: 'builtin-assistant-local-avatar',
+    });
+  });
+
+  it('returns no assistant when the current conversation has no assistant snapshot', () => {
+    const conversation = makeConversation({
+      extra: {
+        unrelated_id: 'ignored-field',
+        agent_name: 'Legacy Runtime',
+      },
+    });
+
+    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
+
+    expect(result.current).toEqual({ info: null, isLoading: false });
+  });
+
+  it('uses the assistant fallback when the current snapshot has no avatar', () => {
+    const conversation = makeConversation({
+      assistant: {
+        id: 'bare-codex',
+        source: 'generated',
+        name: 'Codex',
+        avatar: '',
+        backend: 'codex',
+      },
+    });
+
+    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
+
+    expect(result.current.info).toEqual({
+      name: 'Codex',
       logo: '',
       isEmoji: false,
       isFallback: true,
@@ -285,276 +191,27 @@ describe('usePresetAssistantInfo', () => {
       assistantId: 'bare-codex',
     });
   });
-
-  it('includes preset assistant backend when the assistant catalog resolves an identity', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
-        return {
-          data: [
-            {
-              id: 'assistant-social',
-              name: 'Social Job Publisher',
-              avatar: '🦜',
-              agent_id: 'agent-gemini',
-              agent: { type: 'acp', source: 'builtin', acp_backend: 'gemini' },
-              name_i18n: {},
-            },
-          ],
-          isLoading: false,
-        };
-      }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      assistant_id: 'assistant-social',
-      backend: 'claude',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Social Job Publisher',
-      logo: '🦜',
-      isEmoji: true,
-      backend: 'gemini',
-      assistantId: 'assistant-social',
-    });
-  });
-
-  it('falls back to custom runtime metadata when no assistant identity exists', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      agent_id: 'runtime-social',
-      agent_name: 'Gemini Runtime',
-      backend: 'gemini',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Gemini Runtime',
-      logo: getAgentLogo('gemini'),
-      isEmoji: false,
-      backend: 'gemini',
-    });
-  });
-
-  it('falls back to custom runtime metadata when legacy custom_agent_id is only a runtime row id', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      custom_agent_id: 'runtime-social',
-      agent_name: 'Gemini Runtime',
-      backend: 'gemini',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Gemini Runtime',
-      logo: getAgentLogo('gemini'),
-      isEmoji: false,
-      backend: 'gemini',
-    });
-  });
-
-  it('falls back to runtime metadata when an explicit assistant identity no longer resolves', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      assistant_id: 'assistant-deleted',
-      custom_agent_id: 'runtime-social',
-      agent_name: 'Gemini Runtime',
-      backend: 'gemini',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Gemini Runtime',
-      logo: getAgentLogo('gemini'),
-      isEmoji: false,
-      backend: 'gemini',
-    });
-  });
-
-  it('does not revive a different legacy assistant when an explicit assistant identity is present', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
-        return {
-          data: [
-            {
-              id: 'assistant-legacy',
-              name: 'Legacy Planner',
-              avatar: '🧭',
-              name_i18n: {},
-            },
-          ],
-          isLoading: false,
-        };
-      }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      assistant_id: 'assistant-deleted',
-      custom_agent_id: 'assistant-legacy',
-      agent_name: 'Gemini Runtime',
-      backend: 'gemini',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Gemini Runtime',
-      logo: getAgentLogo('gemini'),
-      isEmoji: false,
-      backend: 'gemini',
-    });
-  });
-
-  it('falls back from a stale assistant_id to a valid preset_assistant_id', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
-        return {
-          data: [
-            {
-              id: 'assistant-modern',
-              name: 'Modern Planner',
-              avatar: '🧭',
-              name_i18n: {},
-            },
-          ],
-          isLoading: false,
-        };
-      }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      assistant_id: 'assistant-deleted',
-      preset_assistant_id: 'assistant-modern',
-      custom_agent_id: 'runtime-social',
-      agent_name: 'Gemini Runtime',
-      backend: 'gemini',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Modern Planner',
-      logo: '🧭',
-      isEmoji: true,
-      assistantId: 'assistant-modern',
-    });
-  });
-
-  it('restores assistant info from a legacy custom_agent_id when it still matches an assistant id', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') {
-        return {
-          data: [
-            {
-              id: 'assistant-legacy',
-              name: 'Legacy Planner',
-              avatar: '🧭',
-              name_i18n: {},
-            },
-          ],
-          isLoading: false,
-        };
-      }
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      custom_agent_id: 'assistant-legacy',
-      backend: 'claude',
-      preset_context: '# Legacy Planner',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Legacy Planner',
-      logo: '🧭',
-      isEmoji: true,
-      assistantId: 'assistant-legacy',
-    });
-  });
-
-  it('falls back to a capitalized backend name when legacy runtime rows lack agent_name', () => {
-    useSWRMock.mockImplementation((key: unknown) => {
-      if (key === 'assistants') return { data: [], isLoading: false };
-      if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
-      return { data: undefined, isLoading: false };
-    });
-
-    const conversation = makeConversation({
-      agent_id: 'runtime-social',
-      backend: 'openclaw-gateway',
-    });
-
-    const { result } = renderHook(() => usePresetAssistantInfo(conversation));
-
-    expect(result.current.info).toEqual({
-      name: 'Openclaw Gateway',
-      logo: getAgentLogo('openclaw-gateway'),
-      isEmoji: false,
-      backend: 'openclaw-gateway',
-    });
-  });
-
-  it('treats legacy custom_agent_id as runtime-only when resolving explicit assistant identity', () => {
-    expect(
-      resolveAssistantConfigId(
-        makeConversation({
-          custom_agent_id: 'runtime-social',
-        })
-      )
-    ).toBeNull();
-
-    expect(
-      resolveAssistantConfigId(
-        makeConversation({
-          preset_assistant_id: 'assistant-modern',
-          custom_agent_id: 'runtime-social',
-        })
-      )
-    ).toBe('assistant-modern');
-  });
 });
 
-function makeConversation(extra: Record<string, unknown>): TChatConversation {
+function makeConversation({
+  assistant,
+  extra = {},
+}: {
+  assistant?: TConversationAssistantIdentity;
+  extra?: Record<string, unknown>;
+}): TChatConversation {
   return {
     id: 'conv-1',
-    user_id: 'user-1',
     name: '测试',
     type: 'acp',
-    model: {},
-    extra,
+    extra: {
+      backend: 'codex',
+      ...extra,
+    },
+    assistant,
     status: 'finished',
     source: 'tjuaeui',
     created_at: 1,
     modified_at: 1,
-    pinned: false,
   } as TChatConversation;
 }

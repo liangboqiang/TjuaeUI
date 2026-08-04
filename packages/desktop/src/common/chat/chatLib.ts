@@ -67,6 +67,7 @@ type TMessageType =
   | 'acp_tool_call'
   | 'plan'
   | 'thinking'
+  | 'a2a_part'
   | 'available_commands';
 
 interface IMessage<T extends TMessageType, Content extends Record<string, any>> {
@@ -351,6 +352,25 @@ export type IMessageThinking = IMessage<
   }
 >;
 
+export type A2aPartKind = 'resource' | 'data' | 'inline_file' | 'artifact';
+
+export type IMessageA2aPart = IMessage<
+  'a2a_part',
+  {
+    kind: A2aPartKind;
+    artifact_id?: string;
+    name?: string;
+    description?: string;
+    url?: string;
+    data?: unknown;
+    /** Standard base64 without a data-URL prefix. */
+    bytes_base64?: string;
+    byte_length?: number;
+    filename?: string;
+    media_type?: string;
+  }
+>;
+
 // Available commands from ACP agents (Claude, etc.)
 export type AvailableCommand = AcpAvailableCommand;
 
@@ -373,6 +393,7 @@ export type TMessage =
   | IMessageAcpToolCall
   | IMessagePlan
   | IMessageThinking
+  | IMessageA2aPart
   | IMessageAvailableCommands;
 
 // 统一所有需要用户交互的用户类型
@@ -802,6 +823,25 @@ export const transformMessage = (message: IResponseMessage): TMessage | undefine
           duration: data.duration ?? data.duration_ms,
           status: data.status,
         },
+      };
+    }
+    case 'a2a_part': {
+      const data = message.data as IMessageA2aPart['content'];
+      if (
+        !isObject(data) ||
+        (data.kind !== 'resource' && data.kind !== 'data' && data.kind !== 'inline_file' && data.kind !== 'artifact')
+      ) {
+        console.warn('[transformMessage] Ignoring malformed A2A part event.');
+        return undefined;
+      }
+      return {
+        id: uuid(),
+        type: 'a2a_part',
+        msg_id: message.msg_id,
+        position: 'left',
+        conversation_id: message.conversation_id,
+        created_at,
+        content: data,
       };
     }
     // Disabled: available_commands messages are too noisy and distracting in the chat UI

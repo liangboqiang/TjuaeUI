@@ -82,7 +82,12 @@ vi.mock('@/renderer/components/chat/SendBox', () => ({
   ),
 }));
 
-vi.mock('@/renderer/components/agent/AgentModeSelector', () => ({ default: () => null }));
+vi.mock('@/renderer/components/agent/AgentModeSelector', () => ({
+  default: () => <span data-testid='agent-mode-selector' />,
+}));
+vi.mock('@/renderer/components/agent/AcpModelSelector', () => ({
+  default: () => <span data-testid='acp-model-selector' />,
+}));
 vi.mock('@/renderer/components/chat/CommandQueuePanel', () => ({ default: () => null }));
 vi.mock('@/renderer/components/chat/MobileActionSheet', () => ({
   default: ({
@@ -206,7 +211,23 @@ vi.mock('@arco-design/web-react', () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    className,
+  }: {
+    children?: React.ReactNode;
+    onClick?: React.MouseEventHandler<HTMLButtonElement>;
+    disabled?: boolean;
+    className?: string;
+  }) => (
+    <button type='button' onClick={onClick} disabled={disabled} className={className}>
+      {children}
+    </button>
+  ),
   Tag: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
 }));
 
 const makeMessageState = (): UseAcpMessageReturn => ({
@@ -464,6 +485,21 @@ describe('AcpSendBox', () => {
 
     expect(useAcpConfigOptionsMock).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
     expect(screen.queryByTestId('mock-thought-selector')).not.toBeInTheDocument();
+  });
+
+  it('hides ACP-only model and permission controls for an A2A conversation', () => {
+    render(
+      <AcpSendBox
+        conversation_id='conv-a2a'
+        backend='remote-agent'
+        conversationType='a2a'
+        messageState={makeMessageState()}
+      />
+    );
+
+    expect(useAcpConfigOptionsMock).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
+    expect(screen.queryByTestId('acp-model-selector')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('agent-mode-selector')).not.toBeInTheDocument();
   });
 
   it('applies runtime thought level from the mobile action sheet without persisting a global preference', async () => {

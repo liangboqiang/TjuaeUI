@@ -14,6 +14,18 @@
   "copiedToClipboard": "In die Zwischenablage kopiert",
   "downloadSuccess": "Download erfolgreich",
   "downloadFailed": "Download fehlgeschlagen",
+  "a2aPart": {
+    "unnamed": "A2A-Inhalt",
+    "unsupportedUrl": "Nur HTTP- und HTTPS-Links können geöffnet werden.",
+    "openConfirmTitle": "Externe A2A-Ressource öffnen?",
+    "openConfirmContent": "Dieser Link wurde von einem entfernten Agenten bereitgestellt. Prüfen Sie vor dem Fortfahren das Ziel.",
+    "open": "Öffnen",
+    "downloadConfirmTitle": "Inhalt von diesem A2A-Agenten herunterladen?",
+    "downloadConfirmContent": "Speichern Sie „{{name}}“ nur lokal, wenn Sie dem entfernten Agenten vertrauen und diese Datei erwartet haben.",
+    "download": "Herunterladen",
+    "structuredData": "Strukturierte Daten",
+    "inlineTooLarge": "Die eingebettete Datei überschreitet das sichere Download-Limit von 2 MiB."
+  },
   "imageLoadFailed": "Bild konnte nicht geladen werden",
   "scrollToBottom": "Nach unten scrollen",
   "availableCommands": "{{count}} verfügbare Befehle",

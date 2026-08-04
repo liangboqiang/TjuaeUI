@@ -26,7 +26,7 @@ import { useGuidInput } from './hooks/useGuidInput';
 import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
 import { useTypewriterPlaceholder } from './hooks/useTypewriterPlaceholder';
-import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
+import { loadRuntimeMcpCatalog } from '@/renderer/services/mcpRuntimeCatalog';
 import { resolveGuidAssistantDefaults } from './utils/assistantDefaults';
 import SpeechInputButton from '@/renderer/components/chat/SpeechInputButton';
 import { useOpenFileSelector } from '@/renderer/hooks/file/useOpenFileSelector';
@@ -70,24 +70,21 @@ const GuidPage: React.FC = () => {
   }, []);
 
   // --- Skills state ---
-  // Skill metadata comes from the database-backed catalog. Built-in auto-inject
-  // skills default checked; the rest are opt-in per conversation or pre-checked
-  // by assistant defaults.
-  const [allSkills, setAllSkills] = useState<Array<{ name: string; description: string; isAuto: boolean }>>([]);
-  const [guidDisabledBuiltinSkills, setGuidDisabledBuiltinSkills] = useState<string[] | undefined>(undefined);
+  // Skill metadata comes from the Core-owned local catalog. Selection is
+  // explicit per conversation or inherited from assistant defaults.
+  const [allSkills, setAllSkills] = useState<Array<{ name: string; description: string }>>([]);
   const [guidEnabledSkills, setGuidEnabledSkills] = useState<string[] | undefined>(undefined);
   const [availableMcpServers, setAvailableMcpServers] = useState<IMcpServer[]>([]);
   const [guidSelectedMcpServerIds, setGuidSelectedMcpServerIds] = useState<string[] | undefined>(undefined);
 
   useEffect(() => {
-    ipcBridge.fs.listAvailableSkills
+    ipcBridge.skills.listRuntime
       .invoke()
       .then((availableSkills) => {
         setAllSkills(
           availableSkills.map((s) => ({
             name: s.name,
             description: s.description,
-            isAuto: s.source === 'builtin' && s.is_auto_inject,
           }))
         );
       })
@@ -95,9 +92,9 @@ const GuidPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    void ensureBackendMcpCatalog()
-      .then(({ allServers }) => {
-        setAvailableMcpServers(allServers);
+    void loadRuntimeMcpCatalog()
+      .then((servers) => {
+        setAvailableMcpServers(servers);
       })
       .catch((error) => {
         console.error('[GuidPage] Failed to load MCP catalog:', error);
@@ -105,18 +102,11 @@ const GuidPage: React.FC = () => {
       });
   }, []);
 
-  const handleToggleSkill = useCallback((skillName: string, isAuto: boolean) => {
-    if (isAuto) {
-      setGuidDisabledBuiltinSkills((prev) => {
-        const list = prev ?? [];
-        return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
-      });
-    } else {
-      setGuidEnabledSkills((prev) => {
-        const list = prev ?? [];
-        return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
-      });
-    }
+  const handleToggleSkill = useCallback((skillName: string) => {
+    setGuidEnabledSkills((prev) => {
+      const list = prev ?? [];
+      return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
+    });
   }, []);
 
   const handleToggleMcpServer = useCallback((serverId: string) => {
@@ -133,7 +123,8 @@ const GuidPage: React.FC = () => {
 
   const navState = location.state as GuidNavigationState | null;
   const resetAssistantRequested = navState?.resetAssistant === true;
-  const preselectAssistantId = navState?.selectedAssistantId;
+  const linkedAssistantId = new URLSearchParams(location.search).get('assistant')?.trim() || undefined;
+  const preselectAssistantId = navState?.selectedAssistantId ?? linkedAssistantId;
   const agentSelection = useGuidAssistantSelection({
     resetAssistant: resetAssistantRequested,
     preselectAssistantId,
@@ -171,21 +162,10 @@ const GuidPage: React.FC = () => {
     [selectedAssistantDetail]
   );
   const selectedSkillNames = useMemo(() => {
-    const disabledBuiltinSkillSet = new Set(
-      guidDisabledBuiltinSkills ?? resolvedAssistantDefaults.disabledBuiltinSkillIds
-    );
     const enabledSkillSet = new Set(guidEnabledSkills ?? resolvedAssistantDefaults.skillIds);
 
-    return allSkills
-      .filter((skill) => (skill.isAuto ? !disabledBuiltinSkillSet.has(skill.name) : enabledSkillSet.has(skill.name)))
-      .map((skill) => skill.name);
-  }, [
-    allSkills,
-    guidDisabledBuiltinSkills,
-    guidEnabledSkills,
-    resolvedAssistantDefaults.disabledBuiltinSkillIds,
-    resolvedAssistantDefaults.skillIds,
-  ]);
+    return allSkills.filter((skill) => enabledSkillSet.has(skill.name)).map((skill) => skill.name);
+  }, [allSkills, guidEnabledSkills, resolvedAssistantDefaults.skillIds]);
   const skillDescriptionByName = useMemo(
     () => new Map(allSkills.map((skill) => [skill.name, skill.description])),
     [allSkills]
@@ -263,10 +243,8 @@ const GuidPage: React.FC = () => {
     currentAcpCachedModelInfo: agentSelection.currentAcpCachedModelInfo,
     current_model: modelSelection.current_model,
 
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
     assistantDefaultSkillIds: resolvedAssistantDefaults.skillIds,
-    assistantDefaultDisabledBuiltinSkillIds: resolvedAssistantDefaults.disabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds: guidSelectedMcpServerIds,
     assistantDefaultMcpIds: resolvedAssistantDefaults.mcpIds,
@@ -318,10 +296,7 @@ const GuidPage: React.FC = () => {
   const typewriterPlaceholder = useTypewriterPlaceholder(t('conversation.welcome.placeholder'));
   const selectedAssistantRecord = useMemo(() => {
     if (!selectedAssistantId) return undefined;
-    const selectedId = agentSelection.selectedAssistantId;
-    const strippedId = selectedId.replace(/^builtin-/, '');
-    const candidates = new Set([selectedId, `builtin-${strippedId}`, strippedId]);
-    return agentSelection.assistants.find((item) => candidates.has(item.id));
+    return agentSelection.assistants.find((item) => item.id === agentSelection.selectedAssistantId);
   }, [agentSelection.assistants, selectedAssistantId, agentSelection.selectedAssistantId]);
   const selectedAssistantPrompts = useMemo(() => {
     if (!selectedAssistantId) return [];
@@ -341,16 +316,14 @@ const GuidPage: React.FC = () => {
     return [t('guid.defaultPrompts.understand'), t('guid.defaultPrompts.cleanup'), t('guid.defaultPrompts.create')];
   }, [localeKey, selectedAssistantDetail, selectedAssistantRecord, selectedAssistantId, t]);
 
-  // Sync disabledBuiltinSkills + enabledSkills from assistant detail defaults.
+  // Sync the selected skills from assistant detail defaults.
   useEffect(() => {
     if (!selectedAssistantId || !selectedAssistantDetail) {
-      setGuidDisabledBuiltinSkills(undefined);
       setGuidEnabledSkills(undefined);
       return;
     }
 
     const resolvedDefaults = resolveGuidAssistantDefaults(selectedAssistantDetail);
-    setGuidDisabledBuiltinSkills(resolvedDefaults.disabledBuiltinSkillIds);
     setGuidEnabledSkills(resolvedDefaults.skillIds);
   }, [selectedAssistantDetail, selectedAssistantId]);
 
@@ -625,7 +598,6 @@ const GuidPage: React.FC = () => {
       dynamicModes={agentSelection.currentAgentModeOptions}
       onModeSelect={setGuidSelectedMode}
       allSkills={allSkills}
-      disabledBuiltinSkills={guidDisabledBuiltinSkills ?? []}
       enabledSkills={guidEnabledSkills ?? []}
       onToggleSkill={handleToggleSkill}
       mcpServers={availableMcpServers}

@@ -35,7 +35,7 @@ export function useStatusIcons() {
 }
 
 // Map ACP status values to mobile icon keys
-export function mapAcpStatus(status: string): string {
+export function mapAcpStatus(status: string): 'executing' | 'success' | 'error' | 'pending' {
   switch (status) {
     case 'in_progress':
       return 'executing';
@@ -103,7 +103,7 @@ export function ToolCallBlock({ content, type }: ToolCallBlockProps) {
     const update = content.update;
     const acpStatus = mapAcpStatus(update.status || 'pending');
     const title = update.title || update.kind || t('chat.toolCall');
-    const info = statusIcons[acpStatus] || statusIcons.pending;
+    const info = statusIcons[acpStatus];
 
     return (
       <View style={[styles.container, { backgroundColor: surface }]}>
@@ -111,6 +111,9 @@ export function ToolCallBlock({ content, type }: ToolCallBlockProps) {
           style={[styles.item, { borderBottomColor: border }]}
           onPress={() => setExpanded(!expanded)}
           activeOpacity={0.7}
+          accessibilityRole='button'
+          accessibilityState={{ expanded }}
+          accessibilityLabel={title}
         >
           <Ionicons name={info.icon} size={18} color={info.color} />
           <ThemedText style={styles.toolName} numberOfLines={expanded ? undefined : 1}>
@@ -138,6 +141,9 @@ export function ToolCallBlock({ content, type }: ToolCallBlockProps) {
         style={[styles.item, { borderBottomColor: border }]}
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
+        accessibilityRole='button'
+        accessibilityState={{ expanded }}
+        accessibilityLabel={title}
       >
         <Ionicons name={info.icon} size={18} color={info.color} />
         <ThemedText style={styles.toolName} numberOfLines={expanded ? undefined : 1}>
@@ -199,7 +205,10 @@ export function WebSearchBlock({ content }: { content: any }) {
 
 // --- Diff Display ---
 
-function parseDiffStats(unifiedDiff: string): { fileName: string; insertions: number; deletions: number } {
+function parseDiffStats(
+  unifiedDiff: string,
+  fallbackFileName: string
+): { fileName: string; insertions: number; deletions: number } {
   let fileName = '';
   let insertions = 0;
   let deletions = 0;
@@ -232,7 +241,7 @@ function parseDiffStats(unifiedDiff: string): { fileName: string; insertions: nu
     fileName = parts[parts.length - 1];
   }
 
-  return { fileName: fileName || t('files.defaultFile'), insertions, deletions };
+  return { fileName: fileName || fallbackFileName, insertions, deletions };
 }
 
 export function DiffBlock({ content }: { content: any }) {
@@ -247,7 +256,7 @@ export function DiffBlock({ content }: { content: any }) {
   const text = useThemeColor({}, 'text');
 
   const unifiedDiff = content.data?.unified_diff || '';
-  const stats = parseDiffStats(unifiedDiff);
+  const stats = parseDiffStats(unifiedDiff, t('files.defaultFile'));
 
   return (
     <View style={[styles.container, { backgroundColor: surface }]}>
@@ -255,6 +264,9 @@ export function DiffBlock({ content }: { content: any }) {
         style={[styles.item, { borderBottomColor: border }]}
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
+        accessibilityRole='button'
+        accessibilityState={{ expanded }}
+        accessibilityLabel={stats.fileName}
       >
         <View style={[styles.diffDot, { backgroundColor: success }]} />
         <ThemedText style={styles.toolName} numberOfLines={1}>
@@ -301,6 +313,7 @@ export function ToolItem({
   border: string;
   iconColor: string;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const statusIcons = useStatusIcons();
   const status = tool.status || 'Executing';
@@ -312,6 +325,9 @@ export function ToolItem({
         style={[styles.item, { borderBottomColor: border }]}
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
+        accessibilityRole='button'
+        accessibilityState={{ expanded }}
+        accessibilityLabel={tool.description || tool.name || t('chat.toolCall')}
       >
         <Ionicons name={info.icon} size={18} color={info.color} />
         <ThemedText style={styles.toolName} numberOfLines={1}>
@@ -345,6 +361,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    minHeight: 44,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   toolName: {

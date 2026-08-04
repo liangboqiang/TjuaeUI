@@ -193,100 +193,83 @@ const GuidModelSelector: React.FC<GuidModelSelectorProps> = ({
   }
 
   // ACP cached model selector
-  if (currentAcpCachedModelInfo && currentAcpCachedModelInfo.available_models?.length > 0) {
-    if (currentAcpCachedModelInfo.available_models.length > 0) {
-      const modelListNode = (
-        <RuntimeSelectorModelList
-          models={currentAcpCachedModelInfo.available_models}
-          currentModelId={selectedAcpModel}
-          onSelect={(modelId) => setSelectedAcpModel(modelId)}
-        />
-      );
-
-      return (
-        <Dropdown
-          trigger='click'
-          droplist={
-            <Menu selectedKeys={selectedAcpModel ? [selectedAcpModel] : []}>
-              {normalizedThoughtLevelOption ? (
-                <>
-                  {/* Two-level layout: model row on top, thought-level row below;
-                      each expands into a left-side submenu. */}
-                  <Menu.SubMenu
-                    key='model'
-                    triggerProps={RUNTIME_SUBMENU_TRIGGER_PROPS}
-                    title={
-                      <RuntimeSelectorSubMenuTitle
-                        label={t('common.model', { defaultValue: 'Model' })}
-                        value={acpButtonLabel}
-                      />
-                    }
-                  >
-                    {modelListNode}
-                  </Menu.SubMenu>
-                  <Menu.SubMenu
-                    key='thought-level'
-                    triggerProps={RUNTIME_SUBMENU_TRIGGER_PROPS}
-                    title={
-                      <RuntimeSelectorSubMenuTitle
-                        label={t('agent.thoughtLevel.label')}
-                        value={getCurrentThoughtLevelLabel(normalizedThoughtLevelOption)}
-                      />
-                    }
-                  >
-                    {normalizedThoughtLevelOption.options.map((item) => (
-                      <Menu.Item
-                        key={item.value}
-                        className={item.value === normalizedThoughtLevelOption.currentValue ? '!bg-2' : ''}
-                        onClick={() => onThoughtLevelSelect?.(item.value)}
-                      >
-                        <RuntimeSelectorCheckedItem
-                          selected={item.value === normalizedThoughtLevelOption.currentValue}
-                          description={item.description}
-                        >
-                          {item.label}
-                        </RuntimeSelectorCheckedItem>
-                      </Menu.Item>
-                    ))}
-                  </Menu.SubMenu>
-                </>
-              ) : (
-                modelListNode
-              )}
-            </Menu>
-          }
-        >
-          <Button className={'sendbox-model-btn guid-config-btn'} shape='round' size='small'>
-            <span className='flex items-center gap-6px min-w-0'>
-              <Brain theme='outline' size='14' fill={iconColors.secondary} className='shrink-0' />
-              <span className='guid-model-label'>{combinedAcpButtonLabel}</span>
-              <Down theme='outline' size='12' fill={iconColors.secondary} className='shrink-0' />
-            </span>
-          </Button>
-        </Dropdown>
-      );
-    }
+  if (currentAcpCachedModelInfo?.available_models?.length) {
+    const modelListNode = (
+      <RuntimeSelectorModelList
+        models={currentAcpCachedModelInfo.available_models}
+        currentModelId={selectedAcpModel}
+        onSelect={(modelId) => setSelectedAcpModel(modelId)}
+      />
+    );
 
     return (
-      <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
-        <Button
-          className={'sendbox-model-btn guid-config-btn'}
-          shape='round'
-          size='small'
-          style={{ cursor: 'default' }}
-        >
+      <Dropdown
+        trigger='click'
+        droplist={
+          <Menu selectedKeys={selectedAcpModel ? [selectedAcpModel] : []}>
+            {normalizedThoughtLevelOption ? (
+              <>
+                {/* Two-level layout: model row on top, thought-level row below;
+                    each expands into a left-side submenu. */}
+                <Menu.SubMenu
+                  key='model'
+                  triggerProps={RUNTIME_SUBMENU_TRIGGER_PROPS}
+                  title={
+                    <RuntimeSelectorSubMenuTitle
+                      label={t('common.model', { defaultValue: 'Model' })}
+                      value={acpButtonLabel}
+                    />
+                  }
+                >
+                  {modelListNode}
+                </Menu.SubMenu>
+                <Menu.SubMenu
+                  key='thought-level'
+                  triggerProps={RUNTIME_SUBMENU_TRIGGER_PROPS}
+                  title={
+                    <RuntimeSelectorSubMenuTitle
+                      label={t('agent.thoughtLevel.label')}
+                      value={getCurrentThoughtLevelLabel(normalizedThoughtLevelOption)}
+                    />
+                  }
+                >
+                  {normalizedThoughtLevelOption.options.map((item) => (
+                    <Menu.Item
+                      key={item.value}
+                      className={item.value === normalizedThoughtLevelOption.currentValue ? '!bg-2' : ''}
+                      onClick={() => onThoughtLevelSelect?.(item.value)}
+                    >
+                      <RuntimeSelectorCheckedItem
+                        selected={item.value === normalizedThoughtLevelOption.currentValue}
+                        description={item.description}
+                      >
+                        {item.label}
+                      </RuntimeSelectorCheckedItem>
+                    </Menu.Item>
+                  ))}
+                </Menu.SubMenu>
+              </>
+            ) : (
+              modelListNode
+            )}
+          </Menu>
+        }
+      >
+        <Button className={'sendbox-model-btn guid-config-btn'} shape='round' size='small'>
           <span className='flex items-center gap-6px min-w-0'>
             <Brain theme='outline' size='14' fill={iconColors.secondary} className='shrink-0' />
-            <span className='guid-model-label'>{acpButtonLabel}</span>
+            <span className='guid-model-label'>{combinedAcpButtonLabel}</span>
+            <Down theme='outline' size='12' fill={iconColors.secondary} className='shrink-0' />
           </span>
         </Button>
-      </Tooltip>
+      </Dropdown>
     );
   }
 
-  // Fallback: no model switching
+  // Model discovery is an explicit diagnostic operation. The selector only
+  // consumes persisted catalog data and never asks for a throwaway message.
   return (
-    <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
+    <Tooltip content={t('conversation.welcome.modelCatalogUnavailable')} position='top'>
       <Button className={'sendbox-model-btn guid-config-btn'} shape='round' size='small' style={{ cursor: 'default' }}>
         <span className='flex items-center gap-6px min-w-0'>
           <Brain theme='outline' size='14' fill={iconColors.secondary} className='shrink-0' />

@@ -1,58 +1,59 @@
-export type HubExtensionStatus =
-  | 'not_installed'
-  | 'installing'
-  | 'installed'
-  | 'install_failed'
-  | 'update_available'
-  | 'uninstalling';
+export type HubAssetKind = 'assistant' | 'engineAdapter' | 'skill' | 'mcp';
+export type HubPublishWarningCode = 'SENSITIVE_FIELDS_REMOVED';
 
-/**
- * Declarative contributes in hub index.
- * Each key mirrors ExtContributesSchemaBase but values are string ID arrays
- * indicating what capabilities the extension provides.
- */
-export type HubContributes = {
-  acpAdapters?: string[];
-  mcpServers?: string[];
-  assistants?: string[];
-  agents?: string[];
-  skills?: string[];
-  channelPlugins?: string[];
-  webui?: string[];
-  themes?: string[];
-  settingsTabs?: string[];
-  modelProviders?: string[];
+export type HubPackageFile = {
+  path: string;
+  content: string;
+  sha256: string;
+  size: number;
 };
 
-export interface IHubExtension {
-  name: string; // Extension unique ID
-  display_name: string; // UI display name
-  version?: string;
-  description: string;
+export type HubCanonicalPackage = {
+  packageName: string;
+  manifest: Record<string, unknown>;
+  files: HubPackageFile[];
+};
+
+export type HubPublishRequest = {
+  assetKind: HubAssetKind;
+  assetId: string;
+  packageName: string;
+  version: string;
   author: string;
-  icon?: string; // Path relative to extension root
-  dist: {
-    tarball: string; // Relative path e.g. extensions/ext-claude-code.tgz
-    integrity: string; // 解压后规范内容的 SHA-256。
-    archiveIntegrity: string; // 下载归档字节的 SHA-256。
-    unpackedSize: number;
-  };
-  engines: {
-    tjuae: string; // Minimum Tjuae platform version requirement
-  };
-  hubs: string[]; // Hub categories e.g. ["acpAdapters"]
-  contributes?: HubContributes;
-  tags?: string[];
-  bundled?: boolean; // Set at runtime by HubIndexManager for local bundled extensions
-}
+  license: string;
+  sourceRepository: string;
+  metadataConfirmed: boolean;
+  idempotencyKey: string;
+  title?: string;
+  body?: string;
+};
 
-export interface IHubIndex {
-  schemaVersion: number;
-  generatedAt: string;
-  extensions: Record<string, IHubExtension>;
-}
+export type HubPublishConnectionStatus = {
+  state: 'notConfigured' | 'disconnected' | 'authorizationPending' | 'connected' | 'insufficientPermissions';
+  account?: string;
+  userCode?: string;
+  verificationUri?: string;
+  expiresAt?: number;
+  pollAfterMs?: number;
+  reasonCode?: string;
+};
 
-export interface IHubAgentItem extends IHubExtension {
-  status: HubExtensionStatus;
-  installError?: string; // Error message if install failed
-}
+export type HubPublishPreparation = {
+  status: 'notPushed';
+  package: HubCanonicalPackage;
+  proposedBranchName: string;
+  baseBranch: 'main';
+  repository: string;
+  manualContributionUrl: string;
+  requiresUserAction: true;
+  warningCodes: HubPublishWarningCode[];
+  blockedFields: string[];
+};
+
+export type HubPublishResult = {
+  status: 'published';
+  operationId: string;
+  branchName: string;
+  pullRequestUrl: string;
+  repository: string;
+};

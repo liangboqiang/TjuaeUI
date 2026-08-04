@@ -107,7 +107,7 @@ extraResources:
     to: .
   - from: resources/app.png
     to: app.png
-  # tjuaecore binary (pre-compiled per platform/arch, ships its own bun runtime)
+  # tjuaecore binary and the single managed Node runtime prepared for this platform/arch
   - from: resources/bundled-tjuaecore
     to: bundled-tjuaecore
   - from: resources/hub
@@ -117,6 +117,9 @@ win:
     - nsis
     #    - msi
   icon: resources/app.ico # Use the checked-in Windows icon resource for executable metadata/icon patching
+  # Sign the bundled Core and managed Node executables in addition to the app and installer.
+  signExts:
+    - .exe
   artifactName: ${productName}-${version}-${os}-${arch}.${ext}
 
 nsis:
@@ -203,8 +206,6 @@ asarUnpack:
   # tree-sitter WASM files need to be unpacked for fs.readFile access
   - '**/node_modules/web-tree-sitter/**/*'
   - '**/node_modules/tree-sitter-bash/**/*'
-  # Builtin MCP server scripts must be unpacked so external node processes can execute them
-  - 'out/main/builtin-mcp-image-gen.js'
   - 'out/main/team-mcp-stdio.js'
 
 # Compression level: normal for faster builds, maximum for smallest size

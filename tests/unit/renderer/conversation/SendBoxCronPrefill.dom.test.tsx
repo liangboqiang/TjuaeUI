@@ -21,8 +21,10 @@ vi.mock('react-i18next', () => ({
 vi.mock('@/common', () => ({
   ipcBridge: {
     fs: {
-      listAvailableSkills: { invoke: vi.fn().mockResolvedValue([]) },
       listWorkspaceFiles: { invoke: vi.fn().mockResolvedValue([]) },
+    },
+    skills: {
+      listRuntime: { invoke: vi.fn().mockResolvedValue([]) },
     },
   },
 }));

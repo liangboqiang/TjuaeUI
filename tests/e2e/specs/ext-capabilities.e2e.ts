@@ -16,9 +16,6 @@ test.describe('Extension: Complete Capabilities', () => {
     const assistantIds = snapshot.assistants.map((item) => item.id);
     expect(assistantIds).toEqual(expect.arrayContaining(['ext-e2e-test-assistant', 'ext-hello-assistant']));
 
-    const agentIds = snapshot.agents.map((item) => item.id);
-    expect(agentIds).toEqual(expect.arrayContaining(['ext-hello-coder', 'ext-hello-researcher']));
-
     const mcpServerNames = snapshot.mcp_servers.map((item) => item.name);
     expect(mcpServerNames).toEqual(expect.arrayContaining(['e2e-echo-server', 'hello-echo-mcp']));
 

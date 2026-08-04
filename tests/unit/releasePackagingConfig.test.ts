@@ -54,6 +54,27 @@ describe('发布打包配置', () => {
     expect(workflow).toContain('至少一个目标平台构建失败');
   });
 
+  it('标签发布强制 Windows 与 macOS 正式签名且公证失败不能放行', () => {
+    const reusable = readProjectFile('.github/workflows/_build-reusable.yml');
+    const release = readProjectFile('.github/workflows/build-and-release.yml');
+    const manual = readProjectFile('.github/workflows/build-manual.yml');
+    const afterSign = readProjectFile('scripts/afterSign.js');
+    const config = readProjectFile('packages/desktop/electron-builder.yml');
+
+    expect(release).toContain('require_distribution_signing: true');
+    expect(reusable).toContain('require_distribution_signing:');
+    expect(reusable).toContain('WINDOWS_CERTIFICATE_BASE64');
+    expect(reusable).toContain('CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}');
+    expect(reusable).toContain('Get-AuthenticodeSignature');
+    expect(reusable).toContain('xcrun stapler validate');
+    expect(reusable).not.toContain('mapfile');
+    expect(reusable).toContain('正式分发禁止发布未公证或未装订的 macOS 产物');
+    expect(manual).not.toContain('require_distribution_signing: true');
+    expect(afterSign).toContain("process.env.TJUAEUI_REQUIRE_DISTRIBUTION_SIGNING === '1'");
+    expect(afterSign).toContain('正式分发要求有效的 Developer ID 签名');
+    expect(config).toMatch(/signExts:\s*\n\s+- \.exe/);
+  });
+
   it('使用固定的 Bun 工具链版本', () => {
     const packageJson = JSON.parse(readProjectFile('package.json')) as { packageManager?: string };
 

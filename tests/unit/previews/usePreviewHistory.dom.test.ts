@@ -14,22 +14,19 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { usePreviewHistory } from '@/renderer/pages/conversation/Preview/hooks/usePreviewHistory';
 
 describe('usePreviewHistory module shape', () => {
-  it('module loads and exposes usePreviewHistory', async () => {
-    const mod = await import('@/renderer/pages/conversation/Preview/hooks/usePreviewHistory');
-    expect(mod).toBeDefined();
-    expect(mod.usePreviewHistory).toBeDefined();
+  it('module loads and exposes usePreviewHistory', () => {
+    expect(usePreviewHistory).toBeDefined();
   });
 
-  it('usePreviewHistory is a function (React hook)', async () => {
-    const mod = await import('@/renderer/pages/conversation/Preview/hooks/usePreviewHistory');
-    expect(typeof mod.usePreviewHistory).toBe('function');
+  it('usePreviewHistory is a function (React hook)', () => {
+    expect(typeof usePreviewHistory).toBe('function');
   });
 
-  it('the hook function has at most one parameter (options bag)', async () => {
-    const mod = await import('@/renderer/pages/conversation/Preview/hooks/usePreviewHistory');
+  it('the hook function has at most one parameter (options bag)', () => {
     // React hooks typically take one options argument; assert a loose upper bound.
-    expect((mod.usePreviewHistory as { length: number }).length).toBeLessThanOrEqual(2);
+    expect((usePreviewHistory as { length: number }).length).toBeLessThanOrEqual(2);
   });
 });

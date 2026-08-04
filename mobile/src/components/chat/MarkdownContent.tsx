@@ -126,7 +126,12 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
           <View key={node.key} style={fenceStyles.wrapper}>
             <View style={[fenceStyles.header, { backgroundColor: codeBackground }]}>
               <ThemedText style={[fenceStyles.lang, { color: textSecondary }]}>{language}</ThemedText>
-              <TouchableOpacity onPress={() => handleCopy(code)} hitSlop={8}>
+              <TouchableOpacity
+                onPress={() => handleCopy(code)}
+                hitSlop={8}
+                accessibilityRole='button'
+                accessibilityLabel={t('common.copy')}
+              >
                 <Ionicons name='copy-outline' size={16} color={textSecondary} />
               </TouchableOpacity>
             </View>
@@ -135,7 +140,7 @@ export function MarkdownContent({ content }: MarkdownContentProps) {
         );
       },
     }),
-    [codeBackground, textSecondary, handleCopy]
+    [codeBackground, textSecondary, handleCopy, t]
   );
 
   return (

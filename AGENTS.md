@@ -14,7 +14,7 @@
 
 - **组件**：PascalCase（`Button.tsx`、`Modal.tsx`）
 - **工具函数**：camelCase（`formatDate.ts`）
-- **Hooks**：带 `use` 前缀的 camelCase（`useTheme.ts`）
+- **钩子**：带 `use` 前缀的 camelCase（`useTheme.ts`）
 - **常量文件**：camelCase（`constants.ts`），文件内的常量值使用 UPPER_SNAKE_CASE
 - **类型文件**：camelCase（`types.ts`）
 - **样式文件**：kebab-case 或 `ComponentName.module.css`
@@ -38,7 +38,7 @@
 - 多行数组和对象必须保留尾随逗号
 - 字符串使用单引号
 
-### TypeScript
+### TypeScript 规范
 
 - 已启用严格模式：禁止 `any`，禁止隐式返回
 - 使用路径别名：`@/*`、`@process/*`、`@renderer/*`
@@ -81,7 +81,7 @@ bun run test:coverage     # 运行测试并生成覆盖率报告
 - **当前变更要求**：命名、CSS、文件位置、测试、文档、目录规模和单文件目录规则，适用于本次新建或实质修改的文件。
 - **渐进收紧规则**：普通功能或缺陷修复不要求顺带清理既有的目录规模或单文件目录问题，但本次变更不得使问题恶化。
 - **不得扩张范围**：除非用户明确要求，否则实施计划和代码审查不得额外增加清理任务、阶段或验收条件。
-- **忽略的工作文档**：`docs/superpowers/` 专用于本地 Superpowers 规格与计划，已被 gitignore；不得强制添加或提交其中的文件。
+- **忽略的工作文档**：`docs/superpowers/` 专用于本地 Superpowers 规格与计划，已被 Git 忽略规则排除；不得强制添加或提交其中的文件。
 
 ### 开发过程中
 
@@ -111,7 +111,7 @@ just push -u origin feat/branch    # 执行相同检查，并附加 git push 参
 
 任一步骤失败都会中止推送。修复问题并提交后再重试。
 
-> **AI 智能体注意事项**：`just push` 会为 lint 添加 `--quiet`；只有错误才会导致失败。项目中存在较多既有 lint _warning_，它们不代表命令失败。应根据退出码判断结果，而不是根据输出量判断。
+> **AI 智能体注意事项**：`just push` 会为代码检查命令添加 `--quiet`；只有错误才会导致失败。项目中存在较多既有代码检查警告，它们不代表命令失败。应根据退出码判断结果，而不是根据输出量判断。
 
 ### PR 前可选的严格检查
 
@@ -127,9 +127,9 @@ prek run --from-ref origin/main --to-ref HEAD
 
 > `prek` 只读，不会自动修复。若发现问题，先运行上面的自动修复命令，提交后再重新执行。
 
-### Commit 与 PR 格式
+### 提交与 PR 格式
 
-Commit 和 PR 标题必须遵循 [CONTRIBUTING.md](CONTRIBUTING.md) 规定的 Conventional Commit 格式；类型与范围使用约定的英文标识，主题使用简体中文：
+提交和 PR 标题必须遵循 [CONTRIBUTING.md](CONTRIBUTING.md) 规定的约定式提交格式；类型与范围使用约定的英文标识，主题使用简体中文：
 
 ```text
 <type>(<scope>): <subject>

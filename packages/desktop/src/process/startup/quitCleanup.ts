@@ -16,7 +16,6 @@ type QuitCleanupDeps = {
   destroyTray: () => void;
   disposeCronResumeListener: () => void;
   stopBackend: () => Promise<void>;
-  destroyPetWindow: () => Promise<void> | void;
   logInfo: (message: string) => void;
   logWarn: (message: string) => void;
   logError: (message: string, error: unknown) => void;
@@ -56,12 +55,6 @@ async function runQuitCleanup(deps: QuitCleanupDeps): Promise<void> {
     deps.disposeCronResumeListener();
 
     await deps.stopBackend().catch((err) => deps.logError('[App] Failed to stop backend:', err));
-
-    try {
-      await deps.destroyPetWindow();
-    } catch {
-      /* pet not initialized */
-    }
   };
 
   await runWithTimeout(cleanup(), deps.timeoutMs ?? DEFAULT_QUIT_CLEANUP_TIMEOUT_MS, deps.logWarn);

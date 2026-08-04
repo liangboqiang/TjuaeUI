@@ -173,7 +173,9 @@ const ProtocolDetectionStatus: React.FC<ProtocolDetectionStatusProps> = ({
         <div className='flex items-center justify-center w-16px h-16px rounded-4px bg-warning/10 shrink-0'>
           <span className='text-10px font-medium'>!</span>
         </div>
-        <span className='truncate'>{suggestion ? getSuggestionMessage(suggestion, t) : result.error}</span>
+        <span className='truncate'>
+          {suggestion ? getSuggestionMessage(suggestion, t) : t('settings.protocolDetectFailed')}
+        </span>
       </div>
     );
   }
@@ -635,13 +637,7 @@ const AddPlatformModal = ModalHOC<{
             required
             rules={[{ required: true }]}
             validateStatus={!isFullUrl && modelListState.error ? 'error' : 'success'}
-            help={
-              !isFullUrl && modelListState.error instanceof Error
-                ? modelListState.error.message
-                : !isFullUrl && modelListState.error
-                  ? String(modelListState.error)
-                  : undefined
-            }
+            help={!isFullUrl && modelListState.error ? t('settings.agentModelLoadFailed') : undefined}
           >
             <Select
               mode='multiple'
@@ -704,8 +700,9 @@ const AddPlatformModal = ModalHOC<{
                             }) || [];
                           // Update the model list state manually
                           void modelListState.mutate({ models }, false);
-                        } catch (error: any) {
-                          message.error(error.message || 'Failed to fetch models');
+                        } catch (error: unknown) {
+                          console.error('Failed to fetch the Bedrock model list:', error);
+                          message.error(t('settings.agentModelLoadFailed'));
                         }
                         return;
                       }

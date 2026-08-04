@@ -14,6 +14,18 @@
   "copiedToClipboard": "Copied to clipboard",
   "downloadSuccess": "Download successful",
   "downloadFailed": "Failed to download",
+  "a2aPart": {
+    "unnamed": "A2A content",
+    "unsupportedUrl": "Only HTTP and HTTPS links can be opened.",
+    "openConfirmTitle": "Open external A2A resource?",
+    "openConfirmContent": "This link was supplied by a remote Agent. Verify the destination before continuing.",
+    "open": "Open",
+    "downloadConfirmTitle": "Download content from this A2A Agent?",
+    "downloadConfirmContent": "Save “{{name}}” locally only if you trust the remote Agent and expected this file.",
+    "download": "Download",
+    "structuredData": "Structured data",
+    "inlineTooLarge": "The inline file exceeds the safe 2 MiB download limit."
+  },
   "imageLoadFailed": "Failed to load image",
   "scrollToBottom": "Scroll to bottom",
   "availableCommands": "{{count}} Available Commands",

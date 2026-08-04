@@ -9,8 +9,9 @@
  */
 
 import { type ChildProcess, spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import { connect, createServer, type Socket } from 'node:net';
+import { dirname, join } from 'node:path';
 import { cleanupRegisteredAgentProcesses } from './agent-process-registry.js';
 import type { AppMetadata, BackendBinaryResolver } from './types.js';
 
@@ -221,6 +222,84 @@ export function buildSpawnEnv(dirs: BackendDirConfig): NodeJS.ProcessEnv {
     TJUAE_LOG_DIR: dirs.logDir,
     TJUAE_E2E_TEST: process.env.TJUAEUI_E2E_TEST,
   };
+}
+
+const HUB_RESOURCE_MANIFEST_SCHEMA = 'tjuae://schemas/hub-offline-resources.v1';
+const HUB_REPOSITORY = 'https://github.com/liangboqiang/TjuaeHub';
+const LOCAL_ACCEPTANCE_VERSION = /^\d+\.\d+\.\d+-local$/u;
+
+export function isLocalAcceptanceVersion(version: string): boolean {
+  return LOCAL_ACCEPTANCE_VERSION.test(version);
+}
+
+type HubResourceManifest = {
+  $schema: string;
+  schemaVersion: number;
+  source: {
+    kind: 'pinnedDist' | 'localSibling';
+    repository: string;
+    distRef?: string;
+    sourceRevision?: string;
+  };
+};
+
+/**
+ * Locate the immutable Hub v2 offline seed shipped beside tjuaecore.
+ * Core performs the full manifest/archive verification; the launcher only
+ * establishes an explicit, non-ambiguous trust boundary and source mode.
+ */
+export function buildOfflineHubSpawnEnv(appMeta: AppMetadata): NodeJS.ProcessEnv {
+  const hubDirectory = join(appMeta.resourcesPath, 'hub');
+  const manifestPath = join(hubDirectory, 'manifest.json');
+  if (!existsSync(manifestPath)) return {};
+
+  const manifestStat = lstatSync(manifestPath);
+  if (!manifestStat.isFile() || manifestStat.isSymbolicLink()) {
+    throw new Error('TjuaeHub 离线资源 manifest.json 必须是普通文件');
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as HubResourceManifest;
+  // During source-tree migration an old v1 extension manifest may still be
+  // present. Development ignores it; formal packaged builds must never do so.
+  if (manifest.$schema !== HUB_RESOURCE_MANIFEST_SCHEMA) {
+    if (appMeta.isPackaged) throw new Error('安装包中的 TjuaeHub 离线资源清单版本无效');
+    return {};
+  }
+  const canonicalDirectory = realpathSync(hubDirectory);
+  const canonicalManifest = realpathSync(manifestPath);
+  if (dirname(canonicalManifest) !== canonicalDirectory) {
+    throw new Error('TjuaeHub 离线资源清单越出固定资源目录');
+  }
+  if (
+    manifest.schemaVersion !== 1 ||
+    manifest.source?.repository?.replace(/\/+$/, '').replace(/\.git$/, '') !== HUB_REPOSITORY
+  ) {
+    throw new Error('TjuaeHub 离线资源清单来源不受信任');
+  }
+
+  const env: NodeJS.ProcessEnv = {
+    TJUAE_HUB_OFFLINE_DIR: canonicalDirectory,
+    TJUAE_HUB_OFFLINE_MANIFEST: canonicalManifest,
+  };
+  if (manifest.source.kind === 'pinnedDist') {
+    if (!/^[0-9a-f]{40}$/.test(manifest.source.distRef || '')) {
+      throw new Error('TjuaeHub 固定分发资源缺少真实的 40 位 distRef');
+    }
+    env.TJUAE_HUB_DIST_REF = manifest.source.distRef;
+    return env;
+  }
+  // A local acceptance installer is deliberately versioned `*-local` by the
+  // build gate. It is the only packaged artifact allowed to consume an
+  // uncommitted sibling Hub distribution; formal packages still require an
+  // immutable pinnedDist revision.
+  const allowLocalSibling = !appMeta.isPackaged || isLocalAcceptanceVersion(appMeta.version);
+  if (manifest.source.kind === 'localSibling' && allowLocalSibling) {
+    if (!/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/.test(manifest.source.sourceRevision || '')) {
+      throw new Error('TjuaeHub 本地开发资源缺少真实 sourceRevision');
+    }
+    env.TJUAE_HUB_OFFLINE_DEVELOPMENT = '1';
+    return env;
+  }
+  throw new Error('正式安装包禁止使用本地 sibling TjuaeHub 资源');
 }
 
 const FETCH_FORBIDDEN_PORTS = new Set([
@@ -652,7 +731,10 @@ export class BackendLifecycleManager {
     try {
       this.childProcess = spawn(binaryPath, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: dirs ? buildSpawnEnv(dirs) : process.env,
+        env: {
+          ...(dirs ? buildSpawnEnv(dirs) : process.env),
+          ...buildOfflineHubSpawnEnv(this.appMeta),
+        },
         cwd: dirs?.workDir ?? dbPath,
         detached: process.platform !== 'win32',
       });

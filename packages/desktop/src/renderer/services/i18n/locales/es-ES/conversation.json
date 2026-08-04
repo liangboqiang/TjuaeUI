@@ -6,7 +6,8 @@
     "newConversation": "Nuevo chat",
     "selectModel": "Seleccionar modelo",
     "useCliModel": "Seleccionar modelo",
-    "modelSwitchNotSupported": "La lista de modelos estará disponible después de la primera conexión. Envía un mensaje para conectar y cargar los modelos disponibles.",
+    "modelCatalogUnavailable": "No hay un catálogo de modelos en caché. Ejecuta Probar conexión en la configuración de Agent.",
+    "modelSelectionUnavailable": "Este entorno no ofrece una lista de modelos intercambiables.",
     "specifyWorkspace": "Chatear en proyecto",
     "currentWorkspace": "Proyecto actual",
     "clearWorkspace": "Quitar proyecto",
@@ -559,6 +560,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "El agente notificó un aviso técnico de ejecución."
+      },
       "ACP_EMPTY_TURN": {
         "body": "Esta solicitud no produjo ninguna respuesta visible."
       },
@@ -573,7 +577,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "El modelo rechazó esta solicitud antes de producir alguna respuesta visible."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "La configuración local del proyecto, los hooks y las políticas de ejecución están desactivados hasta que se confíe en este espacio de trabajo. Las habilidades aún pueden cargarse."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "Las descripciones de habilidades se acortaron porque el presupuesto de contexto está completo. Desactiva habilidades o complementos que no uses."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "La conexión WebSocket agotó el tiempo de espera. La comunicación cambió automáticamente a HTTPS."
       }
+    }
+  },
+  "trace": {
+    "title": "Traza",
+    "selectRun": "Seleccionar una ejecución",
+    "empty": "Aún no hay ninguna traza disponible.",
+    "loadError": "No se pudo cargar la traza de ejecución.",
+    "backend": "Backend",
+    "duration": "Duración",
+    "firstOutput": "Primera salida",
+    "tokens": "Tokens",
+    "spans": "Pasos",
+    "incomplete": "Incompleta",
+    "truncated": "Truncada",
+    "droppedSpans": "{{count}} pasos omitidos",
+    "noDetails": "Esta ejecución no tiene pasos registrados.",
+    "jumpToMessage": "Ver mensaje",
+    "runtimeAssets": "Activos de ejecución",
+    "runtimeReceipt": "Recibo de ejecución verificado",
+    "runtimeAssetsUnavailable": "El recibo de activos verificado ya no está disponible.",
+    "runtimeAssetsEmpty": "Esta ejecución no usó activos administrados.",
+    "definitionDigest": "Resumen de definición",
+    "upstreamSource": "Origen remoto",
+    "localOnlyAsset": "Solo local",
+    "assetKind": {
+      "assistant": "Asistente",
+      "engineAdapter": "Adaptador de motor",
+      "skill": "Habilidad",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "En ejecución",
+      "succeeded": "Correcta",
+      "failed": "Fallida",
+      "cancelled": "Cancelada",
+      "interrupted": "Interrumpida"
+    },
+    "spanKind": {
+      "thinking": "Razonamiento",
+      "tool": "Herramienta",
+      "permission": "Permiso"
     }
   },
   "notFound": "Conversación no encontrada o ha sido eliminada"

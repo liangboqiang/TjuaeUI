@@ -79,30 +79,6 @@ test.describe('Extension IPC: Assistants', () => {
   });
 });
 
-// ── Agents ───────────────────────────────────────────────────────────────────
-
-test.describe('Extension IPC: Agents', () => {
-  test('returns agents from extensions', async ({ page }) => {
-    const snapshot = await getExtensionSnapshot(page);
-    const ids = snapshot.agents.map((a) => a.id);
-
-    expect(ids).toContain('ext-hello-coder');
-    expect(ids).toContain('ext-hello-researcher');
-  });
-
-  test('each agent has id, name, and source metadata', async ({ page }) => {
-    const snapshot = await getExtensionSnapshot(page);
-    for (const agent of snapshot.agents) {
-      expect(agent.id).toBeTruthy();
-      expect(agent.name).toBeTruthy();
-    }
-
-    // At least one agent should have _source or _kind metadata
-    const withMeta = snapshot.agents.filter((a) => a._source || a._kind);
-    expect(withMeta.length).toBeGreaterThanOrEqual(0); // soft check
-  });
-});
-
 // ── Skills ───────────────────────────────────────────────────────────────────
 
 test.describe('Extension IPC: Skills', () => {
@@ -251,7 +227,6 @@ test.describe('Extension IPC: Performance', () => {
       'extensions.get-acp-adapters',
       'extensions.get-mcp-servers',
       'extensions.get-assistants',
-      'extensions.get-agents',
       'extensions.get-skills',
       'extensions.get-themes',
       'extensions.get-settings-tabs',

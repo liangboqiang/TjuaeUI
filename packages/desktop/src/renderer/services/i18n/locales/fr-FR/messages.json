@@ -14,6 +14,18 @@
   "copiedToClipboard": "Copié dans le presse-papiers",
   "downloadSuccess": "Téléchargement réussi",
   "downloadFailed": "Échec du téléchargement",
+  "a2aPart": {
+    "unnamed": "Contenu A2A",
+    "unsupportedUrl": "Seuls les liens HTTP et HTTPS peuvent être ouverts.",
+    "openConfirmTitle": "Ouvrir la ressource A2A externe ?",
+    "openConfirmContent": "Ce lien a été fourni par un Agent distant. Vérifiez la destination avant de continuer.",
+    "open": "Ouvrir",
+    "downloadConfirmTitle": "Télécharger le contenu de cet Agent A2A ?",
+    "downloadConfirmContent": "Enregistrez « {{name}} » localement uniquement si vous faites confiance à l’Agent distant et attendiez ce fichier.",
+    "download": "Télécharger",
+    "structuredData": "Données structurées",
+    "inlineTooLarge": "Le fichier intégré dépasse la limite de téléchargement sûre de 2 Mio."
+  },
   "imageLoadFailed": "Échec du chargement de l'image",
   "scrollToBottom": "Défiler vers le bas",
   "availableCommands": "{{count}} commandes disponibles",

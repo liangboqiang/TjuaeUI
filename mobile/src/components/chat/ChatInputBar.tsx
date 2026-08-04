@@ -45,13 +45,27 @@ export function ChatInputBar({ onSend, onStop, isStreaming, disabled }: ChatInpu
           editable={!disabled}
           onSubmitEditing={handleSend}
           blurOnSubmit={false}
+          accessibilityLabel={t('chat.inputPlaceholder')}
+          accessibilityState={{ disabled: Boolean(disabled) }}
         />
         {isStreaming ? (
-          <TouchableOpacity style={styles.stopButton} onPress={onStop} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.stopButton}
+            onPress={onStop}
+            activeOpacity={0.7}
+            accessibilityRole='button'
+            accessibilityLabel={t('chat.stopGenerating')}
+          >
             <Ionicons name='stop-circle' size={28} color={error} />
           </TouchableOpacity>
         ) : showSend ? (
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={handleSend}
+            activeOpacity={0.7}
+            accessibilityRole='button'
+            accessibilityLabel={t('chat.send')}
+          >
             <Ionicons name='arrow-up-circle' size={32} color={tint} />
           </TouchableOpacity>
         ) : null}
@@ -85,11 +99,15 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 2,
   },
   stopButton: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 2,

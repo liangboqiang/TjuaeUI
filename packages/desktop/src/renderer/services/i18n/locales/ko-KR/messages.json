@@ -14,6 +14,18 @@
   "copiedToClipboard": "클립보드에 복사됨",
   "downloadSuccess": "다운로드 성공",
   "downloadFailed": "다운로드 실패",
+  "a2aPart": {
+    "unnamed": "A2A 콘텐츠",
+    "unsupportedUrl": "HTTP 및 HTTPS 링크만 열 수 있습니다.",
+    "openConfirmTitle": "외부 A2A 리소스를 여시겠습니까?",
+    "openConfirmContent": "이 링크는 원격 Agent가 제공했습니다. 계속하기 전에 대상을 확인하세요.",
+    "open": "열기",
+    "downloadConfirmTitle": "이 A2A Agent의 콘텐츠를 다운로드하시겠습니까?",
+    "downloadConfirmContent": "원격 Agent를 신뢰하고 이 파일을 예상한 경우에만 “{{name}}”을 로컬에 저장하세요.",
+    "download": "다운로드",
+    "structuredData": "구조화된 데이터",
+    "inlineTooLarge": "인라인 파일이 안전 다운로드 제한인 2 MiB를 초과합니다."
+  },
   "imageLoadFailed": "이미지 로드 실패",
   "scrollToBottom": "맨 아래로 스크롤",
   "availableCommands": "{{count}}개의 사용 가능한 명령어",

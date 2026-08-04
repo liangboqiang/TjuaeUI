@@ -6,19 +6,10 @@
 
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { addImportantToAll } from '@renderer/utils/theme/customCssProcessor';
-import { ipcBridge } from '@/common';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 
-/**
- * Create the base style element for Shadow DOM with CSS variables, theme styles, and optional custom CSS.
- */
-const createInitStyle = (
-  currentTheme = 'light',
-  cssVars?: Record<string, string>,
-  customCss?: string,
-  isMobile?: boolean
-) => {
+/** 为 Shadow DOM 创建基础样式，并同步结构化主题变量。 */
+const createInitStyle = (currentTheme = 'light', cssVars?: Record<string, string>, isMobile?: boolean) => {
   const style = document.createElement('style');
   // Inject external CSS variables into Shadow DOM for dark mode support
   const cssVarsDeclaration = cssVars
@@ -263,9 +254,6 @@ const createInitStyle = (
       transform: rotate(360deg);
     }
   }
-
-  /* User Custom CSS (injected into Shadow DOM) */
-  ${customCss || ''}
   `;
   return style;
 };
@@ -323,28 +311,10 @@ type ShadowDivElement = HTMLDivElement & { __init__shadow?: boolean };
 const ShadowView = ({ children }: { children: React.ReactNode }) => {
   const [root, setRoot] = useState<ShadowRoot | null>(null);
   const styleRef = React.useRef<HTMLStyleElement | null>(null);
-  const [customCss, setCustomCss] = useState<string>('');
   const layout = useLayoutContext();
   const isMobile = layout?.isMobile ?? false;
 
-  React.useEffect(() => {
-    let mounted = true;
-    const applyCss = (t: { css?: string } | null) => {
-      if (!mounted) return;
-      setCustomCss(t?.css ? addImportantToAll(t.css) : '');
-    };
-    ipcBridge.theme.requestCurrent
-      .invoke()
-      .then(applyCss)
-      .catch(() => {});
-    const off = ipcBridge.theme.changed.on((t) => applyCss(t));
-    return () => {
-      mounted = false;
-      off?.();
-    };
-  }, []);
-
-  // Update CSS variables and custom styles in Shadow DOM
+  // 将当前结构化主题变量同步到 Shadow DOM。
   const updateStyles = React.useCallback(
     (shadowRoot: ShadowRoot) => {
       const computedStyle = getComputedStyle(document.documentElement);
@@ -366,7 +336,7 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
       if (styleRef.current) {
         styleRef.current.remove();
       }
-      const newStyle = createInitStyle(currentTheme, cssVars, customCss, isMobile);
+      const newStyle = createInitStyle(currentTheme, cssVars, isMobile);
       styleRef.current = newStyle;
       shadowRoot.appendChild(newStyle);
 
@@ -377,15 +347,14 @@ const ShadowView = ({ children }: { children: React.ReactNode }) => {
         shadowRoot.adoptedStyleSheets = [...shadowRoot.adoptedStyleSheets, katexSheet];
       }
     },
-    [customCss, isMobile]
+    [isMobile]
   );
 
   React.useEffect(() => {
     if (!root) return;
 
-    // Update styles when custom CSS changes
     updateStyles(root);
-  }, [root, customCss, updateStyles]);
+  }, [root, updateStyles]);
 
   React.useEffect(() => {
     if (!root) return;

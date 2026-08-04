@@ -1,12 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  View,
-  Modal,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, Modal, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ThemedText } from '../ui/ThemedText';
@@ -40,13 +33,7 @@ type FilePickerSheetProps = {
   onClose: () => void;
 };
 
-export function FilePickerSheet({
-  visible,
-  rootDir,
-  selectedFiles,
-  onDone,
-  onClose,
-}: FilePickerSheetProps) {
+export function FilePickerSheet({ visible, rootDir, selectedFiles, onDone, onClose }: FilePickerSheetProps) {
   const { t } = useTranslation();
   const background = useThemeColor({}, 'background');
   const border = useThemeColor({}, 'border');
@@ -151,6 +138,11 @@ export function FilePickerSheet({
       style={[styles.item, { paddingLeft: 16 + 16 * item.depth }]}
       onPress={() => (item.isDir ? toggleExpand(item.fullPath) : toggleSelect(item.fullPath))}
       activeOpacity={0.6}
+      accessibilityRole={item.isDir ? 'button' : 'checkbox'}
+      accessibilityState={
+        item.isDir ? { expanded: Boolean(item.isExpanded) } : { checked: selected.has(item.fullPath) }
+      }
+      accessibilityLabel={item.name}
     >
       {item.isDir && (
         <Ionicons
@@ -185,15 +177,23 @@ export function FilePickerSheet({
         <View style={[styles.sheet, { backgroundColor: background }]}>
           <View style={[styles.header, { borderBottomColor: border }]}>
             <ThemedText style={styles.title}>{t('chat.browseFiles')}</ThemedText>
-            <TouchableOpacity onPress={onClose}>
-              <ThemedText style={[styles.closeButton, { color: tint }]}>
-                {t('common.close')}
-              </ThemedText>
+            <TouchableOpacity
+              style={styles.closeHitArea}
+              onPress={onClose}
+              accessibilityRole='button'
+              accessibilityLabel={t('common.close')}
+            >
+              <ThemedText style={[styles.closeButton, { color: tint }]}>{t('common.close')}</ThemedText>
             </TouchableOpacity>
           </View>
 
           {loading ? (
-            <ActivityIndicator size='small' color={tint} style={styles.loader} />
+            <ActivityIndicator
+              size='small'
+              color={tint}
+              style={styles.loader}
+              accessibilityLabel={t('common.loading')}
+            />
           ) : (
             <FlatList
               data={flatData}
@@ -215,6 +215,8 @@ export function FilePickerSheet({
               style={[styles.doneButton, { backgroundColor: tint }]}
               onPress={handleDone}
               activeOpacity={0.7}
+              accessibilityRole='button'
+              accessibilityLabel={`${t('chat.done')} (${selectedCount})`}
             >
               <ThemedText style={styles.doneText}>
                 {t('chat.done')}
@@ -254,6 +256,12 @@ const styles = StyleSheet.create({
   closeButton: {
     fontSize: 16,
   },
+  closeHitArea: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   loader: {
     marginTop: 40,
   },
@@ -261,6 +269,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    minHeight: 44,
     paddingRight: 16,
   },
   chevron: {
@@ -286,7 +295,8 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     borderRadius: 10,
-    paddingVertical: 12,
+    minHeight: 48,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   doneText: {

@@ -161,7 +161,6 @@ function classifyIncompleteInstallation(details: ErrorWithDetails['details']): B
       missingBundledTjuaeCoreDir || missingRuntimeDir || missingManagedResourcesDir || missingRuntimeBinary,
     missingBundledTjuaeCoreDir,
     missingHubDir: getMissingDirectoryFlag(resourcesDirEntries, 'hub/'),
-    missingPetStatesDir: getMissingDirectoryFlag(resourcesDirEntries, 'pet-states/'),
     missingPwaDir: getMissingDirectoryFlag(resourcesDirEntries, 'pwa/'),
     reason: 'backend_incomplete_installation',
     missingResources,

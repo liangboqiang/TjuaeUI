@@ -6,7 +6,7 @@
 
 import { ipcBridge } from '@/common';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
-import brandAppIcon from '@/renderer/assets/logos/brand/app.png';
+import brandAppIcon from '@/renderer/assets/logos/brand/app.svg';
 import PwaPullToRefresh from '@/renderer/components/layout/PwaPullToRefresh';
 import Titlebar from '@/renderer/components/layout/Titlebar';
 import { Layout as ArcoLayout, Tooltip } from '@arco-design/web-react';

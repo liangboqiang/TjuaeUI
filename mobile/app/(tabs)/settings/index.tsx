@@ -27,84 +27,116 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Connection Section */}
-      <View style={styles.section}>
-        <ThemedText type='caption' style={styles.sectionTitle}>
-          {t('settings.connection').toUpperCase()}
+    <View style={styles.container}>
+      <View style={[styles.header, { borderBottomColor: border }]}>
+        <ThemedText accessibilityRole='header' style={styles.headerTitle}>
+          {t('tabs.settings')}
         </ThemedText>
-        <View style={[styles.card, { backgroundColor: surface }]}>
-          <View style={[styles.row, { borderBottomColor: border }]}>
-            <ThemedText>{t('settings.connectionStatus')}</ThemedText>
-            <View style={styles.statusRow}>
-              <View
-                style={[
-                  styles.statusDot,
-                  {
-                    backgroundColor: connectionState === 'connected' ? success : error,
-                  },
-                ]}
-              />
-              <ThemedText type='caption'>
-                {connectionState === 'connected' ? t('settings.connected') : t('settings.disconnected')}
-              </ThemedText>
-            </View>
-          </View>
-          {config && (
+      </View>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Connection Section */}
+        <View style={styles.section}>
+          <ThemedText type='caption' style={styles.sectionTitle}>
+            {t('settings.connection').toUpperCase()}
+          </ThemedText>
+          <View style={[styles.card, { backgroundColor: surface }]}>
             <View style={[styles.row, { borderBottomColor: border }]}>
-              <ThemedText>{t('settings.serverAddress')}</ThemedText>
-              <ThemedText type='caption'>
-                {config.host}:{config.port}
-              </ThemedText>
+              <ThemedText>{t('settings.connectionStatus')}</ThemedText>
+              <View style={styles.statusRow} accessibilityLiveRegion='polite'>
+                <View
+                  style={[
+                    styles.statusDot,
+                    {
+                      backgroundColor: connectionState === 'connected' ? success : error,
+                    },
+                  ]}
+                />
+                <ThemedText type='caption'>
+                  {connectionState === 'connected' ? t('settings.connected') : t('settings.disconnected')}
+                </ThemedText>
+              </View>
             </View>
-          )}
-          {connectionState !== 'connected' && (
-            <TouchableOpacity
-              style={[styles.row, { borderBottomColor: border }]}
-              onPress={tryReconnect}
-              disabled={connectionState === 'connecting'}
-              activeOpacity={0.7}
-            >
-              {connectionState === 'connecting' ? (
-                <ActivityIndicator size='small' color={tint} />
-              ) : (
-                <Ionicons name='refresh-outline' size={18} color={tint} />
-              )}
-              <ThemedText style={{ color: tint, flex: 1, marginLeft: 8 }}>
-                {t('settings.reconnect')}
-              </ThemedText>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Actions */}
-      <View style={styles.section}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: surface }]} onPress={handleDisconnect}>
-          <Ionicons name='log-out-outline' size={20} color={error} />
-          <ThemedText style={{ color: error, fontWeight: '500' }}>{t('settings.changeServer')}</ThemedText>
-        </TouchableOpacity>
-      </View>
-
-      {/* About */}
-      <View style={styles.section}>
-        <ThemedText type='caption' style={styles.sectionTitle}>
-          {t('settings.about').toUpperCase()}
-        </ThemedText>
-        <View style={[styles.card, { backgroundColor: surface }]}>
-          <View style={[styles.row, { borderBottomColor: border }]}>
-            <ThemedText>{t('settings.version')}</ThemedText>
-            <ThemedText type='caption'>0.1.0</ThemedText>
+            {config && (
+              <View style={[styles.row, { borderBottomColor: border }]}>
+                <ThemedText>{t('settings.serverAddress')}</ThemedText>
+                <ThemedText type='caption'>
+                  {config.host}:{config.port}
+                </ThemedText>
+              </View>
+            )}
+            {connectionState !== 'connected' && (
+              <TouchableOpacity
+                style={[styles.row, { borderBottomColor: border }]}
+                onPress={tryReconnect}
+                disabled={connectionState === 'connecting'}
+                activeOpacity={0.7}
+                accessibilityRole='button'
+                accessibilityLabel={t('settings.reconnect')}
+                accessibilityState={{
+                  disabled: connectionState === 'connecting',
+                  busy: connectionState === 'connecting',
+                }}
+              >
+                {connectionState === 'connecting' ? (
+                  <ActivityIndicator size='small' color={tint} />
+                ) : (
+                  <Ionicons name='refresh-outline' size={18} color={tint} />
+                )}
+                <ThemedText style={{ color: tint, flex: 1, marginLeft: 8 }}>{t('settings.reconnect')}</ThemedText>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {/* Actions */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: surface }]}
+            onPress={handleDisconnect}
+            accessibilityRole='button'
+            accessibilityLabel={t('settings.changeServer')}
+          >
+            <Ionicons name='log-out-outline' size={20} color={error} />
+            <ThemedText style={{ color: error, fontWeight: '500' }}>{t('settings.changeServer')}</ThemedText>
+          </TouchableOpacity>
+        </View>
+
+        {/* About */}
+        <View style={styles.section}>
+          <ThemedText type='caption' style={styles.sectionTitle}>
+            {t('settings.about').toUpperCase()}
+          </ThemedText>
+          <View style={[styles.card, { backgroundColor: surface }]}>
+            <View style={[styles.row, { borderBottomColor: border }]}>
+              <ThemedText>{t('settings.version')}</ThemedText>
+              <ThemedText type='caption'>0.1.0</ThemedText>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 16, gap: 24 },
+  header: {
+    height: 56,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  content: {
+    width: '100%',
+    maxWidth: 680,
+    alignSelf: 'center',
+    padding: 16,
+    gap: 24,
+  },
   section: { gap: 8 },
   sectionTitle: {
     paddingHorizontal: 4,
@@ -121,6 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
+    minHeight: 52,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   statusRow: {
@@ -140,5 +173,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 12,
+    minHeight: 52,
   },
 });

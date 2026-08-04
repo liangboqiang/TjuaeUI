@@ -9,11 +9,8 @@ import { configService } from '@/common/config/configService';
 import { ipcBridge } from '@/common';
 import { resolveActiveTheme } from '@/common/theme/resolveTheme';
 import { BUILTIN_THEMES } from '@renderer/theme/builtinThemes';
-import { processCustomCss } from './customCssProcessor';
-import { getSystemPrefersDark } from './systemAppearance';
 
 const TOKENS_STYLE_ID = 'theme-tokens';
-const DECORATION_STYLE_ID = 'theme-decoration';
 
 function upsertStyle(id: string, css: string | null, root: Document = document): void {
   const existing = root.getElementById(id);
@@ -27,27 +24,28 @@ function upsertStyle(id: string, css: string | null, root: Document = document):
   root.head.appendChild(el); // (re)append to keep it last in <head>
 }
 
-function tokensToCss(tokens?: Record<string, string>): string | null {
+function tokensToCss(theme: Theme): string | null {
+  const { tokens } = theme;
   if (!tokens || Object.keys(tokens).length === 0) return null;
   const body = Object.entries(tokens)
     .map(([k, v]) => `  ${k}: ${v};`)
     .join('\n');
-  return `:root {\n${body}\n}`;
+  return `:root[data-color-scheme='default'][data-theme='${theme.appearance}'] {\n${body}\n}`;
 }
 
 /** Apply a resolved theme to a document. Used by every app-chrome surface. */
 export function applyTheme(theme: Theme, root: Document = document): void {
   root.documentElement.setAttribute('data-theme', theme.appearance);
+  root.documentElement.setAttribute('data-theme-id', theme.id);
   root.body?.setAttribute('arco-theme', theme.appearance);
-  upsertStyle(TOKENS_STYLE_ID, tokensToCss(theme.tokens), root);
-  upsertStyle(DECORATION_STYLE_ID, theme.css ? processCustomCss(theme.css) : null, root);
+  upsertStyle(TOKENS_STYLE_ID, tokensToCss(theme), root);
+  upsertStyle('theme-decoration', null, root);
 }
 
 /** Resolve `activeId` locally, apply, persist, and publish to main for cross-window broadcast. */
 export async function setActiveTheme(activeId: string): Promise<void> {
-  const userThemes = (configService.get('theme.userThemes') as Theme[] | undefined) ?? [];
-  const resolved = resolveActiveTheme(activeId, [...BUILTIN_THEMES, ...userThemes], getSystemPrefersDark());
+  const resolved = resolveActiveTheme(activeId, BUILTIN_THEMES);
   applyTheme(resolved);
-  await configService.set('theme.activeId', activeId);
+  await configService.set('theme.activeId', resolved.id);
   await ipcBridge.theme.setActive.invoke(resolved);
 }

@@ -39,15 +39,15 @@ const {
       description_i18n: {},
       enabled: true,
       sort_order: 10,
-      preset_agent_type: 'tjuaecli',
+      engine_id: 'engine-tjuaecli',
+      engine: { type: 'tjuaecli', ownership: 'internal' },
       enabled_skills: [],
       custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: [],
       prompts_i18n: {},
       models: [],
-      agent_status: 'online',
+      engine_status: 'online',
       team_selectable: true,
       deletable: false,
     },
@@ -60,15 +60,15 @@ const {
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        engine_id: 'engine-tjuaecli',
+        engine: { type: 'tjuaecli', ownership: 'internal' },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       },
@@ -113,7 +113,6 @@ const {
   capturedGuidInputCardProps: [] as Array<Record<string, unknown>>,
   capturedGuidSendDeps: [] as Array<Record<string, unknown>>,
   resolveGuidAssistantDefaultsMock: vi.fn(() => ({
-    disabledBuiltinSkillIds: [],
     skillIds: [],
     mcpIds: [],
   })),
@@ -139,14 +138,14 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('@/common', () => ({
   ipcBridge: {
-    fs: {
-      listAvailableSkills: { invoke: vi.fn().mockResolvedValue([]) },
+    skills: {
+      listRuntime: { invoke: vi.fn().mockResolvedValue([]) },
     },
   },
 }));
 
-vi.mock('@/renderer/hooks/mcp/catalog', () => ({
-  ensureBackendMcpCatalog: vi.fn().mockResolvedValue({ allServers: [] }),
+vi.mock('@/renderer/services/mcpRuntimeCatalog', () => ({
+  loadRuntimeMcpCatalog: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@/renderer/hooks/chat/useInputFocusRing', () => ({
@@ -258,7 +257,6 @@ const assistantDetailFixture = {
     last_model_id: null,
     last_permission_value: null,
     last_skill_ids: [],
-    last_disabled_builtin_skill_ids: [],
     last_mcp_ids: [],
   },
 };
@@ -300,6 +298,7 @@ describe('GuidPage', () => {
   beforeEach(() => {
     locationMock.state = null;
     locationMock.key = 'guid-location';
+    locationMock.search = '';
     navigateMock.mockReset();
     swrMock.useSWRMock.mockReturnValue({ data: null });
     capturedGuidActionRowProps.length = 0;
@@ -308,7 +307,6 @@ describe('GuidPage', () => {
     capturedGuidSendDeps.length = 0;
     useGuidAssistantSelectionMock.mockClear();
     resolveGuidAssistantDefaultsMock.mockReturnValue({
-      disabledBuiltinSkillIds: [],
       skillIds: [],
       mcpIds: [],
     });
@@ -329,15 +327,15 @@ describe('GuidPage', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        engine_id: 'engine-tjuaecli',
+        engine: { type: 'tjuaecli', ownership: 'internal' },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       },
@@ -459,6 +457,18 @@ describe('GuidPage', () => {
     );
   });
 
+  it('accepts the canonical assistant query when opening a market trial run', () => {
+    locationMock.search = '?assistant=assistant-from-market';
+
+    render(<GuidPage />);
+
+    expect(useGuidAssistantSelectionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        preselectAssistantId: 'assistant-from-market',
+      })
+    );
+  });
+
   it('renders example prompts with wrapping text for long assistant suggestions', () => {
     agentSelectionMock.assistants = [
       {
@@ -469,10 +479,10 @@ describe('GuidPage', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        engine_id: 'engine-tjuaecli',
+        engine: { type: 'tjuaecli', ownership: 'internal' },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {
@@ -481,7 +491,7 @@ describe('GuidPage', () => {
           ],
         },
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       },
@@ -524,15 +534,15 @@ describe('GuidPage', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        engine_id: 'engine-tjuaecli',
+        engine: { type: 'tjuaecli', ownership: 'internal' },
         enabled_skills: ['stale-list-skill'],
         custom_skill_names: [],
-        disabled_builtin_skills: ['stale-disabled-builtin'],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       },
@@ -545,7 +555,6 @@ describe('GuidPage', () => {
       const latestDeps = capturedGuidSendDeps.at(-1);
       expect(latestDeps).toMatchObject({
         guidEnabledSkills: undefined,
-        guidDisabledBuiltinSkills: undefined,
       });
     });
   });
@@ -554,7 +563,6 @@ describe('GuidPage', () => {
     swrMock.useSWRMock.mockReturnValue({ data: assistantDetailFixture });
     resolveGuidAssistantDefaultsMock.mockReturnValue({
       modelId: 'gpt-4.1',
-      disabledBuiltinSkillIds: [],
       skillIds: [],
       mcpIds: [],
     });
@@ -590,7 +598,6 @@ describe('GuidPage', () => {
     swrMock.useSWRMock.mockReturnValue({ data: assistantDetailFixture });
     resolveGuidAssistantDefaultsMock.mockReturnValue({
       modelId: 'default',
-      disabledBuiltinSkillIds: [],
       skillIds: [],
       mcpIds: [],
     });

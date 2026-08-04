@@ -7,22 +7,22 @@
 // Mirror of tjuaeui-api-types/src/assistant.rs.
 // Any shape change on either side requires a same-PR update on the other.
 
-export type AssistantSource = 'builtin' | 'generated' | 'user';
-export type AssistantAgentStatus = 'missing' | 'online' | 'offline' | 'unchecked';
-export type AssistantAgentSource = 'internal' | 'builtin' | 'extension' | 'custom';
+export type AssistantSource = 'generated' | 'user';
+export type AssistantEngineStatus = 'missing' | 'online' | 'offline' | 'unchecked';
+export type AssistantEngineOwnership = 'internal' | 'builtin' | 'extension' | 'custom';
 
-export type AssistantAgent = {
+export type AssistantEngineDescriptor = {
   type: string;
-  source: AssistantAgentSource;
+  ownership: AssistantEngineOwnership;
   acp_backend?: string;
 };
 
-export function assistantRuntimeKey(assistant?: Pick<Assistant, 'agent'> | null): string {
-  return assistant?.agent?.acp_backend || assistant?.agent?.type || '';
+export function assistantRuntimeKey(assistant?: Pick<Assistant, 'engine'> | null): string {
+  return assistant?.engine?.acp_backend || assistant?.engine?.type || '';
 }
 
-export function isTjuaeCliAssistant(assistant?: Pick<Assistant, 'agent'> | null): boolean {
-  return assistant?.agent?.type === 'tjuaecli';
+export function isTjuaeCliAssistant(assistant?: Pick<Assistant, 'engine'> | null): boolean {
+  return assistant?.engine?.type === 'tjuaecli';
 }
 
 export interface Assistant {
@@ -35,19 +35,18 @@ export interface Assistant {
   avatar?: string;
   enabled: boolean;
   sort_order: number;
-  agent_id: string;
-  agent?: AssistantAgent;
+  engine_id: string;
+  engine?: AssistantEngineDescriptor;
   enabled_skills: string[];
   custom_skill_names: string[];
-  disabled_builtin_skills: string[];
   context?: string;
   context_i18n: Record<string, string>;
   prompts: string[];
   prompts_i18n: Record<string, string[]>;
   models: string[];
   last_used_at?: number;
-  agent_status: AssistantAgentStatus;
-  agent_status_message?: string;
+  engine_status: AssistantEngineStatus;
+  engine_status_message?: string;
   team_selectable: boolean;
   team_block_reason?: string;
   deletable: boolean;
@@ -68,8 +67,8 @@ export interface AssistantState {
 }
 
 export interface AssistantEngine {
-  agent_id: string;
-  agent?: AssistantAgent;
+  id: string;
+  descriptor?: AssistantEngineDescriptor;
 }
 
 export interface AssistantRules {
@@ -111,7 +110,6 @@ export interface AssistantDefaultsRequest {
 export interface AssistantCapabilities {
   default_skill_ids: string[];
   custom_skill_names: string[];
-  default_disabled_builtin_skill_ids: string[];
 }
 
 export interface AssistantPreferences {
@@ -119,15 +117,14 @@ export interface AssistantPreferences {
   last_permission_value?: string;
   last_thought_level_value?: string;
   last_skill_ids: string[];
-  last_disabled_builtin_skill_ids: string[];
   last_mcp_ids: string[];
 }
 
 export interface AssistantDetail {
   id: string;
   source: AssistantSource;
-  agent_status: AssistantAgentStatus;
-  agent_status_message?: string;
+  engine_status: AssistantEngineStatus;
+  engine_status_message?: string;
   team_selectable: boolean;
   team_block_reason?: string;
   deletable: boolean;
@@ -146,10 +143,9 @@ export interface CreateAssistantRequest {
   name: string;
   description?: string;
   avatar?: string;
-  agent_id?: string;
+  engine_id?: string;
   enabled_skills?: string[];
   custom_skill_names?: string[];
-  disabled_builtin_skills?: string[];
   prompts?: string[];
   models?: string[];
   name_i18n?: Record<string, string>;
@@ -169,20 +165,4 @@ export interface SetAssistantStateRequest {
   enabled?: boolean;
   sort_order?: number;
   last_used_at?: number;
-}
-
-export interface ImportAssistantsRequest {
-  assistants: CreateAssistantRequest[];
-}
-
-export interface ImportError {
-  id: string;
-  error: string;
-}
-
-export interface ImportAssistantsResult {
-  imported: number;
-  skipped: number;
-  failed: number;
-  errors: ImportError[];
 }

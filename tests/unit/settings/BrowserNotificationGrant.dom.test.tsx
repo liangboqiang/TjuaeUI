@@ -29,36 +29,45 @@ afterEach(() => {
 });
 
 describe('BrowserNotificationGrant', () => {
-  it('shows the enable button when permission is default', () => {
+  const renderSetting = (enabled = true, onEnabledChange = vi.fn()) =>
+    render(<BrowserNotificationGrant enabled={enabled} onEnabledChange={onEnabledChange} />);
+
+  it('shows a single disabled-looking preference switch and guidance when permission is default', () => {
     setNotification('default');
-    render(<BrowserNotificationGrant />);
-    expect(screen.getByText('settings.browserNotification.enable')).toBeInTheDocument();
+    renderSetting();
+    expect(screen.getByText('settings.browserNotification.enableHint')).toBeInTheDocument();
+    expect(screen.queryByText('settings.browserNotification.enable')).not.toBeInTheDocument();
+    expect(screen.getByRole('switch')).not.toBeChecked();
   });
 
   it('shows the granted state when already granted', () => {
     setNotification('granted');
-    render(<BrowserNotificationGrant />);
+    renderSetting();
     expect(screen.getByText('settings.browserNotification.granted')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeChecked();
   });
 
   it('shows the denied state when permission is denied', () => {
     setNotification('denied');
-    render(<BrowserNotificationGrant />);
+    renderSetting();
     expect(screen.getByText('settings.browserNotification.denied')).toBeInTheDocument();
+    expect(screen.getByRole('switch')).toBeDisabled();
   });
 
   it('shows the insecure-context hint when not a secure context', () => {
     setNotification('default', false);
-    render(<BrowserNotificationGrant />);
+    renderSetting();
     expect(screen.getByText('settings.browserNotification.insecureContext')).toBeInTheDocument();
   });
 
-  it('requests permission when the enable button is clicked', async () => {
+  it('requests permission through the main switch and enables notifications after grant', async () => {
     setNotification('default');
+    const onEnabledChange = vi.fn();
     const requestSpy = (globalThis as unknown as { Notification: { requestPermission: ReturnType<typeof vi.fn> } })
       .Notification.requestPermission;
-    render(<BrowserNotificationGrant />);
-    await userEvent.click(screen.getByText('settings.browserNotification.enable'));
+    renderSetting(false, onEnabledChange);
+    await userEvent.click(screen.getByRole('switch'));
     expect(requestSpy).toHaveBeenCalled();
+    expect(onEnabledChange).toHaveBeenCalledWith(true);
   });
 });

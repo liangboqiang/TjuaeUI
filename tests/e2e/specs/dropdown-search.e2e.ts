@@ -123,11 +123,8 @@ test.describe('Assistant editor default selects search', () => {
   test.setTimeout(90_000);
 
   test('default model / skills / mcp selects expose search above the threshold', async ({ page }) => {
-    // Assistants moved from settings to a standalone `#/assistants` page; the
-    // legacy goToAssistantSettings helper still walks the settings sider and
-    // fails, so navigate directly. Create is now a TalkToButler dropdown —
-    // open it and pick "create manually" to reach the editor.
-    await page.evaluate(() => window.location.assign('#/assistants'));
+    // 助手只有设置内的规范路由；直接进入后再从创建菜单打开编辑器。
+    await page.evaluate(() => window.location.assign('#/settings/assistants'));
     const createButton = page.locator('[data-testid="btn-create-assistant"]');
     await createButton.waitFor({ state: 'visible', timeout: 15_000 });
     await createButton.click();

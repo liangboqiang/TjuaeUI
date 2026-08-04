@@ -28,7 +28,6 @@ import {
   verifyDirectoryFiles,
 } from './utils';
 import { runLegacyDatabaseMigrations } from '@process/services/database/runLegacyDatabaseMigrations';
-import { BUILTIN_IMAGE_GEN_ID } from '../resources/builtinMcp/constants';
 // Platform and architecture types (moved from deleted updateConfig)
 type PlatformType = 'win32' | 'darwin' | 'linux';
 type ArchitectureType = 'x64' | 'arm64' | 'ia32' | 'arm';
@@ -40,14 +39,7 @@ const STORAGE_PATH = {
   chatMessage: 'tjuaeui-chat-message.txt',
   chat: 'tjuaeui-chat.txt',
   env: '.tjuaeui-env',
-  assistants: 'assistants',
-  skills: 'skills',
-  cronSkills: 'cron-skills',
 };
-
-/** Legacy builtin-skills cache directory, cleaned up at startup after the
- * backend took ownership of the corpus. */
-const LEGACY_BUILTIN_SKILLS_DIR = 'builtin-skills';
 
 const getHomePage = getConfigPath;
 
@@ -282,87 +274,6 @@ const conversationHistoryProxy = (options: typeof _chatMessageFile, dir: string)
 
 const chatMessageFile = conversationHistoryProxy(_chatMessageFile, cacheDir);
 
-/**
- * 获取助手规则目录路径
- * Get assistant rules directory path
- */
-const getAssistantsDir = () => {
-  return path.join(cacheDir, STORAGE_PATH.assistants);
-};
-
-/**
- * 获取技能脚本目录路径
- * Get skills scripts directory path
- */
-const getSkillsDir = () => {
-  return path.join(cacheDir, STORAGE_PATH.skills);
-};
-
-/**
- * Get the directory for per-cron-job SKILL.md files.
- * Each cron job gets its own subdirectory: {cronSkillsDir}/{job_id}/SKILL.md
- */
-const getCronSkillsDir = () => {
-  return path.join(cacheDir, STORAGE_PATH.cronSkills);
-};
-
-/**
- * Best-effort cleanup of the legacy `{cacheDir}/builtin-skills/` directory
- * left behind by versions prior to the backend taking ownership of the skill
- * corpus. Failures are swallowed — at worst a stale copy lingers on disk.
- */
-const cleanupLegacyBuiltinSkillsDir = () => {
-  const legacyDir = path.join(cacheDir, LEGACY_BUILTIN_SKILLS_DIR);
-  if (!existsSync(legacyDir)) return;
-  fs.rm(legacyDir, { recursive: true, force: true })
-    .then(() => console.log('[TjuaeUI] Cleaned up legacy builtin-skills cache'))
-    .catch(() => {
-      /* swallow — cleanup is not critical */
-    });
-};
-
-/**
- * Ensure user-facing config directories exist. Built-in assistant rules and
- * skill files are now owned by the backend (see
- * `crates/tjuaeui-app/assets/builtin-assistants/` and
- * `crates/tjuaeui-app/assets/builtin-skills/`) — neither is synced from
- * renderer resources anymore.
- */
-const ensureAssistantDirs = async (): Promise<void> => {
-  const assistantsDir = getAssistantsDir();
-  const userSkillsDir = getSkillsDir();
-
-  if (!existsSync(userSkillsDir)) mkdirSync(userSkillsDir);
-
-  const cronSkillsDir = getCronSkillsDir();
-  if (!existsSync(cronSkillsDir)) mkdirSync(cronSkillsDir);
-
-  if (!existsSync(assistantsDir)) mkdirSync(assistantsDir);
-};
-
-const getBuiltinMcpBaseDir = (): string => {
-  const mainModuleDir =
-    typeof require !== 'undefined' && require.main?.filename ? path.dirname(require.main.filename) : __dirname;
-  const baseDir = path.basename(mainModuleDir) === 'chunks' ? path.dirname(mainModuleDir) : mainModuleDir;
-  // In packaged mode the main bundle lives inside app.asar, but external node
-  // processes cannot read files from ASAR archives. Redirect to the unpacked copy.
-  if (getPlatformServices().paths.isPackaged()) {
-    return baseDir.replace('app.asar', 'app.asar.unpacked');
-  }
-  return baseDir;
-};
-
-/**
- * Resolve the path to a built-in MCP server entry script.
- * In development the file lives next to the main process bundle (out/main/);
- * in production it's inside the packaged app.
- */
-const getBuiltinMcpScriptPath = (scriptName: string): string => {
-  // initStorage may itself be code-split into out/main/chunks/.
-  // Built-in MCP entry files are emitted next to the main entry in out/main/.
-  return path.resolve(getBuiltinMcpBaseDir(), `${scriptName}.js`);
-};
-
 const initStorage = async () => {
   const t0 = performance.now();
   const mark = (label: string) => console.log(`[TjuaeUI:init] ${label} +${Math.round(performance.now() - t0)}ms`);
@@ -384,36 +295,19 @@ const initStorage = async () => {
 
   mark('4. MCP config initialization skipped');
 
-  // 5. Ensure assistant-related directories exist. Built-in assistant records
-  //    now live in the backend SQLite catalog (see tjuaeui-assistant crate) and
-  //    are no longer seeded into ConfigStorage. User-authored rule md files
-  //    continue to live under `{cacheDir}/assistants/` until the one-shot
-  //    migration (T3b) imports them into the backend.
-  try {
-    await ensureAssistantDirs();
-    mark('5. ensureAssistantDirs');
-  } catch (error) {
-    console.error('[TjuaeUI] Failed to ensure assistant dirs:', error);
-  }
-
-  // 5b. Best-effort cleanup of the legacy builtin-skills cache left behind
-  //     before the backend took ownership of the corpus.
-  cleanupLegacyBuiltinSkillsDir();
-  mark('5b. legacyBuiltinSkillsCleanup');
-
-  // 6. Backend only understands the v26-era schema baseline. Older desktop
+  // 5. Backend only understands the v26-era schema baseline. Older desktop
   //    users may still have a pre-v26 Electron-managed catalog, so we upgrade
   //    that file here, close it, and only then allow the backend to start.
   const legacyDbMigration = await runLegacyDatabaseMigrations();
   const repaired = legacyDbMigration.handoffRepair.repairedColumns.length;
   if (legacyDbMigration.skipped) {
-    mark('6. legacyDbMigrations skipped');
+    mark('5. legacyDbMigrations skipped');
   } else if (legacyDbMigration.migrated) {
     mark(
-      `6. legacyDbMigrations v${legacyDbMigration.fromVersion}->v${legacyDbMigration.toVersion} handoffRepair=${repaired}`
+      `5. legacyDbMigrations v${legacyDbMigration.fromVersion}->v${legacyDbMigration.toVersion} handoffRepair=${repaired}`
     );
   } else {
-    mark(`6. legacyDbMigrations noop(v${legacyDbMigration.fromVersion}) handoffRepair=${repaired}`);
+    mark(`5. legacyDbMigrations noop(v${legacyDbMigration.fromVersion}) handoffRepair=${repaired}`);
   }
 
   if (hasElectronAppPath()) {
@@ -446,11 +340,5 @@ export const getSystemDir = () => {
     arch: process.arch as ArchitectureType,
   };
 };
-
-/**
- * 获取助手规则目录路径（供其他模块使用）
- * Get assistant rules directory path (for use by other modules)
- */
-export { getAssistantsDir, getSkillsDir, getCronSkillsDir, BUILTIN_IMAGE_GEN_ID, getBuiltinMcpScriptPath };
 
 export default initStorage;

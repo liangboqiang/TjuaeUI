@@ -3,11 +3,12 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '..');
+const desktopCommonRoot = path.resolve(workspaceRoot, 'packages/desktop/src/common');
 
 const config = getDefaultConfig(projectRoot);
 
 // Share pure functions from the main TjuaeUI project
-config.watchFolders = [path.resolve(workspaceRoot, 'src/common')];
+config.watchFolders = [desktopCommonRoot];
 
 // Resolve node_modules from mobile/ only
 config.resolver.nodeModulesPaths = [path.resolve(projectRoot, 'node_modules')];
@@ -20,7 +21,7 @@ config.resolver.blockList = [
 
 // Map path aliases for shared code
 config.resolver.extraNodeModules = {
-  '@common': path.resolve(workspaceRoot, 'src/common'),
+  '@common': desktopCommonRoot,
 };
 
 module.exports = config;

@@ -42,13 +42,14 @@ export function WorkspacePickerSheet({
         style={[styles.item, { borderBottomColor: border }]}
         onPress={() => handleSelect(item)}
         activeOpacity={0.6}
+        accessibilityRole='radio'
+        accessibilityState={{ selected: isActive }}
+        accessibilityLabel={getDisplayName(item)}
+        accessibilityHint={item}
       >
         <Ionicons name='folder-outline' size={20} color={tint} style={styles.icon} />
         <View style={styles.itemContent}>
-          <ThemedText
-            style={[styles.itemName, isActive && { color: tint, fontWeight: '600' }]}
-            numberOfLines={1}
-          >
+          <ThemedText style={[styles.itemName, isActive && { color: tint, fontWeight: '600' }]} numberOfLines={1}>
             {getDisplayName(item)}
           </ThemedText>
           <ThemedText type='caption' numberOfLines={1}>
@@ -66,10 +67,13 @@ export function WorkspacePickerSheet({
         <View style={[styles.sheet, { backgroundColor: background }]}>
           <View style={[styles.header, { borderBottomColor: border }]}>
             <ThemedText style={styles.title}>{t('chat.selectWorkspace')}</ThemedText>
-            <TouchableOpacity onPress={onClose}>
-              <ThemedText style={[styles.closeButton, { color: tint }]}>
-                {t('common.close')}
-              </ThemedText>
+            <TouchableOpacity
+              style={styles.closeHitArea}
+              onPress={onClose}
+              accessibilityRole='button'
+              accessibilityLabel={t('common.close')}
+            >
+              <ThemedText style={[styles.closeButton, { color: tint }]}>{t('common.close')}</ThemedText>
             </TouchableOpacity>
           </View>
 
@@ -78,11 +82,7 @@ export function WorkspacePickerSheet({
               <ThemedText type='caption'>{t('chat.noRecentWorkspaces')}</ThemedText>
             </View>
           ) : (
-            <FlatList
-              data={workspaces}
-              renderItem={renderItem}
-              keyExtractor={(item) => item}
-            />
+            <FlatList data={workspaces} renderItem={renderItem} keyExtractor={(item) => item} />
           )}
         </View>
       </View>
@@ -115,6 +115,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     fontSize: 16,
+  },
+  closeHitArea: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   empty: {
     padding: 40,

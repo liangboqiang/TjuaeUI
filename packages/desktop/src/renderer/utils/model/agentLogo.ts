@@ -6,16 +6,15 @@
  * 统一的 Agent Logo 工具
  * Unified Agent Logo utility
  *
- * Logo 真值由后端 `/api/agents/management` 提供（投影自 agent_metadata.icon/avatar）。
- * 前端不再维护任何 backend -> 资源路径的硬编码映射。
+ * 第三方 Logo 真值由后端 `/api/engines/management` 提供（投影自 agent_metadata.icon/avatar）。
+ * Tjuae 自有品牌路径统一归一到前端的 canonical SVG，兼容已迁移数据库中的历史 URL。
  *
  * 使用方式：组件用 {@link useAgentLogos} 取得 `backend -> url` 映射，再用纯函数
  * {@link resolveAgentLogo} 解析。非组件的工具函数应把映射作为参数传入。
  *
- * Logo truth lives in the backend (`/api/agents/management`, projected from
- * `agent_metadata.icon/avatar`); the frontend owns no path map. Components read the
- * `backend -> url` map via {@link useAgentLogos} and resolve with the pure
- * {@link resolveAgentLogo}; non-React utilities receive the map as an argument.
+ * Third-party logo truth lives in the backend (`/api/engines/management`, projected
+ * from `agent_metadata.icon/avatar`). Tjuae-owned legacy URLs are normalized to the
+ * canonical local SVG so old databases cannot reintroduce a retired raster logo.
  */
 
 import { ipcBridge } from '@/common';
@@ -23,6 +22,8 @@ import type { AssistantAvatar } from '@/renderer/utils/model/assistantAvatar';
 import {
   isBackendRelativeAssetPath,
   isLikelyLocalFilePath,
+  isTjuaeBrandLogoPath,
+  resolveTjuaeBrandLogoPath,
   resolveAssistantAvatar,
 } from '@/renderer/utils/model/assistantAvatar';
 import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
@@ -45,7 +46,7 @@ function collectManagedAgentLogoKeys(agent: ManagedAgent): string[] {
 /** Shared fetcher for the backend management catalog, keyed into a backend->url map. */
 export async function fetchAgentLogos(): Promise<AgentLogoMap> {
   try {
-    const agents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+    const agents = await ipcBridge.acpConversation.getManagedEngines.invoke();
     if (Array.isArray(agents)) {
       const map: AgentLogoMap = {};
       for (const agent of agents as ManagedAgent[]) {
@@ -81,6 +82,7 @@ function normalizeLogoUrl(logo: string): string | null {
   const value = logo.trim();
   if (!value || isLikelyLocalFilePath(value)) return null;
   if (value.startsWith('/') && !isBackendRelativeAssetPath(value)) return null;
+  if (isTjuaeBrandLogoPath(value)) return resolveTjuaeBrandLogoPath(value);
 
   const resolved = resolveBackendAssetUrl(value) ?? value;
   const isImage = /\.(svg|png|jpe?g|webp|gif)$/i.test(resolved) || /^(https?:|data:|\/)/i.test(resolved);

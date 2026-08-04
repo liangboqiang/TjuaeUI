@@ -4,17 +4,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import useSWR, { useSWRConfig } from 'swr';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
-import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { ipcBridge } from '@/common';
 import type { TeamAssistant, TTeam } from '@/common/types/team/teamTypes';
-import type { IProvider, TChatConversation, TProviderWithModel } from '@/common/config/storage';
-import { classifyConfigSetError, useAcpConfigOptions } from '@/renderer/hooks/agent/useAcpConfigOptions';
+import type { TChatConversation } from '@/common/config/storage';
 import ChatLayout from '@/renderer/pages/conversation/components/ChatLayout';
 import ChatSlider from '@renderer/pages/conversation/components/ChatSlider.tsx';
 import { useTeamPendingPermissions } from './hooks/useTeamPendingPermissions';
-import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
-import TjuaeCliModelSelector from '@/renderer/pages/conversation/platforms/tjuaecli/TjuaeCliModelSelector';
-import { useTjuaeCliModelSelection } from '@/renderer/pages/conversation/platforms/tjuaecli/useTjuaeCliModelSelection';
 import { CronJobManager } from '@/renderer/pages/cron';
 import { resolveCronJobId } from '@/renderer/pages/cron/cronUtils';
 import TeamTabs from './components/TeamTabs';
@@ -26,7 +21,7 @@ import { useTeamViewMode } from './hooks/useTeamViewMode';
 import { useTeamWarmup, type TeamWarmupMemberState, type TeamWarmupPhase } from './hooks/useTeamWarmup';
 import { TeamTabsProvider, useTeamTabs } from './hooks/TeamTabsContext';
 import { TeamIdentityProvider } from './identity/TeamIdentityContext';
-import { TeamPermissionProvider, useTeamPermission } from './hooks/TeamPermissionContext';
+import { TeamPermissionProvider } from './hooks/TeamPermissionContext';
 import { useTeamSession } from './hooks/useTeamSession';
 import { useTeamRunView, type TeamRunViewState } from './hooks/useTeamRunView';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
@@ -38,72 +33,12 @@ type Props = {
   team: TTeam;
 };
 
-const NON_ACP_BACKENDS = new Set(['tjuaecli', 'openclaw-gateway', 'nanobot', 'remote']);
-
-function isAcpLikeBackend(backend: string | undefined): boolean {
-  if (!backend) return false;
-  return !NON_ACP_BACKENDS.has(backend);
-}
-
 type TeamPageContentProps = {
   team: TTeam;
   onRenameTeam: (new_name: string) => Promise<boolean>;
   warmupPhase: TeamWarmupPhase;
   warmupRuntimeStatus: Map<string, TeamWarmupMemberState>;
   onRetryWarmup: () => void;
-};
-
-const configErrorMessageKey = (error: unknown) => {
-  const errorKind = classifyConfigSetError(error);
-  if (errorKind === 'command_ack') return 'agent.config.commandAck';
-  if (errorKind === 'confirmation_timeout') return 'agent.config.timeout';
-  if (errorKind === 'config_update_in_progress') return 'agent.config.busy';
-  return 'agent.config.failed';
-};
-
-/** Compact tjuaecli model selector for the agent header */
-const TjuaeCliHeaderModelSelector: React.FC<{ conversation_id: string; initialModel?: TProviderWithModel }> = ({
-  conversation_id,
-  initialModel,
-}) => {
-  const { t } = useTranslation();
-  const teamPermission = useTeamPermission();
-  const onSelectModel = useCallback(
-    async (_provider: IProvider, modelName: string) => {
-      const selected = { ..._provider, use_model: modelName } as TProviderWithModel;
-      const ok = await ipcBridge.conversation.update.invoke({ id: conversation_id, updates: { model: selected } });
-      return Boolean(ok);
-    },
-    [conversation_id]
-  );
-  const modelSelection = useTjuaeCliModelSelection({ initialModel, onSelectModel });
-  const runtimeConfig = useAcpConfigOptions({
-    conversation_id,
-    prepareSetRuntime: teamPermission?.warmupSession,
-    loadConfigOptions: teamPermission?.loadConfigOptions,
-    enabled: Boolean(conversation_id),
-  });
-  const handleThoughtLevelSetOption = useCallback(
-    async (optionId: string, value: string) => {
-      try {
-        const result = await runtimeConfig.setConfigOption(optionId, value);
-        Message.success(t('agent.thoughtLevel.switchSuccess'));
-        return result;
-      } catch (error) {
-        Message.error(t(configErrorMessageKey(error)));
-        throw error;
-      }
-    },
-    [runtimeConfig, t]
-  );
-  return (
-    <TjuaeCliModelSelector
-      selection={modelSelection}
-      thoughtLevel={runtimeConfig.thoughtLevel}
-      setStatus={runtimeConfig.setStatus}
-      onSetThoughtLevel={handleThoughtLevelSetOption}
-    />
-  );
 };
 
 /** Fetches conversation for a single assistant and renders TeamChatView */
@@ -129,17 +64,11 @@ const AssistantChatSlot: React.FC<{
   onTeamRunAck,
   onRunStateStale,
 }) => {
-  const layout = useLayoutContext();
-  const teamPermission = useTeamPermission();
-  const isMobile = layout?.isMobile ?? false;
   const { data: conversation } = useSWR(
     assistant.conversation_id ? ['team-conversation', assistant.conversation_id] : null,
     () => getConversationOrNull(assistant.conversation_id)
   );
 
-  const isTjuaeCli = conversation?.type === 'tjuaecli';
-  const initialModelId = (conversation?.extra as { current_model_id?: string })?.current_model_id;
-  const isAcpLike = conversation?.type === 'acp' || isAcpLikeBackend(assistant.assistant_backend);
   const cronJobId = resolveCronJobId(conversation?.extra);
   // 抬头不叠身份色底（避免压低彩色名字的可读性）；成员身份仅由抬头里的“彩色名字”承担。
   // 列身体保留极淡身份色底作弱提示，不影响气泡阅读。
@@ -158,27 +87,6 @@ const AssistantChatSlot: React.FC<{
         />
         <div className='flex items-center gap-8px shrink-0'>
           {conversation && <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />}
-          {!isMobile && assistant.conversation_id && !isTjuaeCli && isAcpLike && (
-            <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
-              <AcpModelSelector
-                key={assistant.conversation_id}
-                conversation_id={assistant.conversation_id}
-                backend={assistant.assistant_backend}
-                initialModelId={initialModelId}
-                prepareSetRuntime={teamPermission?.warmupSession}
-                loadConfigOptions={teamPermission?.loadConfigOptions}
-              />
-            </div>
-          )}
-          {!isMobile && isTjuaeCli && assistant.conversation_id && (
-            <div className='min-w-0 max-w-140px [&_button]:max-w-full [&_button_span]:truncate'>
-              <TjuaeCliHeaderModelSelector
-                key={assistant.conversation_id}
-                conversation_id={assistant.conversation_id}
-                initialModel={conversation?.model as TProviderWithModel | undefined}
-              />
-            </div>
-          )}
           {/* 移除入口统一到顶部胶囊（team-tab-remove-*），抬头这里不再重复放 X。 */}
           <div
             className='shrink-0 flex items-center justify-center leading-none cursor-pointer hover:bg-[var(--fill-3)] p-4px rd-4px text-[color:var(--color-text-3)] hover:text-[color:var(--color-text-1)] transition-colors'

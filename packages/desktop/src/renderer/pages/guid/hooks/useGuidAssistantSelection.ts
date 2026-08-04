@@ -17,7 +17,7 @@ import {
   type AgentRuntimeDerivedOption,
 } from '@/renderer/utils/model/agentRuntimeCatalog';
 import type { SlashCommandItem } from '@/common/chat/slash/types';
-import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
+import { useManagedEngineRuntimeCatalog } from '@/renderer/hooks/agent/useManagedEngines';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCustomAgentsLoader } from './useCustomAgentsLoader';
 
@@ -126,7 +126,7 @@ export const useGuidAssistantSelection = ({
   const [selectedAcpModel, _setSelectedAcpModel] = useState<string | null>(null);
   const [selectedThoughtLevelValue, _setSelectedThoughtLevelValue] = useState<string>('');
   const { assistants } = useCustomAgentsLoader();
-  const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
+  const managedAgentRuntimeCatalog = useManagedEngineRuntimeCatalog();
 
   const setSelectedMode = useCallback(
     (mode: React.SetStateAction<string>, _options?: { persistPreference?: boolean }) => {
@@ -216,10 +216,10 @@ export const useGuidAssistantSelection = ({
   const selectedAssistantModels = selectedAssistant?.models ?? [];
   const selectedManagedAgentRuntimeCatalog = useMemo(
     () =>
-      selectedAssistant?.agent_id
-        ? managedAgentRuntimeCatalog.find((agent) => agent.id === selectedAssistant.agent_id)
+      selectedAssistant?.engine_id
+        ? managedAgentRuntimeCatalog.find((agent) => agent.id === selectedAssistant.engine_id)
         : undefined,
-    [managedAgentRuntimeCatalog, selectedAssistant?.agent_id]
+    [managedAgentRuntimeCatalog, selectedAssistant?.engine_id]
   );
   const selectedAgentRuntimeModelInfo = useMemo(
     () => buildAgentRuntimeModelInfo(selectedManagedAgentRuntimeCatalog),
@@ -247,7 +247,7 @@ export const useGuidAssistantSelection = ({
   const currentAgentModeOptions = selectedAgentRuntimeModeState.options;
 
   const selectedAssistantAvailable = useMemo(() => {
-    return selectedAssistant?.agent_status === 'online';
+    return selectedAssistant?.engine_status === 'online';
   }, [selectedAssistant]);
 
   const modelSelectionScopeRef = useRef<string | null>(null);

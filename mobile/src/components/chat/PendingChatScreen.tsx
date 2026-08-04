@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ThemedText } from '../ui/ThemedText';
@@ -23,7 +16,7 @@ import { getAgentModes, supportsModeSwitch } from '../../constants/agentModes';
 type AcpModelInfo = {
   currentModelId: string | null;
   currentModelLabel: string | null;
-  availableModels: Array<{ id: string; label: string }>;
+  availableModels: { id: string; label: string }[];
   canSwitch: boolean;
   source: 'configOption' | 'models';
   configOptionId?: string;
@@ -60,10 +53,9 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
   useEffect(() => {
     let cancelled = false;
     bridge
-      .request<{ success: boolean; data?: { modelInfo: AcpModelInfo | null } }>(
-        'acp.probe-model-info',
-        { backend: agent.backend },
-      )
+      .request<{ success: boolean; data?: { modelInfo: AcpModelInfo | null } }>('acp.probe-model-info', {
+        backend: agent.backend,
+      })
       .then((res) => {
         if (!cancelled && res?.success && res.data?.modelInfo) {
           setModelInfo(res.data.modelInfo);
@@ -119,11 +111,11 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
 
   const handleModePress = useCallback(() => {
     // iOS: use ActionSheet
-    const handled = showModeActionSheet(modes, selectedMode, setSelectedMode);
+    const handled = showModeActionSheet(modes, selectedMode, setSelectedMode, t('common.cancel'));
     if (!handled) {
       setShowModePicker(true);
     }
-  }, [modes, selectedMode]);
+  }, [modes, selectedMode, t]);
 
   const handleSend = async (text: string) => {
     if (isSending) return;
@@ -172,17 +164,16 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
       {/* Selection badge */}
       {hasSelection && (
         <View style={[styles.badge, { backgroundColor: surface, borderColor: border }]}>
-          <Ionicons
-            name={hasWorkspace ? 'folder-outline' : 'attach'}
-            size={16}
-            color={tint}
-          />
+          <Ionicons name={hasWorkspace ? 'folder-outline' : 'attach'} size={16} color={tint} />
           <ThemedText style={styles.badgeText} numberOfLines={1}>
-            {hasWorkspace
-              ? workspaceDisplayName
-              : t('chat.filesSelected', { count: selectedFiles.length })}
+            {hasWorkspace ? workspaceDisplayName : t('chat.filesSelected', { count: selectedFiles.length })}
           </ThemedText>
-          <TouchableOpacity onPress={handleClearSelection} hitSlop={8}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleClearSelection}
+            accessibilityRole='button'
+            accessibilityLabel={t('common.close')}
+          >
             <Ionicons name='close-circle' size={18} color={iconColor} />
           </TouchableOpacity>
         </View>
@@ -199,12 +190,12 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
           style={[styles.pill, { borderColor: border }, hasWorkspace && { borderColor: tint }]}
           onPress={() => setShowWorkspacePicker(true)}
           activeOpacity={0.7}
+          accessibilityRole='button'
+          accessibilityState={{ selected: hasWorkspace }}
+          accessibilityLabel={t('chat.selectWorkspace')}
         >
           <Ionicons name='folder-outline' size={15} color={hasWorkspace ? tint : iconColor} />
-          <ThemedText
-            style={[styles.pillText, hasWorkspace && { color: tint }]}
-            numberOfLines={1}
-          >
+          <ThemedText style={[styles.pillText, hasWorkspace && { color: tint }]} numberOfLines={1}>
             {t('chat.selectWorkspace')}
           </ThemedText>
           {hasWorkspace && <View style={[styles.dot, { backgroundColor: tint }]} />}
@@ -214,6 +205,9 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
           style={[styles.pill, { borderColor: border }, hasFiles && { borderColor: tint }]}
           onPress={() => setShowFilePicker(true)}
           activeOpacity={0.7}
+          accessibilityRole='button'
+          accessibilityState={{ selected: hasFiles }}
+          accessibilityLabel={t('chat.selectFiles')}
         >
           <Ionicons name='attach' size={15} color={hasFiles ? tint : iconColor} />
           <ThemedText style={[styles.pillText, hasFiles && { color: tint }]} numberOfLines={1}>
@@ -227,6 +221,8 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
             style={[styles.pill, { borderColor: border }]}
             onPress={() => setShowModelPicker(true)}
             activeOpacity={0.7}
+            accessibilityRole='button'
+            accessibilityLabel={currentModelLabel || t('chat.selectModel')}
           >
             <Ionicons name='hardware-chip-outline' size={15} color={iconColor} />
             <ThemedText style={styles.pillText} numberOfLines={1}>
@@ -241,6 +237,8 @@ export function PendingChatScreen({ agent }: PendingChatScreenProps) {
             style={[styles.pill, { borderColor: border }]}
             onPress={handleModePress}
             activeOpacity={0.7}
+            accessibilityRole='button'
+            accessibilityLabel={`${t('chat.selectMode')}: ${currentModeLabel}`}
           >
             <Ionicons name='flash-outline' size={15} color={iconColor} />
             <ThemedText style={styles.pillText} numberOfLines={1}>
@@ -335,6 +333,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    minHeight: 44,
     borderRadius: 20,
     borderWidth: 1,
   },
@@ -345,5 +344,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: -8,
+    marginRight: -8,
   },
 });

@@ -1,5 +1,4 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
-import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import UnoCSS from 'unocss/vite';
@@ -11,17 +10,10 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 // at "0.0.0" — never use it for user-visible version strings.
 const rootPackageJson = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf-8')) as {
   version: string;
+  tjuaeCoreVersion: string;
 };
-
-// Build builtin MCP servers after main process bundle so they survive out/main/ cleanup.
-function buildMcpServersPlugin() {
-  return {
-    name: 'vite-plugin-build-mcp-servers',
-    closeBundle() {
-      execSync(`node "${resolve('scripts/build-mcp-servers.js')}"`, { stdio: 'inherit' });
-    },
-  };
-}
+const selectedTjuaeCoreVersion = process.env.TJUAEUI_BACKEND_VERSION?.trim() || rootPackageJson.tjuaeCoreVersion.trim();
+const expectedTjuaeCoreBuildIdentifier = selectedTjuaeCoreVersion.replace(/^v/, '');
 
 // Icon Park transform plugin (replaces webpack icon-park-loader)
 function iconParkPlugin() {
@@ -76,18 +68,6 @@ export default defineConfig(({ mode }) => {
         // are bundled by esbuild rather than left as `require('@tjuae/web-host')`, which Node
         // cannot resolve because the package ships no compiled .js files (workspace-only).
         externalizeDepsPlugin({ exclude: ['fix-path', '@tjuae/web-host'] }),
-        ...(isDevelopment
-          ? [
-              {
-                name: 'dev-build-mcp-servers',
-                closeBundle() {
-                  execSync(`node "${resolve(__dirname, '../../scripts/build-mcp-servers.js')}"`, {
-                    stdio: 'inherit',
-                  });
-                },
-              },
-            ]
-          : []),
         ...(!isDevelopment
           ? [
               viteStaticCopy({
@@ -103,7 +83,6 @@ export default defineConfig(({ mode }) => {
               }),
             ]
           : []),
-        ...(isDevelopment ? [buildMcpServersPlugin()] : []),
       ],
       resolve: { alias: mainAliases, extensions: ['.ts', '.tsx', '.js', '.json'] },
       build: {
@@ -112,8 +91,6 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           input: {
             index: resolve('packages/desktop/src/index.ts'),
-            // Built-in MCP server entry points (compiled by scripts/build-mcp-servers.js via esbuild,
-            // not vite — esbuild bundles all deps for self-contained execution by external node processes)
           },
           onwarn(warning, warn) {
             if (warning.code === 'EVAL') return;
@@ -142,9 +119,6 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           input: {
             index: resolve('packages/desktop/src/preload/main.ts'),
-            petPreload: resolve('packages/desktop/src/preload/petPreload.ts'),
-            petHitPreload: resolve('packages/desktop/src/preload/petHitPreload.ts'),
-            petConfirmPreload: resolve('packages/desktop/src/preload/petConfirmPreload.ts'),
           },
         },
       },
@@ -211,48 +185,11 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           input: {
             index: resolve(rendererRoot, 'index.html'),
-            pet: resolve(rendererRoot, 'pet/pet.html'),
-            'pet-hit': resolve(rendererRoot, 'pet/pet-hit.html'),
-            'pet-confirm': resolve(rendererRoot, 'pet/pet-confirm.html'),
           },
           external: ['node:crypto', 'crypto'],
           onwarn(warning, warn) {
             if (warning.code === 'EVAL') return;
             warn(warning);
-          },
-          output: {
-            manualChunks(id: string) {
-              if (!id.includes('node_modules')) return undefined;
-              if (id.includes('/react-dom/') || id.includes('/react/')) return 'vendor-react';
-              if (id.includes('/@arco-design/')) return 'vendor-arco';
-              if (
-                id.includes('/react-markdown/') ||
-                id.includes('/remark-') ||
-                id.includes('/rehype-') ||
-                id.includes('/unified/') ||
-                id.includes('/mdast-') ||
-                id.includes('/hast-') ||
-                id.includes('/micromark')
-              )
-                return 'vendor-markdown';
-              if (
-                id.includes('/react-syntax-highlighter/') ||
-                id.includes('/refractor/') ||
-                id.includes('/highlight.js/')
-              )
-                return 'vendor-highlight';
-              if (
-                id.includes('/monaco-editor/') ||
-                id.includes('/@monaco-editor/') ||
-                id.includes('/codemirror/') ||
-                id.includes('/@codemirror/')
-              )
-                return 'vendor-editor';
-              if (id.includes('/katex/')) return 'vendor-katex';
-              if (id.includes('/@icon-park/')) return 'vendor-icons';
-              if (id.includes('/diff2html/')) return 'vendor-diff';
-              return undefined;
-            },
           },
         },
       },
@@ -264,6 +201,7 @@ export default defineConfig(({ mode }) => {
         // can show it without importing packages/desktop/package.json, which is
         // a workspace-internal placeholder frozen at "0.0.0".
         __APP_VERSION__: JSON.stringify(rootPackageJson.version),
+        __TJUAE_CORE_BUILD_IDENTIFIER__: JSON.stringify(expectedTjuaeCoreBuildIdentifier),
         global: 'globalThis',
       },
       optimizeDeps: {

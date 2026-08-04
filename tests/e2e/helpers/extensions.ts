@@ -6,7 +6,6 @@ export type ExtensionSnapshot = {
   acpAdapters: Array<{ id: string; name: string; connectionType?: string }>;
   mcp_servers: Array<{ id?: string; name: string }>;
   assistants: Array<{ id: string; name: string; _source?: string }>;
-  agents: Array<{ id: string; name: string; _source?: string; _kind?: string }>;
   skills: Array<{ name: string; description?: string; location: string }>;
   themes: Array<{ id: string; name: string; cover?: string }>;
   settingsTabs: Array<{ id: string; label: string; url: string; extensionName: string }>;
@@ -45,34 +44,23 @@ export async function getExtensionSnapshot(page: Page): Promise<ExtensionSnapsho
     return [];
   };
 
-  const [
-    loadedExtensions,
-    acpAdapters,
-    mcpServers,
-    assistants,
-    agents,
-    skills,
-    themes,
-    settingsTabs,
-    webuiContributions,
-  ] = await Promise.all([
-    invokeBridge(page, 'extensions.get-loaded-extensions'),
-    invokeBridge(page, 'extensions.get-acp-adapters'),
-    invokeBridge(page, 'extensions.get-mcp-servers'),
-    invokeBridge(page, 'extensions.get-assistants'),
-    invokeBridge(page, 'extensions.get-agents'),
-    invokeBridge(page, 'extensions.get-skills'),
-    invokeBridge(page, 'extensions.get-themes'),
-    invokeBridge(page, 'extensions.get-settings-tabs'),
-    invokeBridge(page, 'extensions.get-webui-contributions'),
-  ]);
+  const [loadedExtensions, acpAdapters, mcpServers, assistants, skills, themes, settingsTabs, webuiContributions] =
+    await Promise.all([
+      invokeBridge(page, 'extensions.get-loaded-extensions'),
+      invokeBridge(page, 'extensions.get-acp-adapters'),
+      invokeBridge(page, 'extensions.get-mcp-servers'),
+      invokeBridge(page, 'extensions.get-assistants'),
+      invokeBridge(page, 'extensions.get-skills'),
+      invokeBridge(page, 'extensions.get-themes'),
+      invokeBridge(page, 'extensions.get-settings-tabs'),
+      invokeBridge(page, 'extensions.get-webui-contributions'),
+    ]);
 
   return {
     loadedExtensions: unwrapArray(loadedExtensions),
     acpAdapters: unwrapArray(acpAdapters),
     mcp_servers: unwrapArray(mcpServers),
     assistants: unwrapArray(assistants),
-    agents: unwrapArray(agents),
     skills: unwrapArray(skills),
     themes: unwrapArray(themes),
     settingsTabs: unwrapArray(settingsTabs),

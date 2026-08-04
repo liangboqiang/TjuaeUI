@@ -14,6 +14,18 @@
   "copiedToClipboard": "クリップボードにコピーしました",
   "downloadSuccess": "ダウンロードしました",
   "downloadFailed": "ダウンロードに失敗しました",
+  "a2aPart": {
+    "unnamed": "A2A コンテンツ",
+    "unsupportedUrl": "HTTP または HTTPS のリンクのみ開けます。",
+    "openConfirmTitle": "外部 A2A リソースを開きますか？",
+    "openConfirmContent": "このリンクはリモート Agent から提供されました。続行前にリンク先を確認してください。",
+    "open": "開く",
+    "downloadConfirmTitle": "この A2A Agent のコンテンツをダウンロードしますか？",
+    "downloadConfirmContent": "リモート Agent を信頼し、このファイルを想定していた場合にのみ「{{name}}」をローカルに保存してください。",
+    "download": "ダウンロード",
+    "structuredData": "構造化データ",
+    "inlineTooLarge": "インラインファイルが安全なダウンロード上限の 2 MiB を超えています。"
+  },
   "imageLoadFailed": "画像の読み込みに失敗しました",
   "scrollToBottom": "下にスクロール",
   "availableCommands": "{{count}} 個の利用可能なコマンド",

@@ -17,9 +17,9 @@ describe('applyTheme', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(document.body.getAttribute('arco-theme')).toBe('dark');
   });
-  it('injects decoration css when present and removes when absent', () => {
+  it('does not inject retired custom decoration css', () => {
     applyTheme({ ...base, id: 'hk', name: 'HK', appearance: 'light', css: 'body{color:red}' } as Theme);
-    expect(document.getElementById('theme-decoration')?.textContent).toContain('color:red');
+    expect(document.getElementById('theme-decoration')).toBeNull();
     applyTheme({ ...base, id: 'light', name: 'Light', appearance: 'light' } as Theme);
     expect(document.getElementById('theme-decoration')).toBeNull();
   });

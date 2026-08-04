@@ -112,7 +112,7 @@ const AcpModelSelector: React.FC<{
 
   if (!model_info) {
     return (
-      <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
+      <Tooltip content={t('conversation.welcome.modelCatalogUnavailable')} position='top'>
         <RuntimeSelectorPill
           className='sendbox-model-btn header-model-btn agent-mode-compact-pill'
           label={t('conversation.welcome.useCliModel')}

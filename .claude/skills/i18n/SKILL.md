@@ -85,7 +85,7 @@ t('cron.status.active'); // cron.json 中的嵌套键
 
 - 键名使用 **camelCase**：`copySuccess`、`scheduledTasks`
 - 相关键使用嵌套分组：`status.active`、`actions.pause`
-- save、cancel、delete、confirm 等可复用文本放入 `common.json`
+- `save`、`cancel`、`delete`、`confirm` 等可复用文本放入 `common.json`
 - 功能专用文本放入对应模块
 
 ### 常用后缀
@@ -98,7 +98,7 @@ t('cron.status.active'); // cron.json 中的嵌套键
 | `success` / `error` | 状态消息       |
 | `confirm`           | 确认对话框     |
 | `empty`             | 空状态消息     |
-| `tooltip`           | Tooltip 文本   |
+| `tooltip`           | 工具提示文本   |
 
 ## 新增文本流程
 
@@ -161,7 +161,7 @@ node scripts/check-i18n.js  # B：校验结构、键一致性与类型同步
 
 1. 将模块名加入 `packages/desktop/src/common/config/i18n-config.json` 的 `modules` 数组
 2. 在每个 `supportedLanguages` 目录创建 `<module>.json`
-3. 在每种语言的 `index.ts` 中补充 import 与 export
+3. 在每种语言的 `index.ts` 中补充导入与导出
 4. 运行 `bun run i18n:types`
 5. 运行 `node scripts/check-i18n.js`
 
@@ -241,11 +241,11 @@ import { Trans } from 'react-i18next';
 
 ## 常见错误
 
-| 错误                              | 正确做法                                        |
-| --------------------------------- | ----------------------------------------------- |
-| 假定语言数量固定                  | 每次先读取 `i18n-config.json`                   |
-| 只向部分语言添加键                | 更新 `supportedLanguages` 中的全部语言          |
-| 手动编辑 `i18n-keys.d.ts`         | 运行 `bun run i18n:types` 生成                  |
-| 使用 `t("New Chat")`              | 先定义键，再使用 `t("conversation.newChat")`    |
-| 新增模块却未更新配置              | 先更新配置，再创建各语言文件                    |
-| 新增模块 JSON 却未更新 `index.ts` | 在每个语言的 `index.ts` 中补充 import 与 export |
+| 错误                              | 正确做法                                     |
+| --------------------------------- | -------------------------------------------- |
+| 假定语言数量固定                  | 每次先读取 `i18n-config.json`                |
+| 只向部分语言添加键                | 更新 `supportedLanguages` 中的全部语言       |
+| 手动编辑 `i18n-keys.d.ts`         | 运行 `bun run i18n:types` 生成               |
+| 使用 `t("New Chat")`              | 先定义键，再使用 `t("conversation.newChat")` |
+| 新增模块却未更新配置              | 先更新配置，再创建各语言文件                 |
+| 新增模块 JSON 却未更新 `index.ts` | 在每个语言的 `index.ts` 中补充导入与导出     |

@@ -14,6 +14,18 @@
   "copiedToClipboard": "已複製到剪貼簿",
   "downloadSuccess": "下載成功",
   "downloadFailed": "下載失敗",
+  "a2aPart": {
+    "unnamed": "A2A 內容",
+    "unsupportedUrl": "僅允許開啟 HTTP 和 HTTPS 連結。",
+    "openConfirmTitle": "開啟外部 A2A 資源？",
+    "openConfirmContent": "此連結由遠端智慧體提供。繼續前請確認目標網址。",
+    "open": "開啟",
+    "downloadConfirmTitle": "下載此 A2A 智慧體提供的內容？",
+    "downloadConfirmContent": "僅在你信任遠端智慧體且預期收到此檔案時，才將「{{name}}」儲存到本機。",
+    "download": "下載",
+    "structuredData": "結構化資料",
+    "inlineTooLarge": "內嵌檔案超過 2 MiB 的安全下載限制。"
+  },
   "imageLoadFailed": "圖片載入失敗",
   "scrollToBottom": "滾動到底部",
   "availableCommands": "{{count}} 個可用指令",

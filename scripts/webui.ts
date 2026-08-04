@@ -16,6 +16,7 @@
  *   TJUAEUI_STATIC_DIR     : override static dir (default out/renderer)
  *   TJUAEUI_BACKEND_BIN    : absolute path to tjuaecore binary (else PATH lookup)
  *   TJUAEUI_BACKEND_BUNDLED_DIR : dir containing bundled-tjuaecore/<plat-arch>/binary
+ *   TJUAEUI_SKIP_CORE_FRESHNESS_CHECK : "1" to skip local sibling Core freshness checks
  *   TJUAEUI_OPEN_BROWSER   : "1"/"true" to force open, "0"/"false" to disable
  */
 
@@ -34,6 +35,7 @@ const DEFAULT_PORT = (() => {
   return 25809;
 })();
 const BACKEND_BINARY = process.platform === 'win32' ? 'tjuaecore.exe' : 'tjuaecore';
+const CORE_SOURCE_IGNORED_DIRECTORIES = new Set(['.git', 'target', 'node_modules']);
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..');
@@ -136,8 +138,72 @@ function runPackageIfNeeded(): void {
   console.log(`[webui] 打包完成，耗时 ${((Date.now() - start) / 1000).toFixed(1)} 秒`);
 }
 
+function latestCoreSourceModificationMs(directory: string): number {
+  let latest = 0;
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (CORE_SOURCE_IGNORED_DIRECTORIES.has(entry.name)) continue;
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      latest = Math.max(latest, latestCoreSourceModificationMs(entryPath));
+    } else if (entry.isFile()) {
+      latest = Math.max(latest, fs.statSync(entryPath).mtimeMs);
+    }
+  }
+  return latest;
+}
+
+/**
+ * Development WebUI must not silently pair new UI sources with the stale
+ * bundled Core. A sibling Core checkout is the source of truth in development;
+ * rebuild it when necessary and run that exact binary. Production has no
+ * sibling checkout and continues through the signed manifest/checksum flow.
+ */
+function resolveSiblingCoreBinary(explicitBinary?: string): string | undefined {
+  if (process.env.NODE_ENV === 'production') return undefined;
+  if (parseBoolean(process.env.TJUAEUI_SKIP_CORE_FRESHNESS_CHECK)) return undefined;
+
+  const coreRoot = path.resolve(repoRoot, '..', 'TjuaeCore');
+  const coreManifest = path.join(coreRoot, 'Cargo.toml');
+  if (!fs.existsSync(coreManifest)) return undefined;
+
+  const siblingBinary = path.join(coreRoot, 'target', 'release', BACKEND_BINARY);
+  const sourceModifiedAt = latestCoreSourceModificationMs(coreRoot);
+  const binaryModifiedAt = fs.existsSync(siblingBinary) ? fs.statSync(siblingBinary).mtimeMs : 0;
+  const stale = binaryModifiedAt < sourceModifiedAt;
+
+  if (explicitBinary) {
+    const selectedModifiedAt = fs.existsSync(explicitBinary) ? fs.statSync(explicitBinary).mtimeMs : 0;
+    if (stale || selectedModifiedAt < sourceModifiedAt) {
+      throw new Error(
+        `本地 TjuaeCore 源码比所选后端新。请先在 ${coreRoot} 运行“cargo build --release -p tjuaeui-app”，或移除 TJUAEUI_BACKEND_BIN 让 WebUI 自动构建。`
+      );
+    }
+    return undefined;
+  }
+
+  if (stale) {
+    console.log('[webui] 检测到本地 TjuaeCore 源码较新，正在重新构建后端…');
+    execSync('cargo build --release -p tjuaeui-app', { cwd: coreRoot, stdio: 'inherit' });
+  }
+
+  if (!fs.existsSync(siblingBinary)) {
+    throw new Error(`本地 TjuaeCore 构建未生成后端文件：${siblingBinary}`);
+  }
+  if (fs.statSync(siblingBinary).mtimeMs < latestCoreSourceModificationMs(coreRoot)) {
+    throw new Error(`本地 TjuaeCore 后端仍旧于源码。请检查 ${coreRoot} 的构建错误后重试。`);
+  }
+  return siblingBinary;
+}
+
 function resolveBackendBinary(): string {
-  if (process.env.TJUAEUI_BACKEND_BIN) return process.env.TJUAEUI_BACKEND_BIN;
+  const explicitBinary = process.env.TJUAEUI_BACKEND_BIN;
+  if (explicitBinary) {
+    resolveSiblingCoreBinary(explicitBinary);
+    return explicitBinary;
+  }
+
+  const siblingBinary = resolveSiblingCoreBinary();
+  if (siblingBinary) return siblingBinary;
 
   const bundledBase = process.env.TJUAEUI_BACKEND_BUNDLED_DIR ?? path.join(repoRoot, 'resources', 'bundled-tjuaecore');
   const runtimeKey = `${process.platform}-${process.arch}`;

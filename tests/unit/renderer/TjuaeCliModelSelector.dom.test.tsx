@@ -75,7 +75,7 @@ vi.mock('react-i18next', () => ({
       if (key === 'common.model') return 'Model';
       if (key === 'conversation.welcome.selectModel') return 'Select model';
       if (key === 'conversation.welcome.useCliModel') return 'Use CLI model';
-      if (key === 'conversation.welcome.modelSwitchNotSupported') return 'Model switch is not supported';
+      if (key === 'conversation.welcome.modelSelectionUnavailable') return 'Model selection is unavailable';
       if (key === 'common.defaultModel') return 'Default';
       if (key === 'agent.model.searchPlaceholder') return 'Search models';
       if (key === 'agent.model.noResults') return 'No matching models';

@@ -4,6 +4,7 @@ import { isBackendHttpError } from '@/common/adapter/httpBridge';
 import { isSideQuestionSupported } from '@/common/chat/sideQuestion';
 import { parseError, uuid } from '@/common/utils';
 import AgentModeSelector from '@/renderer/components/agent/AgentModeSelector';
+import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
 import CommandQueuePanel from '@/renderer/components/chat/CommandQueuePanel';
 import MobileActionSheet, {
   type MobileActionSheetEntry,
@@ -103,6 +104,7 @@ const useSendBoxDraft = (conversation_id: string) => {
 const AcpSendBox: React.FC<{
   conversation_id: string;
   backend: string;
+  conversationType?: 'acp' | 'a2a';
   session_mode?: string;
   agent_name?: string;
   workspacePath?: string;
@@ -112,6 +114,7 @@ const AcpSendBox: React.FC<{
 }> = ({
   conversation_id,
   backend,
+  conversationType = 'acp',
   session_mode,
   agent_name,
   workspacePath,
@@ -121,9 +124,10 @@ const AcpSendBox: React.FC<{
 }) => {
   const { aiProcessing, setAiProcessing, resetState, hasThinkingMessage, slashCommands } = messageState;
   const { t } = useTranslation();
+  const isA2a = conversationType === 'a2a';
   const teamPermission = useTeamPermission();
   // In team mode, all agents show the permission mode selector (members don't propagate)
-  const showModeSelector = true;
+  const showModeSelector = !isA2a;
   const isLeaderInTeam = teamPermission && conversation_id === teamPermission.leaderConversationId;
   const { checkAndUpdateTitle } = useAutoTitle();
   const { atPath, uploadFile, setAtPath, setUploadFile, content, setContent } = useSendBoxDraft(conversation_id);
@@ -148,7 +152,7 @@ const AcpSendBox: React.FC<{
     prepareRuntime: prepareRuntimeConfig,
     prepareSetRuntime: teamPermission?.warmupSession,
     loadConfigOptions: teamPermission?.loadConfigOptions,
-    enabled: true,
+    enabled: !isA2a,
   });
   const runtimeMode = runtimeConfig.mode;
   const runtimeThoughtLevel = runtimeConfig.thoughtLevel;
@@ -168,7 +172,7 @@ const AcpSendBox: React.FC<{
     prepareRuntime: prepareRuntimeConfig,
     prepareSetRuntime: teamPermission?.warmupSession,
     loadConfigOptions: teamPermission?.loadConfigOptions,
-    enabled: isMobile,
+    enabled: isMobile && !isA2a,
     onSelectModelSuccess: () => Message.success(t('agent.model.switchSuccess')),
     onSelectModelFailed: (_modelId, error) => Message.error(t(configErrorMessageKey(error))),
   });
@@ -485,7 +489,7 @@ Please check your local CLI tool authentication status`,
 
     // Model entry: only when the agent exposes a switchable list. Otherwise
     // (Codex with no list, no info) skip — exposing a no-op row would be noise.
-    if (modelOptions.length > 0) {
+    if (!isA2a && modelOptions.length > 0) {
       entries.push({
         key: 'model',
         icon: <Brain theme='outline' size='16' />,
@@ -499,7 +503,7 @@ Please check your local CLI tool authentication status`,
       });
     }
 
-    if (runtimeThoughtLevel) {
+    if (!isA2a && runtimeThoughtLevel) {
       entries.push({
         key: 'thought-level',
         icon: <Brain theme='outline' size='16' />,
@@ -525,7 +529,7 @@ Please check your local CLI tool authentication status`,
       });
     }
 
-    if (modeOptions.length > 0) {
+    if (!isA2a && modeOptions.length > 0) {
       entries.push({
         key: 'permission',
         icon: <Shield theme='outline' size='16' />,
@@ -599,6 +603,7 @@ Please check your local CLI tool authentication status`,
     currentMode,
     handleSheetModeChange,
     handleThoughtLevelSetOption,
+    isA2a,
     isMobile,
     loadedMcpStatuses,
     loadedSkills,
@@ -700,7 +705,7 @@ Please check your local CLI tool authentication status`,
         className='z-10'
         onFilesAdded={handleFilesAdded}
         hasPendingAttachments={uploadFile.length > 0 || atPath.length > 0}
-        enableBtw={isSideQuestionSupported({ type: 'acp', backend })}
+        enableBtw={!isA2a && isSideQuestionSupported({ type: 'acp', backend })}
         supportedExts={allSupportedExts}
         defaultMultiLine={!isMobile}
         lockMultiLine={!isMobile}
@@ -713,6 +718,15 @@ Please check your local CLI tool authentication status`,
         }
         rightTools={
           <div className='flex items-center gap-8px min-w-0'>
+            {!isMobile && !isA2a && (
+              <AcpModelSelector
+                conversation_id={conversation_id}
+                backend={backend}
+                prepareRuntime={prepareRuntimeConfig}
+                prepareSetRuntime={teamPermission?.warmupSession}
+                loadConfigOptions={teamPermission?.loadConfigOptions}
+              />
+            )}
             {showModeSelector && (
               <AgentModeSelector
                 backend={backend}

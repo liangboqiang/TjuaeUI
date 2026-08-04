@@ -51,6 +51,7 @@ import { Brain, MagicHat, Shield } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { classifyConversationBusyError } from '../conversationBusyError';
+import TjuaeCliModelSelector from './TjuaeCliModelSelector';
 import { useTjuaeCliMessage } from './useTjuaeCliMessage';
 import type { TjuaeCliModelSelection } from './useTjuaeCliModelSelection';
 
@@ -183,6 +184,19 @@ const TjuaeCliSendBox: React.FC<{
   });
   const runtimeMode = runtimeConfig.mode;
   const runtimeThoughtLevel = runtimeConfig.thoughtLevel;
+  const handleThoughtLevelSetOption = useCallback(
+    async (optionId: string, value: string) => {
+      try {
+        const result = await runtimeConfig.setConfigOption(optionId, value);
+        Message.success(t('agent.thoughtLevel.switchSuccess'));
+        return result;
+      } catch (error) {
+        Message.error(t(configErrorMessageKey(error)));
+        throw error;
+      }
+    },
+    [runtimeConfig, t]
+  );
 
   useEffect(() => {
     if (!runtimeMode?.currentValue) return;
@@ -709,6 +723,14 @@ const TjuaeCliSendBox: React.FC<{
         }
         rightTools={
           <div className='flex items-center gap-8px min-w-0'>
+            {!isMobile && (
+              <TjuaeCliModelSelector
+                selection={modelSelection}
+                thoughtLevel={runtimeThoughtLevel}
+                setStatus={runtimeConfig.setStatus}
+                onSetThoughtLevel={handleThoughtLevelSetOption}
+              />
+            )}
             <AgentModeSelector
               backend='tjuaecli'
               conversation_id={conversation_id}

@@ -121,10 +121,19 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
                   <div
                     data-testid={`collapsed-team-item-${team.id}`}
                     className={classNames(
-                      'relative w-full h-40px flex items-center justify-center cursor-pointer transition-colors rd-8px',
+                      'relative w-full h-40px flex items-center justify-center cursor-pointer outline-none transition-colors rd-8px focus-visible:ring-2 focus-visible:ring-primary-6',
                       isActive ? '!bg-active' : 'hover:bg-fill-3 active:bg-fill-4'
                     )}
+                    role='button'
+                    tabIndex={0}
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={team.name}
                     onClick={() => handleTeamClick(team.id)}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return;
+                      event.preventDefault();
+                      handleTeamClick(team.id);
+                    }}
                   >
                     {isRunning ? (
                       <span
@@ -160,9 +169,17 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
       ) : (
         <div className='shrink-0 flex flex-col gap-2px'>
           <div
-            className='group/label sider-section-label flex items-center px-12px h-28px select-none sticky top-0 z-10 mt-8px cursor-pointer'
+            className='group/label sider-section-label flex items-center px-12px h-28px select-none sticky top-0 z-10 mt-8px cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary-6'
             data-testid='team-section-toggle'
+            role='button'
+            tabIndex={0}
+            aria-expanded={expanded}
             onClick={() => setExpanded((v) => !v)}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              setExpanded((value) => !value);
+            }}
           >
             <span className='text-14px text-t-tertiary sider-section-title group-hover/label:text-t-primary transition-colors font-[500] leading-none'>
               {t('team.sider.title')}
@@ -179,9 +196,18 @@ const TeamSiderSection: React.FC<TeamSiderSectionProps> = ({
             <Tooltip content={t('team.sider.createTeam')} position='top'>
               <div
                 data-testid='team-create-btn'
-                className='ml-auto -mr-4px size-20px rd-4px flex items-center justify-center hover:bg-fill-4 transition-all shrink-0 cursor-pointer text-t-secondary hover:text-t-primary'
+                className='ml-auto -mr-4px size-20px rd-4px flex items-center justify-center hover:bg-fill-4 transition-all shrink-0 cursor-pointer text-t-secondary hover:text-t-primary outline-none focus-visible:ring-2 focus-visible:ring-primary-6'
+                role='button'
+                tabIndex={0}
+                aria-label={t('team.sider.createTeam')}
                 onClick={(e) => {
                   e.stopPropagation();
+                  setCreateTeamVisible(true);
+                }}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
                   setCreateTeamVisible(true);
                 }}
               >

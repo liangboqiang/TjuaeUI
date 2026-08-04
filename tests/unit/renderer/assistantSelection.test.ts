@@ -19,7 +19,6 @@ const mk = (id: string, source: Assistant['source'], sort_order: number, enabled
     sort_order,
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
@@ -30,15 +29,15 @@ const mk = (id: string, source: Assistant['source'], sort_order: number, enabled
   }) as Assistant;
 
 describe('selectableAssistants', () => {
-  it('keeps the legacy source order when no preference exists', () => {
+  it('keeps generated assistants ahead of user assistants when no preference exists', () => {
     const result = selectableAssistants([
-      mk('builtin-a', 'builtin', 5),
+      mk('generated-a', 'generated', 5),
       mk('user-b', 'user', 20),
       mk('cli-a', 'generated', 30),
       mk('user-a', 'user', 10),
       mk('cli-b', 'generated', 40),
     ]);
-    expect(result.map((a) => a.id)).toEqual(['cli-a', 'cli-b', 'user-a', 'user-b', 'builtin-a']);
+    expect(result.map((a) => a.id)).toEqual(['generated-a', 'cli-a', 'cli-b', 'user-a', 'user-b']);
   });
 
   it('drops disabled assistants', () => {
@@ -50,25 +49,29 @@ describe('selectableAssistants', () => {
     expect(result.map((a) => a.id)).toEqual(['cli-on']);
   });
 
-  it('keeps CLI agents ahead of official even when official has a lower sort_order', () => {
-    const result = selectableAssistants([mk('official', 'builtin', 1), mk('cli', 'generated', 999)]);
+  it('keeps generated assistants ahead of user assistants even when the user assistant sorts first', () => {
+    const result = selectableAssistants([mk('writer', 'user', 1), mk('cli', 'generated', 999)]);
     expect(result[0].id).toBe('cli');
   });
 
-  it('applies one preferred order across CLI, custom, and official assistants', () => {
-    const assistants = [mk('official', 'builtin', 1), mk('custom', 'user', 1), mk('cli', 'generated', 1)];
+  it('applies one preferred order across generated and user assistants', () => {
+    const assistants = [mk('generated', 'generated', 1), mk('custom', 'user', 1), mk('cli', 'generated', 2)];
 
-    const result = selectableAssistants(assistants, ['official', 'cli', 'custom']);
+    const result = selectableAssistants(assistants, ['generated', 'cli', 'custom']);
 
-    expect(result.map((assistant) => assistant.id)).toEqual(['official', 'cli', 'custom']);
+    expect(result.map((assistant) => assistant.id)).toEqual(['generated', 'cli', 'custom']);
   });
 
   it('ignores duplicate and stale IDs, then appends new assistants deterministically', () => {
-    const assistants = [mk('official-new', 'builtin', 2), mk('custom-known', 'user', 1), mk('cli-new', 'generated', 3)];
+    const assistants = [
+      mk('generated-new', 'generated', 2),
+      mk('custom-known', 'user', 1),
+      mk('cli-new', 'generated', 3),
+    ];
 
     const result = selectableAssistants(assistants, ['missing', 'custom-known', 'custom-known']);
 
-    expect(result.map((assistant) => assistant.id)).toEqual(['custom-known', 'cli-new', 'official-new']);
+    expect(result.map((assistant) => assistant.id)).toEqual(['custom-known', 'generated-new', 'cli-new']);
   });
 });
 
@@ -76,20 +79,20 @@ describe('assistantOrderAfterToggle', () => {
   const assistants = [
     mk('cli', 'generated', 1),
     mk('custom', 'user', 1),
-    mk('official', 'builtin', 1),
-    mk('disabled', 'builtin', 2, false),
+    mk('generated', 'generated', 2),
+    mk('disabled', 'generated', 3, false),
   ];
 
   it('removes a disabled assistant from the enabled order', () => {
-    expect(assistantOrderAfterToggle(assistants, ['official', 'cli', 'custom'], 'cli', false)).toEqual([
-      'official',
+    expect(assistantOrderAfterToggle(assistants, ['generated', 'cli', 'custom'], 'cli', false)).toEqual([
+      'generated',
       'custom',
     ]);
   });
 
   it('appends a re-enabled assistant to the end', () => {
-    expect(assistantOrderAfterToggle(assistants, ['official', 'cli', 'custom'], 'disabled', true)).toEqual([
-      'official',
+    expect(assistantOrderAfterToggle(assistants, ['generated', 'cli', 'custom'], 'disabled', true)).toEqual([
+      'generated',
       'cli',
       'custom',
       'disabled',

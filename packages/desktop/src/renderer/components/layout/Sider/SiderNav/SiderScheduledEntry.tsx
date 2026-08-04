@@ -33,10 +33,19 @@ const SiderScheduledEntry: React.FC<SiderScheduledEntryProps> = ({
       <Tooltip {...siderTooltipProps} content={t('cron.scheduledTasks')} position='right'>
         <div
           className={classNames(
-            'w-full h-34px flex items-center justify-center cursor-pointer transition-colors rd-8px text-t-primary',
+            'w-full h-34px flex items-center justify-center cursor-pointer outline-none transition-colors rd-8px text-t-primary focus-visible:ring-2 focus-visible:ring-primary-6',
             isActive ? 'bg-fill-3' : 'hover:bg-fill-3 active:bg-fill-4'
           )}
+          role='button'
+          tabIndex={0}
+          aria-current={isActive ? 'page' : undefined}
+          aria-label={t('cron.scheduledTasks')}
           onClick={onClick}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            onClick();
+          }}
         >
           <AlarmClock
             theme='outline'
@@ -54,11 +63,19 @@ const SiderScheduledEntry: React.FC<SiderScheduledEntryProps> = ({
     <Tooltip {...siderTooltipProps} content={t('cron.scheduledTasks')} position='right'>
       <div
         className={classNames(
-          'box-border group h-34px w-full flex items-center justify-start gap-8px pl-10px pr-8px rd-0.5rem cursor-pointer shrink-0 transition-all text-t-primary',
+          'box-border group h-34px w-full flex items-center justify-start gap-8px pl-10px pr-8px rd-0.5rem cursor-pointer shrink-0 outline-none transition-all text-t-primary focus-visible:ring-2 focus-visible:ring-primary-6',
           isMobile && 'sider-action-btn-mobile',
           isActive ? 'bg-fill-3' : 'hover:bg-fill-3 active:bg-fill-4'
         )}
+        role='button'
+        tabIndex={0}
+        aria-current={isActive ? 'page' : undefined}
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          onClick();
+        }}
       >
         <span className='size-22px flex items-center justify-center shrink-0 text-t-primary'>
           <AlarmClock

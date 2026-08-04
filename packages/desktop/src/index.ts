@@ -25,7 +25,7 @@ import { shouldRegisterBackendStartup } from './process/startup/singleInstanceGa
 import { ProcessConfig } from './process/utils/initStorage';
 import type { BackendStartupFailureInfo } from './common/types/platform/electron';
 import { registerWindowMaximizeListeners } from '@process/bridge';
-import { BackendLifecycleManager } from '@tjuae/web-host';
+import { BackendLifecycleManager, isLocalAcceptanceVersion } from '@tjuae/web-host';
 import { resolveBinaryPath } from '@process/backend';
 import { wasLaunchedAtLogin } from '@process/bridge/applicationBridge';
 import { onLanguageChanged } from './process/bridge/systemSettingsBridge';
@@ -192,7 +192,7 @@ const backendManager = new BackendLifecycleManager(
   {
     version: app.getVersion(),
     isPackaged: app.isPackaged,
-    resourcesPath: process.resourcesPath,
+    resourcesPath: app.isPackaged ? process.resourcesPath : path.join(app.getAppPath(), 'resources'),
     userDataPath: app.getPath('userData'),
   },
   resolveBinaryPath
@@ -411,7 +411,7 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   let devIcon: Electron.NativeImage | undefined;
   if (!app.isPackaged) {
     try {
-      // Windows: app.ico (no dev version), Linux: app_dev.png (with padding)
+      // Windows and Linux use native-format derivatives of the canonical circular SVG.
       const iconFile = process.platform === 'win32' ? 'app.ico' : 'app_dev.png';
       const iconPath = path.join(process.cwd(), 'resources', iconFile);
       if (fs.existsSync(iconPath)) {
@@ -494,7 +494,10 @@ const createWindow = ({ showOnReady = true }: { showOnReady?: boolean } = {}): v
   // 初始化自动更新服务（通过环境变量禁用时跳过，例如 E2E / CI 场景）
   const isCiRuntime = process.env.CI === 'true' || process.env.CI === '1' || process.env.GITHUB_ACTIONS === 'true';
   const disableAutoUpdater =
-    process.env.TJUAEUI_DISABLE_AUTO_UPDATE === '1' || process.env.TJUAEUI_E2E_TEST === '1' || isCiRuntime;
+    process.env.TJUAEUI_DISABLE_AUTO_UPDATE === '1' ||
+    process.env.TJUAEUI_E2E_TEST === '1' ||
+    isCiRuntime ||
+    isLocalAcceptanceVersion(app.getVersion());
   if (!disableAutoUpdater) {
     Promise.all([import('./process/services/autoUpdaterService'), import('./process/bridge/updateBridge')])
       .then(([{ autoUpdaterService }, { createAutoUpdateStatusBroadcast }]) => {
@@ -836,25 +839,6 @@ const handleAppReady = async (): Promise<void> => {
     appReadyDone = true;
     mark('createWindow');
 
-    // Initialize desktop pet (delayed to not block main window)
-    setTimeout(() => {
-      void (async () => {
-        try {
-          const petEnabled = await ProcessConfig.get('pet.enabled');
-          if (petEnabled === true) {
-            // Read pet sub-settings before creating the pet so flags are honored
-            // on the first createPetWindow() call (which is sync).
-            const confirmEnabled = (await ProcessConfig.get('pet.confirmEnabled')) ?? true;
-            const { createPetWindow, setPetConfirmEnabled } = await import('./process/pet/petManager');
-            setPetConfirmEnabled(confirmEnabled);
-            createPetWindow();
-          }
-        } catch (error) {
-          console.error('[Pet] Failed to initialize:', error);
-        }
-      })();
-    }, 3000);
-
     // 读取语言设置并初始化主进程 i18n，然后刷新托盘菜单
     // Read language setting and initialize main process i18n, then refresh tray menu
     try {
@@ -990,10 +974,6 @@ installQuitCleanup({
   // Stop tjuaecore subprocess — backend shutdown kills all agent children
   // transitively (no separate frontend workerTaskManager remains).
   stopBackend: () => backendManager.stop(),
-  destroyPetWindow: async () => {
-    const { destroyPetWindow } = await import('./process/pet/petManager');
-    destroyPetWindow();
-  },
   logInfo: console.log,
   logWarn: console.warn,
   logError: console.error,

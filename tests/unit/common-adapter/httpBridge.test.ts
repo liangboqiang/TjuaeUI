@@ -183,6 +183,57 @@ describe('httpBridge', () => {
 
       expect(fetchSpy.mock.calls[0][1]?.body).toBe('{"wrapped":"raw"}');
     });
+
+    it('merges caller headers with the JSON content type', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: { ok: true } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+      vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+      await httpPost<{ ok: boolean }, { value: boolean }>('/api/x', undefined, {
+        headers: { 'x-tjuae-asset-protocol': '1.0.0' },
+      }).invoke({ value: true });
+
+      expect(fetchSpy.mock.calls[0][1]?.headers).toEqual({
+        'x-tjuae-asset-protocol': '1.0.0',
+        'Content-Type': 'application/json',
+      });
+    });
+
+    it('sends redacted request bodies without exposing Overlay data to diagnostics', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ data: { ok: true } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+      vi.stubGlobal('fetch', fetchSpy);
+      const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      const body = {
+        configuration: {
+          kind: 'engineAdapter',
+          configuration: {
+            executablePath: 'C:/private/runtime.exe',
+            environment: [{ name: 'TOKEN', secretSlot: 'environment.token' }],
+          },
+        },
+        secretUpdates: [{ slot: 'environment.token', operation: 'set', value: 'private-runtime-secret' }],
+      };
+
+      await httpPost<{ ok: boolean }, typeof body>('/api/assets/demo/configure', undefined, {
+        redactBody: true,
+      }).invoke(body);
+
+      expect(fetchSpy.mock.calls[0][1]?.body).toBe(JSON.stringify(body));
+      const diagnostics = JSON.stringify(debugSpy.mock.calls);
+      expect(diagnostics).toContain('[REDACTED_BODY]');
+      expect(diagnostics).not.toContain('C:/private/runtime.exe');
+      expect(diagnostics).not.toContain('private-runtime-secret');
+    });
   });
 
   describe('path as function', () => {

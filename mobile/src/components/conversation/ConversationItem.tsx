@@ -18,7 +18,7 @@ const agentBadgeColors: Record<string, string> = {
   qwen: '#7C3AED',
 };
 
-function formatTime(timestamp: number): string {
+function formatTime(timestamp: number, yesterdayLabel: string): string {
   const date = new Date(timestamp);
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
@@ -30,7 +30,7 @@ function formatTime(timestamp: number): string {
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   if (date.toDateString() === yesterday.toDateString()) {
-    return t('workspace.yesterday');
+    return yesterdayLabel;
   }
 
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -82,6 +82,10 @@ export function ConversationItem({ conversation, onPress, onDelete }: Conversati
       onPress={onPress}
       onLongPress={handleLongPress}
       activeOpacity={0.6}
+      accessibilityRole='button'
+      accessibilityLabel={conversation.name || t('conversations.untitled')}
+      accessibilityHint={onDelete ? t('conversations.deleteMessage') : undefined}
+      accessibilityState={{ busy: conversation.status === 'running' }}
     >
       <View style={styles.row}>
         <View style={styles.nameRow}>
@@ -90,7 +94,7 @@ export function ConversationItem({ conversation, onPress, onDelete }: Conversati
             {conversation.name || t('conversations.untitled')}
           </ThemedText>
         </View>
-        <ThemedText type='caption'>{formatTime(conversation.modifyTime)}</ThemedText>
+        <ThemedText type='caption'>{formatTime(conversation.modifyTime, t('workspace.yesterday'))}</ThemedText>
       </View>
 
       <View style={styles.row}>

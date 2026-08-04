@@ -17,7 +17,6 @@ import type { AcpSlashCommandApiItem } from '@/common/chat/slash/types';
 import { bridge } from '@/common/platform/bridge';
 import type { OpenDialogOptions } from 'electron';
 import type {
-  ICssTheme,
   IMcpServer,
   IProvider,
   ISessionMcpServer,
@@ -25,15 +24,12 @@ import type {
   TConversationRuntimeSummary,
   TProviderWithModel,
 } from '../config/storage';
+import type { Assistant, AssistantDetail } from '../types/agent/assistantTypes';
 import type {
-  Assistant,
-  AssistantDetail,
-  CreateAssistantRequest,
-  ImportAssistantsRequest,
-  ImportAssistantsResult,
-  SetAssistantStateRequest,
-  UpdateAssistantRequest,
-} from '../types/agent/assistantTypes';
+  ConversationTraceDetailResponse,
+  ConversationTraceListResponse,
+  ConversationTraceUpdatedEvent,
+} from '../types/conversationTrace';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/office/preview';
 import type {
   EnsureConversationRuntimeResponse,
@@ -87,7 +83,6 @@ import type {
   UpdateDownloadRequest,
   UpdateDownloadResult,
 } from '../update/updateTypes';
-import type { AgentMetadata } from '@/renderer/utils/model/agentTypes';
 import type { Theme } from '@/common/theme/types';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from '../utils/protocolDetector';
 import {
@@ -108,6 +103,7 @@ import {
   wsEmitter,
   wsMappedEmitter,
 } from './httpBridge';
+import { ASSET_PROTOCOL_REQUEST_OPTIONS } from './assetProtocolContract';
 import { fromApiSearchResult, type ApiMessageSearchItem } from './searchMapper';
 import type { IAddTeamAssistantParams, ICreateTeamParams } from './teamMapper';
 import {
@@ -160,17 +156,6 @@ export const assistants = {
     ({ id, locale }) =>
       `/api/assistants/${encodeURIComponent(id)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`
   ),
-  create: httpPost<Assistant, CreateAssistantRequest>('/api/assistants'),
-  update: httpPut<Assistant, UpdateAssistantRequest>((p) => `/api/assistants/${p.id}`),
-  delete: httpDelete<void, { id: string }>((p) => `/api/assistants/${p.id}`),
-  setState: httpPatch<Assistant, SetAssistantStateRequest>(
-    (p) => `/api/assistants/${p.id}/state`,
-    (p) => {
-      const { id: _id, ...body } = p;
-      return body;
-    }
-  ),
-  import: httpPost<ImportAssistantsResult, ImportAssistantsRequest>('/api/assistants/import'),
 };
 
 // ---------------------------------------------------------------------------
@@ -282,6 +267,16 @@ export const conversation = {
     created_at: number;
   }>('message.userCreated'),
   artifactStream: wsEmitter<IConversationArtifact>('conversation.artifact'),
+  listTraces: httpGet<ConversationTraceListResponse, { conversation_id: string; limit?: number }>(
+    (p) =>
+      `/api/conversations/${encodeURIComponent(p.conversation_id)}/traces${
+        p.limit ? `?limit=${encodeURIComponent(String(p.limit))}` : ''
+      }`
+  ),
+  getTrace: httpGet<ConversationTraceDetailResponse, { conversation_id: string; trace_id: string }>(
+    (p) => `/api/conversations/${encodeURIComponent(p.conversation_id)}/traces/${encodeURIComponent(p.trace_id)}`
+  ),
+  traceUpdated: wsEmitter<ConversationTraceUpdatedEvent>('conversation.traceUpdated'),
   turnCompleted: wsMappedEmitter<IConversationTurnCompletedEvent>('turn.completed', (raw) => {
     const r = raw as Record<string, unknown>;
     const rawLast = (r.last_message ?? r.lastMessage) as Record<string, unknown> | undefined;
@@ -545,7 +540,7 @@ export const dialog = {
 };
 
 // ---------------------------------------------------------------------------
-// File System — routed to /api/fs/* and /api/skills/*
+// File System — routed to /api/fs/*
 // ---------------------------------------------------------------------------
 
 export const fs = {
@@ -582,107 +577,23 @@ export const fs = {
   >('/api/fs/copy'),
   removeEntry: httpPost<void, { path: string; workspace?: string }>('/api/fs/remove'),
   renameEntry: httpPost<{ new_path: string }, { path: string; new_name: string; workspace?: string }>('/api/fs/rename'),
-  readBuiltinRule: httpPost<string, { file_name: string }>('/api/skills/builtin-rule'),
-  readBuiltinSkill: httpPost<string, { file_name: string }>('/api/skills/builtin-skill'),
-  readAssistantRule: httpPost<string, { assistant_id: string; locale?: string }>('/api/skills/assistant-rule/read'),
-  writeAssistantRule: httpPost<boolean, { assistant_id: string; content: string; locale?: string }>(
-    '/api/skills/assistant-rule/write'
-  ),
-  deleteAssistantRule: httpDelete<boolean, { assistant_id: string }>(
-    (p) => `/api/skills/assistant-rule/${p.assistant_id}`
-  ),
-  listAvailableSkills: httpGet<
+};
+
+// ---------------------------------------------------------------------------
+// Runtime Skills — read-only projection of canonical local skill assets
+// ---------------------------------------------------------------------------
+
+export const skills = {
+  listRuntime: httpGet<
     Array<{
       name: string;
       description: string;
       location: string;
-      relative_location?: string;
-      is_auto_inject: boolean;
       is_custom: boolean;
-      source: 'builtin' | 'custom' | 'cron' | 'extension';
+      source: 'managed' | 'cron' | 'asset';
     }>,
     void
   >('/api/skills'),
-  materializeSkillsForAgent: httpPost<
-    { skills: Array<{ name: string; source_path: string }> },
-    { conversation_id: string; skills: string[] }
-  >('/api/skills/materialize-for-agent'),
-  readSkillInfo: httpPost<{ name: string; description: string }, { skill_path: string }>('/api/skills/info'),
-  importSkill: httpPost<
-    {
-      skill_name: string;
-      skill_names?: string[];
-      failed?: Array<{
-        source_name: string;
-        code: string;
-        error_path?: string;
-        actual_bytes?: number;
-        limit_bytes?: number;
-        line?: number;
-        column?: number;
-      }>;
-    },
-    { skill_path: string }
-  >('/api/skills/import'),
-  scanForSkills: httpPost<Array<{ name: string; description: string; path: string }>, { folder_path: string }>(
-    '/api/skills/scan'
-  ),
-  detectCommonSkillPaths: httpGet<Array<{ name: string; path: string }>, void>('/api/skills/detect-paths'),
-  detectAndCountExternalSkills: httpGet<
-    Array<{
-      name: string;
-      path: string;
-      source: string;
-      skills: Array<{ name: string; description: string; path: string }>;
-    }>,
-    void
-  >('/api/skills/detect-external'),
-  importSkills: httpPost<
-    {
-      skill_name: string;
-      skill_names?: string[];
-      failed?: Array<{
-        source_name: string;
-        code: string;
-        error_path?: string;
-        actual_bytes?: number;
-        limit_bytes?: number;
-        line?: number;
-        column?: number;
-      }>;
-    },
-    { skill_path: string }
-  >('/api/skills/import'),
-  listSkillImportHistory: httpGet<
-    Array<{
-      id: string;
-      operation_id: string;
-      source_label: string;
-      source_path?: string;
-      source_name: string;
-      skill_id?: string;
-      skill_name?: string;
-      status: string;
-      error_code?: string;
-      error_path?: string;
-      actual_bytes?: number;
-      limit_bytes?: number;
-      line?: number;
-      column?: number;
-      created_at: number;
-    }>,
-    void
-  >('/api/skills/import-history'),
-  getSkillImportLimits: httpGet<{ max_file_bytes: number; max_total_bytes: number }, void>('/api/skills/import-limits'),
-  deleteSkill: httpDelete<void, { skill_name: string }>((p) => `/api/skills/${p.skill_name}`),
-  getSkillPaths: httpGet<{ user_skills_dir: string; builtin_skills_dir: string }, void>('/api/skills/paths'),
-  getCustomExternalPaths: httpGet<Array<{ name: string; path: string }>, void>('/api/skills/external-paths'),
-  addCustomExternalPath: httpPost<void, { name: string; path: string }>('/api/skills/external-paths'),
-  removeCustomExternalPath: httpDelete<void, { path: string }>(
-    (p) => `/api/skills/external-paths?path=${encodeURIComponent(p.path)}`
-  ),
-  enableSkillsMarket: httpPost<void, void>('/api/skills/market/enable'),
-  disableSkillsMarket: httpPost<void, void>('/api/skills/market/disable'),
 };
 
 // ---------------------------------------------------------------------------
@@ -822,80 +733,30 @@ export const mode = {
 };
 
 // ---------------------------------------------------------------------------
-// ACP Conversation — routed to /api/agents/* + conversation routes
+// ACP execution and engine diagnostics
 // ---------------------------------------------------------------------------
 
 export const acpConversation = {
   sendMessage: conversation.sendMessage,
   responseStream: conversation.responseStream,
-  /** Management view used by Agent settings. */
-  getManagedAgents: httpGet<import('@/renderer/utils/model/agentTypes').ManagedAgent[], void>('/api/agents/management'),
-  getAgentOverrides: httpGet<
-    { command_override?: string; env_override: { name: string; value: string }[] },
-    { id: string }
-  >((p) => `/api/agents/${encodeURIComponent(p.id)}/overrides`),
-  setAgentOverrides: httpPut<
-    import('@/renderer/utils/model/agentTypes').ManagedAgent,
-    { id: string; command_override?: string | null; env_override?: { name: string; value: string }[] }
-  >(
-    (p) => `/api/agents/${encodeURIComponent(p.id)}/overrides`,
-    (p) => ({ command_override: p.command_override, env_override: p.env_override })
+  /** Management view used by Engine settings. */
+  getManagedEngines: httpGet<import('@/renderer/utils/model/agentTypes').ManagedAgent[], void>(
+    '/api/engines/management'
   ),
-  refreshCustomAgents: httpPost<void, void>('/api/agents/refresh'),
-  testCustomAgent: httpPost<
-    { step: 'success' } | { step: 'fail_cli'; error: string } | { step: 'fail_acp'; error: string },
-    { command: string; acp_args?: string[]; env?: Record<string, string>; runtime_scope_id?: string }
-  >('/api/agents/custom/try-connect'),
-  createCustomAgent: httpPost<
-    AgentMetadata,
+  startEngineDiagnostics: httpPost<
+    import('@/renderer/utils/model/agentTypes').AgentDiagnosticRun,
     {
-      name: string;
-      command: string;
-      icon?: string;
-      args?: string[];
-      env?: Array<{ name: string; value: string; description?: string }>;
-      advanced?: {
-        yolo_id?: string;
-        native_skills_dirs?: string[];
-        behavior_policy?: { supports_side_question?: boolean };
-        description?: string;
-      };
+      agent_ids?: string[];
+      trigger: import('@/renderer/utils/model/agentTypes').AgentSnapshotCheckKind;
     }
-  >('/api/agents/custom'),
-  updateCustomAgent: httpPut<
-    AgentMetadata,
-    {
-      id: string;
-      name: string;
-      command: string;
-      icon?: string;
-      args?: string[];
-      env?: Array<{ name: string; value: string; description?: string }>;
-      advanced?: {
-        yolo_id?: string;
-        native_skills_dirs?: string[];
-        behavior_policy?: { supports_side_question?: boolean };
-        description?: string;
-      };
-    }
-  >(
-    (p) => `/api/agents/custom/${p.id}`,
-    (p) => {
-      const { id: _id, ...rest } = p;
-      return rest;
-    }
+  >('/api/engines/diagnostics/run'),
+  getCurrentEngineDiagnostics: httpGet<import('@/renderer/utils/model/agentTypes').AgentDiagnosticRun | null, void>(
+    '/api/engines/diagnostics/current'
   ),
-  deleteCustomAgent: httpDelete<{ deleted: boolean }, { id: string }>((p) => `/api/agents/custom/${p.id}`),
-  setAgentEnabled: httpPatch<AgentMetadata, { id: string; enabled: boolean }>(
-    (p) => `/api/agents/${p.id}/enabled`,
-    (p) => ({ enabled: p.enabled })
-  ),
-  checkManagedAgentHealthById: httpPost<import('@/renderer/utils/model/agentTypes').ManagedAgent, { id: string }>(
-    (p) => `/api/agents/${p.id}/health-check`,
-    () => undefined
-  ),
+  diagnosticsChanged:
+    wsEmitter<import('@/renderer/utils/model/agentTypes').AgentDiagnosticsChangedPayload>('engine.diagnosticsChanged'),
   checkProviderHealth: httpPost<ProviderHealthCheckResponse, ProviderHealthCheckRequest>(
-    '/api/agents/provider-health-check'
+    '/api/engines/provider-health-check'
   ),
   setConfigOption: httpPut<SetConfigOptionResponse, { conversation_id: string; option_id: string; value: string }>(
     (p) => `/api/conversations/${p.conversation_id}/config-options/${encodeURIComponent(p.option_id)}`,
@@ -909,70 +770,6 @@ export const acpConversation = {
 
 export const mcpService = {
   listServers: httpGet<IMcpServer[], void>('/api/mcp/servers'),
-  createServer: httpPost<
-    IMcpServer,
-    Pick<IMcpServer, 'name' | 'description' | 'transport' | 'original_json' | 'builtin'>
-  >('/api/mcp/servers'),
-  importServers: httpPost<
-    IMcpServer[],
-    { servers: Array<Pick<IMcpServer, 'name' | 'description' | 'transport' | 'original_json' | 'builtin'>> }
-  >('/api/mcp/servers/import'),
-  updateServer: httpPut<
-    IMcpServer,
-    {
-      id: string;
-      data: Partial<Pick<IMcpServer, 'name' | 'description' | 'transport' | 'original_json' | 'builtin'>>;
-    }
-  >(
-    (p) => `/api/mcp/servers/${p.id}`,
-    (p) => p.data
-  ),
-  deleteServer: httpDelete<void, { id: string }>((p) => `/api/mcp/servers/${p.id}`),
-  toggleServer: httpPost<IMcpServer, { id: string }>(
-    (p) => `/api/mcp/servers/${p.id}/toggle`,
-    () => undefined
-  ),
-  batchImportServers: httpPost<
-    IMcpServer[],
-    { servers: Array<Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'>> }
-  >('/api/mcp/servers/import'),
-  getAgentMcpConfigs: httpGet<
-    Array<{
-      source: string;
-      servers: Array<
-        IMcpServer & {
-          importable: boolean;
-          import_skip_reason?: string;
-        }
-      >;
-    }>,
-    void
-  >('/api/mcp/agent-configs'),
-  testMcpConnection: httpPost<
-    {
-      success: boolean;
-      tools?: Array<{
-        name: string;
-        description?: string;
-        input_schema?: unknown;
-        _meta?: Record<string, unknown>;
-      }>;
-      error?: string;
-      code?: string;
-      details?: unknown;
-      needsAuth?: boolean;
-      needs_auth?: boolean;
-      authMethod?: 'oauth' | 'basic';
-      auth_method?: 'oauth' | 'basic';
-      wwwAuthenticate?: string;
-      www_authenticate?: string;
-    },
-    IMcpServer & { runtime_scope_id?: string }
-  >('/api/mcp/test-connection'),
-  checkOAuthStatus: httpPost<{ authenticated: boolean }, { server_url: string }>('/api/mcp/oauth/check-status'),
-  loginMcpOAuth: httpPost<{ success: boolean; error?: string }, { server_url: string }>('/api/mcp/oauth/login'),
-  logoutMcpOAuth: httpPost<void, { server_url: string }>('/api/mcp/oauth/logout'),
-  getAuthenticatedServers: httpGet<string[], void>('/api/mcp/oauth/authenticated'),
 };
 
 export const openclawConversation = {
@@ -1004,36 +801,6 @@ export const openclawConversation = {
     },
     { conversation_id: string }
   >((p) => `/api/conversations/${p.conversation_id}/openclaw/runtime`),
-};
-
-// ---------------------------------------------------------------------------
-// Remote Agent — routed to /api/remote-agents/*
-// ---------------------------------------------------------------------------
-
-export const remoteAgent = {
-  list: httpGet<import('@/common/types/agent/remoteAgentTypes').RemoteAgentConfig[], void>('/api/remote-agents'),
-  get: httpGet<import('@/common/types/agent/remoteAgentTypes').RemoteAgentConfig | null, { id: string }>(
-    (p) => `/api/remote-agents/${p.id}`
-  ),
-  create: httpPost<
-    import('@/common/types/agent/remoteAgentTypes').RemoteAgentConfig,
-    import('@/common/types/agent/remoteAgentTypes').RemoteAgentInput
-  >('/api/remote-agents'),
-  update: httpPut<
-    boolean,
-    { id: string; updates: Partial<import('@/common/types/agent/remoteAgentTypes').RemoteAgentInput> }
-  >(
-    (p) => `/api/remote-agents/${p.id}`,
-    (p) => p.updates
-  ),
-  delete: httpDelete<boolean, { id: string }>((p) => `/api/remote-agents/${p.id}`),
-  testConnection: httpPost<
-    { success: boolean; error?: string },
-    { url: string; auth_type: string; auth_token?: string; allow_insecure?: boolean }
-  >('/api/remote-agents/test-connection'),
-  handshake: httpPost<{ status: 'ok' | 'pending_approval' | 'error'; error?: string }, { id: string }>(
-    (p) => `/api/remote-agents/${p.id}/handshake`
-  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -1188,6 +955,27 @@ export const theme = {
 // System Settings — routed to /api/settings/* unless they need Electron-native side effects.
 // ---------------------------------------------------------------------------
 
+export type NetworkProxyMode = 'follow_system' | 'manual' | 'disabled';
+
+export interface INetworkProxySettings {
+  mode: NetworkProxyMode;
+  proxy_url: string | null;
+  no_proxy: string;
+}
+
+export interface INetworkProxyStatus {
+  mode: NetworkProxyMode;
+  state: 'active' | 'direct';
+  source: 'manual' | 'environment' | 'windows_system' | 'disabled' | 'none';
+  proxy_url: string | null;
+  no_proxy: string;
+  warning: 'pac_unsupported' | 'invalid_system_proxy' | null;
+}
+
+interface ISystemSettingsResponse {
+  network_proxy: INetworkProxySettings;
+}
+
 export const systemSettings = {
   getCloseToTray: bridge.buildProvider<boolean, void>('system-settings:get-close-to-tray'),
   setCloseToTray: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-close-to-tray'),
@@ -1202,6 +990,11 @@ export const systemSettings = {
   getKeepAwake: httpGetClientSetting<boolean>('keepAwake'),
   setKeepAwake: httpPut<void, { enabled: boolean }>('/api/settings/client', (p) => ({ keepAwake: p.enabled })),
   changeLanguage: httpPatch<void, { language: string }>('/api/settings', (p) => ({ language: p.language })),
+  getNetworkProxy: httpGet<ISystemSettingsResponse>('/api/settings'),
+  updateNetworkProxy: httpPatch<ISystemSettingsResponse, INetworkProxySettings>('/api/settings', (networkProxy) => ({
+    network_proxy: networkProxy,
+  })),
+  getNetworkProxyStatus: httpGet<INetworkProxyStatus>('/api/settings/network-proxy/status'),
   languageChanged: wsEmitter<{ language: string }>('system-settings:language-changed'),
   getSaveUploadToWorkspace: httpGetClientSetting<boolean>('saveUploadToWorkspace'),
   setSaveUploadToWorkspace: httpPut<void, { enabled: boolean }>('/api/settings/client', (p) => ({
@@ -1211,14 +1004,6 @@ export const systemSettings = {
   setAutoPreviewOfficeFiles: httpPut<void, { enabled: boolean }>('/api/settings/client', (p) => ({
     autoPreviewOfficeFiles: p.enabled,
   })),
-  getPetEnabled: bridge.buildProvider<boolean, void>('system-settings:get-pet-enabled'),
-  setPetEnabled: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-pet-enabled'),
-  getPetSize: bridge.buildProvider<number, void>('system-settings:get-pet-size'),
-  setPetSize: bridge.buildProvider<void, { size: number }>('system-settings:set-pet-size'),
-  getPetDnd: bridge.buildProvider<boolean, void>('system-settings:get-pet-dnd'),
-  setPetDnd: bridge.buildProvider<void, { dnd: boolean }>('system-settings:set-pet-dnd'),
-  getPetConfirmEnabled: bridge.buildProvider<boolean, void>('system-settings:get-pet-confirm-enabled'),
-  setPetConfirmEnabled: bridge.buildProvider<void, { enabled: boolean }>('system-settings:set-pet-confirm-enabled'),
   ensureNodeRuntime: httpPost<{ ready: boolean }, { scope: IRuntimeStatusScope }>('/api/system/ensure-node-runtime'),
   ensureManagedAcpTool: httpPost<{ ready: boolean }, { scope: IRuntimeStatusScope; tool_id: string }>(
     '/api/system/ensure-managed-acp-tool'
@@ -1489,7 +1274,6 @@ export interface ICreateConversationParams {
       model?: string;
       permission?: string;
       skill_ids?: string[];
-      disabled_builtin_skill_ids?: string[];
       mcp_ids?: string[];
     };
   };
@@ -1743,10 +1527,8 @@ export interface IExtensionAgentActivitySnapshot {
 }
 
 export const extensions = {
-  getThemes: httpGet<ICssTheme[], void>('/api/extensions/themes'),
   getLoadedExtensions: httpGet<IExtensionInfo[], void>('/api/extensions'),
   getAssistants: httpGet<Record<string, unknown>[], void>('/api/extensions/assistants'),
-  getAgents: httpGet<Record<string, unknown>[], void>('/api/extensions/agents'),
   getAcpAdapters: httpGet<Record<string, unknown>[], void>('/api/extensions/acp-adapters'),
   getMcpServers: httpGet<Record<string, unknown>[], void>('/api/extensions/mcp-servers'),
   getSkills: httpGet<Array<{ name: string; description: string; location: string }>, void>('/api/extensions/skills'),
@@ -1882,18 +1664,30 @@ export const channel = {
 };
 
 // ---------------------------------------------------------------------------
-// Agent Hub API — routed to /api/hub/*
+// TjuaeHub publish API — routed to /api/hub/*
 // ---------------------------------------------------------------------------
 
-import type { HubExtensionStatus, IHubAgentItem } from '@/common/types/agent/hub';
+import type {
+  HubPublishConnectionStatus,
+  HubPublishPreparation,
+  HubPublishRequest,
+  HubPublishResult,
+} from '@/common/types/agent/hub';
 export const hub = {
-  getExtensionList: httpGet<IHubAgentItem[], void>('/api/hub/extensions'),
-  install: httpPost<void, { name: string }>('/api/hub/install'),
-  uninstall: httpPost<void, { name: string }>('/api/hub/uninstall'),
-  retryInstall: httpPost<void, { name: string }>('/api/hub/retry-install'),
-  checkUpdates: httpPost<{ name: string }[], void>('/api/hub/check-updates'),
-  update: httpPost<void, { name: string }>('/api/hub/update'),
-  onStateChanged: wsEmitter<{ name: string; status: HubExtensionStatus; error?: string }>('hub.state-changed'),
+  getPublishConnection: httpGet<HubPublishConnectionStatus, void>('/api/hub/publish/connection'),
+  startPublishAuthorization: httpPost<HubPublishConnectionStatus, void>('/api/hub/publish/authorize'),
+  pollPublishAuthorization: httpPost<HubPublishConnectionStatus, void>('/api/hub/publish/authorize/poll'),
+  disconnectPublishAccount: httpDelete<HubPublishConnectionStatus, void>('/api/hub/publish/connection'),
+  preparePublish: httpPost<HubPublishPreparation, HubPublishRequest>(
+    '/api/hub/assets/publish-request',
+    undefined,
+    ASSET_PROTOCOL_REQUEST_OPTIONS
+  ),
+  publish: httpPost<HubPublishResult, HubPublishRequest>(
+    '/api/hub/assets/publish',
+    undefined,
+    ASSET_PROTOCOL_REQUEST_OPTIONS
+  ),
 };
 
 // ---------------------------------------------------------------------------

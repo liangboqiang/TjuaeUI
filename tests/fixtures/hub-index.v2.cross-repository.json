@@ -1,0 +1,120 @@
+{
+  "$schema": "https://raw.githubusercontent.com/liangboqiang/TjuaeHub/main/schemas/hub-index.v2.schema.json",
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-02T00:00:00.000Z",
+  "assets": {
+    "tjuaeasset-contract-engine/engineAdapter/contract-acp": {
+      "id": "tjuaeasset-contract-engine/engineAdapter/contract-acp",
+      "kind": "engineAdapter",
+      "runtimeId": "contract-acp",
+      "dependencies": ["tjuaeasset-contract-skill/skill/contract-helper"],
+      "displayName": "契约 ACP 适配器",
+      "description": "用于验证 Hub、Core 与 UI 字段一致性的固定引擎适配器。",
+      "version": "2.1.0",
+      "definitionDigest": "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "entryFile": "engine-adapter.json",
+      "packageName": "tjuaeasset-contract-engine",
+      "author": "Tjuae",
+      "license": "Apache-2.0",
+      "trust": "community",
+      "status": "active",
+      "compatibility": {
+        "tjuae": "^1.0.0"
+      },
+      "sourceRevision": "0123456789abcdef0123456789abcdef01234567",
+      "files": [
+        {
+          "path": "asset-package.json",
+          "digest": "sha256-dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "size": 1024,
+          "mediaType": "application/json"
+        },
+        {
+          "path": "engine-adapter.json",
+          "digest": "sha256-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "size": 384,
+          "mediaType": "application/json"
+        }
+      ],
+      "tags": ["contract", "engine"]
+    },
+    "tjuaeasset-contract-skill/skill/contract-helper": {
+      "id": "tjuaeasset-contract-skill/skill/contract-helper",
+      "kind": "skill",
+      "runtimeId": "contract-helper",
+      "dependencies": [],
+      "displayName": "契约辅助技能",
+      "description": "固定的跨仓库契约依赖资产。",
+      "version": "1.4.2",
+      "definitionDigest": "sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "entryFile": "SKILL.md",
+      "packageName": "tjuaeasset-contract-skill",
+      "author": "Tjuae",
+      "license": "Apache-2.0",
+      "trust": "community",
+      "status": "deprecated",
+      "compatibility": {
+        "tjuae": "^1.0.0"
+      },
+      "sourceRevision": "0123456789abcdef0123456789abcdef01234567",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "digest": "sha256-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "size": 512,
+          "mediaType": "text/markdown"
+        },
+        {
+          "path": "asset-package.json",
+          "digest": "sha256-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "size": 768,
+          "mediaType": "application/json"
+        }
+      ],
+      "tags": ["contract", "skill"]
+    }
+  },
+  "packages": {
+    "tjuaeasset-contract-engine": {
+      "name": "tjuaeasset-contract-engine",
+      "version": "2.1.0",
+      "reviewStatus": "approved",
+      "atomic": true,
+      "assetIds": ["tjuaeasset-contract-engine/engineAdapter/contract-acp"],
+      "dependencies": {
+        "tjuaeasset-contract-skill": "^1.4.0"
+      },
+      "tarball": "tjuaeasset-contract-engine.zip",
+      "integrity": "sha256-1111111111111111111111111111111111111111111111111111111111111111",
+      "archiveIntegrity": "sha256-3333333333333333333333333333333333333333333333333333333333333333",
+      "unpackedSize": 1408,
+      "repository": "https://github.com/liangboqiang/TjuaeHub/",
+      "sourcePath": "assets/tjuaeasset-contract-engine",
+      "manifestPath": "assets/tjuaeasset-contract-engine/asset-package.json",
+      "sourceRevision": "0123456789abcdef0123456789abcdef01234567"
+    },
+    "tjuaeasset-contract-skill": {
+      "name": "tjuaeasset-contract-skill",
+      "version": "1.4.2",
+      "reviewStatus": "approved",
+      "atomic": true,
+      "assetIds": ["tjuaeasset-contract-skill/skill/contract-helper"],
+      "dependencies": {},
+      "tarball": "tjuaeasset-contract-skill.zip",
+      "integrity": "sha256-2222222222222222222222222222222222222222222222222222222222222222",
+      "archiveIntegrity": "sha256-4444444444444444444444444444444444444444444444444444444444444444",
+      "unpackedSize": 1280,
+      "repository": "https://github.com/liangboqiang/TjuaeHub/",
+      "sourcePath": "assets/tjuaeasset-contract-skill",
+      "manifestPath": "assets/tjuaeasset-contract-skill/asset-package.json",
+      "sourceRevision": "0123456789abcdef0123456789abcdef01234567"
+    }
+  },
+  "metadata": {
+    "totalPackages": 2,
+    "totalAssets": 2,
+    "generatedBy": "Tjuae 资产构建器 v3.0.0",
+    "repository": "https://github.com/liangboqiang/TjuaeHub/",
+    "sourceRevision": "0123456789abcdef0123456789abcdef01234567"
+  }
+}

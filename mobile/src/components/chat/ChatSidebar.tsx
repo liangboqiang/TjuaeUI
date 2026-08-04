@@ -169,6 +169,7 @@ export function ChatSidebar({ navigation }: DrawerContentComponentProps) {
             onBlur={handleRenameSubmit}
             autoFocus
             selectTextOnFocus
+            accessibilityLabel={t('conversations.renamePlaceholder')}
           />
         </View>
       );
@@ -181,6 +182,10 @@ export function ChatSidebar({ navigation }: DrawerContentComponentProps) {
         onPress={() => handleSelect(conv.id)}
         onLongPress={() => handleLongPress(conv)}
         activeOpacity={0.6}
+        accessibilityRole='button'
+        accessibilityState={{ selected: isActive }}
+        accessibilityLabel={conv.name || t('conversations.untitled')}
+        accessibilityHint={t('conversations.rename')}
       >
         <View style={styles.itemContent}>
           <ThemedText style={[styles.itemName, isActive && { color: tint, fontWeight: '600' }]} numberOfLines={1}>
@@ -202,7 +207,13 @@ export function ChatSidebar({ navigation }: DrawerContentComponentProps) {
     <View style={[styles.container, { backgroundColor: background }]}>
       <View style={[styles.header, { borderBottomColor: border }]}>
         <ThemedText style={styles.headerTitle}>{t('tabs.chat')}</ThemedText>
-        <TouchableOpacity onPress={() => setShowNewModal(true)} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerAction}
+          onPress={() => setShowNewModal(true)}
+          activeOpacity={0.7}
+          accessibilityRole='button'
+          accessibilityLabel={t('conversations.newConversation')}
+        >
           <Ionicons name='add-circle-outline' size={26} color={tint} />
         </TouchableOpacity>
       </View>
@@ -220,9 +231,15 @@ export function ChatSidebar({ navigation }: DrawerContentComponentProps) {
             clearButtonMode='while-editing'
             autoCorrect={false}
             autoCapitalize='none'
+            accessibilityLabel={t('conversations.searchPlaceholder')}
           />
           {searchQuery.length > 0 && Platform.OS !== 'ios' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity
+              style={styles.searchClear}
+              onPress={() => setSearchQuery('')}
+              accessibilityRole='button'
+              accessibilityLabel={t('common.close')}
+            >
               <Ionicons name='close-circle' size={16} color={textSecondary} />
             </TouchableOpacity>
           )}
@@ -276,7 +293,11 @@ export function ChatSidebar({ navigation }: DrawerContentComponentProps) {
         </ScrollView>
       )}
 
-      <NewConversationModal visible={showNewModal} onClose={() => setShowNewModal(false)} onAgentSelected={handleAgentSelected} />
+      <NewConversationModal
+        visible={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        onAgentSelected={handleAgentSelected}
+      />
     </View>
   );
 }
@@ -298,6 +319,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
   },
+  headerAction: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   searchContainer: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -315,6 +342,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: 2,
+  },
+  searchClear: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   list: {
     flexGrow: 1,

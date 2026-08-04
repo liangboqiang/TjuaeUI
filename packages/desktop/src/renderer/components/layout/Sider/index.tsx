@@ -64,7 +64,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
         console.error('Navigation failed:', error);
       });
     } else {
-      Promise.resolve(navigate('/settings/agent')).catch((error) => {
+      Promise.resolve(navigate('/settings/engine')).catch((error) => {
         console.error('Navigation failed:', error);
       });
     }
@@ -101,7 +101,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
     blurActiveElement();
     closePreview();
     setIsBatchMode(false);
-    Promise.resolve(navigate('/assistants')).catch((error) => {
+    Promise.resolve(navigate('/settings/assistants')).catch((error) => {
       console.error('Navigation failed:', error);
     });
     if (onSessionClick) {
@@ -187,7 +187,7 @@ const Sider: React.FC<SiderProps> = ({ onSessionClick, collapsed = false }) => {
             {/* Assistant nav entry - fixed above Scheduled */}
             <SiderAssistantEntry
               isMobile={isMobile}
-              isActive={pathname.startsWith('/assistants')}
+              isActive={pathname.startsWith('/settings/assistants')}
               collapsed={collapsed}
               siderTooltipProps={siderTooltipProps}
               onClick={handleAssistantClick}

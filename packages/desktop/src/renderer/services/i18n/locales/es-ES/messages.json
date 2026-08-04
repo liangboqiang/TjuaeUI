@@ -14,6 +14,18 @@
   "copiedToClipboard": "Copiado al portapapeles",
   "downloadSuccess": "Descarga exitosa",
   "downloadFailed": "Error en la descarga",
+  "a2aPart": {
+    "unnamed": "Contenido A2A",
+    "unsupportedUrl": "Solo se pueden abrir enlaces HTTP y HTTPS.",
+    "openConfirmTitle": "¿Abrir recurso A2A externo?",
+    "openConfirmContent": "Este enlace fue proporcionado por un agente remoto. Comprueba el destino antes de continuar.",
+    "open": "Abrir",
+    "downloadConfirmTitle": "¿Descargar contenido de este agente A2A?",
+    "downloadConfirmContent": "Guarda «{{name}}» localmente solo si confías en el agente remoto y esperabas este archivo.",
+    "download": "Descargar",
+    "structuredData": "Datos estructurados",
+    "inlineTooLarge": "El archivo incrustado supera el límite seguro de descarga de 2 MiB."
+  },
   "imageLoadFailed": "Error al cargar la imagen",
   "scrollToBottom": "Ir al final",
   "availableCommands": "{{count}} comandos disponibles",

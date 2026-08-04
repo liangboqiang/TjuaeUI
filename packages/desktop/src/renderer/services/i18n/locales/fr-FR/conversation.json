@@ -6,7 +6,8 @@
     "newConversation": "Nouveau chat",
     "selectModel": "Sélectionner un modèle",
     "useCliModel": "Sélectionner un modèle",
-    "modelSwitchNotSupported": "La liste des modèles sera disponible après la première connexion. Envoyez un message pour vous connecter et charger les modèles disponibles.",
+    "modelCatalogUnavailable": "Aucun catalogue de modèles n’est en cache. Lancez Tester la connexion dans les paramètres Agent.",
+    "modelSelectionUnavailable": "Cet environnement ne fournit pas de liste de modèles commutables.",
     "specifyWorkspace": "Chat dans un dossier",
     "currentWorkspace": "Espace de travail actuel",
     "clearWorkspace": "Retirer le dossier",
@@ -558,6 +559,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "L’agent a signalé un avis technique d’exécution."
+      },
       "ACP_EMPTY_TURN": {
         "body": "Cette demande n'a produit aucune réponse visible."
       },
@@ -572,7 +576,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "Le modèle a refusé cette demande avant de produire une réponse visible."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "La configuration locale du projet, les hooks et les politiques d’exécution sont désactivés tant que cet espace de travail n’est pas approuvé. Les skills peuvent toujours être chargés."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "Les descriptions des skills ont été raccourcies, car leur budget de contexte est saturé. Désactivez les skills ou plugins inutilisés."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "La connexion WebSocket a expiré. La communication est automatiquement passée en HTTPS."
       }
+    }
+  },
+  "trace": {
+    "title": "Trace",
+    "selectRun": "Sélectionner une exécution",
+    "empty": "Aucune trace d’exécution n’est encore disponible.",
+    "loadError": "Impossible de charger la trace d’exécution.",
+    "backend": "Backend",
+    "duration": "Durée",
+    "firstOutput": "Première sortie",
+    "tokens": "Tokens",
+    "spans": "Étapes",
+    "incomplete": "Incomplète",
+    "truncated": "Tronquée",
+    "droppedSpans": "{{count}} étapes omises",
+    "noDetails": "Cette exécution ne comporte aucune étape enregistrée.",
+    "jumpToMessage": "Voir le message",
+    "runtimeAssets": "Ressources d’exécution",
+    "runtimeReceipt": "Reçu d’exécution vérifié",
+    "runtimeAssetsUnavailable": "Le reçu vérifié des ressources n’est plus disponible.",
+    "runtimeAssetsEmpty": "Cette exécution n’a utilisé aucune ressource gérée.",
+    "definitionDigest": "Empreinte de définition",
+    "upstreamSource": "Source distante",
+    "localOnlyAsset": "Local uniquement",
+    "assetKind": {
+      "assistant": "Assistant",
+      "engineAdapter": "Adaptateur de moteur",
+      "skill": "Compétence",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "En cours",
+      "succeeded": "Réussie",
+      "failed": "Échouée",
+      "cancelled": "Annulée",
+      "interrupted": "Interrompue"
+    },
+    "spanKind": {
+      "thinking": "Réflexion",
+      "tool": "Outil",
+      "permission": "Autorisation"
     }
   },
   "notFound": "Conversation introuvable ou supprimée"

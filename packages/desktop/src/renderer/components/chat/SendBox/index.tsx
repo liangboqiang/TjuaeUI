@@ -469,7 +469,7 @@ const SendBox: React.FC<{
   // human-readable description; the loadedSkills snapshot decides which appear.
   const loadedSkills = conversationContext?.loadedSkills;
   const { data: skillIndex } = useSWR(loadedSkills && loadedSkills.length > 0 ? 'skills-index' : null, () =>
-    ipcBridge.fs.listAvailableSkills.invoke()
+    ipcBridge.skills.listRuntime.invoke()
   );
   const skillSlashCommands = useMemo<SlashCommandItem[]>(() => {
     const descriptionByName = new Map((skillIndex ?? []).map((s) => [s.name, s.description]));

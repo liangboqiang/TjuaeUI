@@ -35,10 +35,12 @@
   --text-primary: #000000; /* 主要文字 */
   --color-text-1: #000000; /* Arco 主文字 — 与 --text-primary 对齐 */
   --text-secondary: #454d5f; /* 次要文字 — 加深至 ~7.5:1 对比度 */
-  --text-disabled: #c9cdd4; /* 禁用文字 */
+  --text-tertiary: #606a7d; /* 三级说明文字 — 保持正文级可读性 */
+  --text-disabled: #606a7d; /* 禁用文字 — 通过控件状态而非低对比度表达禁用 */
 
   /* Semantic Colors - Light Mode */
   --primary: #165dff;
+  --primary-contrast: #ffffff;
   --success: #00b42a;
   --warning: #ff7d00;
   --danger: #f53f3f;
@@ -107,10 +109,12 @@
   --text-primary: #ffffff; /* 主要文字 */
   --color-text-1: #ffffff; /* Arco 主文字 — 与 --text-primary 对齐 */
   --text-secondary: #ced3da; /* 次要文字 — 提亮至 ~11:1 对比度 */
-  --text-disabled: #737373; /* 禁用文字 */
+  --text-tertiary: #a1a9b6; /* 三级说明文字 */
+  --text-disabled: #a1a9b6; /* 禁用文字 — 保留可读性 */
 
   /* Semantic Colors - Dark Mode */
   --primary: #4d9fff;
+  --primary-contrast: #111827;
   --success: #23c343;
   --warning: #ff9a2e;
   --danger: #f76560;

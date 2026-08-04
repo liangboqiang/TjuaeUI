@@ -47,11 +47,11 @@ packages/desktop/src/renderer/
 
 **固定层：**
 
-- `base/`：通用 UI 原语（Modal、Select、ScrollArea），不得包含业务逻辑，也不得依赖应用专用 Context
+- `base/`：通用 UI 原语（Modal、Select、ScrollArea），不得包含业务逻辑，也不得依赖应用专用上下文
 
 **业务层：**
 
-- 按业务域创建 lowercase 子目录；同一业务域出现 ≥ 2 个共享组件时再建目录
+- 按业务域创建全小写子目录；同一业务域出现 ≥ 2 个共享组件时再建目录
 - 在同一业务域出现第二个组件前，单个组件可以暂时留在 `components/` 根目录
 
 **约束：**
@@ -73,7 +73,7 @@ packages/desktop/src/renderer/components/
 
 ## `hooks/`：按业务域分组
 
-直接子项超过 10 个时拆分子目录；无法明确归属业务域的通用 Hook 留在根目录。
+直接子项超过 10 个时拆分子目录；无法明确归属业务域的通用钩子留在根目录。
 
 ```text
 hooks/
@@ -125,27 +125,27 @@ PageName/                  # PascalCase
 
 | 类型                     | 规范       | 示例                                                                       |
 | ------------------------ | ---------- | -------------------------------------------------------------------------- |
-| **分类目录**（标准职责） | lowercase  | `components/`、`hooks/`、`context/`、`utils/`                              |
+| **分类目录**（标准职责） | 全小写     | `components/`、`hooks/`、`context/`、`utils/`                              |
 | **功能模块**（业务功能） | PascalCase | `GroupedHistory/`、`Workspace/`、`Preview/`                                |
-| **平台目录**             | lowercase  | `acp/`、`codex/`、`gemini/`，与 `packages/desktop/src/process/agent/` 对齐 |
+| **平台目录**             | 全小写     | `acp/`、`codex/`、`gemini/`，与 `packages/desktop/src/process/agent/` 对齐 |
 
 ### 示例
 
 ```text
 packages/desktop/src/renderer/
-├── components/              # 分类目录 → lowercase
+├── components/              # 分类目录 → 全小写
 │   ├── SettingsModal/       # 组件 → PascalCase
 │   └── EmojiPicker/         # 组件 → PascalCase
-├── pages/                   # 分类目录 → lowercase
-│   ├── settings/            # 顶级页面/路由段 → lowercase
+├── pages/                   # 分类目录 → 全小写
+│   ├── settings/            # 顶级页面/路由段 → 全小写
 │   │   ├── CssThemeSettings/   # 功能模块 → PascalCase
 │   │   └── McpManagement/      # 功能模块 → PascalCase
-│   └── conversation/        # 顶级页面 → lowercase
+│   └── conversation/        # 顶级页面 → 全小写
 │       ├── GroupedHistory/  # 功能模块 → PascalCase
 │       ├── Workspace/       # 功能模块 → PascalCase
-│       ├── acp/             # 平台目录 → lowercase
-│       └── components/      # 分类目录 → lowercase
-└── hooks/                   # 分类目录 → lowercase
+│       ├── acp/             # 平台目录 → 全小写
+│       └── components/      # 分类目录 → 全小写
+└── hooks/                   # 分类目录 → 全小写
 ```
 
 ## 共享代码与页面私有代码

@@ -14,6 +14,18 @@
   "copiedToClipboard": "Panoya kopyalandı",
   "downloadSuccess": "İndirme başarılı",
   "downloadFailed": "İndirme başarısız",
+  "a2aPart": {
+    "unnamed": "A2A içeriği",
+    "unsupportedUrl": "Yalnızca HTTP ve HTTPS bağlantıları açılabilir.",
+    "openConfirmTitle": "Harici A2A kaynağı açılsın mı?",
+    "openConfirmContent": "Bu bağlantı uzak bir Agent tarafından sağlandı. Devam etmeden önce hedefi doğrulayın.",
+    "open": "Aç",
+    "downloadConfirmTitle": "Bu A2A Agent içeriği indirilsin mi?",
+    "downloadConfirmContent": "“{{name}}” dosyasını yalnızca uzak Agent'a güveniyorsanız ve bu dosyayı bekliyorsanız yerel olarak kaydedin.",
+    "download": "İndir",
+    "structuredData": "Yapılandırılmış veri",
+    "inlineTooLarge": "Satır içi dosya, güvenli 2 MiB indirme sınırını aşıyor."
+  },
   "imageLoadFailed": "Görüntü yüklenemedi",
   "scrollToBottom": "Aşağı kaydır",
   "availableCommands": "{{count}} Kullanılabilir Komut",

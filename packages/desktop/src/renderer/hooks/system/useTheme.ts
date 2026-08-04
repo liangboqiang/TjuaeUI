@@ -8,8 +8,6 @@ import { configService } from '@/common/config/configService';
 import { ipcBridge } from '@/common';
 import { resolveActiveTheme } from '@/common/theme/resolveTheme';
 import { applyTheme, setActiveTheme } from '@/renderer/utils/theme/applyTheme';
-import { getSystemPrefersDark } from '@/renderer/utils/theme/systemAppearance';
-import { startSystemThemeWatcher } from '@/renderer/utils/theme/systemThemeWatcher';
 import { BUILTIN_THEMES } from '@renderer/theme/builtinThemes';
 import { LIGHT_THEME_ID } from '@/common/theme/constants';
 import type { Theme } from '@/common/theme/types';
@@ -25,15 +23,17 @@ async function initActiveTheme(): Promise<Theme> {
   try {
     await configService.whenReady();
     const activeId = getPersistedActiveId();
-    const userThemes = (configService.get('theme.userThemes') as Theme[]) ?? [];
-    const resolved = resolveActiveTheme(activeId, [...BUILTIN_THEMES, ...userThemes], getSystemPrefersDark());
+    const resolved = resolveActiveTheme(activeId, BUILTIN_THEMES);
     applyTheme(resolved);
+    if (activeId !== resolved.id) {
+      await configService.set('theme.activeId', resolved.id);
+    }
     try {
       localStorage.setItem(APPEARANCE_CACHE_KEY, resolved.appearance);
     } catch {
       /* noop */
     }
-    // Seed the main-process relay so other surfaces (markdown shadow DOM, pet windows) can pull it.
+    // Seed the main-process relay so other app surfaces can pull it.
     void ipcBridge.theme.setActive.invoke(resolved).catch(() => {});
     return resolved;
   } catch (e) {
@@ -48,9 +48,7 @@ let initialPromise: Promise<Theme> | null = null;
 if (typeof window !== 'undefined') initialPromise = initActiveTheme();
 
 /**
- * Returns [resolvedActiveTheme, selectThemeById, rawActiveId]. `rawActiveId` may be the
- * `system` sentinel while the resolved theme is the Light/Dark builtin — the gallery
- * highlights cards by `rawActiveId`.
+ * 返回当前主题、按标识选择主题的方法以及已保存的主题标识。
  */
 const useTheme = (): [Theme | null, (activeId: string) => Promise<void>, string | null] => {
   const [active, setActive] = useState<Theme | null>(null);
@@ -79,17 +77,15 @@ const useTheme = (): [Theme | null, (activeId: string) => Promise<void>, string 
         /* noop */
       }
     });
-    const offSystemWatch = startSystemThemeWatcher();
     return () => {
       mounted = false;
       off?.();
-      offSystemWatch();
     };
   }, []);
 
   const select = useCallback(async (activeId: string) => {
     await setActiveTheme(activeId);
-    setActiveId(activeId);
+    setActiveId((configService.get('theme.activeId') as string) || activeId);
   }, []);
 
   return [active, select, activeId];

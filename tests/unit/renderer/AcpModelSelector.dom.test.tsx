@@ -102,7 +102,7 @@ vi.mock('react-i18next', () => ({
       if (key === 'agent.model.searchPlaceholder') return 'Search models';
       if (key === 'agent.model.noResults') return 'No matching models';
       if (key === 'conversation.welcome.useCliModel') return 'Use CLI model';
-      if (key === 'conversation.welcome.modelSwitchNotSupported') return 'Model switch is not supported';
+      if (key === 'conversation.welcome.modelCatalogUnavailable') return 'Model catalog is unavailable';
       return options?.defaultValue ?? key;
     },
   }),

@@ -312,13 +312,7 @@ const EditModeModal = ModalHOC<{ data?: IProvider; onChange(data: IProvider): vo
               required
               rules={[{ required: true }]}
               validateStatus={!isFullUrl && modelListState.error ? 'error' : undefined}
-              help={
-                !isFullUrl && modelListState.error instanceof Error
-                  ? modelListState.error.message
-                  : !isFullUrl && modelListState.error
-                    ? String(modelListState.error)
-                    : undefined
-              }
+              help={!isFullUrl && modelListState.error ? t('settings.agentModelLoadFailed') : undefined}
             >
               <Select
                 loading={!isFullUrl && modelListState.isLoading}
@@ -374,8 +368,9 @@ const EditModeModal = ModalHOC<{ data?: IProvider; onChange(data: IProvider): vo
                         }) || [];
                       // Update the model list state manually
                       void modelListState.mutate({ models }, false);
-                    } catch (error: any) {
-                      message.error(error.message || 'Failed to fetch models');
+                    } catch (error: unknown) {
+                      console.error('Failed to fetch the Bedrock model list:', error);
+                      message.error(t('settings.agentModelLoadFailed'));
                     }
                     return;
                   }

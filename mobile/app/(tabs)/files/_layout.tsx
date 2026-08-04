@@ -1,6 +1,7 @@
 import React from 'react';
 import { Drawer } from 'expo-router/drawer';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { useTranslation } from 'react-i18next';
 import { WorkspaceFilesSidebar } from '../../../src/components/files/WorkspaceFilesSidebar';
 import { useThemeColor } from '../../../src/hooks/useThemeColor';
 
@@ -9,6 +10,7 @@ function DrawerContent(props: DrawerContentComponentProps) {
 }
 
 export default function FilesDrawerLayout() {
+  const { t } = useTranslation();
   const background = useThemeColor({}, 'background');
 
   return (
@@ -20,7 +22,7 @@ export default function FilesDrawerLayout() {
         drawerStyle: { width: '85%', backgroundColor: background },
       }}
     >
-      <Drawer.Screen name='index' options={{ drawerLabel: 'Files', title: 'Files' }} />
+      <Drawer.Screen name='index' options={{ drawerLabel: t('tabs.files'), title: t('tabs.files') }} />
     </Drawer>
   );
 }

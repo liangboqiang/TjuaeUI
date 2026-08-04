@@ -30,7 +30,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => {
       if (key === 'common.defaultModel') return 'Default';
       if (key === 'common.model') return 'Model';
-      if (key === 'conversation.welcome.modelSwitchNotSupported') return 'Model switch is not supported';
+      if (key === 'conversation.welcome.modelCatalogUnavailable') return 'Model catalog is unavailable';
       if (key === 'agent.thoughtLevel.label') return 'Thinking Level';
       return key;
     },

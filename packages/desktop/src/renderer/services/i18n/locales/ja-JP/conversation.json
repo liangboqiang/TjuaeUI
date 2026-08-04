@@ -6,7 +6,8 @@
     "newConversation": "新しいチャット",
     "selectModel": "モデルを選択",
     "useCliModel": "モデルを選択",
-    "modelSwitchNotSupported": "初回接続後に利用可能なモデルリストが表示されます。まずメッセージを送信して接続し、利用可能なモデルを読み込んでください。",
+    "modelCatalogUnavailable": "モデルカタログのキャッシュがありません。Agent 設定で「接続テスト」を実行してください。",
+    "modelSelectionUnavailable": "このランタイムは切り替え可能なモデル一覧を提供していません。",
     "specifyWorkspace": "プロジェクトを選択",
     "currentWorkspace": "現在のプロジェクト",
     "clearWorkspace": "プロジェクトを解除",
@@ -558,6 +559,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "エージェントから実行時の技術的なお知らせが届きました。"
+      },
       "ACP_EMPTY_TURN": {
         "body": "このリクエストでは、表示できる返信はありませんでした。"
       },
@@ -572,7 +576,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "モデルは、表示できる返信を生成する前にこのリクエストを拒否しました。"
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "このワークスペースが信頼されるまで、プロジェクト固有の設定、フック、実行ポリシーは無効です。スキルは引き続き読み込めます。"
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "スキルのコンテキスト予算が上限に達したため、説明が短縮されました。未使用のスキルやプラグインを無効にしてください。"
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "WebSocket 接続がタイムアウトしました。通信は自動的に HTTPS へ切り替わりました。"
       }
+    }
+  },
+  "trace": {
+    "title": "実行トレース",
+    "selectRun": "実行を選択",
+    "empty": "表示できる実行トレースはまだありません。",
+    "loadError": "実行トレースを読み込めませんでした。",
+    "backend": "バックエンド",
+    "duration": "所要時間",
+    "firstOutput": "最初の出力",
+    "tokens": "トークン",
+    "spans": "ステップ",
+    "incomplete": "不完全",
+    "truncated": "切り詰め済み",
+    "droppedSpans": "{{count}} 件のステップを省略",
+    "noDetails": "この実行には記録されたステップがありません。",
+    "jumpToMessage": "メッセージを表示",
+    "runtimeAssets": "実行アセット",
+    "runtimeReceipt": "検証済み実行レシート",
+    "runtimeAssetsUnavailable": "検証済みアセットレシートの詳細は利用できません。",
+    "runtimeAssetsEmpty": "この実行では管理対象アセットを使用していません。",
+    "definitionDigest": "定義ダイジェスト",
+    "upstreamSource": "リモートソース",
+    "localOnlyAsset": "ローカルのみ",
+    "assetKind": {
+      "assistant": "アシスタント",
+      "engineAdapter": "エンジンアダプター",
+      "skill": "スキル",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "実行中",
+      "succeeded": "成功",
+      "failed": "失敗",
+      "cancelled": "キャンセル済み",
+      "interrupted": "中断"
+    },
+    "spanKind": {
+      "thinking": "思考",
+      "tool": "ツール",
+      "permission": "権限"
     }
   },
   "notFound": "会話が存在しないか、削除されました"

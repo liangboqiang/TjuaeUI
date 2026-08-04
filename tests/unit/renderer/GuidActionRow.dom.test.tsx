@@ -153,7 +153,6 @@ const renderActionRow = (overrides: Partial<React.ComponentProps<typeof GuidActi
       selectedMode=''
       onModeSelect={vi.fn()}
       allSkills={makeSkills(8)}
-      disabledBuiltinSkills={[]}
       enabledSkills={[]}
       onToggleSkill={vi.fn()}
       mcpServers={makeMcpServers(8)}
@@ -232,6 +231,6 @@ describe('GuidActionRow skill/MCP submenu search', () => {
     fireEvent.change(screen.getByTestId('guid-skill-search'), { target: { value: 'skill-3' } });
     fireEvent.click(screen.getByText('skill-3').closest('[role="menuitem"]')!);
 
-    expect(onToggleSkill).toHaveBeenCalledWith('skill-3', false);
+    expect(onToggleSkill).toHaveBeenCalledWith('skill-3');
   });
 });

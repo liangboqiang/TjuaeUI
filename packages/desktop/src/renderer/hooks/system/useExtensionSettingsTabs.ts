@@ -7,11 +7,8 @@
 import { useEffect, useState } from 'react';
 import { extensions as extensionsIpc, type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 
-// Module-scope cache: settings tabs rarely change during a session, and multiple
-// components (SettingsSider, SettingsPageWrapper, ExtensionSettingsPage, SettingsModal)
-// used to each issue their own /api/extensions/settings-tabs request on mount,
-// flooding the backend. We share a single in-flight request and a single cached
-// result, refreshed only when extensions.state-changed fires.
+// 设置标签在单次会话中很少变化；共享请求与缓存，避免多个设置页面同时请求后端。
+// 仅在 extensions.state-changed 触发时刷新。
 let cachedTabs: IExtensionSettingsTab[] | null = null;
 let inflight: Promise<IExtensionSettingsTab[]> | null = null;
 const subscribers = new Set<(tabs: IExtensionSettingsTab[]) => void>();

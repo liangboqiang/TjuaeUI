@@ -29,6 +29,7 @@ const AcpChat: React.FC<{
   conversation_id: string;
   workspace?: string;
   backend: string;
+  conversationType?: 'acp' | 'a2a';
   session_mode?: string;
   agent_name?: string;
   cron_job_id?: string;
@@ -44,6 +45,7 @@ const AcpChat: React.FC<{
   conversation_id,
   workspace,
   backend,
+  conversationType = 'acp',
   session_mode,
   agent_name,
   cron_job_id,
@@ -69,7 +71,7 @@ const AcpChat: React.FC<{
       value={{
         conversation_id: conversation_id,
         workspace,
-        type: 'acp',
+        type: conversationType,
         cron_job_id,
         hideSendBox,
         loadedSkills,
@@ -88,6 +90,7 @@ const AcpChat: React.FC<{
             <AcpSendBox
               conversation_id={conversation_id}
               backend={backend}
+              conversationType={conversationType}
               session_mode={session_mode}
               agent_name={agent_name}
               workspacePath={workspace}

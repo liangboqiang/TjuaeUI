@@ -62,6 +62,8 @@ export function ConfirmationCard({ content }: ConfirmationCardProps) {
               ]}
               onPress={() => handleConfirm(opt.value)}
               activeOpacity={0.7}
+              accessibilityRole='button'
+              accessibilityLabel={opt.label || (isApprove ? t('chat.approve') : t('chat.deny'))}
             >
               <ThemedText style={[styles.buttonText, isApprove ? styles.approveText : { color: textSecondary }]}>
                 {opt.label || (isApprove ? t('chat.approve') : t('chat.deny'))}
@@ -97,7 +99,8 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    paddingVertical: 8,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: 8,
     alignItems: 'center',
   },

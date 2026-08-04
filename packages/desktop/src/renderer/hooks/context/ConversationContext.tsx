@@ -28,7 +28,7 @@ export interface ConversationContextValue {
    * Conversation type
    * 会话类型
    */
-  type: 'acp' | 'codex' | 'tjuaecli';
+  type: 'acp' | 'a2a' | 'codex' | 'tjuaecli';
 
   /**
    * Cron job ID (if this conversation was created by a scheduled task)

@@ -83,6 +83,10 @@ export function ConnectionBanner() {
         style={styles.inner}
         onPress={tappable ? handlePress : undefined}
         disabled={!tappable}
+        accessibilityRole={tappable ? 'button' : 'alert'}
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: !tappable, busy: showSpinner }}
+        accessibilityLiveRegion='polite'
       >
         {showSpinner && <ActivityIndicator size='small' color='#fff' style={styles.spinner} />}
         <Text style={styles.text}>{label}</Text>

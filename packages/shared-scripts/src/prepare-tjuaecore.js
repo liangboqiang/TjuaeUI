@@ -25,6 +25,8 @@ const { verifyBundledTjuaeCoreResources } = require('./verify-bundled-tjuaecore-
 const GITHUB_OWNER = 'liangboqiang';
 const GITHUB_REPO = 'TjuaeCore';
 const DEFAULT_DOWNLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+const MANAGED_RESOURCES_PREPARE_MAX_ATTEMPTS = 4;
+const PRODUCTION_SOURCE_TYPES = new Set(['download', 'actions-artifact']);
 
 const ACTIONS_ARTIFACT_TARGETS = {
   'darwin-arm64': {
@@ -104,6 +106,28 @@ function getActionsManualPlatform(platform, arch) {
   return getActionsTarget(platform, arch)?.manualPlatform || `${platform}-${arch}`;
 }
 
+function resolveTjuaeCorePreparationPolicy(env = process.env) {
+  const inferredMode = env.CI === 'true' || env.NODE_ENV === 'production' ? 'production' : 'development';
+  const mode = String(env.TJUAEUI_BACKEND_BUILD_MODE || inferredMode).trim();
+  if (mode !== 'development' && mode !== 'production') {
+    throw new Error('TJUAEUI_BACKEND_BUILD_MODE 只能是 development 或 production');
+  }
+
+  const localBundleDir = String(env.TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR || '').trim();
+  const localBinary = String(env.TJUAEUI_BACKEND_LOCAL_BINARY || '').trim();
+  if (mode === 'production' && (localBundleDir || localBinary)) {
+    throw new Error('正式构建禁止使用本地 TjuaeCore；请固定 Release 标签或 GitHub Actions 运行产物');
+  }
+
+  return { mode, localBundleDir, localBinary };
+}
+
+function canReuseTjuaeCoreCache(manifest, policy) {
+  if (!manifest || typeof manifest !== 'object') return false;
+  if (policy.mode === 'production') return PRODUCTION_SOURCE_TYPES.has(manifest.sourceType);
+  return typeof manifest.sourceType === 'string' && manifest.sourceType.length > 0;
+}
+
 function getActionsArtifactMissingMessage({ runId, platform, arch, expectedArtifactName, availableArtifactNames }) {
   const available =
     Array.isArray(availableArtifactNames) && availableArtifactNames.length > 0
@@ -122,17 +146,36 @@ function prepareManagedResources(binaryPath, targetDir) {
 
   removeDirectorySafe(bundleOut);
   removeDirectorySafe(dataDir);
-  ensureDirectory(bundleOut);
   ensureDirectory(dataDir);
 
   console.log(`  正在准备托管资源：${path.relative(process.cwd(), bundleOut)}`);
-  execFileSync(binaryPath, ['--data-dir', dataDir, 'prepare-managed-resources', '--bundle-out', bundleOut], {
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      TJUAE_BUNDLED_MANAGED_RESOURCES: '',
-    },
-  });
+  let lastError;
+  for (let attempt = 1; attempt <= MANAGED_RESOURCES_PREPARE_MAX_ATTEMPTS; attempt += 1) {
+    removeDirectorySafe(bundleOut);
+    ensureDirectory(bundleOut);
+    try {
+      execFileSync(binaryPath, ['--data-dir', dataDir, 'prepare-managed-resources', '--bundle-out', bundleOut], {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          TJUAE_BUNDLED_MANAGED_RESOURCES: '',
+        },
+      });
+      lastError = undefined;
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt === MANAGED_RESOURCES_PREPARE_MAX_ATTEMPTS) break;
+      console.warn(`  托管资源准备失败，正在重试 ${attempt + 1}/${MANAGED_RESOURCES_PREPARE_MAX_ATTEMPTS}……`);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, attempt * 2000);
+    }
+  }
+
+  if (lastError) {
+    removeDirectorySafe(bundleOut);
+    removeDirectorySafe(dataDir);
+    throw lastError;
+  }
 
   removeDirectorySafe(dataDir);
   return bundleOut;
@@ -497,6 +540,7 @@ function prepareTjuaeCore(options) {
   const { projectRoot, platform, arch, version } = options;
   const runtimeKey = `${platform}-${arch}`;
   const actionsRunId = (process.env.TJUAEUI_BACKEND_RUN_ID || '').trim();
+  const policy = resolveTjuaeCorePreparationPolicy(process.env);
 
   let tag = null;
   if (!actionsRunId) {
@@ -510,7 +554,7 @@ function prepareTjuaeCore(options) {
   const targetDir = path.join(projectRoot, 'resources', 'bundled-tjuaecore', runtimeKey);
   const binaryName = getBinaryName(platform);
   const targetBinaryPath = path.join(targetDir, binaryName);
-  const localBundleDir = (process.env.TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR || '').trim();
+  const { localBundleDir } = policy;
 
   console.log(
     `正在为 ${runtimeKey} 准备 tjuaecore（${actionsRunId ? `Actions 运行：${actionsRunId}` : `版本：${tag}`}）`
@@ -524,11 +568,12 @@ function prepareTjuaeCore(options) {
         existingManifest.platform === platform &&
         existingManifest.arch === arch &&
         existingManifest.version === tag &&
+        canReuseTjuaeCoreCache(existingManifest, policy) &&
         fs.existsSync(targetBinaryPath)
       ) {
         verifyPreparedTjuaeCoreBundle(projectRoot, platform, arch);
         console.log(`  已复用通过契约校验的 tjuaecore 固定版本资源包：${tag}`);
-        return { prepared: true, dir: targetDir, sourceType: 'verified-cache' };
+        return { prepared: true, dir: targetDir, sourceType: existingManifest.sourceType, cacheHit: true };
       }
     } catch (error) {
       if (fs.existsSync(targetDir)) {
@@ -604,7 +649,7 @@ function prepareTjuaeCore(options) {
 
   // 3. 网络下载不可用时，使用显式指定的本地二进制文件。
   if (!sourcePath) {
-    const localBinary = (process.env.TJUAEUI_BACKEND_LOCAL_BINARY || '').trim();
+    const { localBinary } = policy;
     if (localBinary) {
       const resolvedLocalBinary = path.resolve(localBinary);
       if (fs.existsSync(resolvedLocalBinary) && fs.statSync(resolvedLocalBinary).isFile()) {
@@ -648,8 +693,10 @@ function prepareTjuaeCore(options) {
 }
 
 module.exports = {
+  canReuseTjuaeCoreCache,
   getActionsArtifactMissingMessage,
   getActionsArtifactName,
   prepareTjuaeCore,
+  resolveTjuaeCorePreparationPolicy,
   verifyPreparedTjuaeCoreBundle,
 };

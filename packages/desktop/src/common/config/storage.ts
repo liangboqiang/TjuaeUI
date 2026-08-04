@@ -5,7 +5,6 @@
  */
 
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
-import type { Theme } from '@/common/theme/types';
 import { buildStorage } from '@/common/platform/storage';
 
 // 系统配置存储
@@ -16,8 +15,6 @@ export const EnvStorage = buildStorage<IEnvStorageRefer>('agent.env');
 
 export interface IConfigStorageRefer {
   language: string;
-  theme: string; // @deprecated migrated to theme.activeId/theme.userThemes
-  colorScheme: string; // @deprecated migrated to theme.activeId/theme.userThemes
   /** Persisted app-wide UI zoom factor for Display settings */
   'ui.zoomFactor'?: number;
   /** Per-region configurable font sizes (px), set in Appearance settings */
@@ -32,13 +29,8 @@ export interface IConfigStorageRefer {
   'webui.desktop.allowRemote'?: boolean;
   /** 桌面模式下 WebUI 端口 / WebUI port in desktop mode */
   'webui.desktop.port'?: number;
-  customCss: string; // 自定义 CSS 样式 // @deprecated migrated to theme.activeId/theme.userThemes
-  'css.themes': ICssTheme[]; // 自定义 CSS 主题列表 / Custom CSS themes list // @deprecated migrated to theme.activeId/theme.userThemes
-  'css.activeThemeId': string; // 当前激活的主题 ID / Currently active theme ID // @deprecated migrated to theme.activeId/theme.userThemes
-  /** Active unified theme ID */
+  /** 当前内置主题标识 */
   'theme.activeId': string;
-  /** User-created themes */
-  'theme.userThemes': Theme[];
   // 是否在粘贴文件到工作区时询问确认（true = 不再询问）
   'workspace.pasteConfirm'?: boolean;
   // 上传的文件是否保存到工作区目录（true = 保存到工作区，false = 保存到缓存目录）
@@ -64,23 +56,6 @@ export interface IConfigStorageRefer {
    * pre-flag build still re-reads the legacy data unchanged.
    */
   'migration.providersMigrated_v1'?: boolean;
-  /**
-   * One-shot completion flag for the legacy `assistants` → backend assistants
-   * migration in {@link migrateAssistantsToBackend}. Same rationale as
-   * `migration.providersMigrated_v1` — without it, an assistant the user
-   * deletes after migration would be re-imported on the next launch from the
-   * still-on-disk legacy field.
-   */
-  'migration.assistantsMigrated_v1'?: boolean;
-  // Desktop Pet: whether the desktop pet feature is enabled
-  'pet.enabled'?: boolean;
-  // Desktop Pet: size in pixels (200, 280, or 360)
-  'pet.size'?: number;
-  // Desktop Pet: do not disturb mode (pet stays idle, ignores AI events)
-  'pet.dnd'?: boolean;
-  // Desktop Pet: whether tool-call confirmations are routed to the pet's bubble
-  // (true) or remain in the main chat window (false). Default true.
-  'pet.confirmEnabled'?: boolean;
 }
 
 /**
@@ -190,8 +165,6 @@ export type TChatConversation =
           mcp_statuses?: IConversationMcpStatus[];
           /** Session-only MCP server snapshot persisted at creation time. */
           session_mcp_servers?: ISessionMcpServer[];
-          /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
-          preset_assistant_id?: string;
           /** 是否置顶会话 / Whether this conversation is pinned */
           pinned?: boolean;
           /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
@@ -224,6 +197,27 @@ export type TChatConversation =
     >
   | Omit<
       IChatConversation<
+        'a2a',
+        {
+          workspace?: string;
+          backend: 'a2a';
+          agent_id: string;
+          agent_source?: string;
+          custom_workspace?: boolean;
+          is_temporary_workspace?: boolean;
+          session_mode?: string;
+          skills?: string[];
+          mcp_server_ids?: string[];
+          mcp_servers?: string[];
+          mcp_statuses?: IConversationMcpStatus[];
+          session_mcp_servers?: ISessionMcpServer[];
+          cron_job_id?: string;
+        }
+      >,
+      'model'
+    >
+  | Omit<
+      IChatConversation<
         'codex',
         {
           workspace?: string;
@@ -234,8 +228,6 @@ export type TChatConversation =
           /** Skills snapshot for this conversation — authoritative list, written
            * once at creation. Join with `GET /api/skills` for descriptions. */
           skills?: string[];
-          /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
-          preset_assistant_id?: string;
           /** 是否置顶会话 / Whether this conversation is pinned */
           pinned?: boolean;
           /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
@@ -284,8 +276,6 @@ export type TChatConversation =
           /** Skills snapshot for this conversation — authoritative list, written
            * once at creation. Join with `GET /api/skills` for descriptions. */
           skills?: string[];
-          /** 预设助手 ID / Preset assistant ID */
-          preset_assistant_id?: string;
           /** 是否置顶会话 / Whether this conversation is pinned */
           pinned?: boolean;
           /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
@@ -312,7 +302,6 @@ export type TChatConversation =
           workspace?: string;
           custom_workspace?: boolean;
           agent_name?: string;
-          preset_assistant_id?: string;
           pinned?: boolean;
           pinned_at?: number;
           /** Legacy marker for pre-provider-probe health-check conversations */
@@ -333,8 +322,6 @@ export type TChatConversation =
           /** Skills snapshot for this conversation — authoritative list, written
            * once at creation. Join with `GET /api/skills` for descriptions. */
           skills?: string[];
-          /** 预设助手 ID / Preset assistant ID */
-          preset_assistant_id?: string;
           /** 是否置顶会话 / Whether this conversation is pinned */
           pinned?: boolean;
           /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
@@ -360,8 +347,6 @@ export type TChatConversation =
           /** Skills snapshot for this conversation — authoritative list, written
            * once at creation. Join with `GET /api/skills` for descriptions. */
           skills?: string[];
-          /** Preset assistant ID */
-          preset_assistant_id?: string;
           /** Whether this conversation is pinned */
           pinned?: boolean;
           /** Pin timestamp in milliseconds */
@@ -393,8 +378,6 @@ export type TChatConversation =
         mcp_statuses?: IConversationMcpStatus[];
         /** Session-only MCP server snapshot persisted at creation time. */
         session_mcp_servers?: ISessionMcpServer[];
-        /** Preset assistant ID */
-        preset_assistant_id?: string;
         /** Whether this conversation is pinned */
         pinned?: boolean;
         /** Pin timestamp in milliseconds */
@@ -578,28 +561,9 @@ export interface IConversationMcpStatus {
   reason?: string;
 }
 
-/** Stable ID for the built-in image generation MCP server */
-export const BUILTIN_IMAGE_GEN_ID = 'builtin-image-gen';
-export const BUILTIN_IMAGE_GEN_NAME = 'tjuaeui-image-generation';
-export const BUILTIN_IMAGE_GEN_LEGACY_NAMES = ['TjuaeUI Image Generation', BUILTIN_IMAGE_GEN_ID] as const;
-
 export interface IMcpTool {
   name: string;
   description?: string;
   input_schema?: unknown;
   _meta?: Record<string, unknown>;
-}
-
-/**
- * CSS 主题配置接口 / CSS Theme configuration interface
- * 用于存储用户自定义的 CSS 皮肤 / Used to store user-defined CSS skins
- */
-export interface ICssTheme {
-  id: string; // 唯一标识 / Unique identifier
-  name: string; // 主题名称 / Theme name
-  cover?: string; // 封面图片 base64 或 URL / Cover image base64 or URL
-  css: string; // CSS 样式代码 / CSS style code
-  is_preset?: boolean; // 是否为预设主题 / Whether it's a preset theme
-  created_at: number; // 创建时间 / Creation time
-  updated_at: number; // 更新时间 / Update time
 }

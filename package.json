@@ -1,6 +1,6 @@
 {
   "name": "@tjuae/ui",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "description": "面向多模型智能体的桌面与 Web 协作界面",
   "keywords": [
@@ -33,8 +33,11 @@
     "webui:prod": "cross-env NODE_ENV=production tsx scripts/webui.ts",
     "webui:prod:remote": "cross-env NODE_ENV=production tsx scripts/webui.ts --remote",
     "resetpass": "tsx scripts/resetpass.ts",
-    "package": "electron-vite build --config packages/desktop/electron.vite.config.ts",
-    "make": "electron-vite build --config packages/desktop/electron.vite.config.ts",
+    "package": "node scripts/generate-brand-assets.js && electron-vite build --config packages/desktop/electron.vite.config.ts",
+    "make": "node scripts/generate-brand-assets.js && electron-vite build --config packages/desktop/electron.vite.config.ts",
+    "brand:generate": "node scripts/generate-brand-assets.js",
+    "brand:check": "node scripts/generate-brand-assets.js --check",
+    "brand:check:native": "electron scripts/verify-brand-native-icons.js",
     "dist": "node scripts/build-with-builder.js",
     "dist:mac": "node scripts/build-with-builder.js auto --mac",
     "dist:win": "node scripts/build-with-builder.js auto --win",
@@ -273,9 +276,10 @@
     "electronVersion": "^37.3.1"
   },
   "patchedDependencies": {
-    "7zip-bin@5.2.0": "patches/7zip-bin@5.2.0.patch"
+    "7zip-bin@5.2.0": "patches/7zip-bin@5.2.0.patch",
+    "app-builder-lib@26.15.2": "patches/app-builder-lib@26.15.2.patch"
   },
   "productName": "TjuaeUI",
-  "tjuaeCoreVersion": "v0.2.0",
+  "tjuaeCoreVersion": "v0.3.0",
   "tjuaeHubRef": "16e4a9ed3606ac3aa8dda72d513545411bf77c55"
 }

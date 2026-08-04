@@ -27,6 +27,10 @@ on:
         description: '可选的 TjuaeCore 手动构建运行 ID，用其产物替代锁定版本'
         type: string
         default: ''
+      require_distribution_signing:
+        description: '要求桌面分发产物完成正式代码签名，并要求 macOS 完成公证与装订'
+        type: boolean
+        default: false
 
 env:
   BUN_INSTALL_REGISTRY: 'https://registry.npmjs.org/'
@@ -200,6 +204,46 @@ jobs:
           echo "提交：${{ steps.commit.outputs.short }}"
           echo "=========================================="
 
+      - name: 校验正式分发签名凭据
+        if: ${{ inputs.require_distribution_signing }}
+        shell: bash
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          APP_ID: ${{ secrets.APP_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+          IDENTITY: ${{ secrets.IDENTITY }}
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          require_secret() {
+            local name="$1"
+            local value="$2"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "::error::正式分发缺少签名凭据 ${name}"
+              exit 1
+            fi
+          }
+
+          case "${{ matrix.platform }}" in
+            macos-*)
+              require_secret BUILD_CERTIFICATE_BASE64 "$BUILD_CERTIFICATE_BASE64"
+              require_secret P12_PASSWORD "$P12_PASSWORD"
+              require_secret APP_ID "$APP_ID"
+              require_secret APPLE_ID "$APPLE_ID"
+              require_secret APPLE_ID_PASSWORD "$APPLE_ID_PASSWORD"
+              require_secret TEAM_ID "$TEAM_ID"
+              require_secret IDENTITY "$IDENTITY"
+              ;;
+            windows-*)
+              require_secret WINDOWS_CERTIFICATE_BASE64 "$WINDOWS_CERTIFICATE_BASE64"
+              require_secret WINDOWS_CERTIFICATE_PASSWORD "$WINDOWS_CERTIFICATE_PASSWORD"
+              ;;
+          esac
+
       # 安装 macOS 代码签名证书。
       - name: 配置 macOS 代码签名（仅 macOS）
         if: startsWith(matrix.platform, 'macos')
@@ -313,6 +357,9 @@ jobs:
           identity: ${{ secrets.IDENTITY }}
           CSC_NAME: ${{ secrets.IDENTITY }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          TJUAEUI_REQUIRE_DISTRIBUTION_SIGNING: ${{ inputs.require_distribution_signing && '1' || '0' }}
           # Windows 构建参数。
           MSVS_VERSION: 2022
           GYP_MSVS_VERSION: 2022
@@ -322,6 +369,26 @@ jobs:
           CI: true
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
+
+      - name: 验证 Windows 正式分发签名
+        if: ${{ startsWith(matrix.platform, 'windows') && inputs.require_distribution_signing }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $unpacked = @(Get-ChildItem -LiteralPath out -Directory | Where-Object { $_.Name -match '^win(?:-[a-z0-9]+)?-unpacked$' })
+          $executables = @($unpacked | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Filter '*.exe' })
+          $installers = @(Get-ChildItem -LiteralPath out -File -Filter 'TjuaeUI-*-win-*.exe')
+          $targets = @($executables + $installers | Sort-Object FullName -Unique)
+          if ($targets.Count -eq 0) {
+            throw '正式分发签名验证没有找到 Windows 可执行文件。'
+          }
+          foreach ($target in $targets) {
+            $signature = Get-AuthenticodeSignature -LiteralPath $target.FullName
+            if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+              throw "Windows 文件签名无效：$($target.FullName)；状态：$($signature.Status)"
+            }
+          }
+          Write-Host "已验证 $($targets.Count) 个 Windows 可执行文件的 Authenticode 签名。"
 
       # 创建 DMG 前清理残留磁盘镜像（仅 macOS）。
       # 清理可能残留的磁盘镜像，避免 hdiutil "Device not configured" 错误
@@ -338,7 +405,7 @@ jobs:
           rm -f /tmp/*.dmg 2>/dev/null || true
           echo "清理完成"
 
-      # macOS：构建并公证；DMG 失败会使 CI 失败，公证失败仅发出警告。
+      # macOS：正式分发要求签名、公证和装订全部成功；手动调试构建仍可显式不签名。
       - name: 使用 electron-builder 构建（macOS）
         if: startsWith(matrix.platform, 'macos')
         id: macos-build
@@ -370,6 +437,10 @@ jobs:
             if grep -qiE "notariz|staple" "${RUNNER_TEMP}/build.log"; then
               echo "⚠️ DMG 已创建，但公证失败"
               echo "notarization_status=failed" >> $GITHUB_OUTPUT
+              if [ "${{ inputs.require_distribution_signing }}" = "true" ]; then
+                echo "::error title=公证失败::正式分发禁止发布未公证或未装订的 macOS 产物。"
+                exit 1
+              fi
               echo "::warning title=公证失败::DMG 已成功构建并签名，但公证失败。"
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "## ⚠️ 公证警告" >> $GITHUB_STEP_SUMMARY
@@ -397,6 +468,7 @@ jobs:
           identity: ${{ secrets.IDENTITY }}
           CSC_NAME: ${{ secrets.IDENTITY }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          TJUAEUI_REQUIRE_DISTRIBUTION_SIGNING: ${{ inputs.require_distribution_signing && '1' || '0' }}
           npm_config_cache: ${{ runner.temp }}/.npm
           ELECTRON_CACHE: ${{ runner.temp }}/.cache/electron
           ELECTRON_BUILDER_CACHE: ${{ runner.temp }}/.cache/electron-builder
@@ -409,6 +481,23 @@ jobs:
           CI: true
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
+
+      - name: 验证 macOS 正式签名、公证与装订
+        if: ${{ startsWith(matrix.platform, 'macos') && inputs.require_distribution_signing }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          apps=()
+          while IFS= read -r -d '' app; do
+            apps+=("$app")
+          done < <(find out -type d -name 'TjuaeUI.app' -prune -print0)
+          if [ "${#apps[@]}" -ne 1 ]; then
+            echo "::error::正式分发签名验证需要且只能找到一个 TjuaeUI.app，实际为 ${#apps[@]} 个。"
+            exit 1
+          fi
+          codesign --verify --deep --strict --verbose=2 "${apps[0]}"
+          xcrun stapler validate "${apps[0]}"
+          echo "已验证 macOS Developer ID 签名、公证与装订。"
 
       # Linux：标准构建，不做特殊错误处理。
       - name: 使用 electron-builder 构建（Linux）

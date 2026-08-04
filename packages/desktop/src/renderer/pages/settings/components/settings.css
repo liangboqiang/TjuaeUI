@@ -1,5 +1,5 @@
 /* Settings mobile top nav */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .settings-mobile-top-nav {
     display: flex;
     gap: 8px;

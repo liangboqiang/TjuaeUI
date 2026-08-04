@@ -1,18 +1,16 @@
 import { ipcBridge } from '@/common';
 import { httpRequest } from '@/common/adapter/httpBridge';
-import { assistantRuntimeKey, type AssistantAgent } from '@/common/types/agent/assistantTypes';
+import { assistantRuntimeKey, type AssistantEngineDescriptor } from '@/common/types/agent/assistantTypes';
 import type { CreateProviderRequest } from '@/common/types/provider/providerApi';
 
 import type { ConfigKey } from './configKeys';
-import type { ILegacyConfigStorageRefer, IMcpServer } from './storage';
-import { BUILTIN_IMAGE_GEN_ID, BUILTIN_IMAGE_GEN_LEGACY_NAMES, BUILTIN_IMAGE_GEN_NAME } from './storage';
+import type { ILegacyConfigStorageRefer } from './storage';
 
 export type ConfigFile = {
   get<K extends keyof ILegacyConfigStorageRefer>(key: K): Promise<ILegacyConfigStorageRefer[K]>;
   set<K extends keyof ILegacyConfigStorageRefer>(key: K, value: ILegacyConfigStorageRefer[K]): Promise<unknown>;
 };
 
-const LEGACY_MCP_CONFIG_KEY = 'mcp.config' as const;
 const LEGACY_CHANNEL_KEYS = [
   'assistant.telegram.defaultModel',
   'assistant.telegram.agent',
@@ -34,15 +32,9 @@ type LegacyBusinessConfigKey =
   | 'google.config'
   | 'acp.promptTimeout'
   | 'acp.agentIdleTimeout'
-  | 'mcp.config'
   | 'tools.imageGenerationModel'
   | 'tools.speechToText';
 type LegacyConfigKey = ConfigKey | LegacyBusinessConfigKey | LegacyChannelConfigKey;
-
-type LegacyMcpConfigFile = ConfigFile & {
-  get(key: typeof LEGACY_MCP_CONFIG_KEY): Promise<unknown>;
-  set(key: typeof LEGACY_MCP_CONFIG_KEY, value: unknown): Promise<unknown>;
-};
 
 type LegacyChannelConfigFile = ConfigFile & {
   get(key: LegacyConfigKey): Promise<unknown>;
@@ -51,16 +43,14 @@ type LegacyChannelConfigFile = ConfigFile & {
 type ChannelAssistantCandidate = {
   id: string;
   source: string;
-  agent_id: string;
-  agent?: AssistantAgent;
+  engine_id: string;
+  engine?: AssistantEngineDescriptor;
 };
 
 const ALL_LEGACY_KEYS: LegacyConfigKey[] = [
   'acp.promptTimeout',
   'acp.agentIdleTimeout',
   'language',
-  'theme',
-  'colorScheme',
   'ui.zoomFactor',
   'ui.fontSize.chat',
   'ui.fontSize.markdown',
@@ -68,18 +58,11 @@ const ALL_LEGACY_KEYS: LegacyConfigKey[] = [
   'webui.desktop.enabled',
   'webui.desktop.allowRemote',
   'webui.desktop.port',
-  'customCss',
-  'css.themes',
-  'css.activeThemeId',
   'tools.imageGenerationModel',
   'tools.speechToText',
   'workspace.pasteConfirm',
   'upload.saveToWorkspace',
   'skillsMarket.enabled',
-  'pet.enabled',
-  'pet.size',
-  'pet.dnd',
-  'pet.confirmEnabled',
   'system.closeToTray',
   'system.notificationEnabled',
   'system.cronNotificationEnabled',
@@ -140,64 +123,6 @@ export async function migrateConfigStorage(configFile: ConfigFile): Promise<void
   }
 
   await migrateLegacyChannelSettings(legacyConfigFile);
-}
-
-export async function migrateLegacyMcpConfigToDb(configFile: ConfigFile): Promise<void> {
-  const legacyConfigFile = configFile as LegacyMcpConfigFile;
-  const backendPrefs = await fetchExistingClientKeys();
-  const backendLegacy = backendPrefs[LEGACY_MCP_CONFIG_KEY];
-  const fileLegacy = await legacyConfigFile.get(LEGACY_MCP_CONFIG_KEY).catch((): undefined => undefined);
-  const legacyServers = Array.isArray(backendLegacy) ? backendLegacy : Array.isArray(fileLegacy) ? fileLegacy : [];
-
-  if (legacyServers.length === 0) {
-    console.info('[Migration] legacy MCP migration skipped — no legacy servers found');
-    return;
-  }
-
-  const existing = await ipcBridge.mcpService.listServers.invoke();
-  const existingNames = new Set((existing ?? []).map((server) => server.name));
-  const importableServers = legacyServers.filter(isImportableMcpServer).map(normalizeLegacyMcpServer);
-  const missing = importableServers.filter((server) => !existingNames.has(server.name));
-
-  console.info(
-    '[Migration] legacy MCP migration found %d servers, importing %d missing, skipping %d existing',
-    legacyServers.length,
-    missing.length,
-    legacyServers.length - missing.length
-  );
-
-  if (missing.length > 0) {
-    await ipcBridge.mcpService.batchImportServers.invoke({ servers: missing });
-  }
-
-  await setBackendClientPreferences({ [LEGACY_MCP_CONFIG_KEY]: null });
-  await legacyConfigFile.set(LEGACY_MCP_CONFIG_KEY, []);
-}
-
-function isImportableMcpServer(
-  server: unknown
-): server is Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'> {
-  if (!server || typeof server !== 'object') return false;
-  const candidate = server as Partial<IMcpServer>;
-  return typeof candidate.name === 'string' && candidate.name.length > 0 && Boolean(candidate.transport);
-}
-
-function normalizeLegacyMcpServer(
-  server: Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'>
-): Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'> {
-  const isLegacyImageGen =
-    server.builtin === true &&
-    (server.id === BUILTIN_IMAGE_GEN_ID ||
-      server.name === BUILTIN_IMAGE_GEN_NAME ||
-      BUILTIN_IMAGE_GEN_LEGACY_NAMES.includes(server.name as (typeof BUILTIN_IMAGE_GEN_LEGACY_NAMES)[number]));
-
-  if (!isLegacyImageGen) return server;
-
-  return {
-    ...server,
-    name: BUILTIN_IMAGE_GEN_NAME,
-    builtin: true,
-  };
 }
 
 async function migrateLegacyChannelSettings(configFile: LegacyChannelConfigFile): Promise<void> {

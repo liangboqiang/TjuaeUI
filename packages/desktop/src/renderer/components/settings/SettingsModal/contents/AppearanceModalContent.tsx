@@ -40,11 +40,10 @@ const PreferenceRow: React.FC<{
 /**
  * 外观设置内容组件 / Appearance settings content component
  *
- * 提供外观相关的配置选项，包括主题画廊和字体缩放
- * Provides appearance-related configuration options including theme gallery and font scale
+ * 提供外观相关的配置选项，包括主题选择和字体缩放。
  *
  * @features
- * - 统一主题画廊（浅色、深色及装饰主题）/ Unified theme gallery (light, dark, decorative)
+ * - 浅色/深色结构化主题选择器
  * - 缩放比例控制 / Zoom scale control
  */
 const AppearanceModalContent: React.FC = () => {
@@ -58,7 +57,7 @@ const AppearanceModalContent: React.FC = () => {
       {/* 内容区域 / Content Area */}
       <TjuaeScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
-          {/* 主题画廊 / Theme Gallery */}
+          {/* 结构化主题选择 */}
           <div className='px-16px md:px-24px lg:px-28px py-14px md:py-16px bg-2 rd-16px'>
             <div className='text-14px text-t-primary leading-22px mb-12px'>{t('settings.theme')}</div>
             <CssThemeSettings />

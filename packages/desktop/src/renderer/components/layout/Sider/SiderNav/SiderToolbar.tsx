@@ -37,10 +37,18 @@ const SiderToolbar: React.FC<SiderToolbarProps> = ({
         <Tooltip {...siderTooltipProps} content={t('conversation.welcome.newConversation')} position='right'>
           <div
             className={classNames(
-              'w-full h-34px flex items-center justify-center cursor-pointer transition-colors text-t-primary rd-8px hover:bg-fill-3 active:bg-fill-4',
+              'w-full h-34px flex items-center justify-center cursor-pointer outline-none transition-colors text-t-primary rd-8px hover:bg-fill-3 active:bg-fill-4 focus-visible:ring-2 focus-visible:ring-primary-6',
               styles.newChatTrigger
             )}
+            role='button'
+            tabIndex={0}
+            aria-label={t('conversation.welcome.newConversation')}
             onClick={onNewChat}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              onNewChat();
+            }}
           >
             <Plus
               theme='outline'
@@ -61,10 +69,17 @@ const SiderToolbar: React.FC<SiderToolbarProps> = ({
         <div
           className={classNames(
             styles.newChatTrigger,
-            'h-34px flex-1 flex items-center justify-start gap-8px pl-10px pr-8px rd-0.5rem cursor-pointer group transition-all bg-transparent text-t-primary hover:bg-fill-3 active:bg-fill-4',
+            'h-34px flex-1 flex items-center justify-start gap-8px pl-10px pr-8px rd-0.5rem cursor-pointer group outline-none transition-all bg-transparent text-t-primary hover:bg-fill-3 active:bg-fill-4 focus-visible:ring-2 focus-visible:ring-primary-6',
             isMobile && 'sider-action-btn-mobile'
           )}
+          role='button'
+          tabIndex={0}
           onClick={onNewChat}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            onNewChat();
+          }}
         >
           <span className='size-22px rd-6px bg-aou-2 border border-solid border-[var(--color-border-2)] group-hover:bg-fill-3 group-hover:border-transparent flex items-center justify-center shrink-0 transition-colors'>
             <Plus
@@ -87,14 +102,23 @@ const SiderToolbar: React.FC<SiderToolbarProps> = ({
       >
         <div
           className={classNames(
-            'size-26px rd-6px flex items-center justify-center cursor-pointer shrink-0 transition-colors border border-solid border-transparent text-t-secondary hover:text-t-primary',
+            'size-26px rd-6px flex items-center justify-center cursor-pointer shrink-0 outline-none transition-colors border border-solid border-transparent text-t-secondary hover:text-t-primary focus-visible:ring-2 focus-visible:ring-primary-6',
             isMobile && 'sider-action-icon-btn-mobile',
             {
               'hover:bg-fill-3': !isBatchMode,
               'bg-[rgba(var(--primary-6),0.12)] border-[rgba(var(--primary-6),0.24)] !text-primary': isBatchMode,
             }
           )}
+          role='button'
+          tabIndex={0}
+          aria-label={isBatchMode ? t('conversation.history.batchModeExit') : t('conversation.history.batchManage')}
+          aria-pressed={isBatchMode}
           onClick={onToggleBatchMode}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            onToggleBatchMode();
+          }}
         >
           <ListCheckbox theme='outline' size='14' className='block leading-none shrink-0' style={{ lineHeight: 0 }} />
         </div>

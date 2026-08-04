@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import { wsService, type ConnectionState } from '../services/websocket';
 import { configureApi, resetApi, refreshToken } from '../services/api';
+import { connectionStorage } from '../services/connectionStorage';
 import { decodeJwtPayload } from '../utils/jwt';
 
 const STORAGE_KEY = 'tjuaeui_connection';
@@ -53,7 +53,7 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
     if (!newToken) return false;
 
     const newConfig = { ...currentConfig, token: newToken };
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(newConfig));
+    await connectionStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
     setConfig(newConfig);
 
     configureApi(newConfig.host, newConfig.port, newConfig.token);
@@ -83,7 +83,7 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
         }
 
         const newConfig = { ...currentConfig, token: newToken };
-        await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(newConfig));
+        await connectionStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
         setConfig(newConfig);
 
         configureApi(newConfig.host, newConfig.port, newConfig.token);
@@ -144,7 +144,7 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     (async () => {
       try {
-        const saved = await SecureStore.getItemAsync(STORAGE_KEY);
+        const saved = await connectionStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved) as ConnectionConfig;
           setConfig(parsed);
@@ -160,27 +160,24 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
     })();
   }, []);
 
-  const connect = useCallback(
-    async (host: string, port: string, token: string) => {
-      const newConfig: ConnectionConfig = { host, port, token };
+  const connect = useCallback(async (host: string, port: string, token: string) => {
+    const newConfig: ConnectionConfig = { host, port, token };
 
-      // Persist to secure storage
-      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(newConfig));
+    // Persist to secure storage
+    await connectionStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
 
-      // Configure services
-      setConfig(newConfig);
-      configureApi(host, port, token);
-      wsService.configure(host, port, token);
-      wsService.connect();
-    },
-    [],
-  );
+    // Configure services
+    setConfig(newConfig);
+    configureApi(host, port, token);
+    wsService.configure(host, port, token);
+    wsService.connect();
+  }, []);
 
   const disconnect = useCallback(() => {
     wsService.disconnect();
     resetApi();
     setConfig(null);
-    SecureStore.deleteItemAsync(STORAGE_KEY).catch(() => {});
+    connectionStorage.removeItem(STORAGE_KEY).catch(() => {});
   }, []);
 
   return (

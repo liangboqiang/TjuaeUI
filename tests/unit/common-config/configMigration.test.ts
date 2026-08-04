@@ -70,7 +70,7 @@ describe('configMigration', () => {
       const configFile: ConfigFile = {
         get: vi.fn((key: string) => {
           if (key === 'language') return Promise.resolve('zh-CN');
-          if (key === 'theme') return Promise.resolve('dark');
+          if (key === 'ui.zoomFactor') return Promise.resolve(1.1);
           return Promise.reject(new Error('not found'));
         }),
         set: vi.fn(),
@@ -85,7 +85,7 @@ describe('configMigration', () => {
 
       expect(httpRequest).toHaveBeenCalledWith('PUT', '/api/settings/client', {
         language: 'zh-CN',
-        theme: 'dark',
+        'ui.zoomFactor': 1.1,
       });
       expect(configFile.set).not.toHaveBeenCalled();
     });
@@ -94,13 +94,13 @@ describe('configMigration', () => {
       const configFile: ConfigFile = {
         get: vi.fn((key: string) => {
           if (key === 'language') return Promise.resolve('en');
-          if (key === 'theme') return Promise.resolve('dark');
+          if (key === 'ui.zoomFactor') return Promise.resolve(1.1);
           return Promise.reject(new Error('not found'));
         }),
         set: vi.fn(),
       };
       (httpRequest as ReturnType<typeof vi.fn>).mockImplementation((method: string) => {
-        if (method === 'GET') return Promise.resolve({ theme: 'light' });
+        if (method === 'GET') return Promise.resolve({ 'ui.zoomFactor': 1 });
         return Promise.resolve(undefined);
       });
       vi.spyOn(console, 'info').mockImplementation(() => {});
@@ -116,7 +116,7 @@ describe('configMigration', () => {
       const configFile: ConfigFile = {
         get: vi.fn((key: string) => {
           if (key === 'language') return Promise.resolve('en');
-          if (key === 'theme') return Promise.resolve(null);
+          if (key === 'ui.zoomFactor') return Promise.resolve(null);
           return Promise.reject(new Error('not found'));
         }),
         set: vi.fn(),
@@ -131,7 +131,7 @@ describe('configMigration', () => {
 
       const putCall = (httpRequest as ReturnType<typeof vi.fn>).mock.calls.find((c: unknown[]) => c[0] === 'PUT');
       expect(putCall?.[2]).toEqual({ language: 'en' });
-      expect(putCall?.[2]).not.toHaveProperty('theme');
+      expect(putCall?.[2]).not.toHaveProperty('ui.zoomFactor');
     });
 
     it('handles configFile.get exceptions by skipping those keys', async () => {
@@ -194,92 +194,6 @@ describe('configMigration', () => {
 
       expect(configFile.get).not.toHaveBeenCalledWith('acp.config');
       expect(configFile.get).not.toHaveBeenCalledWith('codex.config');
-    });
-
-    it('migrates legacy channel settings through dedicated channel APIs', async () => {
-      const legacyChannelAgent = {
-        assistant_id: 'missing_assistant',
-        backend: 'codex',
-        name: 'Telegram Assistant',
-      };
-      const configFile: ConfigFile = {
-        get: vi.fn((key: string) => {
-          if (key === 'assistant.telegram.agent') return Promise.resolve(legacyChannelAgent);
-          if (key === 'assistant.telegram.defaultModel') {
-            return Promise.resolve({ id: 'provider_1', use_model: 'gpt-5' });
-          }
-          return Promise.reject(new Error('not found'));
-        }),
-        set: vi.fn(),
-      };
-      (httpRequest as ReturnType<typeof vi.fn>).mockImplementation((method: string) => {
-        if (method === 'GET') return Promise.resolve({});
-        return Promise.resolve(undefined);
-      });
-      (ipcBridge.assistants.list.invoke as ReturnType<typeof vi.fn>).mockResolvedValue([
-        {
-          id: 'bare_codex',
-          source: 'generated',
-          agent_id: 'agent-codex',
-          agent: { type: 'acp', source: 'builtin', acp_backend: 'codex' },
-        },
-      ]);
-      vi.spyOn(console, 'info').mockImplementation(() => {});
-
-      await migrateConfigStorage(configFile);
-
-      expect(httpRequest).not.toHaveBeenCalledWith('PUT', '/api/settings/client', {
-        'assistant.telegram.agent': expect.anything(),
-        'assistant.telegram.defaultModel': expect.anything(),
-      });
-      expect(ipcBridge.channel.setAssistantSetting.invoke).toHaveBeenCalledWith({
-        platform: 'telegram',
-        assistant: { assistant_id: 'bare_codex' },
-      });
-      expect(ipcBridge.channel.setDefaultModelSetting.invoke).toHaveBeenCalledWith({
-        platform: 'telegram',
-        default_model: { id: 'provider_1', use_model: 'gpt-5' },
-      });
-      expect(ipcBridge.channel.syncChannelSettings.invoke).toHaveBeenCalledWith({
-        platform: 'telegram',
-      });
-    });
-
-    it('preserves backend channel settings and skips rewriting existing values', async () => {
-      const configFile: ConfigFile = {
-        get: vi.fn((key: string) => {
-          if (key === 'assistant.telegram.agent') return Promise.resolve({ backend: 'codex' });
-          if (key === 'assistant.telegram.defaultModel') {
-            return Promise.resolve({ id: 'provider_1', use_model: 'gpt-5' });
-          }
-          return Promise.reject(new Error('not found'));
-        }),
-        set: vi.fn(),
-      };
-      (httpRequest as ReturnType<typeof vi.fn>).mockImplementation((method: string) => {
-        if (method === 'GET') return Promise.resolve({});
-        return Promise.resolve(undefined);
-      });
-      (ipcBridge.assistants.list.invoke as ReturnType<typeof vi.fn>).mockResolvedValue([
-        {
-          id: 'bare_codex',
-          source: 'generated',
-          agent_id: 'agent-codex',
-          agent: { type: 'acp', source: 'builtin', acp_backend: 'codex' },
-        },
-      ]);
-      (ipcBridge.channel.getPlatformSettings.invoke as ReturnType<typeof vi.fn>).mockResolvedValue({
-        platform: 'telegram',
-        assistant: { assistant_id: 'existing_assistant' },
-        default_model: { id: 'provider_existing', use_model: 'o3' },
-      });
-      vi.spyOn(console, 'info').mockImplementation(() => {});
-
-      await migrateConfigStorage(configFile);
-
-      expect(ipcBridge.channel.setAssistantSetting.invoke).not.toHaveBeenCalled();
-      expect(ipcBridge.channel.setDefaultModelSetting.invoke).not.toHaveBeenCalled();
-      expect(ipcBridge.channel.syncChannelSettings.invoke).not.toHaveBeenCalled();
     });
   });
 

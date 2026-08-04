@@ -313,6 +313,6 @@ draft.mutate((prev) => ({ ...prev, content: t('team.addMember.tellLeaderPrefill'
 ## 9. 风险与回归
 
 - **测试契约**：胶囊栏替换 TeamTabs DOM，需同步 team 相关单测/E2E 的 selector（本仓有 [E2E SYnC] 约定）。
-- **主题回归**：身份色用 hex + color-mix，深色模式需目视核对；多套自定义主题（discourse-horizon 等）用 `:has()` 覆盖过 modal，需确认不误伤团队页新类。
+- **主题回归**：身份色使用 hex + color-mix，浅色与深色主题均需目视核对，确认团队页面的身份色、弹窗和层级样式不受影响。
 - **leader-ready 信号**：阶段 3 实现前必须先在代码/CDP 确认信号可取，否则 warmup 闸门方案需回退到「全员聚合 + 超时」。
 - **性能**：身份色映射为 O(成员数) 纯函数，随 assistants 变化重算，无忧。

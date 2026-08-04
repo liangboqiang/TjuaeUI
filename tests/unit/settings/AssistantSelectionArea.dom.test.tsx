@@ -41,7 +41,7 @@ describe('AssistantSelectionArea', () => {
     expect(onSelectAssistant).toHaveBeenCalledWith('writer');
   });
 
-  it('renders assistant pills in sort_order order', () => {
+  it('renders generated assistants before user-created assistants', () => {
     render(
       <ConfigProvider>
         <AssistantSelectionArea
@@ -57,7 +57,7 @@ describe('AssistantSelectionArea', () => {
       .getAllByTestId(/preset-pill-/)
       .map((element) => element.getAttribute('data-testid')?.replace('preset-pill-', ''));
 
-    expect(presetPills).toEqual(['writer', 'cowork']);
+    expect(presetPills).toEqual(['cowork', 'writer']);
   });
 
   it('prefers localized assistant names for the active locale', () => {
@@ -68,7 +68,7 @@ describe('AssistantSelectionArea', () => {
           assistants={[
             {
               id: 'academic-paper',
-              source: 'builtin',
+              source: 'generated',
               name: 'Academic Paper',
               name_i18n: {
                 'zh-CN': '学术论文助手',
@@ -79,7 +79,6 @@ describe('AssistantSelectionArea', () => {
               preset_agent_type: 'claude',
               enabled_skills: [],
               custom_skill_names: [],
-              disabled_builtin_skills: [],
               context_i18n: {},
               prompts: ['English prompt'],
               prompts_i18n: {
@@ -106,7 +105,7 @@ function assistants(): Assistant[] {
   return [
     {
       id: 'cowork',
-      source: 'builtin',
+      source: 'generated',
       name: 'Cowork',
       name_i18n: {},
       description_i18n: {},
@@ -115,7 +114,6 @@ function assistants(): Assistant[] {
       preset_agent_type: 'claude',
       enabled_skills: [],
       custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: [],
       prompts_i18n: {},
@@ -135,7 +133,6 @@ function assistants(): Assistant[] {
       preset_agent_type: 'claude',
       enabled_skills: [],
       custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: [],
       prompts_i18n: {},

@@ -30,7 +30,7 @@ const ConversationSkillsIndicator: React.FC<ConversationSkillsIndicatorProps> = 
   const names = (conversation?.extra as { skills?: string[] } | undefined)?.skills ?? [];
 
   const { data: skillIndex } = useSWR(names.length > 0 ? 'skills-index' : null, () =>
-    ipcBridge.fs.listAvailableSkills.invoke()
+    ipcBridge.skills.listRuntime.invoke()
   );
 
   if (names.length === 0) return null;

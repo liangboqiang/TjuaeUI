@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 const scriptPath = 'resources/windows/support/verify-bundled-tjuaecore-install.ps1';
 const script = readFileSync(scriptPath, 'utf8');
 
-function writeFile(filePath: string, contents = '') {
+function writeFile(filePath: string, contents = 'x') {
   mkdirSync(dirname(filePath), { recursive: true });
   writeFileSync(filePath, contents);
 }
@@ -17,78 +17,43 @@ function writeJson(filePath: string, value: unknown) {
 }
 
 describe('Windows bundled tjuaecore install verifier', () => {
-  it('reads managed resources manifest instead of deriving Codex platform paths', () => {
+  it('enforces the node-only v3 contract and rejects bundled third-party CLIs', () => {
     expect(script).toContain("Join-Path $managedRoot 'manifest.json'");
-    expect(script).toContain('schemaVersion');
-    expect(script).toContain('$Cli.executable');
-    expect(script).not.toContain('Get-CodexPlatformExecutable');
-    expect(script).not.toContain('x86_64-pc-windows-msvc');
+    expect(script).toContain('[double]$contract.schemaVersion -ne 3');
+    expect(script).toContain('forbidden_bundled_dependency');
+    expect(script).not.toContain('missing_required_cli');
+    expect(script).not.toContain('2.1.215');
+    expect(script).not.toContain('0.144.6');
   });
 
-  it('logs machine-readable contract failures', () => {
-    expect(script).toContain('duplicate_cli_name');
-    expect(script).toContain('missing_required_cli');
+  it('keeps machine-readable failure logging', () => {
     expect(script).toContain('unsupported_schema_version');
     expect(script).toContain('invalid_schema');
     expect(script).toContain('result=fail runtime=$RuntimeKey failures=$summary');
   });
 
-  it('requires numeric schemaVersion without PowerShell string coercion', () => {
-    expect(script).toContain("Test-NumberField $contract 'schemaVersion'");
-    expect(script).not.toContain('if ($contract.schemaVersion -ne 2)');
-  });
-
   const runOnWindows = process.platform === 'win32' ? it : it.skip;
 
-  runOnWindows('fails an old-version-only Codex CLI install directory', () => {
+  runOnWindows('fails an install containing a third-party CLI payload', () => {
     const tmp = mkdtempSync(join(tmpdir(), 'tjuaeui-install-verify-'));
     const installDir = join(tmp, 'install');
-    const managedRoot = join(installDir, 'resources', 'bundled-tjuaecore', 'win32-x64', 'managed-resources');
+    const base = join(installDir, 'resources', 'bundled-tjuaecore', 'win32-x64');
+    const managedRoot = join(base, 'managed-resources');
     const logPath = join(tmp, 'verify.log');
-    const codexTriple = 'x86_64-pc-windows-msvc';
-
     try {
-      writeFile(join(installDir, 'resources', 'bundled-tjuaecore', 'win32-x64', 'tjuaecore.exe'), 'x');
-      writeJson(join(installDir, 'resources', 'bundled-tjuaecore', 'win32-x64', 'manifest.json'), {
-        platform: 'win32',
-        arch: 'x64',
-      });
-      writeFile(join(managedRoot, 'node', 'node-v24.11.0-win-x64', 'node.exe'), 'x');
-      // claude is present at its pinned version.
-      writeFile(join(managedRoot, 'cli', 'claude', '2.1.215', 'win32-x64', 'claude.exe'), 'x');
+      writeFile(join(base, 'tjuaecore.exe'));
+      writeJson(join(base, 'manifest.json'), { platform: 'win32', arch: 'x64' });
+      writeFile(join(managedRoot, 'node', 'node-v24.11.0-win-x64', 'node.exe'));
+      writeFile(join(managedRoot, 'cli', 'codex', 'codex.exe'));
       writeJson(join(managedRoot, 'manifest.json'), {
-        schemaVersion: 2,
+        schemaVersion: 3,
         runtimeKey: 'win32-x64',
         node: {
           version: '24.11.0',
           root: 'node/node-v24.11.0-win-x64',
           executable: 'node.exe',
         },
-        clis: [
-          {
-            name: 'claude',
-            version: '2.1.215',
-            root: 'cli/claude/2.1.215/win32-x64',
-            platformDirectory: 'win32-x64',
-            executable: 'claude.exe',
-            requiredFiles: [],
-            requiredDirectories: [],
-          },
-          {
-            name: 'codex',
-            version: '0.144.6',
-            root: 'cli/codex/0.144.6/win32-x64',
-            platformDirectory: 'win32-x64',
-            executable: `vendor/${codexTriple}/bin/codex.exe`,
-            requiredFiles: [],
-            requiredDirectories: [`vendor/${codexTriple}`],
-          },
-        ],
       });
-
-      // Only an OLD codex version exists on disk; the contract pins 0.144.6.
-      const oldRoot = join(managedRoot, 'cli', 'codex', '0.100.0', 'win32-x64');
-      writeFile(join(oldRoot, 'vendor', codexTriple, 'bin', 'codex.exe'), 'x');
 
       const result = spawnSync(
         'powershell.exe',
@@ -109,9 +74,7 @@ describe('Windows bundled tjuaecore install verifier', () => {
       );
 
       expect(result.status).not.toBe(0);
-      const log = readFileSync(logPath, 'utf8');
-      expect(log).toContain('cli/codex/0.144.6');
-      expect(log).toContain('result=fail');
+      expect(readFileSync(logPath, 'utf8')).toContain('forbidden_bundled_dependency');
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

@@ -13,6 +13,18 @@
   "copiedToClipboard": "Скопійовано в буфер обміну",
   "downloadSuccess": "Завантаження успішне",
   "downloadFailed": "Не вдалося завантажити",
+  "a2aPart": {
+    "unnamed": "Вміст A2A",
+    "unsupportedUrl": "Можна відкривати лише посилання HTTP та HTTPS.",
+    "openConfirmTitle": "Відкрити зовнішній ресурс A2A?",
+    "openConfirmContent": "Це посилання надав віддалений агент. Перевірте адресу перед продовженням.",
+    "open": "Відкрити",
+    "downloadConfirmTitle": "Завантажити вміст від цього агента A2A?",
+    "downloadConfirmContent": "Зберігайте «{{name}}» локально, лише якщо довіряєте віддаленому агенту й очікували цей файл.",
+    "download": "Завантажити",
+    "structuredData": "Структуровані дані",
+    "inlineTooLarge": "Вбудований файл перевищує безпечне обмеження завантаження 2 МіБ."
+  },
   "imageLoadFailed": "Не вдалося завантажити зображення",
   "scrollToBottom": "Прокрутити донизу",
   "availableCommands": "Доступні команди: {{count}}",

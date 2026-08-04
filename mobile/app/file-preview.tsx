@@ -141,8 +141,8 @@ export default function FilePreviewScreen() {
   // Loading
   if (isLoading) {
     return (
-      <View style={[styles.center, { backgroundColor: bg }]}>
-        <ActivityIndicator size='large' color={tint} />
+      <View style={[styles.center, { backgroundColor: bg }]} accessibilityLiveRegion='polite'>
+        <ActivityIndicator size='large' color={tint} accessibilityLabel={t('filePreview.loading')} />
         <ThemedText style={styles.message}>{t('filePreview.loading')}</ThemedText>
       </View>
     );
@@ -151,10 +151,15 @@ export default function FilePreviewScreen() {
   // Error with retry
   if (error) {
     return (
-      <View style={[styles.center, { backgroundColor: bg }]}>
+      <View style={[styles.center, { backgroundColor: bg }]} accessibilityLiveRegion='polite'>
         <Ionicons name='warning-outline' size={48} color={textColor} style={{ opacity: 0.4 }} />
         <ThemedText style={styles.message}>{error}</ThemedText>
-        <TouchableOpacity style={[styles.retryButton, { borderColor: tint }]} onPress={loadContent}>
+        <TouchableOpacity
+          style={[styles.retryButton, { borderColor: tint }]}
+          onPress={loadContent}
+          accessibilityRole='button'
+          accessibilityLabel={t('filePreview.retry')}
+        >
           <ThemedText style={{ color: tint }}>{t('filePreview.retry')}</ThemedText>
         </TouchableOpacity>
       </View>
@@ -170,7 +175,12 @@ export default function FilePreviewScreen() {
         maximumZoomScale={3}
         minimumZoomScale={1}
       >
-        <Image source={{ uri: imageUri }} style={{ width: screenWidth, height: screenWidth }} resizeMode='contain' />
+        <Image
+          source={{ uri: imageUri }}
+          style={{ width: screenWidth, height: screenWidth }}
+          resizeMode='contain'
+          accessibilityLabel={name || t('files.title')}
+        />
       </ScrollView>
     );
   }
@@ -179,7 +189,10 @@ export default function FilePreviewScreen() {
   const renderedContent = contentType === 'markdown' ? content! : `\`\`\`${language}\n${content}\n\`\`\``;
 
   return (
-    <ScrollView style={{ backgroundColor: bg }} contentContainerStyle={[styles.textContainer, { paddingBottom: 16 + insets.bottom }]}>
+    <ScrollView
+      style={{ backgroundColor: bg }}
+      contentContainerStyle={[styles.textContainer, { paddingBottom: 16 + insets.bottom }]}
+    >
       <MarkdownContent content={renderedContent} />
     </ScrollView>
   );
@@ -201,7 +214,8 @@ const styles = StyleSheet.create({
   retryButton: {
     marginTop: 8,
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: 8,
     borderWidth: 1,
   },

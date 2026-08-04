@@ -14,6 +14,18 @@
   "copiedToClipboard": "Скопировано в буфер обмена",
   "downloadSuccess": "Скачивание успешно",
   "downloadFailed": "Не удалось скачать",
+  "a2aPart": {
+    "unnamed": "Содержимое A2A",
+    "unsupportedUrl": "Можно открывать только ссылки HTTP и HTTPS.",
+    "openConfirmTitle": "Открыть внешний ресурс A2A?",
+    "openConfirmContent": "Эта ссылка предоставлена удалённым агентом. Проверьте адрес перед продолжением.",
+    "open": "Открыть",
+    "downloadConfirmTitle": "Скачать содержимое от этого агента A2A?",
+    "downloadConfirmContent": "Сохраняйте «{{name}}» локально, только если доверяете удалённому агенту и ожидали этот файл.",
+    "download": "Скачать",
+    "structuredData": "Структурированные данные",
+    "inlineTooLarge": "Встроенный файл превышает безопасный лимит загрузки 2 МиБ."
+  },
   "imageLoadFailed": "Не удалось загрузить изображение",
   "scrollToBottom": "Прокрутить вниз",
   "availableCommands": "{{count}} доступных команд",

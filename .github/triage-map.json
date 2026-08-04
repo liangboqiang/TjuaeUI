@@ -13,7 +13,7 @@
     { "module": "WebUI 与远程访问", "label": "area/webui", "owner": "liangboqiang" },
     { "module": "定时任务", "label": "area/cron", "owner": "liangboqiang" },
     { "module": "Team 协作", "label": "area/team", "owner": "liangboqiang" },
-    { "module": "界面、显示与桌面宠物", "label": "area/display", "owner": "liangboqiang" },
+    { "module": "界面与显示", "label": "area/display", "owner": "liangboqiang" },
     { "module": "系统设置", "label": "area/settings", "owner": "liangboqiang" },
     { "module": "其他", "label": "area/other", "owner": "liangboqiang" }
   ],

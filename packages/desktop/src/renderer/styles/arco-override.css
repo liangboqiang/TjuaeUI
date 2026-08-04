@@ -92,11 +92,31 @@ html body .arco-popconfirm-arrow.arco-trigger-arrow {
   }
 } */
 
-.arco-btn {
-  &.arco-btn-outline {
-    border-color: #86909c;
-    color: #86909c;
-  }
+.arco-btn.arco-btn-outline:not(.arco-btn-disabled) {
+  border-color: var(--border-base);
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.arco-btn.arco-btn-outline:not(.arco-btn-disabled):hover {
+  border-color: var(--text-secondary);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.arco-btn.arco-btn-outline.arco-btn-disabled {
+  border-color: var(--border-base);
+  background: var(--bg-2);
+  color: var(--text-disabled);
+}
+
+.arco-btn.arco-btn-primary:not(.arco-btn-disabled) {
+  color: var(--primary-contrast);
+}
+
+.arco-btn.arco-btn-disabled,
+.arco-btn.arco-btn-disabled:hover {
+  color: var(--text-disabled);
 }
 
 .arco-btn-primary.arco-btn-disabled {

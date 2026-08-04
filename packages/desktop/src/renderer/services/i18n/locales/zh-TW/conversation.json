@@ -6,7 +6,8 @@
     "newConversation": "新會話",
     "selectModel": "選擇模型",
     "useCliModel": "選擇模型",
-    "modelSwitchNotSupported": "首次連接後將顯示可用模型列表。請先發送訊息以連接並載入可用模型。",
+    "modelCatalogUnavailable": "暫無模型目錄快取。請前往 Agent 設定執行「測試連線」。",
+    "modelSelectionUnavailable": "目前的執行方式未提供可切換的模型清單。",
     "specifyWorkspace": "選擇專案",
     "currentWorkspace": "目前專案",
     "clearWorkspace": "移除專案",
@@ -558,6 +559,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "智慧體回報了一則執行階段技術提示。"
+      },
       "ACP_EMPTY_TURN": {
         "body": "這次請求沒有產生任何可見回覆。"
       },
@@ -572,7 +576,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "模型在產生任何可見回覆前拒絕了這次請求。"
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "目前工作區尚未被信任，因此專案級設定、掛鉤與執行策略已停用；技能仍可正常載入。"
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "技能內容空間已滿，部分技能說明已自動精簡。可停用暫不使用的技能或外掛程式以釋放空間。"
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "WebSocket 連線逾時，通訊已自動切換為 HTTPS。"
       }
+    }
+  },
+  "trace": {
+    "title": "執行追蹤",
+    "selectRun": "選擇一次執行",
+    "empty": "尚無可檢視的執行追蹤。",
+    "loadError": "無法載入執行追蹤。",
+    "backend": "執行後端",
+    "duration": "總耗時",
+    "firstOutput": "首次輸出",
+    "tokens": "Token 用量",
+    "spans": "步驟數",
+    "incomplete": "記錄不完整",
+    "truncated": "記錄已截斷",
+    "droppedSpans": "已省略 {{count}} 個步驟",
+    "noDetails": "本次執行沒有可顯示的步驟。",
+    "jumpToMessage": "定位訊息",
+    "runtimeAssets": "執行資產",
+    "runtimeReceipt": "已驗證執行回執",
+    "runtimeAssetsUnavailable": "已記錄執行資產回執，但明細已不可用。",
+    "runtimeAssetsEmpty": "本次執行未使用受管資產。",
+    "definitionDigest": "定義摘要",
+    "upstreamSource": "遠端來源",
+    "localOnlyAsset": "僅本機",
+    "assetKind": {
+      "assistant": "助手",
+      "engineAdapter": "引擎適配器",
+      "skill": "技能",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "執行中",
+      "succeeded": "已成功",
+      "failed": "失敗",
+      "cancelled": "已取消",
+      "interrupted": "已中斷"
+    },
+    "spanKind": {
+      "thinking": "思考",
+      "tool": "工具",
+      "permission": "權限"
     }
   },
   "notFound": "會話不存在或已被刪除"

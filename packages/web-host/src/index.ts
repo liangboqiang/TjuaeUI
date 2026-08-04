@@ -11,6 +11,7 @@ export {
   buildSpawnArgs,
   buildSpawnEnv,
   findAvailablePort,
+  isLocalAcceptanceVersion,
   startBackend,
   stopBackend,
 } from './backend-launcher.js';

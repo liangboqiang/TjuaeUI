@@ -27,7 +27,11 @@ const buildDetail = (
       sort_order: 1,
     },
     engine: {
-      agent_backend: 'tjuaecli',
+      id: 'engine-1',
+      descriptor: {
+        type: 'tjuaecli',
+        ownership: 'internal',
+      },
     },
     rules: {
       content: '',
@@ -48,17 +52,18 @@ const buildDetail = (
     capabilities: {
       default_skill_ids: [],
       custom_skill_names: [],
-      default_disabled_builtin_skill_ids: [],
     },
     preferences: {
       last_model_id: undefined,
       last_permission_value: undefined,
       last_thought_level_value: undefined,
       last_skill_ids: [],
-      last_disabled_builtin_skill_ids: [],
       last_mcp_ids: [],
       ...preferences,
     },
+    engine_status: 'online',
+    team_selectable: true,
+    deletable: true,
   }) satisfies AssistantDetail;
 
 describe('resolveGuidAssistantDefaults', () => {
@@ -77,7 +82,6 @@ describe('resolveGuidAssistantDefaults', () => {
       permissionMode: 'yolo',
       thoughtLevel: 'medium',
       skillIds: [],
-      disabledBuiltinSkillIds: [],
       mcpIds: ['mcp-a', 'mcp-b'],
     });
   });
@@ -96,7 +100,6 @@ describe('resolveGuidAssistantDefaults', () => {
           last_permission_value: 'plan',
           last_thought_level_value: 'high',
           last_skill_ids: ['skill-a'],
-          last_disabled_builtin_skill_ids: ['skill-b'],
           last_mcp_ids: ['mcp-1'],
         }
       )
@@ -107,12 +110,11 @@ describe('resolveGuidAssistantDefaults', () => {
       permissionMode: 'plan',
       thoughtLevel: 'high',
       skillIds: ['skill-a'],
-      disabledBuiltinSkillIds: ['skill-b'],
       mcpIds: ['mcp-1'],
     });
   });
 
-  it('uses fixed generated assistant skill defaults instead of remembered disabled builtins', () => {
+  it('uses fixed generated assistant skill defaults instead of remembered skills', () => {
     const detail = {
       ...buildDetail(
         {
@@ -120,7 +122,6 @@ describe('resolveGuidAssistantDefaults', () => {
         },
         {
           last_skill_ids: ['custom-skill'],
-          last_disabled_builtin_skill_ids: ['todo-tracker'],
         }
       ),
       source: 'generated',
@@ -133,7 +134,6 @@ describe('resolveGuidAssistantDefaults', () => {
       permissionMode: undefined,
       thoughtLevel: undefined,
       skillIds: [],
-      disabledBuiltinSkillIds: [],
       mcpIds: [],
     });
   });
@@ -146,7 +146,6 @@ describe('resolveGuidAssistantDefaults', () => {
       permissionMode: undefined,
       thoughtLevel: undefined,
       skillIds: [],
-      disabledBuiltinSkillIds: [],
       mcpIds: [],
     });
   });
@@ -163,7 +162,6 @@ describe('resolveGuidAssistantDefaults', () => {
       permissionMode: undefined,
       thoughtLevel: undefined,
       skillIds: ['skill-fixed'],
-      disabledBuiltinSkillIds: [],
       mcpIds: [],
     });
   });

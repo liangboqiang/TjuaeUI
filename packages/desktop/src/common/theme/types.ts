@@ -6,18 +6,12 @@
 
 export type ThemeAppearance = 'light' | 'dark';
 
-/**
- * Unified theme. `appearance` drives data-theme + arco-theme.
- * `css` is the escape hatch (decorative + user themes). `tokens` is an optional
- * forward-looking structured channel applied as :root variables when present.
- */
+/** 结构化内置主题；外观决定浅色/深色模式，令牌提供完整配色。 */
 export type Theme = {
   id: string;
   name: string;
-  cover?: string;
   appearance: ThemeAppearance;
-  tokens?: Record<string, string>;
-  css?: string;
+  tokens: Record<string, string>;
   builtin: boolean;
   created_at: number;
   updated_at: number;

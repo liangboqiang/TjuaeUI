@@ -323,6 +323,7 @@ cdpStartupEnabled = shouldEnableCdp(cdpConfig);
 if (cdpStartupEnabled) {
   const preferredPort = getPreferredPort(cdpConfig);
   const port = findAvailablePort(preferredPort);
+  app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
   app.commandLine.appendSwitch('remote-debugging-port', String(port));
   cdpPort = port;
   registerInstance(port);

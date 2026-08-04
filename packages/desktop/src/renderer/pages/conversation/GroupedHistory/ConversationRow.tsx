@@ -142,7 +142,7 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
       <div
         id={'c-' + conversation.id}
         className={classNames(
-          'chat-history__item h-34px rd-8px flex items-center group cursor-pointer relative overflow-hidden shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-2px min-w-0 transition-colors',
+          'chat-history__item h-34px rd-8px flex items-center group cursor-pointer relative overflow-hidden shrink-0 conversation-item [&.conversation-item+&.conversation-item]:mt-2px min-w-0 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-6',
           collapsed ? 'justify-center px-0' : 'justify-start gap-8px pr-16px',
           // dimIcon means this row sits inside a project/cron parent — visually indent the row content while keeping the bg full-width
           !collapsed && (dimIcon ? 'pl-34px' : 'pl-10px'),
@@ -152,7 +152,17 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
             'bg-[rgba(var(--primary-6),0.08)]': batchMode && checked,
           }
         )}
+        role='button'
+        tabIndex={0}
+        aria-current={selected ? 'page' : undefined}
+        aria-pressed={batchMode ? checked : undefined}
+        aria-label={conversation.name || t('conversation.welcome.newConversation')}
         onClick={handleRowClick}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          handleRowClick();
+        }}
         onContextMenu={handleRowContextMenu}
       >
         {batchMode && (
@@ -280,8 +290,13 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
             >
               <span
                 data-testid={`conversation-row-menu-${conversation.id}`}
+                role='button'
+                tabIndex={0}
+                aria-haspopup='menu'
+                aria-expanded={menuVisible}
+                aria-label={t('common.more', { defaultValue: 'More' })}
                 className={classNames(
-                  'flex-center cursor-pointer transition-colors text-t-secondary hover:text-t-primary size-20px rd-4px sider-action-btn',
+                  'flex-center cursor-pointer outline-none transition-colors text-t-secondary hover:text-t-primary size-20px rd-4px sider-action-btn focus-visible:ring-2 focus-visible:ring-primary-6',
                   {
                     flex: isMobile || menuVisible,
                     'hidden group-hover:flex': !isMobile && !menuVisible,
@@ -289,6 +304,12 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
                 )}
                 onClick={(event) => {
                   event.stopPropagation();
+                  onOpenMenu(conversation);
+                }}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
                   onOpenMenu(conversation);
                 }}
               >

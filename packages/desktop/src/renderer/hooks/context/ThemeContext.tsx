@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// context/ThemeContext.tsx - Unified Theme Management Context 统一主题管理上下文
+// 统一主题管理上下文
 import type { PropsWithChildren } from 'react';
 import React, { createContext, useCallback, useContext } from 'react';
 import type { Theme, ThemeAppearance } from '@/common/theme/types';
@@ -15,19 +15,19 @@ import useFontSizes from '@renderer/hooks/ui/useFontSizes';
 import type { FontSizeKey, FontSizes } from '@/common/config/fontSizes';
 
 interface ThemeContextValue {
-  // Light/Dark appearance of the active theme (back-compat for existing consumers)
+  // 当前主题的浅色/深色外观
   theme: ThemeAppearance;
-  // Back-compat light/dark toggle → selects the Light or Dark built-in theme
+  // 供现有调用方使用的浅色/深色快捷切换
   setTheme: (appearance: ThemeAppearance) => Promise<void>;
-  // The full unified active theme + selector by id (used by the new gallery)
+  // 当前结构化主题及其选择器
   activeTheme: Theme | null;
-  // Raw selected id from config — may be the `system` sentinel (gallery check mark uses this)
+  // 配置中保存的主题标识
   activeId: string | null;
   selectTheme: (id: string) => Promise<void>;
-  // Font scaling (unchanged)
+  // 全局字体缩放
   fontScale: number;
   setFontScale: (scale: number) => Promise<void>;
-  // Per-region font sizes (px)
+  // 各区域字号（像素）
   fontSizes: FontSizes;
   setFontSize: (key: FontSizeKey, px: number) => Promise<void>;
 }

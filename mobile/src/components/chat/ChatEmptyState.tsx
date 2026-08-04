@@ -27,12 +27,21 @@ export function ChatEmptyState() {
       <ThemedText type='caption' style={styles.subHint}>
         {t('chat.startChatHint')}
       </ThemedText>
-      <TouchableOpacity style={[styles.button, { backgroundColor: tint }]} onPress={() => setShowNewModal(true)}>
+      <TouchableOpacity
+        style={[styles.button, { backgroundColor: tint }]}
+        onPress={() => setShowNewModal(true)}
+        accessibilityRole='button'
+        accessibilityLabel={t('chat.newChat')}
+      >
         <Ionicons name='add' size={20} color='#fff' />
         <ThemedText style={styles.buttonText}>{t('chat.newChat')}</ThemedText>
       </TouchableOpacity>
 
-      <NewConversationModal visible={showNewModal} onClose={() => setShowNewModal(false)} onAgentSelected={handleAgentSelected} />
+      <NewConversationModal
+        visible={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        onAgentSelected={handleAgentSelected}
+      />
     </View>
   );
 }
@@ -58,7 +67,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    minHeight: 48,
     borderRadius: 10,
     marginTop: 8,
   },

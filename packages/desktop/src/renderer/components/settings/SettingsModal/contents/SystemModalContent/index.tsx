@@ -12,7 +12,7 @@ import LanguageSwitcher from '@/renderer/components/settings/LanguageSwitcher';
 import { getClientBusinessSetting, setClientBusinessSetting } from '@/renderer/services/clientBusinessSettings';
 import { notifyManualRestartRequired } from '@/renderer/utils/appRestart';
 import { isElectronDesktop } from '@/renderer/utils/platform';
-import { Alert, Collapse, Form, InputNumber, Message, Modal, Switch } from '@arco-design/web-react';
+import { Alert, Form, InputNumber, Message, Modal, Switch } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
@@ -20,6 +20,7 @@ import { useSettingsViewMode } from '../../settingsViewContext';
 import BrowserNotificationGrant from './BrowserNotificationGrant';
 import DevSettings from './DevSettings';
 import DirInputItem from './DirInputItem';
+import NetworkProxySection from './NetworkProxySection';
 import PreferenceRow from './PreferenceRow';
 import VoiceInputSection from './VoiceInputSection';
 
@@ -412,49 +413,27 @@ const SystemModalContent: React.FC = () => {
                 </PreferenceRow>
               ))}
             </div>
-            {/* Notification settings with collapsible sub-options */}
-            <Collapse
-              bordered={false}
-              activeKey={notificationEnabled ? ['notification'] : []}
-              onChange={(_, keys) => {
-                const shouldExpand = (keys as string[]).includes('notification');
-                if (shouldExpand && !notificationEnabled) {
-                  handleNotificationEnabledChange(true);
-                } else if (!shouldExpand && notificationEnabled) {
-                  handleNotificationEnabledChange(false);
-                }
-              }}
-              className='[&_.arco-collapse-item]:!border-none [&_.arco-collapse-item-header]:!px-0 [&_.arco-collapse-item-header-title]:!flex-1 [&_.arco-collapse-item-content-box]:!px-0 [&_.arco-collapse-item-content-box]:!pb-0'
-            >
-              <Collapse.Item
-                name='notification'
-                showExpandIcon={false}
-                header={
-                  <div className='flex flex-1 items-center justify-between w-full'>
-                    <span className='text-14px text-2 ml-12px'>{t('settings.notification')}</span>
-                    <Switch
-                      checked={notificationEnabled}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={handleNotificationEnabledChange}
-                    />
-                  </div>
-                }
-              >
-                {isDesktop ? (
-                  <div className='pl-12px'>
-                    <PreferenceRow label={t('settings.cronNotificationEnabled')}>
-                      <Switch
-                        checked={cronNotificationEnabled}
-                        disabled={!notificationEnabled}
-                        onChange={handleCronNotificationEnabledChange}
-                      />
-                    </PreferenceRow>
-                  </div>
-                ) : (
-                  <BrowserNotificationGrant />
-                )}
-              </Collapse.Item>
-            </Collapse>
+            <div className='border-t border-border-2'>
+              {isDesktop ? (
+                <>
+                  <PreferenceRow label={t('settings.notification')} description={t('settings.notificationDesc')}>
+                    <Switch checked={notificationEnabled} onChange={handleNotificationEnabledChange} />
+                  </PreferenceRow>
+                  {notificationEnabled ? (
+                    <div className='mb-8px rounded-10px bg-fill-1 px-12px'>
+                      <PreferenceRow label={t('settings.cronNotificationEnabled')}>
+                        <Switch checked={cronNotificationEnabled} onChange={handleCronNotificationEnabledChange} />
+                      </PreferenceRow>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <BrowserNotificationGrant
+                  enabled={notificationEnabled}
+                  onEnabledChange={handleNotificationEnabledChange}
+                />
+              )}
+            </div>
             <Form form={form} layout='vertical' className='!mt-32px space-y-16px' onValuesChange={handleValuesChange}>
               <DirInputItem label={t('settings.workDir')} field='workDir' />
               <DirInputItem label={t('settings.logDir')} field='logDir' />
@@ -467,6 +446,8 @@ const SystemModalContent: React.FC = () => {
               )}
             </Form>
           </div>
+
+          <NetworkProxySection />
 
           {/* Voice input (speech-to-text) settings */}
           <VoiceInputSection />

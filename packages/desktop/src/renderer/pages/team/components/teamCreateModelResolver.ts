@@ -36,7 +36,7 @@ export async function resolveDefaultTeamAgentModel(params: {
       return assistantModel;
     }
 
-    return resolveBackendDefaultModel(assistantRuntimeKey({ agent: assistantDetail.engine.agent }));
+    return resolveBackendDefaultModel(assistantRuntimeKey({ engine: assistantDetail.engine.descriptor }));
   }
 
   return resolveBackendDefaultModel(assistant_backend);

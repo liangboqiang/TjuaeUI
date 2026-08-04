@@ -6,7 +6,8 @@
     "newConversation": "چت جدید",
     "selectModel": "انتخاب مدل",
     "useCliModel": "انتخاب مدل",
-    "modelSwitchNotSupported": "لیست مدل‌ها پس از اولین اتصال در دسترس خواهد بود. برای اتصال و بارگذاری مدل‌های موجود، پیامی بفرستید.",
+    "modelCatalogUnavailable": "فهرست مدل ذخیره‌شده‌ای موجود نیست. در تنظیمات Agent گزینهٔ آزمایش اتصال را اجرا کنید.",
+    "modelSelectionUnavailable": "این محیط اجرا فهرست مدل قابل‌تغییر ارائه نمی‌کند.",
     "specifyWorkspace": "چت در پروژه",
     "currentWorkspace": "پروژه فعلی",
     "clearWorkspace": "حذف پروژه",
@@ -558,6 +559,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "عامل یک اعلان فنی زمان اجرا گزارش کرد."
+      },
       "ACP_EMPTY_TURN": {
         "body": "این درخواست پاسخ قابل مشاهده‌ای تولید نکرد."
       },
@@ -572,7 +576,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "مدل قبل از تولید پاسخ قابل مشاهده، این درخواست را رد کرد."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "پیکربندی محلی پروژه، هوک‌ها و سیاست‌های اجرا تا زمان مورد اعتماد شدن این فضای کاری غیرفعال‌اند. مهارت‌ها همچنان بارگذاری می‌شوند."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "به‌دلیل پر شدن بودجهٔ زمینهٔ مهارت‌ها، توضیحات آن‌ها کوتاه شد. مهارت‌ها یا افزونه‌های بدون استفاده را غیرفعال کنید."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "اتصال WebSocket به پایان مهلت رسید. ارتباط به‌طور خودکار به HTTPS تغییر کرد."
       }
+    }
+  },
+  "trace": {
+    "title": "ردیابی اجرا",
+    "selectRun": "یک اجرا را انتخاب کنید",
+    "empty": "هنوز ردیابی اجرایی برای نمایش وجود ندارد.",
+    "loadError": "بارگیری ردیابی اجرا ممکن نبود.",
+    "backend": "بک‌اند",
+    "duration": "مدت",
+    "firstOutput": "اولین خروجی",
+    "tokens": "توکن‌ها",
+    "spans": "مراحل",
+    "incomplete": "ناقص",
+    "truncated": "کوتاه‌شده",
+    "droppedSpans": "{{count}} مرحله حذف شد",
+    "noDetails": "برای این اجرا مرحله‌ای ثبت نشده است.",
+    "jumpToMessage": "نمایش پیام",
+    "runtimeAssets": "دارایی‌های زمان اجرا",
+    "runtimeReceipt": "رسید تأییدشدهٔ زمان اجرا",
+    "runtimeAssetsUnavailable": "رسید تأییدشدهٔ دارایی دیگر در دسترس نیست.",
+    "runtimeAssetsEmpty": "در این اجرا از دارایی مدیریت‌شده‌ای استفاده نشد.",
+    "definitionDigest": "چکیدهٔ تعریف",
+    "upstreamSource": "منبع راه‌دور",
+    "localOnlyAsset": "فقط محلی",
+    "assetKind": {
+      "assistant": "دستیار",
+      "engineAdapter": "آداپتور موتور",
+      "skill": "مهارت",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "در حال اجرا",
+      "succeeded": "موفق",
+      "failed": "ناموفق",
+      "cancelled": "لغوشده",
+      "interrupted": "قطع‌شده"
+    },
+    "spanKind": {
+      "thinking": "تفکر",
+      "tool": "ابزار",
+      "permission": "مجوز"
     }
   },
   "notFound": "مکالمه یافت نشد یا حذف شده است"

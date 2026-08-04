@@ -16,7 +16,7 @@ import { useConversationAssistants } from '@renderer/pages/conversation/hooks/us
 import dayjs from 'dayjs';
 import type { TChatConversation, TProviderWithModel } from '@/common/config/storage';
 import { type AcpModelInfo } from '@/common/types/platform/acpTypes';
-import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
+import { useManagedEngineRuntimeCatalog } from '@/renderer/hooks/agent/useManagedEngines';
 import { useModelProviderList } from '@renderer/hooks/agent/useModelProviderList';
 import GuidModelSelector from '@renderer/pages/guid/components/GuidModelSelector';
 import { buildAssistantModelInfo } from '@renderer/pages/guid/hooks/useGuidAssistantSelection';
@@ -242,7 +242,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const { presetAssistants } = useConversationAssistants();
-  const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
+  const managedAgentRuntimeCatalog = useManagedEngineRuntimeCatalog();
   const { providers, getAvailableModels } = useModelProviderList();
   const [frequency, setFrequency] = useState<FrequencyType>('manual');
   const [time, setTime] = useState('09:00');
@@ -361,7 +361,7 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
   const selectedAssistantModels = selectedAssistant?.models ?? [];
   const resolveAutoApproveModeFromAgentMetadata = useCallback(
     (assistant: (typeof presetAssistants)[number]): string => {
-      const agent = managedAgentRuntimeCatalog.find((item) => item.id === assistant.agent_id);
+      const agent = managedAgentRuntimeCatalog.find((item) => item.id === assistant.engine_id);
       return agent?.yolo_id || 'yolo';
     },
     [managedAgentRuntimeCatalog]

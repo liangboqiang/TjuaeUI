@@ -72,7 +72,6 @@ function makeAssistant(
     preset_agent_type: overrides.preset_agent_type,
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

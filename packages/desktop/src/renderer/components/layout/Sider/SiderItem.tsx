@@ -43,6 +43,11 @@ const SiderItem: React.FC<SiderItemProps> = ({
   const isMobile = layout?.isMobile ?? false;
 
   const hasMenu = menuItems && menuItems.length > 0;
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    onClick();
+  };
 
   return (
     <Tooltip
@@ -56,13 +61,18 @@ const SiderItem: React.FC<SiderItemProps> = ({
     >
       <div
         className={classNames(
-          'h-34px rd-8px flex items-center gap-8px pl-10px pr-8px cursor-pointer relative overflow-hidden shrink-0 group min-w-0 transition-colors',
+          'h-34px rd-8px flex items-center gap-8px pl-10px pr-8px cursor-pointer relative overflow-hidden shrink-0 group min-w-0 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary-6',
           {
             'hover:bg-fill-3': !selected,
             '!bg-fill-3': selected,
           }
         )}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        aria-current={selected ? 'page' : undefined}
+        aria-label={name}
         onClick={onClick}
+        onKeyDown={handleKeyDown}
         onContextMenu={onContextMenu}
       >
         {/* Leading icon — pushpin overlays this slot on hover when row is pinned */}
@@ -131,8 +141,11 @@ const SiderItem: React.FC<SiderItemProps> = ({
             >
               <span
                 data-testid='sider-item-menu-trigger'
+                role='button'
+                tabIndex={0}
+                aria-label={name}
                 className={classNames(
-                  'flex-center cursor-pointer transition-colors text-t-secondary hover:text-t-primary size-20px rd-4px sider-action-btn',
+                  'flex-center cursor-pointer outline-none transition-colors text-t-secondary hover:text-t-primary size-20px rd-4px sider-action-btn focus-visible:ring-2 focus-visible:ring-primary-6',
                   {
                     flex: isMobile || menuVisible,
                     'hidden group-hover:flex': !isMobile && !menuVisible,
@@ -140,6 +153,12 @@ const SiderItem: React.FC<SiderItemProps> = ({
                 )}
                 onClick={(e) => {
                   e.stopPropagation();
+                  setMenuVisible(true);
+                }}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
                   setMenuVisible(true);
                 }}
               >

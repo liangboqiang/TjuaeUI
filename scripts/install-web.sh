@@ -5,7 +5,7 @@
 # 用法：
 #   curl -fsSL https://raw.githubusercontent.com/liangboqiang/TjuaeUI/main/scripts/install-web.sh | bash
 #   # 或指定版本：
-#   VERSION=3.0.0 bash install-web.sh
+#   VERSION=4.0.0 bash install-web.sh
 #   # 或安装到自定义目录：
 #   INSTALL_DIR=/opt/tjuaeui-web bash install-web.sh
 # ============================================================================
@@ -106,7 +106,7 @@ show_help() {
   curl -fsSL https://raw.githubusercontent.com/liangboqiang/TjuaeUI/main/scripts/install-web.sh | bash
 
   # 安装指定版本
-  VERSION=3.0.0 bash install-web.sh
+  VERSION=4.0.0 bash install-web.sh
 
   # 安装到自定义目录
   INSTALL_DIR=/opt/tjuaeui-web bash install-web.sh
@@ -177,7 +177,7 @@ resolve_version() {
         fi
 
         if [[ -z "$VERSION" ]]; then
-            die "无法解析最新版本，请手动指定：VERSION=3.0.0 bash $0"
+            die "无法解析最新版本，请手动指定：VERSION=4.0.0 bash $0"
         fi
 
         info "最新版本：${BOLD}v${VERSION}${NC}"

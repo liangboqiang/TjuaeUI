@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { ThemedText } from '../ui/ThemedText';
 import { ToolCallBlock } from './ToolCallBlock';
 import { useThemeColor } from '../../hooks/useThemeColor';
@@ -83,7 +84,14 @@ function SummaryLine({ messages, complete, isStreaming, expanded, onPress }: Sum
   }
 
   return (
-    <TouchableOpacity style={[styles.summaryLine, { backgroundColor: surface }]} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.summaryLine, { backgroundColor: surface }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole='button'
+      accessibilityState={{ expanded }}
+      accessibilityLabel={label}
+    >
       {!complete && isStreaming ? (
         <ActivityIndicator size='small' color={tint} style={styles.statusIcon} />
       ) : errors > 0 ? (
@@ -119,13 +127,21 @@ function ToolStepRow({ message }: { message: TMessage }) {
 }
 
 function StepRowHeader({ message, onCollapse }: { message: TMessage; onCollapse: () => void }) {
+  const { t } = useTranslation();
   const iconColor = useThemeColor({}, 'icon');
   const tint = useThemeColor({}, 'tint');
-  const items = getStepItems(message);
+  const items = getStepItems(message, t);
   const label = items.map((i) => i.name).join(', ');
 
   return (
-    <TouchableOpacity style={styles.stepHeader} onPress={onCollapse} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.stepHeader}
+      onPress={onCollapse}
+      activeOpacity={0.7}
+      accessibilityRole='button'
+      accessibilityState={{ expanded: true }}
+      accessibilityLabel={label}
+    >
       <Ionicons name='code-slash' size={14} color={tint} />
       <ThemedText style={styles.stepHeaderText} numberOfLines={1}>
         {label}
@@ -136,12 +152,13 @@ function StepRowHeader({ message, onCollapse }: { message: TMessage; onCollapse:
 }
 
 function StepRowCollapsed({ message, onPress }: { message: TMessage; onPress: () => void }) {
+  const { t } = useTranslation();
   const iconColor = useThemeColor({}, 'icon');
   const tint = useThemeColor({}, 'tint');
   const success = useThemeColor({}, 'success');
   const errorColor = useThemeColor({}, 'error');
 
-  const items = getStepItems(message);
+  const items = getStepItems(message, t);
 
   return (
     <View>
@@ -161,7 +178,15 @@ function StepRowCollapsed({ message, onPress }: { message: TMessage; onPress: ()
         }
 
         return (
-          <TouchableOpacity key={i} style={styles.collapsedStep} onPress={onPress} activeOpacity={0.7}>
+          <TouchableOpacity
+            key={i}
+            style={styles.collapsedStep}
+            onPress={onPress}
+            activeOpacity={0.7}
+            accessibilityRole='button'
+            accessibilityState={{ expanded: false }}
+            accessibilityLabel={item.name}
+          >
             <Ionicons name={statusIcon} size={16} color={statusColor} />
             <ThemedText style={styles.stepName} numberOfLines={1}>
               {item.name}
@@ -176,11 +201,11 @@ function StepRowCollapsed({ message, onPress }: { message: TMessage; onPress: ()
 
 type StepItem = { name: string; status: 'executing' | 'success' | 'error' | 'pending' };
 
-function getStepItems(msg: TMessage): StepItem[] {
+function getStepItems(msg: TMessage, t: TFunction): StepItem[] {
   if (msg.type === 'tool_group' && Array.isArray(msg.content)) {
-    return msg.content.map((t: any) => ({
-      name: t.description || t.name || t('chat.toolCall'),
-      status: normalizeStatus(t.status),
+    return msg.content.map((tool: any) => ({
+      name: tool.description || tool.name || t('chat.toolCall'),
+      status: normalizeStatus(tool.status),
     }));
   }
   if (msg.type === 'tool_call') {
@@ -244,6 +269,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    minHeight: 44,
     borderRadius: 10,
   },
   statusIcon: {
@@ -267,6 +293,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    minHeight: 44,
   },
   stepName: {
     flex: 1,
@@ -278,6 +305,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    minHeight: 44,
   },
   stepHeaderText: {
     flex: 1,

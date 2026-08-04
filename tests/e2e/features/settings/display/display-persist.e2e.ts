@@ -43,53 +43,12 @@ async function reloadAndGoToDisplay(page: import('@playwright/test').Page): Prom
   await waitForSettle(page);
 }
 
-async function activeThemeCardIndex(page: import('@playwright/test').Page): Promise<number> {
-  return page.evaluate(() => {
-    const cards = Array.from(document.querySelectorAll<HTMLDivElement>('.grid > div.cursor-pointer'));
-    return cards.findIndex((card) => card.className.includes('border-[var(--color-primary)]'));
-  });
-}
-
 test.describe('Display settings persistence across reload', () => {
   test.setTimeout(60_000);
 
   test.beforeEach(async ({ page }) => {
     await goToSettings(page, 'display');
     await waitForSettle(page);
-  });
-
-  test('theme persists after reload', async ({ page }) => {
-    const themeGroup = page.locator('[role="radiogroup"]');
-    await themeGroup.waitFor({ state: 'visible', timeout: 10_000 });
-
-    const initialTheme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
-    expect(initialTheme).toBeTruthy();
-
-    const targetTheme = initialTheme === 'light' ? 'dark' : 'light';
-    const targetButton = themeGroup.locator('[role="radio"][aria-checked="false"]');
-    await targetButton.click();
-
-    await page.waitForFunction(
-      (expected) => document.documentElement.getAttribute('data-theme') === expected,
-      targetTheme,
-      { timeout: 5_000 }
-    );
-
-    await reloadAndGoToDisplay(page);
-
-    const afterReload = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
-    expect(afterReload).toBe(targetTheme);
-
-    // Restore original theme
-    const revertGroup = page.locator('[role="radiogroup"]');
-    await revertGroup.waitFor({ state: 'visible', timeout: 10_000 });
-    const revertButton = revertGroup.locator('[role="radio"][aria-checked="false"]');
-    await revertButton.click();
-    await page.waitForFunction(
-      (expected) => document.documentElement.getAttribute('data-theme') === expected,
-      initialTheme,
-      { timeout: 5_000 }
-    );
   });
 
   test('zoom scale persists after reload', async ({ page }) => {
@@ -120,53 +79,6 @@ test.describe('Display settings persistence across reload', () => {
     if (await reset.isEnabled()) {
       await reset.click();
       await waitForSettle(page, 1_000);
-    }
-  });
-
-  test('CSS theme selection persists after reload', async ({ page }) => {
-    const cards = page.locator('.grid > div.cursor-pointer');
-    await cards.first().waitFor({ state: 'visible', timeout: 15_000 });
-
-    const cardCount = await cards.count();
-    if (cardCount < 2) {
-      test.skip(true, 'fewer than 2 CSS theme presets — cannot switch');
-      return;
-    }
-
-    // Find current active card index
-    const activeIndex = await activeThemeCardIndex(page);
-
-    const targetIndex = activeIndex <= 0 ? 1 : 0;
-    const targetCard = cards.nth(targetIndex);
-    await targetCard.click();
-
-    await page.locator('.arco-message-success').first().waitFor({ state: 'visible', timeout: 5_000 });
-
-    // Confirm selection took effect before reload
-    await page.waitForFunction(
-      (idx) => {
-        const card = document.querySelectorAll('.grid > div.cursor-pointer')[idx];
-        return card?.className.includes('border-[var(--color-primary)]');
-      },
-      targetIndex,
-      { timeout: 5_000 }
-    );
-
-    await reloadAndGoToDisplay(page);
-
-    // Verify the same card is still active after reload
-    await cards.first().waitFor({ state: 'visible', timeout: 15_000 });
-    const afterReloadCls = await cards.nth(targetIndex).getAttribute('class');
-    expect(afterReloadCls).toContain('border-[var(--color-primary)]');
-
-    // Restore original active theme
-    if (activeIndex >= 0) {
-      await cards.nth(activeIndex).click();
-      await page
-        .locator('.arco-message-success')
-        .first()
-        .waitFor({ state: 'visible', timeout: 5_000 })
-        .catch(() => {});
     }
   });
 });

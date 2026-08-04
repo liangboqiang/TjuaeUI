@@ -38,6 +38,9 @@ export function WorkspaceGroup({
         style={[styles.header, { backgroundColor: surface }]}
         onPress={() => setExpanded((v) => !v)}
         activeOpacity={0.6}
+        accessibilityRole='button'
+        accessibilityState={{ expanded }}
+        accessibilityLabel={group.displayName}
       >
         <Ionicons name='folder' size={16} color={tint} />
         <ThemedText style={styles.displayName} numberOfLines={1}>
@@ -62,6 +65,9 @@ export function WorkspaceGroup({
               onPress={() => onSelectConversation(conv.id)}
               onLongPress={() => onLongPressConversation(conv)}
               activeOpacity={0.6}
+              accessibilityRole='button'
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={conv.name || t('conversations.untitled')}
             >
               <View style={styles.itemContent}>
                 <ThemedText style={[styles.itemName, isActive && { color: tint, fontWeight: '600' }]} numberOfLines={1}>
@@ -84,6 +90,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
+    minHeight: 44,
     gap: 8,
   },
   displayName: {
@@ -98,6 +105,7 @@ const styles = StyleSheet.create({
     paddingLeft: 40,
     paddingRight: 16,
     paddingVertical: 12,
+    minHeight: 48,
   },
   itemContent: {
     gap: 2,

@@ -8,16 +8,16 @@ import { ipcBridge } from '@/common';
 import type { TFunction } from 'i18next';
 
 /**
- * SWR key for the Agent settings management view (`/api/agents/management`).
+ * SWR key for the Engine settings management view (`/api/engines/management`).
  *
  * Phase 2 removed the renderer-side detected-agent candidate cache; business
  * surfaces now consume assistants only. The management view keeps its own
  * diagnostics cache so disabled/missing rows remain visible for troubleshooting.
  */
-export const MANAGED_AGENTS_SWR_KEY = 'agents.managed';
+export const MANAGED_ENGINES_SWR_KEY = 'engines.managed';
 
 /** Type of an agent. */
-export type AgentType = 'acp' | 'remote' | 'tjuaecli' | 'openclaw-gateway' | 'nanobot';
+export type AgentType = 'acp' | 'a2a' | 'remote' | 'tjuaecli' | 'openclaw-gateway' | 'nanobot';
 
 /** Source tier of an agent row, mirroring backend `agent_source` enum. */
 export type AgentSource = 'internal' | 'builtin' | 'extension' | 'custom';
@@ -25,6 +25,23 @@ export type AgentSource = 'internal' | 'builtin' | 'extension' | 'custom';
 export type AgentManagementStatus = 'online' | 'offline' | 'missing' | 'unchecked';
 export type AgentSnapshotCheckStatus = 'online' | 'offline';
 export type AgentSnapshotCheckKind = 'startup' | 'scheduled' | 'manual' | 'session';
+export type AgentDiagnosticRunState = 'running' | 'completed';
+export type AgentDiagnosticRun = {
+  run_id: string;
+  trigger: AgentSnapshotCheckKind;
+  state: AgentDiagnosticRunState;
+  total: number;
+  completed: number;
+  online: number;
+  needs_attention: number;
+  missing: number;
+  started_at: number;
+  finished_at?: number;
+};
+export type AgentDiagnosticsChangedPayload = {
+  run: AgentDiagnosticRun;
+  agent?: ManagedAgent;
+};
 export type AgentManagementErrorDetails = {
   code?: string;
   command?: string;
@@ -107,6 +124,8 @@ export type AgentMetadata = {
   isExtension?: boolean;
   /** True when the agent supports team mode (MCP stdio capable). Computed by backend. */
   team_capable?: boolean;
+  /** Stable catalog ordering. */
+  sort_order: number;
   /** Derived status used by the Agent settings management view. */
   status?: AgentManagementStatus;
   /** True when the agent has a command_override set (requires auth). */
@@ -145,7 +164,7 @@ export type AgentMetadata = {
  * Agent Settings diagnostics row returned by `/api/agents/management`.
  *
  * This is intentionally separate from `AgentMetadata`: the management surface
- * needs disabled/missing rows plus health-check snapshots, while business
+ * needs disabled/missing rows plus diagnostic snapshots, while business
  * surfaces no longer consume `/api/agents` directly.
  */
 export type ManagedAgent = Omit<AgentMetadata, 'available' | 'handshake'> & {
@@ -158,18 +177,21 @@ export type ManagedAgent = Omit<AgentMetadata, 'available' | 'handshake'> & {
   handshake?: AgentHandshake;
 };
 
+/** Engine-management read model. The underlying registry still uses agent protocol metadata internally. */
+export type ManagedEngine = ManagedAgent;
+
 /**
- * Fetcher for MANAGED_AGENTS_SWR_KEY — the Agent settings management view.
- * Hits `/api/agents/management` so user-disabled and missing rows remain
+ * Fetcher for MANAGED_ENGINES_SWR_KEY — the Engine settings management view.
+ * Hits `/api/engines/management` so user-disabled and missing rows remain
  * visible for diagnostics and re-enable/test-connection actions. Engine
  * selectors also use this catalog so `online` / `unchecked` / `missing` /
  * `offline` semantics stay consistent with the Agent settings page.
  */
-export async function fetchManagedAgents(): Promise<ManagedAgent[]> {
+export async function fetchManagedEngines(): Promise<ManagedEngine[]> {
   try {
-    const agents = await ipcBridge.acpConversation.getManagedAgents.invoke();
+    const agents = await ipcBridge.acpConversation.getManagedEngines.invoke();
     if (Array.isArray(agents)) {
-      return agents as ManagedAgent[];
+      return agents as ManagedEngine[];
     }
   } catch {
     // fallback to empty
@@ -185,7 +207,7 @@ const getAgentManagementErrorDetails = (details: unknown): AgentManagementErrorD
 };
 
 export function formatManagedAgentDiagnosticMessage(t: TFunction, agent: ManagedAgent): string {
-  const fallback = agent.last_check_error_message || agent.last_check_guidance || '';
+  const fallback = t('settings.engineManagement.testConnectionUnavailable', { name: agent.name });
   const details = getAgentManagementErrorDetails(agent.last_check_error_details);
   const command = details.command || agent.command || agent.backend || agent.name;
   const resource = details.resource || agent.backend || agent.name;
@@ -195,7 +217,7 @@ export function formatManagedAgentDiagnosticMessage(t: TFunction, agent: Managed
     case 'bridge_missing':
     case 'primary_missing':
     case 'command_missing':
-      return t(`settings.agentManagement.errorCodes.${agent.last_check_error_code}`, {
+      return t(`settings.engineManagement.errorCodes.${agent.last_check_error_code}`, {
         command,
         defaultValue: fallback,
       });
@@ -206,14 +228,38 @@ export function formatManagedAgentDiagnosticMessage(t: TFunction, agent: Managed
     case 'no_provider':
     case 'disabled':
     case 'no_command':
-      return t(`settings.agentManagement.errorCodes.${agent.last_check_error_code}`, {
+      return t(`settings.engineManagement.errorCodes.${agent.last_check_error_code}`, {
         name: agent.name,
         backend: agent.backend || details.backend || agent.name,
         defaultValue: fallback,
       });
     case 'managed_runtime_unavailable':
-      return t('settings.agentManagement.errorCodes.managed_runtime_unavailable', {
+      return t('settings.engineManagement.errorCodes.managed_runtime_unavailable', {
         resource,
+        defaultValue: fallback,
+      });
+    case 'version_probe_failed':
+    case 'version_probe_timeout':
+    case 'process_start_failed':
+    case 'connection_timeout':
+    case 'setup_rejected':
+    case 'session_create_failed':
+    case 'protocol_incompatible':
+    case 'a2a_protocol_error':
+    case 'a2a_card_invalid':
+    case 'a2a_version_unsupported':
+    case 'configuration_missing':
+    case 'a2a_origin_untrusted':
+    case 'a2a_auth_required':
+    case 'a2a_network_blocked':
+    case 'a2a_connection_failed':
+    case 'diagnostic_workspace_failed':
+    case 'catalog_load_failed':
+    case 'runtime_unavailable':
+    case 'unsupported_backend':
+    case 'package_lock_invalid':
+      return t(`settings.engineManagement.errorCodes.${agent.last_check_error_code}`, {
+        name: agent.name,
         defaultValue: fallback,
       });
     default:

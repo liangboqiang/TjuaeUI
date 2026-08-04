@@ -36,7 +36,7 @@ const GoogleModelSelector: React.FC<{
     }
 
     return (
-      <Tooltip content={t('conversation.welcome.modelSwitchNotSupported')} position='top'>
+      <Tooltip content={t('conversation.welcome.modelSelectionUnavailable')} position='top'>
         <Button
           className={classNames(
             'sendbox-model-btn header-model-btn',

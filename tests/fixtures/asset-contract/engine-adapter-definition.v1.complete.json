@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/liangboqiang/TjuaeHub/main/schemas/engine-adapter-definition.v1.schema.json",
+  "schemaVersion": 1,
+  "kind": "engineAdapter",
+  "id": "contract-acp",
+  "runtimeId": "contract-acp",
+  "displayName": "契约 ACP 适配器",
+  "description": "Hub、Core 与 UI 共享的固定引擎适配器 Definition 夹具。",
+  "icon": "resources/icon.svg",
+  "protocol": {
+    "type": "acp",
+    "transport": "stdio",
+    "arguments": ["--acp"]
+  },
+  "runtime": {
+    "commandName": "contract-acp"
+  },
+  "capabilities": {
+    "streaming": true,
+    "authenticationRequired": true,
+    "skillsDirectories": [".contract/skills"]
+  },
+  "configurationSchema": {
+    "fields": [
+      {
+        "key": "profile",
+        "label": "配置档案",
+        "description": "由 Core Overlay 绑定的本机配置档案引用。",
+        "valueType": "string",
+        "required": true,
+        "secret": false,
+        "binding": {
+          "target": "environment",
+          "name": "CONTRACT_PROFILE"
+        }
+      },
+      {
+        "key": "token",
+        "label": "访问令牌",
+        "description": "由 Core 加密保存并仅在会话启动时注入。",
+        "valueType": "string",
+        "required": false,
+        "secret": true,
+        "binding": {
+          "target": "environment",
+          "name": "CONTRACT_TOKEN"
+        }
+      }
+    ]
+  }
+}

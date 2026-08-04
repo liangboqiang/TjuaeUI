@@ -67,19 +67,18 @@ function assistant(id: string, team_selectable: boolean, team_block_reason?: str
     description_i18n: {},
     enabled: true,
     sort_order: 0,
-    agent_id: agentId,
-    agent: isTjuaeCli
-      ? { type: 'tjuaecli', source: 'internal' }
-      : { type: 'acp', source: 'builtin', acp_backend: runtimeKey },
+    engine_id: agentId,
+    engine: isTjuaeCli
+      ? { type: 'tjuaecli', ownership: 'internal' }
+      : { type: 'acp', ownership: 'builtin', acp_backend: runtimeKey },
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
     avatar: undefined,
-    agent_status: 'online',
+    engine_status: 'online',
     team_selectable,
     team_block_reason,
     deletable: false,

@@ -15,13 +15,13 @@ import {
 } from '@/renderer/utils/model/agentLogo';
 
 const bridgeMocks = vi.hoisted(() => ({
-  getManagedAgents: vi.fn(),
+  getManagedEngines: vi.fn(),
 }));
 
 vi.mock('@/common', () => ({
   ipcBridge: {
     acpConversation: {
-      getManagedAgents: { invoke: bridgeMocks.getManagedAgents },
+      getManagedEngines: { invoke: bridgeMocks.getManagedEngines },
     },
   },
 }));
@@ -38,13 +38,14 @@ const LOGOS: AgentLogoMap = {
   gemini: '/api/assets/logos/ai-major/gemini.svg',
   opencode: '/api/assets/logos/tools/coding/opencode-light.svg',
   'openclaw-gateway': '/api/assets/logos/tools/openclaw.svg',
+  tjuaecli: '/api/assets/logos/brand/tjuae.png',
 };
 
 describe('agentLogo', () => {
   let originalDocument: Document | undefined;
 
   beforeEach(() => {
-    bridgeMocks.getManagedAgents.mockReset();
+    bridgeMocks.getManagedEngines.mockReset();
     if (typeof document !== 'undefined') {
       originalDocument = document;
     }
@@ -92,6 +93,11 @@ describe('agentLogo', () => {
     it('does not expose local absolute paths as logo sources', () => {
       expect(resolveAgentLogo(LOGOS, { icon: '/Users/demo/.tjuaeui/agent-avatars/custom.png' })).toBeNull();
     });
+
+    it('normalizes a historical Tjuae raster URL to the canonical local vector', () => {
+      expect(resolveAgentLogo(LOGOS, { icon: '/api/assets/logos/brand/tjuae.png' })).toMatch(/app\.svg$/);
+      expect(resolveAgentLogo(LOGOS, { backend: 'tjuaecli' })).toMatch(/app\.svg$/);
+    });
   });
 
   describe('resolveAgentAvatar', () => {
@@ -117,11 +123,18 @@ describe('agentLogo', () => {
         value: '🧠',
       });
     });
+
+    it('normalizes the Tjuae avatar to the canonical local vector', () => {
+      expect(resolveAgentAvatar(LOGOS, { icon: '/api/assets/logos/brand/tjuae-cli.svg' })).toEqual({
+        kind: 'image',
+        value: expect.stringMatching(/app\.svg$/),
+      });
+    });
   });
 
   describe('fetchAgentLogos', () => {
-    it('builds the logo catalog from /api/agents/management rows', async () => {
-      bridgeMocks.getManagedAgents.mockResolvedValue([
+    it('builds the logo catalog from /api/engines/management rows', async () => {
+      bridgeMocks.getManagedEngines.mockResolvedValue([
         {
           id: 'agent-claude',
           name: 'Claude',
@@ -140,7 +153,7 @@ describe('agentLogo', () => {
         'agent-claude': '/api/assets/logos/ai-major/claude.svg',
         claude: '/api/assets/logos/ai-major/claude.svg',
       });
-      expect(bridgeMocks.getManagedAgents).toHaveBeenCalledTimes(1);
+      expect(bridgeMocks.getManagedEngines).toHaveBeenCalledTimes(1);
     });
   });
 

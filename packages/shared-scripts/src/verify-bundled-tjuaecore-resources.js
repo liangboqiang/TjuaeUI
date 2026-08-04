@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const REQUIRED_CLI_NAMES = ['claude', 'codex'];
-
 function backendBinaryName(platform) {
   return platform === 'win32' ? 'tjuaecore.exe' : 'tjuaecore';
 }
@@ -126,10 +124,6 @@ function stringField(value) {
   return typeof value === 'string' && value.length > 0;
 }
 
-function stringArray(value) {
-  return Array.isArray(value) && value.every((entry) => typeof entry === 'string' && entry.length > 0);
-}
-
 function validateContractPathField(value, component, pathLabel, failures) {
   if (!validateContractRelativePath(value)) {
     failures.push({
@@ -171,7 +165,7 @@ function verifyManagedResourcesContract(baseDir, runtimeKey, checked, missing, f
     addSchemaFailure(failures, missing, 'managed-resources', 'invalid_schema', relativePath);
     return;
   }
-  if (contract.schemaVersion !== 2) {
+  if (contract.schemaVersion !== 3) {
     addSchemaFailure(
       failures,
       missing,
@@ -189,13 +183,21 @@ function verifyManagedResourcesContract(baseDir, runtimeKey, checked, missing, f
     addSchemaFailure(failures, missing, 'managed-resources', 'invalid_schema', relativePath);
     return;
   }
-  if (!Array.isArray(contract.clis)) {
+  const contractKeys = Object.keys(contract).sort();
+  if (JSON.stringify(contractKeys) !== JSON.stringify(['node', 'runtimeKey', 'schemaVersion'])) {
     addSchemaFailure(failures, missing, 'managed-resources', 'invalid_schema', relativePath);
     return;
   }
 
   verifyManagedNodeFromContract(managedRoot, runtimeKey, contract, checked, missing, failures);
-  verifyManagedClisFromContract(managedRoot, runtimeKey, contract, checked, missing, failures);
+  const forbiddenCliRoot = path.join(managedRoot, 'cli');
+  if (fs.existsSync(forbiddenCliRoot)) {
+    addFailure(failures, missing, checked, {
+      component: 'third-party-cli',
+      reason: 'forbidden_bundled_dependency',
+      path: contractBundledPath(runtimeKey, 'cli'),
+    });
+  }
 }
 
 function verifyManagedNodeFromContract(baseDir, runtimeKey, contract, checked, missing, failures) {
@@ -223,111 +225,6 @@ function verifyManagedNodeFromContract(baseDir, runtimeKey, contract, checked, m
       version: node.version,
       runtimeKey,
       path: relativePath,
-    });
-  }
-}
-
-function verifyManagedClisFromContract(baseDir, runtimeKey, contract, checked, missing, failures) {
-  const seen = new Set();
-  const validClis = [];
-  const manifestPath = contractBundledPath(runtimeKey, 'manifest.json');
-
-  for (const cli of contract.clis) {
-    if (!cli || typeof cli !== 'object' || Array.isArray(cli) || !stringField(cli.name)) {
-      addSchemaFailure(failures, missing, 'managed-resources', 'invalid_schema', manifestPath);
-      continue;
-    }
-    if (seen.has(cli.name)) {
-      failures.push({
-        component: cli.name,
-        reason: 'duplicate_cli_name',
-      });
-      continue;
-    }
-    seen.add(cli.name);
-    validClis.push(cli);
-  }
-
-  for (const requiredName of REQUIRED_CLI_NAMES) {
-    if (!seen.has(requiredName)) {
-      failures.push({
-        component: requiredName,
-        reason: 'missing_required_cli',
-      });
-    }
-  }
-
-  for (const cli of validClis) {
-    verifyManagedCliFromContract(baseDir, runtimeKey, cli, checked, missing, failures);
-  }
-}
-
-function verifyManagedCliFromContract(baseDir, runtimeKey, cli, checked, missing, failures) {
-  const manifestPath = contractBundledPath(runtimeKey, 'manifest.json');
-  const requiredStringFields = ['name', 'version', 'root', 'platformDirectory', 'executable'];
-  if (requiredStringFields.some((field) => !stringField(cli[field]))) {
-    addSchemaFailure(failures, missing, cli.name, 'invalid_schema', manifestPath);
-    return;
-  }
-  // requiredFiles / requiredDirectories default to [] (claude has none; codex
-  // lists its vendor sidecar subtree). Absent is allowed; when present each entry
-  // must be a non-empty string.
-  const requiredFiles = cli.requiredFiles === undefined ? [] : cli.requiredFiles;
-  const requiredDirectories = cli.requiredDirectories === undefined ? [] : cli.requiredDirectories;
-  if (!stringArray(requiredFiles) || !stringArray(requiredDirectories)) {
-    addSchemaFailure(failures, missing, cli.name, 'invalid_schema', manifestPath);
-    return;
-  }
-  if (cli.platformDirectory !== runtimeKey) {
-    addSchemaFailure(failures, missing, cli.name, 'runtime_key_mismatch', manifestPath);
-    return;
-  }
-
-  const pathFields = [
-    ['root', cli.root],
-    ['executable', cli.executable],
-    ...requiredFiles.map((entry, index) => [`requiredFiles[${index}]`, entry]),
-    ...requiredDirectories.map((entry, index) => [`requiredDirectories[${index}]`, entry]),
-  ];
-  if (pathFields.some(([field, value]) => !validateContractPathField(value, cli.name, field, failures))) {
-    return;
-  }
-
-  requireContractFile(baseDir, runtimeKey, cli, cli.root, cli.executable, checked, missing, failures);
-  for (const requiredFile of requiredFiles) {
-    requireContractFile(baseDir, runtimeKey, cli, cli.root, requiredFile, checked, missing, failures);
-  }
-  for (const requiredDirectory of requiredDirectories) {
-    requireContractDirectory(baseDir, runtimeKey, cli, cli.root, requiredDirectory, checked, missing, failures);
-  }
-}
-
-function requireContractFile(baseDir, runtimeKey, cli, root, relativePath, checked, missing, failures) {
-  const bundledRelative = contractBundledPath(runtimeKey, root, relativePath);
-  checked.push(bundledRelative);
-  if (!isFile(joinContractPath(joinContractPath(baseDir, root), relativePath))) {
-    missing.push(bundledRelative);
-    failures.push({
-      component: cli.name,
-      reason: 'missing_file',
-      version: cli.version,
-      runtimeKey,
-      path: bundledRelative,
-    });
-  }
-}
-
-function requireContractDirectory(baseDir, runtimeKey, cli, root, relativePath, checked, missing, failures) {
-  const bundledRelative = contractBundledPath(runtimeKey, root, relativePath);
-  checked.push(bundledRelative);
-  if (!isDirectory(joinContractPath(joinContractPath(baseDir, root), relativePath))) {
-    missing.push(bundledRelative);
-    failures.push({
-      component: cli.name,
-      reason: 'missing_directory',
-      version: cli.version,
-      runtimeKey,
-      path: bundledRelative,
     });
   }
 }

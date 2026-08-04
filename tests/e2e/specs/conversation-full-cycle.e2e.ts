@@ -55,7 +55,7 @@ async function resolveFullAutoModeFromAgentMetadata(
   page: import('@playwright/test').Page,
   backend: string
 ): Promise<string> {
-  const agents = await httpGet<Array<{ backend?: string; yolo_id?: string }>>(page, '/api/agents/management').catch(
+  const agents = await httpGet<Array<{ backend?: string; yolo_id?: string }>>(page, '/api/engines/management').catch(
     () => []
   );
   return agents.find((agent) => agent.backend === backend)?.yolo_id || 'yolo';
@@ -106,7 +106,7 @@ function agentMatchesBackend(agent: ManagedAgentRecord, backend: string): boolea
   return agent.backend === backend || (!agent.backend && agent.agent_type === backend);
 }
 
-function formatAgentHealthFailure(backend: string, agent: ManagedAgentRecord | null): string {
+function formatAgentDiagnosticFailure(backend: string, agent: ManagedAgentRecord | null): string {
   if (!agent) return `${backend} agent row was not found after refresh`;
   const fields = [
     `id=${agent.id}`,
@@ -116,19 +116,18 @@ function formatAgentHealthFailure(backend: string, agent: ManagedAgentRecord | n
     `last_check_error_code=${agent.last_check_error_code ?? ''}`,
     `last_check_error_message=${agent.last_check_error_message ?? ''}`,
   ];
-  return `${backend} assistant did not become online after health-check (${fields.join(', ')})`;
+  return `${backend} assistant did not become online after diagnostics (${fields.join(', ')})`;
 }
 
 async function refreshAssistantForBackend(
   page: import('@playwright/test').Page,
   backend: string
 ): Promise<ManagedAgentRecord | null> {
-  await httpPost(page, '/api/agents/refresh', {}).catch(() => undefined);
-  const agents = await httpGet<ManagedAgentRecord[]>(page, '/api/agents/management').catch(() => []);
+  const agents = await httpGet<ManagedAgentRecord[]>(page, '/api/engines/management').catch(() => []);
   const agent = agents.find((item) => item.enabled !== false && agentMatchesBackend(item, backend)) ?? null;
   if (!agent || agent.installed === false) return agent;
 
-  return httpPost<ManagedAgentRecord>(page, `/api/agents/${encodeURIComponent(agent.id)}/health-check`, {}).catch(
+  return httpPost<ManagedAgentRecord>(page, `/api/engines/${encodeURIComponent(agent.id)}/diagnostics`, {}).catch(
     () => agent
   );
 }
@@ -154,19 +153,19 @@ async function requireOnlineAssistantForBackend(
           return id;
         }
 
-        const agents = await httpGet<ManagedAgentRecord[]>(page, '/api/agents/management').catch(() => []);
+        const agents = await httpGet<ManagedAgentRecord[]>(page, '/api/engines/management').catch(() => []);
         lastAgent = agents.find((item) => agentMatchesBackend(item, backend)) ?? lastAgent;
         return null;
       },
       {
         timeout: 60_000,
-        message: formatAgentHealthFailure(backend, lastAgent),
+        message: formatAgentDiagnosticFailure(backend, lastAgent),
       }
     )
     .not.toBeNull();
 
   if (!onlineAssistantId) {
-    throw new Error(formatAgentHealthFailure(backend, lastAgent));
+    throw new Error(formatAgentDiagnosticFailure(backend, lastAgent));
   }
   return onlineAssistantId;
 }
@@ -373,19 +372,9 @@ async function findCronJobByName(
   throw new Error(`Cron job ${taskName} not found within ${timeoutMs}ms`);
 }
 
-async function listAutoInjectBuiltinSkills(
-  page: import('@playwright/test').Page
-): Promise<Array<{ name: string; relative_location?: string; is_auto_inject: boolean; source?: string }>> {
-  const skills = await httpGet<
-    Array<{ name: string; relative_location?: string; is_auto_inject: boolean; source?: string }>
-  >(page, '/api/skills');
-  return (skills ?? []).filter((skill) => skill.source === 'builtin' && skill.is_auto_inject);
-}
-
-async function expectCronBuiltinAutoSkill(page: import('@playwright/test').Page): Promise<void> {
-  const skills = await listAutoInjectBuiltinSkills(page);
-  const hasCron = skills.some((skill) => skill.name === 'cron');
-  expect(hasCron).toBeTruthy();
+async function hasInstalledCronSkill(page: import('@playwright/test').Page): Promise<boolean> {
+  const skills = await httpGet<Array<{ name: string }>>(page, '/api/skills');
+  return (skills ?? []).some((skill) => skill.name === 'cron');
 }
 
 async function hasCronSkill(page: import('@playwright/test').Page, jobId: string): Promise<boolean> {
@@ -1263,7 +1252,10 @@ test.describe('Conversation Full Cycle', () => {
           }
         }
         await requireOnlineAssistantForBackend(page, backend);
-        await expectCronBuiltinAutoSkill(page);
+        if (!(await hasInstalledCronSkill(page))) {
+          test.skip(true, 'The cron asset is not installed in the local Core library');
+          return;
+        }
         await selectAgent(page, backend);
 
         const selectedMode = await resolveFullAutoModeFromAgentMetadata(page, backend);
@@ -1599,9 +1591,9 @@ test.describe('Conversation Full Cycle', () => {
     }
   });
 
-  // -- Supplementary case: Skills indicator -> SkillsHub navigation ----------
+  // -- Supplementary case: Skills indicator -> local skill library ----------
 
-  test('skills indicator click navigates to SkillsHub and highlights skill', async ({ page }) => {
+  test('skills indicator click navigates to the local skill library and highlights the skill', async ({ page }) => {
     await goToGuid(page);
     const backend = await pickAvailableBackend(page);
     if (!backend) {
@@ -1680,7 +1672,7 @@ test.describe('Conversation Full Cycle', () => {
     const url = page.url();
     expect(url).toContain('/settings/capabilities');
     expect(url).toContain('tab=skills');
-    // Note: highlight= param is consumed by SkillsHubSettings and then cleared
+    // The local skill library consumes the highlight parameter and then clears it.
     // from the URL, so we verify the skill name is visible on the page instead.
 
     // Skills list loads asynchronously — wait for the skill name to appear

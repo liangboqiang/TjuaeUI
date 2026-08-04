@@ -138,9 +138,23 @@ export function WorkspaceFilesSidebar({ navigation }: WorkspaceFilesSidebarProps
   // No workspace state
   if (!currentWorkspace) {
     return (
-      <View style={[styles.container, styles.emptyContainer, { backgroundColor: background }]}>
-        <Ionicons name='folder-open-outline' size={48} color={iconColor} style={{ opacity: 0.4 }} />
-        <ThemedText style={styles.emptyText}>{t('workspace.noWorkspace')}</ThemedText>
+      <View style={[styles.container, { backgroundColor: background }]}>
+        <View style={[styles.header, { borderBottomColor: border }]}>
+          <Ionicons name='folder-outline' size={18} color={tint} />
+          <ThemedText style={styles.headerTitle}>{t('tabs.files')}</ThemedText>
+          <TouchableOpacity
+            style={styles.headerAction}
+            onPress={() => navigation.closeDrawer()}
+            accessibilityRole='button'
+            accessibilityLabel={t('common.close')}
+          >
+            <Ionicons name='close' size={22} color={iconColor} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Ionicons name='folder-open-outline' size={48} color={iconColor} style={{ opacity: 0.4 }} />
+          <ThemedText style={styles.emptyText}>{t('workspace.noWorkspace')}</ThemedText>
+        </View>
       </View>
     );
   }
@@ -150,6 +164,9 @@ export function WorkspaceFilesSidebar({ navigation }: WorkspaceFilesSidebarProps
       style={[styles.item, { paddingLeft: 16 + 16 * item.depth }]}
       onPress={() => (item.isDir ? toggleExpand(item) : handleFileSelect(item.fullPath))}
       activeOpacity={0.6}
+      accessibilityRole='button'
+      accessibilityState={item.isDir ? { expanded: Boolean(item.isExpanded) } : undefined}
+      accessibilityLabel={item.name}
     >
       {item.isDir && (
         <Ionicons
@@ -178,13 +195,18 @@ export function WorkspaceFilesSidebar({ navigation }: WorkspaceFilesSidebarProps
         <ThemedText style={styles.headerTitle} numberOfLines={1}>
           {workspaceDisplayName}
         </ThemedText>
-        <TouchableOpacity onPress={() => navigation.closeDrawer()}>
+        <TouchableOpacity
+          style={styles.headerAction}
+          onPress={() => navigation.closeDrawer()}
+          accessibilityRole='button'
+          accessibilityLabel={t('common.close')}
+        >
           <Ionicons name='close' size={22} color={iconColor} />
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <ActivityIndicator size='small' color={tint} style={styles.loader} />
+        <ActivityIndicator size='small' color={tint} style={styles.loader} accessibilityLabel={t('common.loading')} />
       ) : (
         <FlatList
           data={flatData}
@@ -222,6 +244,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  headerAction: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loader: {
     marginTop: 40,
   },
@@ -229,6 +257,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
+    minHeight: 44,
     paddingRight: 16,
   },
   chevron: {
@@ -243,6 +272,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   emptyContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,

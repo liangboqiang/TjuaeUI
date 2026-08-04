@@ -6,7 +6,6 @@
 
 import { ipcBridge } from '@/common';
 import type { IMcpServer, TProviderWithModel } from '@/common/config/storage';
-import { toSessionMcpServer } from '@/renderer/hooks/mcp/catalog';
 import { emitter } from '@/renderer/utils/emitter';
 import { updateWorkspaceTime } from '@/renderer/utils/workspace/workspaceHistory';
 import { Message } from '@arco-design/web-react';
@@ -37,10 +36,8 @@ export type GuidSendDeps = {
   currentAcpCachedModelInfo: AcpModelInfo | null;
   current_model: TProviderWithModel | undefined;
 
-  guidDisabledBuiltinSkills: string[] | undefined;
   guidEnabledSkills: string[] | undefined;
   assistantDefaultSkillIds?: string[];
-  assistantDefaultDisabledBuiltinSkillIds?: string[];
   availableMcpServers: IMcpServer[];
   selectedMcpServerIds: string[] | undefined;
   assistantDefaultMcpIds?: string[];
@@ -84,10 +81,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     selectedThoughtLevelValue,
     currentAcpCachedModelInfo,
     current_model,
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
     assistantDefaultSkillIds,
-    assistantDefaultDisabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds,
     assistantDefaultMcpIds,
@@ -112,32 +107,12 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     const assistantConversationId = selectedAssistantId;
     const assistantBackend = selectedAssistantBackend;
     const enabled_skills_to_send = guidEnabledSkills ?? assistantDefaultSkillIds;
-    const excludeBuiltinSkills = guidDisabledBuiltinSkills ?? assistantDefaultDisabledBuiltinSkillIds;
     const selectedAllMcpServerIds = selectedMcpServerIds ?? [];
-    const selectedMcpServerIdSet = new Set(selectedAllMcpServerIds);
-    const selectedUserMcpServerIds = availableMcpServers
-      .filter((server) => selectedMcpServerIdSet.has(server.id) && server.builtin !== true)
-      .map((server) => server.id);
-    const selectedAllSessionMcpServers = availableMcpServers
-      .filter((server) => selectedMcpServerIdSet.has(server.id))
-      .map((server) => toSessionMcpServer(server));
-    const selectedSessionMcpServers = availableMcpServers
-      .filter((server) => selectedMcpServerIdSet.has(server.id) && server.builtin === true)
-      .map((server) => toSessionMcpServer(server));
     const defaultSelectedMcpServerIds = assistantDefaultMcpIds;
-    const defaultSelectedUserMcpServerIds = availableMcpServers
-      .filter((server) => (defaultSelectedMcpServerIds ?? []).includes(server.id) && server.builtin !== true)
-      .map((server) => server.id);
+    const availableMcpServerIds = new Set(availableMcpServers.map((server) => server.id));
     const assistantOverrideMcpIds =
       selectedMcpServerIds !== undefined ? selectedAllMcpServerIds : defaultSelectedMcpServerIds;
-    const selectedUserMcpServerIdsToSend =
-      selectedMcpServerIds !== undefined ? selectedUserMcpServerIds : defaultSelectedUserMcpServerIds;
-    const selectedSessionMcpServersToSend =
-      selectedMcpServerIds !== undefined
-        ? selectedAllSessionMcpServers
-        : availableMcpServers
-            .filter((server) => (defaultSelectedMcpServerIds ?? []).includes(server.id))
-            .map((server) => toSessionMcpServer(server));
+    const selectedMcpServerIdsToSend = (assistantOverrideMcpIds ?? []).filter((id) => availableMcpServerIds.has(id));
 
     const assistantOverrideModel =
       selectedAcpModel || currentAcpCachedModelInfo?.current_model_id || current_model?.use_model || undefined;
@@ -146,8 +121,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       permission: selectedMode || undefined,
       thought_level: selectedThoughtLevelValue || undefined,
       skill_ids: enabled_skills_to_send,
-      disabled_builtin_skill_ids: excludeBuiltinSkills,
-      mcp_ids: assistantOverrideMcpIds,
+      mcp_ids: selectedMcpServerIdsToSend,
     };
 
     if (assistantBackend === 'tjuaecli') {
@@ -168,8 +142,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
             default_files: files,
             workspace: finalWorkspace,
             custom_workspace: isCustomWorkspace,
-            selected_mcp_server_ids: selectedUserMcpServerIdsToSend,
-            selected_session_mcp_servers: selectedSessionMcpServersToSend,
+            selected_mcp_server_ids: selectedMcpServerIdsToSend,
+            selected_session_mcp_servers: [],
           },
         });
 
@@ -217,9 +191,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
           workspace: finalWorkspace,
           custom_workspace: isCustomWorkspace,
           default_files: files,
-          selected_mcp_server_ids: selectedUserMcpServerIdsToSend,
-          selected_session_mcp_servers:
-            selectedMcpServerIds !== undefined ? selectedSessionMcpServers : selectedSessionMcpServersToSend,
+          selected_mcp_server_ids: selectedMcpServerIdsToSend,
+          selected_session_mcp_servers: [],
         },
       });
       if (!conversation || !conversation.id) {
@@ -262,10 +235,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     selectedThoughtLevelValue,
     currentAcpCachedModelInfo,
     current_model,
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
     assistantDefaultSkillIds,
-    assistantDefaultDisabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds,
     assistantDefaultMcpIds,

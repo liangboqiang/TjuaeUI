@@ -47,6 +47,6 @@ export function initThemeBridge(): void {
     listeners.forEach((l) => l(resolved));
   });
 
-  // A freshly-loaded window (e.g. pet) pulls the current theme on load.
+  // 新加载的窗口会在初始化时读取当前主题。
   ipcBridge.theme.requestCurrent.provider(async () => cachedTheme);
 }

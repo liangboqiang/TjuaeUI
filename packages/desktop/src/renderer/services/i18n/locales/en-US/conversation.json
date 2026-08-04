@@ -6,7 +6,8 @@
     "newConversation": "New Chat",
     "selectModel": "Select Model",
     "useCliModel": "Select Model",
-    "modelSwitchNotSupported": "Model list will be available after first connection. Send a message to connect and load available models.",
+    "modelCatalogUnavailable": "No cached model catalog is available. Run Test Connection in Agent settings.",
+    "modelSelectionUnavailable": "This runtime does not expose a switchable model list.",
     "specifyWorkspace": "Chat in Project",
     "currentWorkspace": "Current Project",
     "clearWorkspace": "Remove project",
@@ -558,6 +559,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "The agent reported a technical runtime notice."
+      },
       "ACP_EMPTY_TURN": {
         "body": "This request produced no visible reply."
       },
@@ -572,7 +576,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "The model refused this request before producing any visible reply."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "Project-local configuration, hooks, and execution policies are disabled until this workspace is trusted. Skills can still load."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "Skill descriptions were shortened because the skills context budget is full. Disable unused skills or plugins to leave more room."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "The WebSocket connection timed out. Communication has automatically switched to HTTPS."
       }
+    }
+  },
+  "trace": {
+    "title": "Trace",
+    "selectRun": "Select a run",
+    "empty": "No run trace is available yet.",
+    "loadError": "The run trace could not be loaded.",
+    "backend": "Backend",
+    "duration": "Duration",
+    "firstOutput": "First output",
+    "tokens": "Tokens",
+    "spans": "Steps",
+    "incomplete": "Incomplete",
+    "truncated": "Truncated",
+    "droppedSpans": "{{count}} steps omitted",
+    "noDetails": "This run has no recorded steps.",
+    "jumpToMessage": "View message",
+    "runtimeAssets": "Runtime assets",
+    "runtimeReceipt": "Verified runtime receipt",
+    "runtimeAssetsUnavailable": "The verified asset receipt is no longer available.",
+    "runtimeAssetsEmpty": "No managed assets were used by this run.",
+    "definitionDigest": "Definition digest",
+    "upstreamSource": "Upstream source",
+    "localOnlyAsset": "Local only",
+    "assetKind": {
+      "assistant": "Assistant",
+      "engineAdapter": "Engine adapter",
+      "skill": "Skill",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "interrupted": "Interrupted"
+    },
+    "spanKind": {
+      "thinking": "Thinking",
+      "tool": "Tool",
+      "permission": "Permission"
     }
   },
   "notFound": "Conversation not found or has been deleted"

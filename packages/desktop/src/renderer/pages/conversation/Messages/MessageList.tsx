@@ -35,6 +35,7 @@ import {
   useMessagePaginationState,
 } from './hooks';
 import MessageAgentStatus from './components/MessageAgentStatus';
+import MessageA2aPart from './components/MessageA2aPart';
 import MessagePlan from './components/MessagePlan';
 import MessageTips from './components/MessageTips';
 import MessageToolCall from './components/MessageToolCall';
@@ -282,6 +283,8 @@ const MessageItem: React.FC<{
           return <MessagePlan message={message}></MessagePlan>;
         case 'thinking':
           return <MessageThinking message={message}></MessageThinking>;
+        case 'a2a_part':
+          return <MessageA2aPart message={message}></MessageA2aPart>;
         case 'available_commands':
           return null;
         default:

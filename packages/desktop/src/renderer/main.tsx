@@ -64,6 +64,7 @@ import { ConversationHistoryProvider } from './hooks/context/ConversationHistory
 import HOC from './utils/ui/HOC';
 import type { BackendStartupFailureInfo } from '@/common/types/platform/electron';
 import type { IRuntimeStatusEvent, RuntimeFailureKind } from '@/common/adapter/ipcBridge';
+import { ensureStartupEngineDiagnostics } from './hooks/agent/useEngineDiagnostics';
 import {
   InstallationIntegrityContent,
   InstallationIntegrityModalHost,
@@ -195,7 +196,7 @@ const Config: React.FC<PropsWithChildren> = ({ children }) => {
 };
 
 const Main = () => {
-  const { ready } = useAuth();
+  const { ready, status } = useAuth();
   const [configReady, setConfigReady] = useState(false);
 
   useEffect(() => {
@@ -207,6 +208,11 @@ const Main = () => {
     if (!ready) return;
     void repairAllCronJobTimeZonesOnce();
   }, [ready]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    ensureStartupEngineDiagnostics();
+  }, [status]);
 
   if (!ready || !configReady) {
     return null;

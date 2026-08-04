@@ -14,6 +14,18 @@
   "copiedToClipboard": "در کلیپ‌بورد کپی شد",
   "downloadSuccess": "دانلود موفقیت‌آمیز بود",
   "downloadFailed": "دانلود ناموفق بود",
+  "a2aPart": {
+    "unnamed": "محتوای A2A",
+    "unsupportedUrl": "فقط پیوندهای HTTP و HTTPS قابل باز کردن هستند.",
+    "openConfirmTitle": "منبع خارجی A2A باز شود؟",
+    "openConfirmContent": "این پیوند توسط یک عامل راه‌دور ارائه شده است. پیش از ادامه مقصد را بررسی کنید.",
+    "open": "باز کردن",
+    "downloadConfirmTitle": "محتوا از این عامل A2A دانلود شود؟",
+    "downloadConfirmContent": "فقط اگر به عامل راه‌دور اعتماد دارید و منتظر این فایل بودید، «{{name}}» را محلی ذخیره کنید.",
+    "download": "دانلود",
+    "structuredData": "دادهٔ ساخت‌یافته",
+    "inlineTooLarge": "فایل درون‌خطی از حد امن دانلود ۲ MiB بیشتر است."
+  },
   "imageLoadFailed": "بارگذاری تصویر ناموفق بود",
   "scrollToBottom": "اسکرول به انتها",
   "availableCommands": "{{count}} دستور موجود",

@@ -1,5 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { useRouter } from 'expo-router';
@@ -102,7 +111,60 @@ export default function ConnectScreen() {
   if (!permission) {
     return (
       <SafeAreaView style={[styles.container, styles.center, { backgroundColor: background }]}>
-        <ActivityIndicator size='large' color={tint} />
+        <ActivityIndicator size='large' color={tint} accessibilityLabel={t('common.loading')} />
+      </SafeAreaView>
+    );
+  }
+
+  // Paste link mode is available even when camera access is unavailable or denied.
+  if (mode === 'paste') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: background }]}>
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={[styles.container, styles.center]}>
+            <ThemedText type='title' style={styles.permissionTitle}>
+              {t('connect.pasteLink')}
+            </ThemedText>
+            <ThemedText style={styles.permissionMessage}>{t('connect.pasteLinkHint')}</ThemedText>
+
+            <TextInput
+              style={[styles.urlInput, { color: textColor, borderColor: tint }]}
+              placeholder={t('connect.urlPlaceholder')}
+              placeholderTextColor='#999'
+              value={pasteUrl}
+              onChangeText={setPasteUrl}
+              autoCapitalize='none'
+              autoCorrect={false}
+              selectTextOnFocus
+              accessibilityLabel={t('connect.urlPlaceholder')}
+              accessibilityHint={t('connect.pasteLinkHint')}
+            />
+
+            <TouchableOpacity
+              style={[styles.permissionButton, { backgroundColor: tint, opacity: pasteUrl.trim() ? 1 : 0.5 }]}
+              onPress={handlePasteConnect}
+              disabled={!pasteUrl.trim() || isVerifying}
+              accessibilityRole='button'
+              accessibilityLabel={t('connect.connect')}
+              accessibilityState={{ disabled: !pasteUrl.trim() || isVerifying, busy: isVerifying }}
+            >
+              {isVerifying ? (
+                <ActivityIndicator color='#fff' accessibilityLabel={t('connect.verifying')} />
+              ) : (
+                <ThemedText style={styles.permissionButtonText}>{t('connect.connect')}</ThemedText>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.switchModeButton}
+              onPress={() => setMode('scan')}
+              accessibilityRole='button'
+              accessibilityLabel={t('connect.scanTitle')}
+            >
+              <ThemedText style={{ color: tint }}>{t('connect.scanTitle')}</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -115,55 +177,22 @@ export default function ConnectScreen() {
           {t('connect.cameraPermissionTitle')}
         </ThemedText>
         <ThemedText style={styles.permissionMessage}>{t('connect.cameraPermissionMessage')}</ThemedText>
-        <TouchableOpacity style={[styles.permissionButton, { backgroundColor: tint }]} onPress={requestPermission}>
+        <TouchableOpacity
+          style={[styles.permissionButton, { backgroundColor: tint }]}
+          onPress={requestPermission}
+          accessibilityRole='button'
+          accessibilityLabel={t('connect.requestPermission')}
+        >
           <ThemedText style={styles.permissionButtonText}>{t('connect.requestPermission')}</ThemedText>
         </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  // Paste link mode
-  if (mode === 'paste') {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: background }]}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <TouchableOpacity
+          style={styles.switchModeButton}
+          onPress={() => setMode('paste')}
+          accessibilityRole='button'
+          accessibilityLabel={t('connect.pasteLink')}
         >
-        <View style={[styles.container, styles.center]}>
-          <ThemedText type='title' style={styles.permissionTitle}>
-            {t('connect.pasteLink')}
-          </ThemedText>
-          <ThemedText style={styles.permissionMessage}>{t('connect.pasteLinkHint')}</ThemedText>
-
-          <TextInput
-            style={[styles.urlInput, { color: textColor, borderColor: tint }]}
-            placeholder={t('connect.urlPlaceholder')}
-            placeholderTextColor='#999'
-            value={pasteUrl}
-            onChangeText={setPasteUrl}
-            autoCapitalize='none'
-            autoCorrect={false}
-            selectTextOnFocus
-          />
-
-          <TouchableOpacity
-            style={[styles.permissionButton, { backgroundColor: tint, opacity: pasteUrl.trim() ? 1 : 0.5 }]}
-            onPress={handlePasteConnect}
-            disabled={!pasteUrl.trim() || isVerifying}
-          >
-            {isVerifying ? (
-              <ActivityIndicator color='#fff' />
-            ) : (
-              <ThemedText style={styles.permissionButtonText}>{t('connect.connect')}</ThemedText>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.switchModeButton} onPress={() => setMode('scan')}>
-            <ThemedText style={{ color: tint }}>{t('connect.scanTitle')}</ThemedText>
-          </TouchableOpacity>
-        </View>
-        </KeyboardAvoidingView>
+          <ThemedText style={{ color: tint }}>{t('connect.pasteLink')}</ThemedText>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -194,15 +223,20 @@ export default function ConnectScreen() {
 
       {/* Switch to paste mode */}
       <View style={[styles.pasteLinkContainer, { bottom: 60 + insets.bottom }]}>
-        <TouchableOpacity style={[styles.pasteLinkButton, { backgroundColor: 'rgba(255,255,255,0.9)' }]} onPress={() => setMode('paste')}>
+        <TouchableOpacity
+          style={[styles.pasteLinkButton, { backgroundColor: 'rgba(255,255,255,0.9)' }]}
+          onPress={() => setMode('paste')}
+          accessibilityRole='button'
+          accessibilityLabel={t('connect.pasteLink')}
+        >
           <ThemedText style={[styles.pasteLinkText, { color: '#333' }]}>{t('connect.pasteLink')}</ThemedText>
         </TouchableOpacity>
       </View>
 
       {/* Verifying indicator */}
       {isVerifying && (
-        <View style={styles.verifyingOverlay}>
-          <ActivityIndicator size='large' color='#fff' />
+        <View style={styles.verifyingOverlay} accessibilityLiveRegion='polite'>
+          <ActivityIndicator size='large' color='#fff' accessibilityLabel={t('connect.verifying')} />
           <ThemedText style={styles.verifyingText}>{t('connect.verifying')}</ThemedText>
         </View>
       )}
@@ -284,6 +318,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
+    maxWidth: 480,
   },
   permissionButton: {
     borderRadius: 10,
@@ -297,6 +332,7 @@ const styles = StyleSheet.create({
   },
   urlInput: {
     width: '100%',
+    maxWidth: 480,
     borderWidth: 1,
     borderRadius: 10,
     padding: 14,

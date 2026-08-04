@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Modal,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  ActionSheetIOS,
-  Platform,
-} from 'react-native';
+import { View, Modal, TouchableOpacity, FlatList, StyleSheet, ActionSheetIOS, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ThemedText } from '../ui/ThemedText';
@@ -26,30 +18,22 @@ export function showModeActionSheet(
   modes: AgentModeOption[],
   currentMode: string,
   onSelect: (value: string) => void,
+  cancelLabel: string
 ) {
   if (Platform.OS === 'ios') {
-    const options = [...modes.map((m) => m.label), t('common.cancel')];
+    const options = [...modes.map((m) => m.label), cancelLabel];
     const cancelButtonIndex = options.length - 1;
-    ActionSheetIOS.showActionSheetWithOptions(
-      { options, cancelButtonIndex },
-      (index) => {
-        if (index !== cancelButtonIndex) {
-          onSelect(modes[index].value);
-        }
-      },
-    );
+    ActionSheetIOS.showActionSheetWithOptions({ options, cancelButtonIndex }, (index) => {
+      if (index !== cancelButtonIndex) {
+        onSelect(modes[index].value);
+      }
+    });
     return true;
   }
   return false;
 }
 
-export function ModePickerSheet({
-  visible,
-  modes,
-  currentMode,
-  onSelect,
-  onClose,
-}: ModePickerSheetProps) {
+export function ModePickerSheet({ visible, modes, currentMode, onSelect, onClose }: ModePickerSheetProps) {
   const { t } = useTranslation();
   const background = useThemeColor({}, 'background');
   const border = useThemeColor({}, 'border');
@@ -67,6 +51,10 @@ export function ModePickerSheet({
         style={[styles.item, { borderBottomColor: border }]}
         onPress={() => handleSelect(item.value)}
         activeOpacity={0.6}
+        accessibilityRole='radio'
+        accessibilityState={{ selected: isActive }}
+        accessibilityLabel={item.label}
+        accessibilityHint={item.description}
       >
         <View style={styles.itemContent}>
           <ThemedText style={[styles.itemLabel, isActive && { color: tint, fontWeight: '600' }]}>
@@ -85,17 +73,16 @@ export function ModePickerSheet({
         <View style={[styles.sheet, { backgroundColor: background }]}>
           <View style={[styles.header, { borderBottomColor: border }]}>
             <ThemedText style={styles.title}>{t('chat.selectMode')}</ThemedText>
-            <TouchableOpacity onPress={onClose}>
-              <ThemedText style={[styles.closeButton, { color: tint }]}>
-                {t('common.close')}
-              </ThemedText>
+            <TouchableOpacity
+              style={styles.closeHitArea}
+              onPress={onClose}
+              accessibilityRole='button'
+              accessibilityLabel={t('common.close')}
+            >
+              <ThemedText style={[styles.closeButton, { color: tint }]}>{t('common.close')}</ThemedText>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={modes}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.value}
-          />
+          <FlatList data={modes} renderItem={renderItem} keyExtractor={(item) => item.value} />
         </View>
       </View>
     </Modal>
@@ -127,6 +114,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     fontSize: 16,
+  },
+  closeHitArea: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   item: {
     flexDirection: 'row',

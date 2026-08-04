@@ -8,14 +8,18 @@ import { useThemeColor } from '../../../src/hooks/useThemeColor';
 import { useConversations } from '../../../src/context/ConversationContext';
 import { useWorkspace } from '../../../src/context/WorkspaceContext';
 import { ThemedText } from '../../../src/components/ui/ThemedText';
+import { useTranslation } from 'react-i18next';
 
 function DrawerMenuButton() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const tint = useThemeColor({}, 'tint');
   return (
     <TouchableOpacity
       onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
-      style={{ marginLeft: 16 }}
+      style={{ marginLeft: 8, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+      accessibilityRole='button'
+      accessibilityLabel={t('conversations.title')}
     >
       <Ionicons name='menu' size={24} color={tint} />
     </TouchableOpacity>
@@ -23,6 +27,7 @@ function DrawerMenuButton() {
 }
 
 export default function ChatDrawerLayout() {
+  const { t } = useTranslation();
   const background = useThemeColor({}, 'background');
   const text = useThemeColor({}, 'text');
   const textSecondary = useThemeColor({}, 'textSecondary');
@@ -30,9 +35,7 @@ export default function ChatDrawerLayout() {
   const { currentWorkspace, workspaceDisplayName } = useWorkspace();
 
   const activeConv = conversations.find((c) => c.id === activeConversationId);
-  const conversationName = pendingAgent
-    ? (pendingAgent.label || pendingAgent.name)
-    : (activeConv?.name || 'Chat');
+  const conversationName = pendingAgent ? pendingAgent.label || pendingAgent.name : activeConv?.name || t('tabs.chat');
 
   return (
     <Drawer
@@ -44,19 +47,13 @@ export default function ChatDrawerLayout() {
         headerStatusBarHeight: 0,
         headerTitle: () => (
           <View style={{ alignItems: 'center' }}>
-            <ThemedText
-              style={{ fontSize: 17, fontWeight: '600', color: text }}
-              numberOfLines={1}
-            >
+            <ThemedText style={{ fontSize: 17, fontWeight: '600', color: text }} numberOfLines={1}>
               {conversationName}
             </ThemedText>
             {currentWorkspace && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
                 <Ionicons name='folder-outline' size={11} color={textSecondary} />
-                <ThemedText
-                  style={{ fontSize: 12, color: textSecondary }}
-                  numberOfLines={1}
-                >
+                <ThemedText style={{ fontSize: 12, color: textSecondary }} numberOfLines={1}>
                   {workspaceDisplayName}
                 </ThemedText>
               </View>
@@ -68,7 +65,7 @@ export default function ChatDrawerLayout() {
         headerLeft: () => <DrawerMenuButton />,
       }}
     >
-      <Drawer.Screen name='index' options={{ title: 'Chat' }} />
+      <Drawer.Screen name='index' options={{ title: t('tabs.chat') }} />
     </Drawer>
   );
 }

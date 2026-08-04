@@ -24,9 +24,7 @@ export function NewConversationModal({ visible, onClose, onAgentSelected }: NewC
   const [isLoadingAgents, setIsLoadingAgents] = useState(false);
   const tint = useThemeColor({}, 'tint');
   const background = useThemeColor({}, 'background');
-  const surface = useThemeColor({}, 'surface');
   const border = useThemeColor({}, 'border');
-  const text = useThemeColor({}, 'text');
 
   useEffect(() => {
     if (visible) {
@@ -47,6 +45,9 @@ export function NewConversationModal({ visible, onClose, onAgentSelected }: NewC
         style={[styles.agentItem, { borderBottomColor: border }]}
         onPress={() => handleSelect(item)}
         activeOpacity={0.6}
+        accessibilityRole='button'
+        accessibilityLabel={item.label || item.name}
+        accessibilityHint={item.backend}
       >
         <View style={[styles.agentIcon, { backgroundColor: tint + '20' }]}>
           <ThemedText style={[styles.agentIconText, { color: tint }]}>{icon}</ThemedText>
@@ -65,14 +66,19 @@ export function NewConversationModal({ visible, onClose, onAgentSelected }: NewC
         <View style={[styles.sheet, { backgroundColor: background }]}>
           <View style={[styles.header, { borderBottomColor: border }]}>
             <ThemedText style={styles.title}>{t('conversations.newConversation')}</ThemedText>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity
+              style={styles.closeHitArea}
+              onPress={onClose}
+              accessibilityRole='button'
+              accessibilityLabel={t('common.close')}
+            >
               <ThemedText style={[styles.closeButton, { color: tint }]}>{t('common.close')}</ThemedText>
             </TouchableOpacity>
           </View>
 
           {isLoadingAgents ? (
             <View style={styles.loading}>
-              <ActivityIndicator size='small' color={tint} />
+              <ActivityIndicator size='small' color={tint} accessibilityLabel={t('common.loading')} />
             </View>
           ) : availableAgents.length === 0 ? (
             <View style={styles.loading}>
@@ -116,6 +122,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     fontSize: 16,
+  },
+  closeHitArea: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   loading: {
     padding: 40,

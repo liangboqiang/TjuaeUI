@@ -6,7 +6,8 @@
     "newConversation": "Neuer Chat",
     "selectModel": "Modell auswählen",
     "useCliModel": "Modell auswählen",
-    "modelSwitchNotSupported": "Die Modellliste ist nach der ersten Verbindung verfügbar. Sende eine Nachricht, um die Verbindung herzustellen und verfügbare Modelle zu laden.",
+    "modelCatalogUnavailable": "Kein Modellkatalog ist zwischengespeichert. Führe in den Agent-Einstellungen „Verbindung testen“ aus.",
+    "modelSelectionUnavailable": "Diese Laufzeit stellt keine wechselbare Modellliste bereit.",
     "specifyWorkspace": "Im Ordner chatten",
     "currentWorkspace": "Aktueller Arbeitsbereich",
     "clearWorkspace": "Ordner entfernen",
@@ -559,6 +560,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "Der Agent hat einen technischen Laufzeithinweis gemeldet."
+      },
       "ACP_EMPTY_TURN": {
         "body": "Diese Anfrage hat keine sichtbare Antwort erzeugt."
       },
@@ -573,7 +577,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "Das Modell hat diese Anfrage abgelehnt, bevor eine sichtbare Antwort erzeugt wurde."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "Projektlokale Konfiguration, Hooks und Ausführungsrichtlinien sind deaktiviert, bis dieser Arbeitsbereich als vertrauenswürdig eingestuft wird. Skills können weiterhin geladen werden."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "Skill-Beschreibungen wurden gekürzt, weil das Kontextbudget für Skills ausgeschöpft ist. Deaktivieren Sie ungenutzte Skills oder Plugins."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "Die WebSocket-Verbindung hat das Zeitlimit überschritten. Die Kommunikation wurde automatisch auf HTTPS umgestellt."
       }
+    }
+  },
+  "trace": {
+    "title": "Ablaufverfolgung",
+    "selectRun": "Ausführung auswählen",
+    "empty": "Noch keine Ablaufverfolgung verfügbar.",
+    "loadError": "Die Ablaufverfolgung konnte nicht geladen werden.",
+    "backend": "Backend",
+    "duration": "Dauer",
+    "firstOutput": "Erste Ausgabe",
+    "tokens": "Tokens",
+    "spans": "Schritte",
+    "incomplete": "Unvollständig",
+    "truncated": "Gekürzt",
+    "droppedSpans": "{{count}} Schritte ausgelassen",
+    "noDetails": "Für diese Ausführung wurden keine Schritte aufgezeichnet.",
+    "jumpToMessage": "Nachricht anzeigen",
+    "runtimeAssets": "Laufzeit-Assets",
+    "runtimeReceipt": "Verifizierter Laufzeitbeleg",
+    "runtimeAssetsUnavailable": "Der verifizierte Asset-Beleg ist nicht mehr verfügbar.",
+    "runtimeAssetsEmpty": "In diesem Lauf wurden keine verwalteten Assets verwendet.",
+    "definitionDigest": "Definitionsprüfsumme",
+    "upstreamSource": "Remote-Quelle",
+    "localOnlyAsset": "Nur lokal",
+    "assetKind": {
+      "assistant": "Assistent",
+      "engineAdapter": "Engine-Adapter",
+      "skill": "Skill",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "Wird ausgeführt",
+      "succeeded": "Erfolgreich",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen",
+      "interrupted": "Unterbrochen"
+    },
+    "spanKind": {
+      "thinking": "Denken",
+      "tool": "Werkzeug",
+      "permission": "Berechtigung"
     }
   },
   "notFound": "Unterhaltung nicht gefunden oder wurde gelöscht"

@@ -58,10 +58,8 @@ const createDeps = (): GuidSendDeps => ({
   selectedAcpModel: 'claude-opus',
   currentAcpCachedModelInfo: null,
   current_model: undefined,
-  guidDisabledBuiltinSkills: undefined,
   guidEnabledSkills: undefined,
   assistantDefaultSkillIds: undefined,
-  assistantDefaultDisabledBuiltinSkillIds: undefined,
   availableMcpServers: [{ id: 'mcp-user', name: 'User MCP', enabled: true, builtin: false } as IMcpServer],
   selectedMcpServerIds: ['mcp-user'],
   assistantDefaultMcpIds: undefined,
@@ -116,9 +114,7 @@ describe('useGuidSend', () => {
   it('falls back to assistant default skill and MCP ids for preset conversations before local Guid overrides exist', async () => {
     const deps = createDeps();
     deps.guidEnabledSkills = undefined;
-    deps.guidDisabledBuiltinSkills = undefined;
     deps.assistantDefaultSkillIds = ['assistant-skill'];
-    deps.assistantDefaultDisabledBuiltinSkillIds = ['builtin-skill'];
     deps.selectedMcpServerIds = undefined;
     deps.assistantDefaultMcpIds = ['mcp-user'];
 
@@ -130,18 +126,31 @@ describe('useGuidSend', () => {
 
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['assistant-skill']);
-    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['builtin-skill']);
     expect(payload.assistant?.conversation_overrides?.mcp_ids).toEqual(['mcp-user']);
     expect(payload.extra.selected_mcp_server_ids).toEqual(['mcp-user']);
   });
 
-  it('preserves builtin MCP ids in assistant overrides while only sending user MCP ids to runtime selection', async () => {
+  it('sends only available Core MCP ids and never serializes transport or secret snapshots', async () => {
     const deps = createDeps();
     deps.availableMcpServers = [
-      { id: 'mcp-user', name: 'User MCP', enabled: true, builtin: false } as IMcpServer,
-      { id: 'builtin-mcp', name: 'Builtin MCP', enabled: true, builtin: true } as IMcpServer,
+      {
+        id: 'mcp-user',
+        name: 'User MCP',
+        enabled: true,
+        builtin: false,
+        command: 'private-command',
+        env: { TOKEN: 'private-token' },
+      } as IMcpServer,
+      {
+        id: 'builtin-mcp',
+        name: 'Hub-installed MCP',
+        enabled: true,
+        builtin: true,
+        url: 'https://private.example.test',
+        headers: { Authorization: 'private-header' },
+      } as IMcpServer,
     ];
-    deps.selectedMcpServerIds = ['mcp-user', 'builtin-mcp'];
+    deps.selectedMcpServerIds = ['mcp-user', 'builtin-mcp', 'unknown-mcp'];
 
     const { result } = renderHook(() => useGuidSend(deps));
 
@@ -151,8 +160,12 @@ describe('useGuidSend', () => {
 
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.assistant?.conversation_overrides?.mcp_ids).toEqual(['mcp-user', 'builtin-mcp']);
-    expect(payload.extra.selected_mcp_server_ids).toEqual(['mcp-user']);
-    expect(payload.extra.selected_session_mcp_servers).toEqual([expect.objectContaining({ id: 'builtin-mcp' })]);
+    expect(payload.extra.selected_mcp_server_ids).toEqual(['mcp-user', 'builtin-mcp']);
+    expect(payload.extra.selected_session_mcp_servers).toEqual([]);
+    expect(JSON.stringify(payload)).not.toContain('private-command');
+    expect(JSON.stringify(payload)).not.toContain('private-token');
+    expect(JSON.stringify(payload)).not.toContain('private.example.test');
+    expect(JSON.stringify(payload)).not.toContain('private-header');
   });
 
   it('does not write legacy preset_assistant_id for preset assistant sends', async () => {
@@ -172,7 +185,6 @@ describe('useGuidSend', () => {
   it('forwards local skill overrides through assistant conversation overrides for ACP assistants', async () => {
     const deps = createDeps();
     deps.guidEnabledSkills = ['pdf-reader'];
-    deps.guidDisabledBuiltinSkills = ['todo-tracker'];
 
     const { result } = renderHook(() => useGuidSend(deps));
 
@@ -183,7 +195,6 @@ describe('useGuidSend', () => {
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.assistant?.id).toBe('assistant-1');
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['pdf-reader']);
-    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['todo-tracker']);
   });
 
   it('forwards local skill overrides for generated Tjuae CLI assistants through assistant conversation overrides', async () => {
@@ -192,7 +203,6 @@ describe('useGuidSend', () => {
     deps.selectedAssistantBackend = 'tjuaecli';
     deps.current_model = { provider_id: 'openai', model: 'gemini-2.5-pro', use_model: 'gemini-2.5-pro' } as never;
     deps.guidEnabledSkills = ['pdf-reader'];
-    deps.guidDisabledBuiltinSkills = ['todo-tracker'];
 
     const { result } = renderHook(() => useGuidSend(deps));
 
@@ -205,7 +215,6 @@ describe('useGuidSend', () => {
     expect(payload.model).toBe(deps.current_model);
     expect(payload.assistant?.id).toBe('bare:tjuaecli');
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['pdf-reader']);
-    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['todo-tracker']);
     expect(payload.extra.session_mode).toBeUndefined();
   });
 

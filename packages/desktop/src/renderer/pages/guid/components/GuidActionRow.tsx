@@ -89,10 +89,9 @@ type GuidActionRowProps = {
   onModeSelect: (mode: string) => void;
 
   // Skills management
-  allSkills: Array<{ name: string; description: string; isAuto: boolean }>;
-  disabledBuiltinSkills: string[];
+  allSkills: Array<{ name: string; description: string }>;
   enabledSkills: string[];
-  onToggleSkill: (name: string, isAuto: boolean) => void;
+  onToggleSkill: (name: string) => void;
   mcpServers: IMcpServer[];
   selectedMcpServerIds: string[];
   onToggleMcpServer: (serverId: string) => void;
@@ -122,7 +121,6 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
   dynamicModes = [],
   onModeSelect,
   allSkills,
-  disabledBuiltinSkills,
   enabledSkills,
   onToggleSkill,
   mcpServers,
@@ -182,8 +180,7 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
 
   const isWebUI = !isElectronDesktop();
 
-  const isSkillChecked = (skill: { name: string; isAuto: boolean }) =>
-    skill.isAuto ? !disabledBuiltinSkills.includes(skill.name) : enabledSkills.includes(skill.name);
+  const isSkillChecked = (skill: { name: string }) => enabledSkills.includes(skill.name);
 
   const activeSkillCount = allSkills.filter(isSkillChecked).length;
   const activeMcpCount = selectedMcpServerIds.length;
@@ -334,7 +331,7 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
           })),
           onSelect: (name) => {
             const skill = allSkills.find((s) => s.name === name);
-            if (skill) onToggleSkill(skill.name, skill.isAuto);
+            if (skill) onToggleSkill(skill.name);
           },
         },
       });
@@ -381,7 +378,6 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
     selectedMode,
     onModeSelect,
     allSkills,
-    disabledBuiltinSkills,
     enabledSkills,
     onToggleSkill,
     mcpServers,
@@ -454,9 +450,9 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
             showSearch={showSkillSearch}
             query={skillQuery}
             onQueryChange={setSkillQuery}
-            placeholder={t('settings.skillsHub.searchPlaceholder', { defaultValue: 'Search skills...' })}
+            placeholder={t('settings.localSkills.searchPlaceholder', { defaultValue: 'Search skills...' })}
             searchTestId='guid-skill-search'
-            emptyText={t('settings.skillsHub.noSearchResults', { defaultValue: 'No matching skills.' })}
+            emptyText={t('settings.localSkills.noSearchResults', { defaultValue: 'No matching skills.' })}
             isEmpty={filteredSkills.length === 0}
           >
             {filteredSkills.map((skill) => (
@@ -464,13 +460,13 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
                 key={`skill-${skill.name}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleSkill(skill.name, skill.isAuto);
+                  onToggleSkill(skill.name);
                 }}
               >
                 <Checkbox
                   checked={isSkillChecked(skill)}
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  onChange={() => onToggleSkill(skill.name, skill.isAuto)}
+                  onChange={() => onToggleSkill(skill.name)}
                 >
                   <span className='text-13px'>{skill.name}</span>
                 </Checkbox>

@@ -1,0 +1,28 @@
+diff --git a/out/util/electronGet.js b/out/util/electronGet.js
+index c433dbb..9f6831c 100644
+--- a/out/util/electronGet.js
++++ b/out/util/electronGet.js
+@@ -184,7 +184,22 @@ async function extractArchive(file, dir) {
+             throw new Error(`Extraction of ${path.basename(file)} produced no files`);
+         }
+         await fs.rm(dir, { recursive: true, force: true });
+-        await fs.rename(tmpDir, dir);
++        for (let attempt = 0;; attempt++) {
++            try {
++                await fs.rename(tmpDir, dir);
++                break;
++            }
++            catch (error) {
++                const isTransientWindowsLock = process.platform === "win32" &&
++                    (error === null || error === void 0 ? void 0 : error.code) != null &&
++                    ["EPERM", "EBUSY"].includes(error.code);
++                if (!isTransientWindowsLock || attempt >= 7) {
++                    throw error;
++                }
++                builder_util_1.log.warn({ tmpDir, dir, attempt: attempt + 1, code: error.code }, "extracted directory rename temporarily blocked, retrying");
++                await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
++            }
++        }
+     }
+     finally {
+         await release().catch(err => builder_util_1.log.warn({ err }, "failed to release lockfile"));

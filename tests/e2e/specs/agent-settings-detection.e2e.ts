@@ -3,7 +3,7 @@
  *
  * Phase 2 turns Agent Settings into a management/diagnostics surface rather
  * than a business-facing picker. These tests lock the page to that contract:
- * - sections come from `/api/agents/management`
+ * - sections come from `/api/engines/management`
  * - official/custom buckets stay visible
  * - a troubleshoot/repair affordance exists per agent
  * - legacy market/chat/preset affordances do not reappear
@@ -54,7 +54,7 @@ async function expectNoText(page: Parameters<typeof test>[0]['page'], candidates
 
 test.describe('Agent Settings Detection', () => {
   test('renders the management catalog buckets and mirrors diagnostics rows', async ({ page }) => {
-    const managedAgents = await httpGet<ManagedAgent[]>(page, '/api/agents/management');
+    const managedAgents = await httpGet<ManagedAgent[]>(page, '/api/engines/management');
 
     await goToSettings(page, 'agent');
     await expectUrlContains(page, 'agent');

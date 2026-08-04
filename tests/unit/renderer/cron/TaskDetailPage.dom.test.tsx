@@ -454,7 +454,6 @@ function assistants(): Assistant[] {
       preset_agent_type: 'codex',
       enabled_skills: [],
       custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: [],
       prompts_i18n: {},

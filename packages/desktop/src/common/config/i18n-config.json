@@ -34,7 +34,6 @@
     "cron",
     "guid",
     "agent",
-    "team",
-    "pet"
+    "team"
   ]
 }

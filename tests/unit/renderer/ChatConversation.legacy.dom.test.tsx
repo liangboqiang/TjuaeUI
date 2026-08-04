@@ -142,7 +142,7 @@ describe('ChatConversation legacy runtime rendering', () => {
     );
   });
 
-  it('passes the resolved assistant backend to the ACP model selector for ACP conversations', () => {
+  it('does not render the ACP model selector in the conversation header', () => {
     usePresetAssistantInfoMock.mockReturnValue({
       info: {
         name: 'Research Assistant',
@@ -174,13 +174,46 @@ describe('ChatConversation legacy runtime rendering', () => {
       />
     );
 
-    expect(screen.getByTestId('mock-acp-model-selector')).toBeInTheDocument();
-    expect(acpModelSelectorMock).toHaveBeenCalledWith(
+    expect(screen.queryByTestId('mock-acp-model-selector')).not.toBeInTheDocument();
+    expect(acpModelSelectorMock).not.toHaveBeenCalled();
+  });
+
+  it('renders an A2A conversation through the shared live chat surface', () => {
+    render(
+      <ChatConversation
+        conversation={
+          {
+            id: 'conv-a2a',
+            name: 'A2A conversation',
+            type: 'a2a',
+            extra: {
+              workspace: '/tmp/tjuaeui-a2a',
+              backend: 'a2a',
+              agent_id: 'agent-a2a',
+              session_mode: 'default',
+            },
+            status: 'pending',
+            source: 'tjuaeui',
+            created_at: 1,
+            modified_at: 1,
+            assistant: {
+              id: 'bare:agent-a2a',
+              source: 'generated',
+              name: 'Remote Agent',
+              avatar: '',
+              backend: 'a2a',
+            },
+          } as TChatConversation
+        }
+      />
+    );
+
+    expect(screen.getByTestId('mock-acp-chat')).toBeInTheDocument();
+    expect(acpChatMock.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
-        conversation_id: 'conv-acp',
-        backend: 'codex',
-        initialModelId: 'model-1',
-        waitForWarmup: true,
+        conversation_id: 'conv-a2a',
+        backend: 'a2a',
+        conversationType: 'a2a',
       })
     );
   });

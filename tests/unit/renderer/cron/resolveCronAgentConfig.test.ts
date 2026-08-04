@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { Assistant, AssistantAgent } from '@/common/types/agent/assistantTypes';
+import type { Assistant, AssistantEngineDescriptor } from '@/common/types/agent/assistantTypes';
 import { resolveCronAgentConfig } from '@/renderer/pages/cron/ScheduledTasksPage/resolveCronAgentConfig';
 
 describe('resolveCronAgentConfig', () => {
@@ -16,8 +16,8 @@ describe('resolveCronAgentConfig', () => {
         assistant({
           id: 'assistant-1',
           name: '文件规划助手',
-          agent_id: 'agent-tjuaecli',
-          agent: agent('agent-tjuaecli', 'tjuaecli'),
+          engine_id: 'agent-tjuaecli',
+          engine: engine('tjuaecli'),
         }),
       ],
       selectedTjuaeCliProvider: {
@@ -54,12 +54,12 @@ describe('resolveCronAgentConfig', () => {
         assistant({
           id: 'assistant-2',
           name: 'Codex 助手',
-          agent_id: 'agent-codex',
-          agent: agent('agent-codex', 'acp', 'codex'),
+          engine_id: 'agent-codex',
+          engine: engine('acp', 'codex'),
         }),
       ],
       config_options: { reasoning_effort: 'high' },
-      getMode: (selectedAssistant) => (selectedAssistant.agent_id === 'agent-codex' ? 'full-access' : 'yolo'),
+      getMode: (selectedAssistant) => (selectedAssistant.engine_id === 'agent-codex' ? 'full-access' : 'yolo'),
       tjuaecliModelRequiredMessage: 'provider required',
     });
 
@@ -83,8 +83,8 @@ describe('resolveCronAgentConfig', () => {
           id: 'assistant-2',
           name: 'Codex',
           name_i18n: { 'zh-CN': '代码助手' },
-          agent_id: 'agent-codex',
-          agent: agent('agent-codex', 'acp', 'codex'),
+          engine_id: 'agent-codex',
+          engine: engine('acp', 'codex'),
         }),
       ],
       localeKey: 'zh-CN',
@@ -102,8 +102,8 @@ describe('resolveCronAgentConfig', () => {
         assistant({
           id: 'assistant-4',
           name: 'Claude 助手',
-          agent_id: 'agent-claude',
-          agent: agent('agent-claude', 'acp', 'claude'),
+          engine_id: 'agent-claude',
+          engine: engine('acp', 'claude'),
         }),
       ],
       getMode: () => 'default',
@@ -130,8 +130,8 @@ describe('resolveCronAgentConfig', () => {
         assistant({
           id: 'assistant-3',
           name: '社媒发布助手',
-          agent_id: 'agent-claude',
-          agent: agent('agent-claude', 'acp', 'claude'),
+          engine_id: 'agent-claude',
+          engine: engine('acp', 'claude'),
         }),
       ],
       getMode: () => 'default',
@@ -156,7 +156,7 @@ describe('resolveCronAgentConfig', () => {
   });
 });
 
-function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name' | 'agent_id'>): Assistant {
+function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name' | 'engine_id'>): Assistant {
   return {
     id: overrides.id,
     source: 'user',
@@ -165,22 +165,24 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
     description_i18n: {},
     enabled: true,
     sort_order: 0,
-    agent_id: overrides.agent_id,
+    engine_id: overrides.engine_id,
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
+    engine_status: 'online',
+    team_selectable: true,
+    deletable: true,
     ...overrides,
   };
 }
 
-function agent(_id: string, type: string, backend?: string): AssistantAgent {
+function engine(type: string, backend?: string): AssistantEngineDescriptor {
   return {
     type,
-    source: type === 'tjuaecli' ? 'internal' : 'builtin',
+    ownership: type === 'tjuaecli' ? 'internal' : 'builtin',
     acp_backend: backend,
   };
 }

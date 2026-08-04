@@ -8,7 +8,7 @@ import {
 
 describe('guid assistant selection helpers', () => {
   const assistants: Assistant[] = [
-    assistant({ id: 'builtin-writer', source: 'builtin', runtimeKey: 'claude', sort_order: 20 }),
+    assistant({ id: 'generated-writer', source: 'generated', runtimeKey: 'claude', sort_order: 20 }),
     assistant({ id: 'bare-tjuaecli', source: 'generated', runtimeKey: 'tjuaecli', sort_order: 10 }),
     assistant({ id: 'user-research', source: 'user', runtimeKey: 'gemini', sort_order: 30 }),
   ];
@@ -44,18 +44,17 @@ function assistant(
     description_i18n: {},
     enabled: true,
     sort_order: overrides.sort_order ?? 0,
-    agent_id: agentId,
-    agent: isTjuaeCli
-      ? { type: 'tjuaecli', source: 'internal' }
-      : { type: 'acp', source: 'builtin', acp_backend: overrides.runtimeKey },
+    engine_id: agentId,
+    engine: isTjuaeCli
+      ? { type: 'tjuaecli', ownership: 'internal' }
+      : { type: 'acp', ownership: 'builtin', acp_backend: overrides.runtimeKey },
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
-    agent_status: 'online',
+    engine_status: 'online',
     team_selectable: true,
     deletable: overrides.source === 'user',
     ...overrides,

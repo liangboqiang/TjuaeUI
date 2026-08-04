@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./resources/app.png" alt="TjuaeUI" width="128">
+  <img src="./packages/desktop/src/renderer/assets/logos/brand/app.svg" alt="TjuaeUI" width="128">
 </p>
 
 # TjuaeUI

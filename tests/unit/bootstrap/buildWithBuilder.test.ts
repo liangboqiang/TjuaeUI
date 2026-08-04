@@ -6,12 +6,12 @@
 
 import { spawnSync } from 'node:child_process';
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -50,10 +50,10 @@ function resolveAppBuilderInstallUtil(): string {
 
 describe('build-with-builder', () => {
   it('rejects skip-vite when renderer output is only a source html shell', () => {
-    const outDir = resolve(repoRoot, 'out');
-    const backupOutDir = resolve(repoRoot, `.tmp-out-backup-${process.pid}-${Date.now()}`);
     const tempDir = mkdtempSync(join(tmpdir(), 'tjuaeui-build-skip-vite-test-'));
+    const outDir = resolve(tempDir, 'out');
     const hookPath = join(tempDir, 'hook.cjs');
+    const isolatedScriptPath = resolve(tempDir, 'scripts/build-with-builder.js');
 
     writeFileSync(
       hookPath,
@@ -66,12 +66,14 @@ childProcess.execSync = function mockedExecSync(command) {
       'utf8'
     );
 
-    let movedExistingOut = false;
     try {
-      if (existsSync(outDir)) {
-        renameSync(outDir, backupOutDir);
-        movedExistingOut = true;
-      }
+      mkdirSync(resolve(tempDir, 'scripts'), { recursive: true });
+      copyFileSync(resolve(repoRoot, 'scripts/build-with-builder.js'), isolatedScriptPath);
+      writeFileSync(
+        resolve(tempDir, 'package.json'),
+        JSON.stringify({ name: 'isolated-build-test', version: '0.0.0', main: './out/main/index.js' }),
+        'utf8'
+      );
       mkdirSync(resolve(outDir, 'main'), { recursive: true });
       mkdirSync(resolve(outDir, 'renderer'), { recursive: true });
       writeFileSync(resolve(outDir, 'main/index.js'), 'console.log("main placeholder");\n', 'utf8');
@@ -81,28 +83,47 @@ childProcess.execSync = function mockedExecSync(command) {
         'utf8'
       );
 
-      const result = spawnSync(
-        process.execPath,
-        ['scripts/build-with-builder.js', 'x64', '--skip-vite', '--pack-only'],
-        {
-          cwd: repoRoot,
-          encoding: 'utf8',
-          env: {
-            ...process.env,
-            NODE_OPTIONS: [process.env.NODE_OPTIONS, `--require=${hookPath}`].filter(Boolean).join(' '),
-          },
-        }
-      );
+      const result = spawnSync(process.execPath, [isolatedScriptPath, 'x64', '--skip-vite', '--pack-only'], {
+        cwd: tempDir,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          NODE_OPTIONS: [process.env.NODE_OPTIONS, `--require=${hookPath}`].filter(Boolean).join(' '),
+        },
+      });
 
       expect(result.status).not.toBe(0);
       expect(result.stderr + result.stdout).toContain('渲染进程构建输出不完整');
     } finally {
-      rmSync(outDir, { recursive: true, force: true });
-      if (movedExistingOut) {
-        renameSync(backupOutDir, outDir);
-      }
       rmSync(tempDir, { recursive: true, force: true });
     }
+  });
+
+  it('requires explicit local Core and Hub sources for a local acceptance installer', () => {
+    const result = spawnSync(
+      process.execPath,
+      [resolve(repoRoot, 'scripts/build-with-builder.js'), 'x64', '--win', '--local-acceptance'],
+      {
+        cwd: repoRoot,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          CI: '',
+          TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR: '',
+          TJUAEUI_HUB_SOURCE_DIR: '',
+        },
+      }
+    );
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr + result.stdout).toContain('必须显式提供 TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR');
+  });
+
+  it('keeps formal distributions on production source policy unless local acceptance is explicit', () => {
+    const script = readFileSync(resolve(repoRoot, 'scripts/build-with-builder.js'), 'utf8');
+    expect(script).toContain("process.env.TJUAEUI_BACKEND_BUILD_MODE = 'production'");
+    expect(script).toContain("TJUAEUI_HUB_BUILD_MODE: localAcceptanceBuild ? 'development' : 'production'");
+    expect(script).toContain('process.env[DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV] = `${stableBaseVersion}-local`');
   });
 
   it('releases the NSIS output directory before any update repair or uninstall work', () => {
@@ -118,6 +139,16 @@ childProcess.execSync = function mockedExecSync(command) {
     expect(preInit).toContain('!insertmacro TJUAEUI_RELEASE_INSTALL_DIR_OUTDIR');
     expect(preInit!.indexOf('TJUAEUI_RELEASE_INSTALL_DIR_OUTDIR')).toBeLessThan(
       preInit!.indexOf('TJUAEUI_SESSION_BEGIN')
+    );
+  });
+
+  it('retries a local Windows build when Electron extraction completed in the staging directory', () => {
+    const script = readFileSync(resolve(repoRoot, 'scripts/build-with-builder.js'), 'utf8');
+
+    expect(script).toContain("path.join(outDir, 'win-unpacked.tmp', 'TjuaeUI.exe')");
+    expect(script).toContain("path.join(outDir, 'win-unpacked.tmp', 'electron.exe')");
+    expect(script).toContain(
+      '(fs.existsSync(winExePath) || fs.existsSync(stagedWinExePath) || fs.existsSync(stagedElectronExePath))'
     );
   });
 
@@ -266,8 +297,7 @@ childProcess.execSync = function mockedExecSync(command) {
     const tempDir = mkdtempSync(join(tmpdir(), 'tjuaeui-build-test-'));
     const hookPath = join(tempDir, 'hook.cjs');
     const callsPath = join(tempDir, 'prepare-calls.json');
-    const outDir = resolve(repoRoot, 'out');
-    const backupOutDir = resolve(repoRoot, `.tmp-out-backup-${process.pid}-${Date.now()}-${expectedArch}`);
+    const outDir = resolve(tempDir, 'out');
 
     writeFileSync(
       hookPath,
@@ -282,7 +312,7 @@ const originalLoad = Module._load;
 function recordPrepareCall(options) {
   const callsPath = process.env.TJUAEUI_PREPARE_CALLS_FILE;
   const calls = fs.existsSync(callsPath) ? JSON.parse(fs.readFileSync(callsPath, 'utf8')) : [];
-  calls.push(options ?? null);
+  calls.push(options ? { ...options, backendBuildMode: process.env.TJUAEUI_BACKEND_BUILD_MODE } : null);
   fs.writeFileSync(callsPath, JSON.stringify(calls));
   return { prepared: true, dir: 'mock-bundled-tjuaecore', sourceType: 'mock' };
 }
@@ -307,7 +337,8 @@ Module._load = function patchedLoad(request, parent, isMain) {
 // artifacts: out/ lives in the actual repo (the script resolves it from its
 // own __dirname), so only create empty placeholders when nothing is there.
 function ensurePlaceholder(relativePath) {
-  const target = path.join(process.cwd(), relativePath);
+  const outputRoot = process.env.TJUAEUI_BUILD_OUT_DIR || path.join(process.cwd(), 'out');
+  const target = path.join(outputRoot, relativePath.replace(/^out[\\\\/]/, ''));
   fs.mkdirSync(path.dirname(target), { recursive: true });
   if (!fs.existsSync(target)) {
     fs.writeFileSync(target, '');
@@ -322,7 +353,7 @@ childProcess.execSync = function mockedExecSync(command) {
     ensurePlaceholder('out/renderer/assets/index-test.js');
     ensurePlaceholder('out/renderer/assets/index-test.css');
     fs.writeFileSync(
-      path.join(process.cwd(), 'out/renderer/index.html'),
+      path.join(process.env.TJUAEUI_BUILD_OUT_DIR || path.join(process.cwd(), 'out'), 'renderer/index.html'),
       '<!doctype html><html><head><script type="module" src="./assets/index-test.js"></script><link rel="stylesheet" href="./assets/index-test.css"></head><body><div id="root"></div></body></html>\\n'
     );
   }
@@ -332,18 +363,13 @@ childProcess.execSync = function mockedExecSync(command) {
       'utf8'
     );
 
-    let movedExistingOut = false;
     try {
-      if (existsSync(outDir)) {
-        renameSync(outDir, backupOutDir);
-        movedExistingOut = true;
-      }
-
       const result = spawnSync(process.execPath, ['scripts/build-with-builder.js', ...args], {
         cwd: repoRoot,
         encoding: 'utf8',
         env: {
           ...process.env,
+          TJUAEUI_BUILD_OUT_DIR: outDir,
           TJUAEUI_PREPARE_CALLS_FILE: callsPath,
           NODE_OPTIONS: [process.env.NODE_OPTIONS, `--require=${hookPath}`].filter(Boolean).join(' '),
         },
@@ -357,13 +383,14 @@ childProcess.execSync = function mockedExecSync(command) {
         expect(installUtil.match(/TjuaeUI-bundled-uninstaller override source/g)).toHaveLength(1);
       }
 
-      const calls = JSON.parse(readFileSync(callsPath, 'utf8')) as Array<{ arch?: string } | null>;
+      const calls = JSON.parse(readFileSync(callsPath, 'utf8')) as Array<{
+        arch?: string;
+        backendBuildMode?: string;
+      } | null>;
       expect(calls).toContainEqual(expect.objectContaining({ arch: expectedArch }));
+      expect(calls).toContainEqual(expect.objectContaining({ backendBuildMode: 'production' }));
     } finally {
       rmSync(outDir, { recursive: true, force: true });
-      if (movedExistingOut) {
-        renameSync(backupOutDir, outDir);
-      }
       rmSync(tempDir, { recursive: true, force: true });
     }
   });

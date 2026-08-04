@@ -6,9 +6,9 @@
 
 - **工作区根目录保持精简**：只放共享配置、脚本、测试、文档、资源和包管理文件。
 - **桌面应用源码统一位于 `packages/desktop/`**：不得将新的应用运行时代码放回根目录。
-- **README 的其他语言版本**放入 `docs/readme/`；根目录只保留主 `readme.md`。
+- **自述文件的其他语言版本**放入 `docs/readme/`；根目录只保留主 `readme.md`。
 - **指南文档**（`*_GUIDE.md`、`CODE_STYLE.md`）放入 `docs/` 对应子目录。
-- **构建产物**（`out/`、`node_modules/`）由 gitignore 排除。
+- **构建产物**（`out/`、`node_modules/`）由 Git 忽略规则排除。
 
 ### 当前根目录结构（M1）
 
@@ -22,7 +22,7 @@ project-root/
 ├── resources/              # 静态资源（图标、图片、安装资源）
 ├── public/                 # 共享 Vite public 资源
 ├── patches/                # npm/Bun patches
-├── package.json            # Workspace 根配置
+├── package.json            # 工作区根配置
 ├── tsconfig.json           # 共享 TypeScript 配置
 ├── vitest.config.ts        # 共享测试配置
 ├── AGENTS.md               # 智能体与贡献者规范
@@ -36,7 +36,7 @@ project-root/
 
 ## `packages/desktop/` 布局
 
-### Workspace 结构
+### 工作区结构
 
 ```text
 packages/desktop/
@@ -57,15 +57,15 @@ packages/desktop/
 ```text
 packages/desktop/src/
 ├── renderer/              # React UI，仅浏览器环境代码
-├── process/               # Electron 主进程与 Worker 代码
-│   ├── bridge/            # IPC handler
+├── process/               # Electron 主进程与工作进程代码
+│   ├── bridge/            # IPC 处理器
 │   ├── services/          # 业务逻辑
 │   ├── agent/             # AI 平台连接
 │   ├── channels/          # 多渠道消息
 │   ├── extensions/        # 插件系统
 │   ├── webserver/         # WebUI 服务
-│   └── worker/            # 后台 Worker
-├── common/                # 共享类型、adapter 与工具
+│   └── worker/            # 后台工作进程
+├── common/                # 共享类型、适配器与工具
 ├── preload/               # contextBridge / ipcRenderer 暴露层
 ├── index.ts               # 主进程入口
 └── types.d.ts             # 环境类型声明

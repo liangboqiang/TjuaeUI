@@ -164,23 +164,6 @@ function Test-StringField {
   return ($value -is [string]) -and $value.Length -gt 0
 }
 
-function Test-StringArrayField {
-  param(
-    [object]$Object,
-    [string]$Name
-  )
-  $value = $Object.$Name
-  if ($null -eq $value -or $value -is [string]) {
-    return $false
-  }
-  foreach ($entry in @($value)) {
-    if (-not ($entry -is [string]) -or -not $entry) {
-      return $false
-    }
-  }
-  return $true
-}
-
 function Test-NumberField {
   param(
     [object]$Object,
@@ -229,84 +212,6 @@ function Test-ManagedNodeContract {
   Test-NonEmptyFile $Failures 'node' $Node.version (Join-ContractPath $nodeRoot $Node.executable) $true $nodeRoot | Out-Null
 }
 
-function Test-ManagedCliContract {
-  param(
-    [System.Collections.Generic.List[object]]$Failures,
-    [string]$ManagedRoot,
-    [object]$Cli
-  )
-
-  $name = $Cli.name
-  foreach ($field in @('name', 'version', 'root', 'platformDirectory', 'executable')) {
-    if (-not (Test-StringField $Cli $field)) {
-      $Failures.Add((New-Failure 'publish_or_install_missing' $name '' $ManagedRoot 'invalid_schema')) | Out-Null
-      return
-    }
-  }
-  if ($Cli.platformDirectory -ne $RuntimeKey) {
-    $Failures.Add((New-Failure 'publish_or_install_missing' $name $Cli.version $ManagedRoot 'runtime_key_mismatch')) | Out-Null
-    return
-  }
-
-  # requiredFiles / requiredDirectories default to empty (claude has none; codex
-  # lists its vendor sidecar subtree). Absent is allowed.
-  $requiredFiles = @($Cli.requiredFiles)
-  $requiredDirectories = @($Cli.requiredDirectories)
-  foreach ($pathValue in @($Cli.root, $Cli.executable) + $requiredFiles + $requiredDirectories) {
-    if (-not (Test-ContractRelativePath $pathValue)) {
-      $Failures.Add((New-Failure 'publish_or_install_missing' $name $Cli.version $ManagedRoot 'invalid_contract_path')) | Out-Null
-      return
-    }
-  }
-
-  $cliRoot = Join-ContractPath $ManagedRoot $Cli.root
-  Test-NonEmptyFile $Failures $name $Cli.version (Join-ContractPath $cliRoot $Cli.executable) $true $cliRoot | Out-Null
-  foreach ($requiredFile in $requiredFiles) {
-    Test-NonEmptyFile $Failures $name $Cli.version (Join-ContractPath $cliRoot $requiredFile) $false $cliRoot | Out-Null
-  }
-  foreach ($requiredDirectory in $requiredDirectories) {
-    Test-Directory $Failures $name $Cli.version (Join-ContractPath $cliRoot $requiredDirectory) | Out-Null
-  }
-}
-
-function Test-ManagedClisContract {
-  param(
-    [System.Collections.Generic.List[object]]$Failures,
-    [string]$ManagedRoot,
-    [object]$Contract
-  )
-
-  if ($null -eq $Contract.clis -or $Contract.clis -is [string]) {
-    $Failures.Add((New-Failure 'publish_or_install_missing' 'managed-resources' '' $ManagedRoot 'invalid_schema')) | Out-Null
-    return
-  }
-
-  $seen = @{}
-  $validClis = @()
-  foreach ($cli in @($Contract.clis)) {
-    if (-not $cli -or -not (Test-StringField $cli 'name')) {
-      $Failures.Add((New-Failure 'publish_or_install_missing' 'managed-resources' '' $ManagedRoot 'invalid_schema')) | Out-Null
-      continue
-    }
-    if ($seen.ContainsKey($cli.name)) {
-      $Failures.Add((New-Failure 'publish_or_install_missing' $cli.name $cli.version $ManagedRoot 'duplicate_cli_name')) | Out-Null
-      continue
-    }
-    $seen[$cli.name] = $true
-    $validClis += $cli
-  }
-
-  foreach ($requiredName in @('claude', 'codex')) {
-    if (-not $seen.ContainsKey($requiredName)) {
-      $Failures.Add((New-Failure 'publish_or_install_missing' $requiredName '' $ManagedRoot 'missing_required_cli')) | Out-Null
-    }
-  }
-
-  foreach ($cli in $validClis) {
-    Test-ManagedCliContract $Failures $ManagedRoot $cli
-  }
-}
-
 function Test-ManagedResourcesContract {
   param(
     [System.Collections.Generic.List[object]]$Failures,
@@ -323,7 +228,7 @@ function Test-ManagedResourcesContract {
     $Failures.Add((New-Failure 'publish_or_install_missing' 'managed-resources' '' $contractPath 'invalid_schema')) | Out-Null
     return
   }
-  if ([double]$contract.schemaVersion -ne 2) {
+  if ([double]$contract.schemaVersion -ne 3) {
     $Failures.Add((New-Failure 'publish_or_install_missing' 'managed-resources' '' $contractPath 'unsupported_schema_version')) | Out-Null
     return
   }
@@ -332,8 +237,17 @@ function Test-ManagedResourcesContract {
     return
   }
 
+  $contractKeys = @($contract.PSObject.Properties.Name | Sort-Object)
+  if (($contractKeys -join ',') -ne 'node,runtimeKey,schemaVersion') {
+    $Failures.Add((New-Failure 'publish_or_install_missing' 'managed-resources' '' $contractPath 'invalid_schema')) | Out-Null
+    return
+  }
+
   Test-ManagedNodeContract $Failures $ManagedRoot $contract.node
-  Test-ManagedClisContract $Failures $ManagedRoot $contract
+  $forbiddenCliRoot = Join-Path $ManagedRoot 'cli'
+  if (Test-Path -LiteralPath $forbiddenCliRoot) {
+    $Failures.Add((New-Failure 'publish_or_install_missing' 'third-party-cli' '' $forbiddenCliRoot 'forbidden_bundled_dependency')) | Out-Null
+  }
 }
 
 function Test-BundledResourcesOnce {

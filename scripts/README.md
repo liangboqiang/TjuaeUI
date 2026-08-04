@@ -4,23 +4,22 @@
 
 ## 主要脚本
 
-| 脚本                                   | 用途                                                       |
-| -------------------------------------- | ---------------------------------------------------------- |
-| `build-with-builder.js`                | 协调 electron-vite、资源准备与 electron-builder            |
-| `rebuildNativeModules.js`              | 统一处理原生模块重建与二进制校验                           |
-| `afterPack.js`                         | 打包后校验与平台专用原生模块处理                           |
-| `afterSign.js`                         | macOS 签名后的公证流程                                     |
-| `prepareTjuaeCore.js`                  | 按版本和目标平台准备 TjuaeCore 可执行文件                  |
-| `prepareHubResources.js`               | 准备 TjuaeHub 索引与扩展包，供离线回退                     |
-| `build-mcp-servers.js`                 | 将内置 MCP server 打成可由外部 Node.js 运行的自包含 bundle |
-| `webui.ts`                             | 启动 WebUI 开发或生产服务                                  |
-| `resetpass.ts`                         | 重置 WebUI 用户密码                                        |
-| `generate-i18n-types.js`               | 根据参考语言生成 i18n 键类型                               |
-| `check-i18n.js`                        | 校验语言目录、键一致性、硬编码调用与类型同步               |
-| `prepare-release-assets.sh`            | 整理 Release 产物                                          |
-| `verify-release-assets.sh`             | 校验 Release 文件集合                                      |
-| `smoke-installer-*.js`                 | 验证 Windows 安装器失败、锁文件与 Restart Manager 场景     |
-| `benchmark-*.ts` / `run-benchmarks.ts` | 启动、ACP 与综合性能基准                                   |
+| 脚本                                   | 用途                                                   |
+| -------------------------------------- | ------------------------------------------------------ |
+| `build-with-builder.js`                | 协调 electron-vite、资源准备与 electron-builder        |
+| `rebuildNativeModules.js`              | 统一处理原生模块重建与二进制校验                       |
+| `afterPack.js`                         | 打包后校验与平台专用原生模块处理                       |
+| `afterSign.js`                         | macOS 签名后的公证流程                                 |
+| `prepareTjuaeCore.js`                  | 按版本和目标平台准备 TjuaeCore 可执行文件              |
+| `prepareHubResources.js`               | 准备 TjuaeHub 索引与扩展包，供离线回退                 |
+| `webui.ts`                             | 启动 WebUI 开发或生产服务                              |
+| `resetpass.ts`                         | 重置 WebUI 用户密码                                    |
+| `generate-i18n-types.js`               | 根据参考语言生成 i18n 键类型                           |
+| `check-i18n.js`                        | 校验语言目录、键一致性、硬编码调用与类型同步           |
+| `prepare-release-assets.sh`            | 整理 Release 产物                                      |
+| `verify-release-assets.sh`             | 校验 Release 文件集合                                  |
+| `smoke-installer-*.js`                 | 验证 Windows 安装器失败、锁文件与 Restart Manager 场景 |
+| `benchmark-*.ts` / `run-benchmarks.ts` | 启动、ACP 与综合性能基准                               |
 
 ## 桌面构建流程
 

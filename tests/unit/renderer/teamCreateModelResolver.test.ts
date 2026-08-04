@@ -68,11 +68,10 @@ describe('resolveDefaultTeamAgentModel', () => {
         last_model_id: undefined,
       },
       engine: {
-        agent_id: 'cc126dd5',
-        agent: {
-          id: 'cc126dd5',
+        id: 'cc126dd5',
+        descriptor: {
           type: 'acp',
-          source: 'builtin',
+          ownership: 'builtin',
           acp_backend: 'gemini',
         },
       },

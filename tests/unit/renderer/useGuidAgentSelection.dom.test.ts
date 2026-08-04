@@ -38,8 +38,8 @@ vi.mock('@/renderer/pages/guid/hooks/useCustomAgentsLoader', () => ({
   }),
 }));
 
-vi.mock('@/renderer/hooks/agent/useManagedAgents', () => ({
-  useManagedAgentRuntimeCatalog: () => mockManagedAgents,
+vi.mock('@/renderer/hooks/agent/useManagedEngines', () => ({
+  useManagedEngineRuntimeCatalog: () => mockManagedAgents,
 }));
 
 describe('useGuidAssistantSelection', () => {
@@ -50,22 +50,21 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'assistant-claude',
-        source: 'builtin',
+        source: 'generated',
         name: 'Claude Assistant',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 1,
-        agent_id: 'agent-claude',
-        agent: { type: 'acp', source: 'builtin', acp_backend: 'claude' },
+        engine_id: 'agent-claude',
+        engine: { type: 'acp', ownership: 'builtin', acp_backend: 'claude' },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: ['claude-opus', 'claude-sonnet'],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       } satisfies Assistant,
@@ -98,7 +97,7 @@ describe('useGuidAssistantSelection', () => {
   it('restores the last selected guid assistant before falling back to the tjuaecli default', async () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'generated', sortOrder: 2 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'assistant-claude' : undefined
@@ -118,7 +117,7 @@ describe('useGuidAssistantSelection', () => {
   it('restores the last selected guid assistant when the guid page resets for a new chat', async () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'generated', sortOrder: 2 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'assistant-claude' : undefined
@@ -139,7 +138,7 @@ describe('useGuidAssistantSelection', () => {
   it('persists manual guid assistant selections for the next visit', async () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'generated', sortOrder: 2 }),
     ];
 
     const { result } = renderHook(() =>
@@ -162,7 +161,7 @@ describe('useGuidAssistantSelection', () => {
   it('falls back to the default assistant when the persisted guid assistant no longer exists', async () => {
     mockAssistants = [
       assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'generated', sortOrder: 2 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'removed-assistant' : undefined
@@ -218,20 +217,19 @@ describe('useGuidAssistantSelection', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 1,
-        agent_id: '2d23ff1c',
-        agent: {
+        engine_id: '2d23ff1c',
+        engine: {
           type: 'acp',
-          source: 'builtin',
+          ownership: 'builtin',
           acp_backend: 'claude',
         },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: true,
       } satisfies Assistant,
@@ -294,20 +292,19 @@ describe('useGuidAssistantSelection', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 1,
-        agent_id: 'agent-claude',
-        agent: {
+        engine_id: 'agent-claude',
+        engine: {
           type: 'acp',
-          source: 'builtin',
+          ownership: 'builtin',
           acp_backend: 'claude',
         },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: ['default'],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: true,
       } satisfies Assistant,
@@ -355,20 +352,19 @@ describe('useGuidAssistantSelection', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 1,
-        agent_id: 'agent-claude',
-        agent: {
+        engine_id: 'agent-claude',
+        engine: {
           type: 'acp',
-          source: 'builtin',
+          ownership: 'builtin',
           acp_backend: 'claude',
         },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: true,
       } satisfies Assistant,
@@ -420,16 +416,15 @@ describe('useGuidAssistantSelection', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 1,
-        agent_id: 'agent-claude-empty',
-        agent: { type: 'acp', source: 'builtin', acp_backend: 'claude' },
+        engine_id: 'agent-claude-empty',
+        engine: { type: 'acp', ownership: 'builtin', acp_backend: 'claude' },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       } satisfies Assistant,
@@ -460,16 +455,15 @@ describe('useGuidAssistantSelection', () => {
         description_i18n: {},
         enabled: true,
         sort_order: 1,
-        agent_id: '632f31d2',
-        agent: { type: 'tjuaecli', source: 'internal' },
+        engine_id: '632f31d2',
+        engine: { type: 'tjuaecli', ownership: 'internal' },
         enabled_skills: [],
         custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
-        agent_status: 'online',
+        engine_status: 'online',
         team_selectable: true,
         deletable: false,
       } satisfies Assistant,
@@ -525,18 +519,17 @@ function assistantFixture({
     description_i18n: {},
     enabled: true,
     sort_order: sortOrder,
-    agent_id: `agent-${runtimeKey}`,
-    agent: isTjuaeCli
-      ? { type: 'tjuaecli', source: 'internal' }
-      : { type: 'acp', source: 'builtin', acp_backend: runtimeKey },
+    engine_id: `agent-${runtimeKey}`,
+    engine: isTjuaeCli
+      ? { type: 'tjuaecli', ownership: 'internal' }
+      : { type: 'acp', ownership: 'builtin', acp_backend: runtimeKey },
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
-    agent_status: 'online',
+    engine_status: 'online',
     team_selectable: true,
     deletable: source === 'user',
   };

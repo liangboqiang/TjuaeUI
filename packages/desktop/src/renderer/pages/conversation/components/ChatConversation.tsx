@@ -10,8 +10,6 @@ import { uuid } from '@/common/utils';
 import addChatIcon from '@/renderer/assets/icons/add-chat.svg';
 import { CronJobManager } from '@/renderer/pages/cron';
 import { resolveCronJobId } from '@/renderer/pages/cron/cronUtils';
-import { classifyConfigSetError, useAcpConfigOptions } from '@/renderer/hooks/agent/useAcpConfigOptions';
-import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
 import { iconColors } from '@/renderer/styles/colors';
 import { Button, Dropdown, Menu, Message, Tooltip, Typography } from '@arco-design/web-react';
@@ -24,27 +22,16 @@ import { emitter } from '../../../utils/emitter';
 import AcpChat from '../platforms/acp/AcpChat';
 import ChatLayout from './ChatLayout';
 import ChatSlider from './ChatSlider.tsx';
-import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';
 import { getConversationCreateErrorMessage } from '@/renderer/pages/conversation/utils/conversationCreateError';
-import GoogleModelSelector from '../platforms/gemini/GoogleModelSelector';
 import TjuaeCliChat from '../platforms/tjuaecli/TjuaeCliChat';
-import TjuaeCliModelSelector from '../platforms/tjuaecli/TjuaeCliModelSelector';
 import { useTjuaeCliModelSelection } from '../platforms/tjuaecli/useTjuaeCliModelSelection';
 import { useConversationRuntimeView } from '../runtime/useConversationRuntimeView';
 import { isLegacyReadOnlyConversationType } from '../utils/conversationRuntime';
 import { resolveConversationBackend } from '../utils/conversationAssistantIdentity';
 import LegacyReadOnlyConversation from '../platforms/legacy/LegacyReadOnlyConversation';
 import { useActiveLease } from '../hooks/useActiveLease';
-// import SkillRuleGenerator from './components/SkillRuleGenerator'; // Temporarily hidden
-
-const configErrorMessageKey = (error: unknown) => {
-  const errorKind = classifyConfigSetError(error);
-  if (errorKind === 'command_ack') return 'agent.config.commandAck';
-  if (errorKind === 'confirmation_timeout') return 'agent.config.timeout';
-  if (errorKind === 'config_update_in_progress') return 'agent.config.busy';
-  return 'agent.config.failed';
-};
+import TraceDrawer from './TraceDrawer';
 
 const _AssociatedConversation: React.FC<{ conversation_id: string }> = ({ conversation_id }) => {
   const { data } = useSWR(['getAssociateConversation', conversation_id], () =>
@@ -171,44 +158,14 @@ const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; 
   const cronJobId = resolveCronJobId(conversation.extra);
   const { info: presetAssistantInfo } = usePresetAssistantInfo(conversation);
   const tjuaecliAssistantId = presetAssistantInfo?.assistantId;
-  const layout = useLayoutContext();
-  // Mobile: model selection moved into the sendbox `+` action sheet to free up
-  // header space; the dropdown stays available on desktop and tablets ≥768px.
-  const isMobile = Boolean(layout?.isMobile);
-  const { t } = useTranslation();
-  const runtimeConfig = useAcpConfigOptions({
-    conversation_id: conversation.id,
-    enabled: !isMobile,
-  });
-  const handleThoughtLevelSetOption = useCallback(
-    async (optionId: string, value: string) => {
-      try {
-        const result = await runtimeConfig.setConfigOption(optionId, value);
-        Message.success(t('agent.thoughtLevel.switchSuccess'));
-        return result;
-      } catch (error) {
-        Message.error(t(configErrorMessageKey(error)));
-        throw error;
-      }
-    },
-    [runtimeConfig, t]
-  );
-
   const chatLayoutProps = {
     title: conversation.name,
     siderTitle: sliderTitle,
     sider: <ChatSlider conversation={conversation} />,
     headerExtra: (
       <div className='flex items-center gap-8px'>
+        <TraceDrawer conversationId={conversation.id} />
         <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />
-        {!isMobile && (
-          <TjuaeCliModelSelector
-            selection={modelSelection}
-            thoughtLevel={runtimeConfig.thoughtLevel}
-            setStatus={runtimeConfig.setStatus}
-            onSetThoughtLevel={handleThoughtLevelSetOption}
-          />
-        )}
       </div>
     ),
     workspaceEnabled,
@@ -247,8 +204,6 @@ const ChatConversation: React.FC<{
   useActiveLease({ type: 'conversation', id: conversation?.id });
   const workspaceEnabled = Boolean(conversation?.extra?.workspace);
   const cronJobId = resolveCronJobId(conversation?.extra);
-  const layout = useLayoutContext();
-  const isMobile = Boolean(layout?.isMobile);
 
   const isTjuaeCliConversation = conversation?.type === 'tjuaecli';
   const isLegacyReadOnlyConversation = isLegacyReadOnlyConversationType(conversation?.type);
@@ -271,12 +226,14 @@ const ChatConversation: React.FC<{
     }
     switch (conversation.type) {
       case 'acp':
+      case 'a2a':
         return (
           <AcpChat
             key={conversation.id}
             conversation_id={conversation.id}
             workspace={conversation.extra?.workspace}
             backend={resolvedConversationBackend || 'claude'}
+            conversationType={conversation.type}
             session_mode={conversation.extra?.session_mode}
             agent_name={assistantDisplayName}
             cron_job_id={cronJobId}
@@ -311,28 +268,6 @@ const ChatConversation: React.FC<{
     );
   }, [t]);
 
-  // For ACP/Codex conversations, use AcpModelSelector that can show/switch models.
-  // For other conversations, show disabled model selector.
-  // Mobile: model selection moves into the sendbox `+` action sheet, so the
-  // header selector is suppressed to free up vertical space.
-  const modelSelector = useMemo(() => {
-    if (!conversation || isTjuaeCliConversation) return undefined;
-    if (isMobile) return undefined;
-    if (isLegacyReadOnlyConversation) return undefined;
-    if (conversation.type === 'acp') {
-      const extra = conversation.extra as { current_model_id?: string };
-      return (
-        <AcpModelSelector
-          conversation_id={conversation.id}
-          backend={resolvedConversationBackend}
-          initialModelId={extra.current_model_id}
-          waitForWarmup
-        />
-      );
-    }
-    return <GoogleModelSelector disabled={true} />;
-  }, [conversation, isTjuaeCliConversation, isMobile, isLegacyReadOnlyConversation, resolvedConversationBackend]);
-
   if (conversation && conversation.type === 'tjuaecli') {
     return <TjuaeCliConversationPanel key={conversation.id} conversation={conversation} sliderTitle={sliderTitle} />;
   }
@@ -353,11 +288,13 @@ const ChatConversation: React.FC<{
   const headerExtraNode = (
     <div className='flex items-center gap-8px'>
       {conversation && (
-        <div className='shrink-0'>
-          <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />
-        </div>
+        <>
+          <TraceDrawer conversationId={conversation.id} />
+          <div className='shrink-0'>
+            <CronJobManager conversation_id={conversation.id} cron_job_id={cronJobId} />
+          </div>
+        </>
       )}
-      {modelSelector && <div className='shrink-0'>{modelSelector}</div>}
     </div>
   );
 

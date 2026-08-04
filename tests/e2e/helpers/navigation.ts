@@ -14,10 +14,11 @@ export const ROUTES = {
   settings: {
     gemini: '#/settings/gemini',
     model: '#/settings/model',
-    agent: '#/settings/agent',
+    agent: '#/settings/engine',
     assistants: '#/settings/assistants',
     skills: '#/settings/skills',
     tools: '#/settings/tools',
+    market: '#/settings/market',
     display: '#/settings/display',
     webui: '#/settings/webui',
     system: '#/settings/system',
@@ -48,7 +49,7 @@ async function ensureRendererReady(page: Page, timeout = 30_000): Promise<void> 
 function isAlreadyAt(page: Page, hash: string): boolean {
   try {
     const url = page.url();
-    // Compare the hash portion (e.g. "#/guid" or "#/settings/agent")
+    // Compare the hash portion (e.g. "#/guid" or "#/settings/engine")
     const currentHash = url.includes('#') ? '#' + url.split('#')[1] : '';
     return currentHash === hash;
   } catch {
@@ -161,9 +162,7 @@ export async function goToGuid(page: Page): Promise<void> {
 
 /** Compatibility helper kept for older specs; Guid selection is now assistant-first and local-state free. */
 export async function resetGuidLastSelectedAgent(page: Page, _agentKey = 'tjuaecli'): Promise<void> {
-  await page.evaluate(() => {
-    sessionStorage.removeItem('guid.openAssistantEditorIntent');
-  });
+  await page.evaluate(() => {});
 }
 
 /** Navigate to a settings tab. */

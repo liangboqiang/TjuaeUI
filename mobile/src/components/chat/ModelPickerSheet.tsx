@@ -15,13 +15,7 @@ type ModelPickerSheetProps = {
   onClose: () => void;
 };
 
-export function ModelPickerSheet({
-  visible,
-  models,
-  currentModelId,
-  onSelect,
-  onClose,
-}: ModelPickerSheetProps) {
+export function ModelPickerSheet({ visible, models, currentModelId, onSelect, onClose }: ModelPickerSheetProps) {
   const { t } = useTranslation();
   const background = useThemeColor({}, 'background');
   const border = useThemeColor({}, 'border');
@@ -39,11 +33,11 @@ export function ModelPickerSheet({
         style={[styles.item, { borderBottomColor: border }]}
         onPress={() => handleSelect(item.id)}
         activeOpacity={0.6}
+        accessibilityRole='radio'
+        accessibilityState={{ selected: isActive }}
+        accessibilityLabel={item.label}
       >
-        <ThemedText
-          style={[styles.itemLabel, isActive && { color: tint, fontWeight: '600' }]}
-          numberOfLines={1}
-        >
+        <ThemedText style={[styles.itemLabel, isActive && { color: tint, fontWeight: '600' }]} numberOfLines={1}>
           {item.label}
         </ThemedText>
         {isActive && <Ionicons name='checkmark' size={20} color={tint} />}
@@ -57,17 +51,16 @@ export function ModelPickerSheet({
         <View style={[styles.sheet, { backgroundColor: background }]}>
           <View style={[styles.header, { borderBottomColor: border }]}>
             <ThemedText style={styles.title}>{t('chat.selectModel')}</ThemedText>
-            <TouchableOpacity onPress={onClose}>
-              <ThemedText style={[styles.closeButton, { color: tint }]}>
-                {t('common.close')}
-              </ThemedText>
+            <TouchableOpacity
+              style={styles.closeHitArea}
+              onPress={onClose}
+              accessibilityRole='button'
+              accessibilityLabel={t('common.close')}
+            >
+              <ThemedText style={[styles.closeButton, { color: tint }]}>{t('common.close')}</ThemedText>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={models}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-          />
+          <FlatList data={models} renderItem={renderItem} keyExtractor={(item) => item.id} />
         </View>
       </View>
     </Modal>
@@ -99,6 +92,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     fontSize: 16,
+  },
+  closeHitArea: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   item: {
     flexDirection: 'row',

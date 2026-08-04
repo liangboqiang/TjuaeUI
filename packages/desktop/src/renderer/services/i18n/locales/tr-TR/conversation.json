@@ -6,7 +6,8 @@
     "newConversation": "Yeni Sohbet",
     "selectModel": "Model Seç",
     "useCliModel": "Model Seç",
-    "modelSwitchNotSupported": "Model listesi ilk bağlantıdan sonra kullanılabilir olacaktır. Bağlanmak ve mevcut modelleri yüklemek için önce bir mesaj gönderin.",
+    "modelCatalogUnavailable": "Önbelleğe alınmış model kataloğu yok. Agent ayarlarında Bağlantıyı Test Et’i çalıştırın.",
+    "modelSelectionUnavailable": "Bu çalışma zamanı değiştirilebilir bir model listesi sunmuyor.",
     "specifyWorkspace": "Projede Sohbet Et",
     "currentWorkspace": "Mevcut Proje",
     "clearWorkspace": "Projeyi kaldır",
@@ -560,6 +561,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "Ajan teknik bir çalışma zamanı bildirimi iletti."
+      },
       "ACP_EMPTY_TURN": {
         "body": "Bu istek görünür bir yanıt üretmedi."
       },
@@ -574,7 +578,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "Model, görünür bir yanıt üretmeden önce bu isteği reddetti."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "Bu çalışma alanına güvenilene kadar projeye özgü yapılandırma, kancalar ve yürütme ilkeleri devre dışıdır. Beceriler yine de yüklenebilir."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "Beceri bağlam bütçesi dolduğu için açıklamalar kısaltıldı. Kullanılmayan becerileri veya eklentileri devre dışı bırakın."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "WebSocket bağlantısı zaman aşımına uğradı. İletişim otomatik olarak HTTPS’ye geçti."
       }
+    }
+  },
+  "trace": {
+    "title": "Çalıştırma izi",
+    "selectRun": "Bir çalıştırma seçin",
+    "empty": "Henüz görüntülenecek bir çalıştırma izi yok.",
+    "loadError": "Çalıştırma izi yüklenemedi.",
+    "backend": "Arka uç",
+    "duration": "Süre",
+    "firstOutput": "İlk çıktı",
+    "tokens": "Tokenlar",
+    "spans": "Adımlar",
+    "incomplete": "Eksik",
+    "truncated": "Kısaltıldı",
+    "droppedSpans": "{{count}} adım atlandı",
+    "noDetails": "Bu çalıştırma için kaydedilmiş adım yok.",
+    "jumpToMessage": "Mesajı göster",
+    "runtimeAssets": "Çalışma zamanı varlıkları",
+    "runtimeReceipt": "Doğrulanmış çalışma zamanı kaydı",
+    "runtimeAssetsUnavailable": "Doğrulanmış varlık kaydının ayrıntıları artık kullanılamıyor.",
+    "runtimeAssetsEmpty": "Bu çalıştırmada yönetilen varlık kullanılmadı.",
+    "definitionDigest": "Tanım özeti",
+    "upstreamSource": "Uzak kaynak",
+    "localOnlyAsset": "Yalnızca yerel",
+    "assetKind": {
+      "assistant": "Asistan",
+      "engineAdapter": "Motor bağdaştırıcısı",
+      "skill": "Beceri",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "Çalışıyor",
+      "succeeded": "Başarılı",
+      "failed": "Başarısız",
+      "cancelled": "İptal edildi",
+      "interrupted": "Kesintiye uğradı"
+    },
+    "spanKind": {
+      "thinking": "Düşünme",
+      "tool": "Araç",
+      "permission": "İzin"
     }
   },
   "notFound": "Konuşma bulunamadı veya silinmiş"

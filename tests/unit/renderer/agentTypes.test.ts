@@ -5,10 +5,12 @@ import { formatManagedAgentDiagnosticMessage } from '@/renderer/utils/model/agen
 
 const t = ((key: string, options?: Record<string, unknown>) => {
   switch (key) {
-    case 'settings.agentManagement.errorCodes.command_not_found':
+    case 'settings.engineManagement.errorCodes.command_not_found':
       return `Install ${String(options?.command)} and retry the connection test.`;
-    case 'settings.agentManagement.errorCodes.bridge_missing':
+    case 'settings.engineManagement.errorCodes.bridge_missing':
       return `Install ${String(options?.command)} and retry the connection test.`;
+    case 'settings.engineManagement.testConnectionUnavailable':
+      return `${String(options?.name)} is unavailable. Check its status details.`;
     default:
       return String(options?.defaultValue ?? key);
   }
@@ -46,7 +48,7 @@ describe('formatManagedAgentDiagnosticMessage', () => {
     expect(message).toBe('Install codex and retry the connection test.');
   });
 
-  it('falls back to backend message when the code is unknown', () => {
+  it('uses a localized fallback instead of exposing backend text when the code is unknown', () => {
     const message = formatManagedAgentDiagnosticMessage(
       t,
       managedAgent({
@@ -55,6 +57,7 @@ describe('formatManagedAgentDiagnosticMessage', () => {
       })
     );
 
-    expect(message).toBe('raw backend message');
+    expect(message).toBe('Codex is unavailable. Check its status details.');
+    expect(message).not.toContain('raw backend message');
   });
 });

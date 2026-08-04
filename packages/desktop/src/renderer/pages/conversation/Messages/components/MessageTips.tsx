@@ -42,14 +42,25 @@ const ownershipColor = {
   unknown_upstream: 'gray',
 };
 
+const LEGACY_CODELESS_TIP_PREFIXES = [
+  ['Project-local config, hooks, and exec policies are disabled', 'CODEX_PROJECT_TRUST_REQUIRED'],
+  ['Skill descriptions were shortened to fit the', 'CODEX_SKILL_DESCRIPTIONS_TRUNCATED'],
+  ['Falling back from WebSockets to HTTPS transport.', 'CODEX_WEBSOCKET_FALLBACK'],
+] as const;
+
+export const inferLegacyAgentTipCode = (content: string): NonNullable<IMessageTips['content']['code']> | null => {
+  return LEGACY_CODELESS_TIP_PREFIXES.find(([prefix]) => content.startsWith(prefix))?.[1] ?? null;
+};
+
 const resolveAgentTipBody = (
   content: string,
   code: IMessageTips['content']['code'],
   params: IMessageTips['content']['params'],
   t: ReturnType<typeof useTranslation>['t']
 ) => {
-  if (!code) return content;
-  return t(`conversation.agentTip.codes.${code}.body`, {
+  const resolvedCode = code ?? inferLegacyAgentTipCode(content);
+  if (!resolvedCode) return content;
+  return t(`conversation.agentTip.codes.${resolvedCode}.body`, {
     ...params,
     defaultValue: content,
   });

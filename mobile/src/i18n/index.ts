@@ -1,4 +1,4 @@
-import i18n from 'i18next';
+import { createInstance } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import * as Localization from 'expo-localization';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,7 @@ import ruRU from './locales/ru-RU.json';
 import deDE from './locales/de-DE.json';
 
 const LANGUAGE_KEY = 'tjuaeui_language';
+const i18n = createInstance();
 
 const resources = {
   'en-US': { translation: enUS },
@@ -36,20 +37,25 @@ const getInitialLanguage = async (): Promise<string> => {
   return detectDeviceLanguage();
 };
 
-i18n.use(initReactI18next);
+let initializationPromise: Promise<typeof i18n> | null = null;
 
-export const initI18n = async () => {
-  const lng = await getInitialLanguage();
+export const initI18n = () => {
+  if (initializationPromise) return initializationPromise;
 
-  await i18n.init({
-    resources,
-    lng,
-    fallbackLng: 'en-US',
-    interpolation: { escapeValue: false },
-    react: { useSuspense: false },
+  initializationPromise = getInitialLanguage().then(async (lng) => {
+    i18n.use(initReactI18next);
+    await i18n.init({
+      resources,
+      lng,
+      fallbackLng: 'en-US',
+      interpolation: { escapeValue: false },
+      react: { useSuspense: false },
+    });
+
+    return i18n;
   });
 
-  return i18n;
+  return initializationPromise;
 };
 
 export const changeLanguage = async (lang: string) => {

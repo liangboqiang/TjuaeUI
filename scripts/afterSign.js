@@ -2,6 +2,7 @@ const { execSync } = require('child_process');
 
 exports.default = async function afterSign(context) {
   const { electronPlatformName, appOutDir } = context;
+  const requireDistributionSigning = process.env.TJUAEUI_REQUIRE_DISTRIBUTION_SIGNING === '1';
 
   if (electronPlatformName !== 'darwin') {
     return;
@@ -19,6 +20,9 @@ exports.default = async function afterSign(context) {
     execSync(`codesign --verify --verbose "${appPath}"`, { stdio: 'pipe' });
     console.log(`应用 ${appName} 已正确完成代码签名`);
   } catch (error) {
+    if (requireDistributionSigning) {
+      throw new Error(`正式分发要求有效的 Developer ID 签名：${error.message}`);
+    }
     console.log(`应用 ${appName} 尚未签名，正在应用临时签名……`);
     try {
       execSync(`codesign --force --deep --sign - "${appPath}"`, { stdio: 'inherit' });
@@ -30,7 +34,10 @@ exports.default = async function afterSign(context) {
   }
 
   // 未提供凭据时跳过公证。
-  if (!process.env.appleId || !process.env.appleIdPassword) {
+  if (!process.env.appleId || !process.env.appleIdPassword || !process.env.teamId) {
+    if (requireDistributionSigning) {
+      throw new Error('正式分发要求完整的 Apple 公证凭据（Apple ID、专用密码和 Team ID）');
+    }
     console.log('缺少 Apple ID 凭据，已跳过公证');
     return;
   }

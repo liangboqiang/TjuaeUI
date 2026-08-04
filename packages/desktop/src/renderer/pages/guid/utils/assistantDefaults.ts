@@ -5,7 +5,6 @@ export type ResolvedGuidAssistantDefaults = {
   permissionMode?: string;
   thoughtLevel?: string;
   skillIds: string[];
-  disabledBuiltinSkillIds: string[];
   mcpIds: string[];
 };
 
@@ -18,7 +17,6 @@ export const resolveGuidAssistantDefaults = (
       permissionMode: undefined,
       thoughtLevel: undefined,
       skillIds: [],
-      disabledBuiltinSkillIds: [],
       mcpIds: [],
     };
   }
@@ -52,13 +50,6 @@ export const resolveGuidAssistantDefaults = (
         ? (detail.preferences.last_skill_ids ?? [])
         : [];
 
-  const disabledBuiltinSkillIds =
-    detail.defaults.skills.mode === 'fixed'
-      ? (detail.capabilities.default_disabled_builtin_skill_ids ?? [])
-      : detail.defaults.skills.mode === 'auto'
-        ? (detail.preferences.last_disabled_builtin_skill_ids ?? [])
-        : [];
-
   const mcpIds =
     detail.defaults.mcps.mode === 'fixed'
       ? (detail.defaults.mcps.value ?? [])
@@ -71,7 +62,6 @@ export const resolveGuidAssistantDefaults = (
     permissionMode: permissionMode || undefined,
     thoughtLevel: thoughtLevel || undefined,
     skillIds,
-    disabledBuiltinSkillIds,
     mcpIds,
   };
 };

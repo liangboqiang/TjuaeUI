@@ -6,7 +6,8 @@
     "newConversation": "Novo Chat",
     "selectModel": "Selecionar Modelo",
     "useCliModel": "Selecionar Modelo",
-    "modelSwitchNotSupported": "A lista de modelos estará disponível após a primeira conexão. Envie uma mensagem para conectar e carregar os modelos disponíveis.",
+    "modelCatalogUnavailable": "Não há catálogo de modelos em cache. Execute Testar conexão nas configurações de Agent.",
+    "modelSelectionUnavailable": "Este ambiente não oferece uma lista de modelos alternáveis.",
     "specifyWorkspace": "Conversar no Projeto",
     "currentWorkspace": "Projeto Atual",
     "clearWorkspace": "Remover projeto",
@@ -564,6 +565,9 @@
   },
   "agentTip": {
     "codes": {
+      "AGENT_UPSTREAM_NOTICE": {
+        "body": "O agente informou um aviso técnico de execução."
+      },
       "ACP_EMPTY_TURN": {
         "body": "Esta solicitação não gerou nenhuma resposta visível."
       },
@@ -578,7 +582,57 @@
       },
       "ACP_EMPTY_TURN_REFUSAL": {
         "body": "O modelo recusou esta solicitação antes de produzir qualquer resposta visível."
+      },
+      "CODEX_PROJECT_TRUST_REQUIRED": {
+        "body": "A configuração local do projeto, os hooks e as políticas de execução ficam desativados até que este espaço de trabalho seja confiável. As habilidades ainda podem ser carregadas."
+      },
+      "CODEX_SKILL_DESCRIPTIONS_TRUNCATED": {
+        "body": "As descrições das habilidades foram encurtadas porque o orçamento de contexto está cheio. Desative habilidades ou plugins não utilizados."
+      },
+      "CODEX_WEBSOCKET_FALLBACK": {
+        "body": "A conexão WebSocket atingiu o tempo limite. A comunicação mudou automaticamente para HTTPS."
       }
+    }
+  },
+  "trace": {
+    "title": "Rastreamento",
+    "selectRun": "Selecionar uma execução",
+    "empty": "Ainda não há rastreamento de execução disponível.",
+    "loadError": "Não foi possível carregar o rastreamento da execução.",
+    "backend": "Backend",
+    "duration": "Duração",
+    "firstOutput": "Primeira saída",
+    "tokens": "Tokens",
+    "spans": "Etapas",
+    "incomplete": "Incompleto",
+    "truncated": "Truncado",
+    "droppedSpans": "{{count}} etapas omitidas",
+    "noDetails": "Esta execução não possui etapas registradas.",
+    "jumpToMessage": "Ver mensagem",
+    "runtimeAssets": "Ativos de execução",
+    "runtimeReceipt": "Comprovante de execução verificado",
+    "runtimeAssetsUnavailable": "O comprovante verificado dos ativos não está mais disponível.",
+    "runtimeAssetsEmpty": "Esta execução não usou ativos gerenciados.",
+    "definitionDigest": "Resumo da definição",
+    "upstreamSource": "Origem remota",
+    "localOnlyAsset": "Somente local",
+    "assetKind": {
+      "assistant": "Assistente",
+      "engineAdapter": "Adaptador de mecanismo",
+      "skill": "Habilidade",
+      "mcp": "MCP"
+    },
+    "status": {
+      "running": "Em execução",
+      "succeeded": "Concluído",
+      "failed": "Falhou",
+      "cancelled": "Cancelado",
+      "interrupted": "Interrompido"
+    },
+    "spanKind": {
+      "thinking": "Raciocínio",
+      "tool": "Ferramenta",
+      "permission": "Permissão"
     }
   },
   "notFound": "Conversa não encontrada ou foi deletada"

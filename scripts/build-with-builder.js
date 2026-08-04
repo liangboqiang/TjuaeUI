@@ -25,7 +25,10 @@ const DMG_RETRY_MAX = 3;
 const DMG_RETRY_DELAY_SEC = 30;
 
 // Incremental build: hash of source files to detect changes
-const INCREMENTAL_CACHE_FILE = 'out/.build-hash';
+const BUILD_OUT_DIR = process.env.TJUAEUI_BUILD_OUT_DIR
+  ? path.resolve(process.env.TJUAEUI_BUILD_OUT_DIR)
+  : path.resolve(__dirname, '../out');
+const INCREMENTAL_CACHE_FILE = path.join(BUILD_OUT_DIR, '.build-hash');
 const DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV = 'TJUAEUI_DEBUG_AUTO_UPDATE_CURRENT_VERSION';
 
 function patchElectronBuilderNsisInstaller() {
@@ -223,7 +226,7 @@ function computeSourceHash() {
 
 function loadCachedHash() {
   try {
-    const cacheFile = path.resolve(__dirname, '..', INCREMENTAL_CACHE_FILE);
+    const cacheFile = INCREMENTAL_CACHE_FILE;
     if (fs.existsSync(cacheFile)) {
       return fs.readFileSync(cacheFile, 'utf8').trim();
     }
@@ -233,7 +236,7 @@ function loadCachedHash() {
 
 function saveCurrentHash(hash) {
   try {
-    const cacheFile = path.resolve(__dirname, '..', INCREMENTAL_CACHE_FILE);
+    const cacheFile = INCREMENTAL_CACHE_FILE;
     const viteDir = path.dirname(cacheFile);
     if (!fs.existsSync(viteDir)) {
       fs.mkdirSync(viteDir, { recursive: true });
@@ -243,7 +246,7 @@ function saveCurrentHash(hash) {
 }
 
 function viteBuildExists() {
-  const outDir = path.resolve(__dirname, '../out');
+  const outDir = BUILD_OUT_DIR;
   const mainDir = path.join(outDir, 'main');
   const rendererDir = path.join(outDir, 'renderer');
 
@@ -337,7 +340,7 @@ function validateRendererBuildOutput(rendererDir) {
 }
 
 function validateViteBuildOutput() {
-  const outDir = path.resolve(__dirname, '../out');
+  const outDir = BUILD_OUT_DIR;
   const problems = [];
 
   for (const relPath of ['main/index.js', 'preload/index.js']) {
@@ -516,7 +519,7 @@ function createMacArtifactsWithPrepackaged(appDir, targetArch) {
 
 function buildWithDmgRetry(cmd, targetArch) {
   const isMac = process.platform === 'darwin';
-  const outDir = path.resolve(__dirname, '../out');
+  const outDir = BUILD_OUT_DIR;
 
   try {
     execSync(cmd, { stdio: 'inherit', shell: process.platform === 'win32' });
@@ -553,7 +556,7 @@ function buildWithDmgRetry(cmd, targetArch) {
 
 // Clean stale Windows packaging outputs from previous runs
 function cleanupWindowsPackOutput() {
-  const outDir = path.resolve(__dirname, '../out');
+  const outDir = BUILD_OUT_DIR;
   if (!fs.existsSync(outDir)) return;
 
   const removed = [];
@@ -589,12 +592,20 @@ const skipVite = args.includes('--skip-vite');
 const skipNative = args.includes('--skip-native');
 const packOnly = args.includes('--pack-only');
 const forceBuild = args.includes('--force');
+const localAcceptanceBuild = args.includes('--local-acceptance');
 
 const builderArgs = args
   .filter((arg) => {
     // Filter out 'auto', architecture flags, and special flags
     if (arg === 'auto') return false;
-    if (arg === '--skip-vite' || arg === '--skip-native' || arg === '--pack-only' || arg === '--force') return false;
+    if (
+      arg === '--skip-vite' ||
+      arg === '--skip-native' ||
+      arg === '--pack-only' ||
+      arg === '--force' ||
+      arg === '--local-acceptance'
+    )
+      return false;
     if (archList.includes(arg)) return false;
     if (arg.startsWith('--') && archList.includes(arg.slice(2))) return false;
     return true;
@@ -671,13 +682,46 @@ if (skipVite) console.log('⚡ --skip-vite：输出存在时跳过 Vite 编译')
 if (skipNative) console.log('⚡ --skip-native：跳过原生模块重建');
 if (packOnly) console.log('⚡ --pack-only：跳过 electron-builder 分发包生成');
 if (forceBuild) console.log('⚡ --force：强制完整重建');
+if (localAcceptanceBuild) console.log('🧪 --local-acceptance：生成明确标记的本地四仓验收包');
 
 const packageJsonPath = path.resolve(__dirname, '../package.json');
 let restorePackageVersionOverride = () => {};
 let buildFailed = false;
 
 try {
+  if (localAcceptanceBuild) {
+    if (process.env.CI === 'true') {
+      throw new Error('CI 正式流水线禁止使用 --local-acceptance');
+    }
+    if (!String(process.env.TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR || '').trim()) {
+      throw new Error('--local-acceptance 必须显式提供 TJUAEUI_BACKEND_LOCAL_BUNDLE_DIR');
+    }
+    if (!String(process.env.TJUAEUI_HUB_SOURCE_DIR || '').trim()) {
+      throw new Error('--local-acceptance 必须显式提供 TJUAEUI_HUB_SOURCE_DIR');
+    }
+    process.env.TJUAEUI_BACKEND_BUILD_MODE = 'development';
+    if (!String(process.env[DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV] || '').trim()) {
+      const sourceVersion = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).version;
+      const stableBaseVersion = String(sourceVersion).split('+')[0].split('-')[0];
+      process.env[DEBUG_AUTO_UPDATE_CURRENT_VERSION_ENV] = `${stableBaseVersion}-local`;
+    }
+  } else {
+    // A distributable is production unless the caller uses the explicit local
+    // acceptance flag. Environment variables cannot silently downgrade it.
+    process.env.TJUAEUI_BACKEND_BUILD_MODE = 'production';
+  }
+
   restorePackageVersionOverride = applyDebugAutoUpdateVersionOverride(packageJsonPath);
+
+  const brandAssetScript = path.resolve(__dirname, 'generate-brand-assets.js');
+  if (fs.existsSync(brandAssetScript)) {
+    const brandAssetResult = spawnSync(process.execPath, [brandAssetScript], {
+      stdio: 'inherit',
+    });
+    if (brandAssetResult.status !== 0) {
+      throw new Error('品牌图标派生资源生成失败');
+    }
+  }
 
   // 1. Ensure package.json main entry is correct for electron-vite
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
@@ -707,20 +751,8 @@ try {
     console.log('📦 正在使用缓存的 Vite 构建输出');
   }
 
-  // Re-bundle builtin MCP server as a fully self-contained CJS bundle so it can
-  // be executed by an external `node` process (no Electron ASAR support available).
-  // electron-vite's externalizeDepsPlugin leaves npm packages as require() calls
-  // which the standalone node process cannot resolve from inside app.asar.unpacked.
-  // Uses a dedicated script (build-mcp-servers.js) to avoid shell-quoting issues
-  // with special characters in esbuild --define values.
-  console.log('📦 正在打包自包含的内置 MCP 服务……');
-  execSync(`node "${path.join(__dirname, 'build-mcp-servers.js')}"`, {
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-
   // 3. Verify electron-vite output
-  const outDir = path.resolve(__dirname, '../out');
+  const outDir = BUILD_OUT_DIR;
   if (!fs.existsSync(outDir)) {
     throw new Error('electron-vite 未生成 out/ 目录');
   }
@@ -750,7 +782,13 @@ try {
   });
 
   // 6. Prepare hub resources (index.json + extension zips for offline fallback)
-  execSync('node scripts/prepareHubResources.js', { stdio: 'inherit', env: process.env });
+  execSync('node scripts/prepareHubResources.js', {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      TJUAEUI_HUB_BUILD_MODE: localAcceptanceBuild ? 'development' : 'production',
+    },
+  });
 
   // 6. 运行 electron-builder 生成分发包；始终禁用隐式发布，发布由 CI 独立任务负责。
   const publishArg = '--publish=never';
@@ -826,9 +864,14 @@ try {
     buildWithDmgRetry(builderCommand, targetArch);
   } catch (error) {
     const winExePath = path.join(outDir, 'win-unpacked', 'TjuaeUI.exe');
+    const stagedWinExePath = path.join(outDir, 'win-unpacked.tmp', 'TjuaeUI.exe');
+    const stagedElectronExePath = path.join(outDir, 'win-unpacked.tmp', 'electron.exe');
     const firstError = formatExecError(error);
     const canRetryWithoutExecutableEdit =
-      process.platform === 'win32' && isWindowsBuild && process.env.CI !== 'true' && fs.existsSync(winExePath);
+      process.platform === 'win32' &&
+      isWindowsBuild &&
+      process.env.CI !== 'true' &&
+      (fs.existsSync(winExePath) || fs.existsSync(stagedWinExePath) || fs.existsSync(stagedElectronExePath));
 
     if (!canRetryWithoutExecutableEdit) {
       throw error;

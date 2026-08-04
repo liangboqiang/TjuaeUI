@@ -11,9 +11,9 @@ import useSWR, { mutate as swrMutate } from 'swr';
 
 type UseCustomAgentsLoaderResult = {
   /**
-   * Preset assistant catalog returned by the backend — merged builtin + user +
-   * extension, already sorted. This is the list the Guid pill bar and the
-   * Settings list render.
+   * Local assistant catalog returned by TjuaeCore. It contains generated
+   * engine assistants and user-created assistants in backend-defined order.
+   * Market assets become local `user` assistants only after installation.
    */
   assistants: Assistant[];
 };
@@ -24,7 +24,7 @@ type UseCustomAgentsLoaderResult = {
  * the assistant list shared with settings/conversation flows.
  */
 export const useCustomAgentsLoader = (): UseCustomAgentsLoaderResult => {
-  // Preset assistants share their own cache so settings / guid / conversation
+  // Local assistants share their own cache so settings / guid / conversation
   // all see the same list without duplicate HTTP calls.
   const { data: assistantList } = useSWR('assistants.list', async () => {
     try {

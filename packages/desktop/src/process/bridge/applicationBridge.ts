@@ -107,6 +107,9 @@ export function initApplicationBridge(): void {
   });
 
   ipcBridge.application.isDevToolsOpened.provider(() => {
+    if (app.isPackaged) {
+      return Promise.resolve(false);
+    }
     if (mainWindowRef && !mainWindowRef.isDestroyed()) {
       return Promise.resolve(mainWindowRef.webContents.isDevToolsOpened());
     }
@@ -114,6 +117,9 @@ export function initApplicationBridge(): void {
   });
 
   ipcBridge.application.openDevTools.provider(() => {
+    if (app.isPackaged) {
+      return Promise.resolve(false);
+    }
     if (mainWindowRef && !mainWindowRef.isDestroyed()) {
       const win = mainWindowRef;
       const wasOpen = win.webContents.isDevToolsOpened();

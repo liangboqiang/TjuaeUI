@@ -11,7 +11,7 @@ VERSION="${2:-}"
 
 if [[ -z "$MIRROR" ]]; then
   echo "用法：$0 <镜像地址> [版本]"
-  echo "示例：$0 file:///tmp/releases 3.0.0"
+  echo "示例：$0 file:///tmp/releases 4.0.0"
     exit 1
 fi
 

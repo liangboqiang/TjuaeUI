@@ -83,20 +83,21 @@ describe('AssistantSelectionArea', () => {
       />
     );
 
-    // Selection lists group by source: CLI (generated) → user → official
-    // (builtin). So the top row is [bare-tjuaecli, user-research, user-review,
-    // user-translate] and the official Writer + trailing user-finance overflow.
+    // Runtime-generated assistants stay ahead of user assets. The top row is
+    // [bare-tjuaecli, generated-writer, user-research, user-review], while the
+    // remaining local user assets overflow.
     expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-generated-writer')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-research')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-review')).toBeInTheDocument();
-    expect(screen.getByTestId('preset-pill-user-translate')).toBeInTheDocument();
-    expect(screen.queryByTestId('preset-pill-builtin-writer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('preset-pill-user-translate')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('assistant-more-btn'));
 
+    expect(await screen.findByTestId('assistant-overflow-user-translate')).toBeInTheDocument();
     expect(await screen.findByTestId('assistant-overflow-user-finance')).toBeInTheDocument();
-    expect(screen.getByTestId('assistant-overflow-builtin-writer')).toBeInTheDocument();
     expect(screen.queryByTestId('assistant-overflow-bare-tjuaecli')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('assistant-overflow-generated-writer')).not.toBeInTheDocument();
     expect(screen.queryByTestId('assistant-overflow-user-research')).not.toBeInTheDocument();
   });
 
@@ -210,9 +211,9 @@ describe('AssistantSelectionArea', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('preset-pill-builtin-writer'));
+    fireEvent.click(screen.getByTestId('preset-pill-generated-writer'));
 
-    expect(onSelectAssistant).toHaveBeenCalledWith('builtin-writer');
+    expect(onSelectAssistant).toHaveBeenCalledWith('generated-writer');
   });
 
   it('orders assistant pills by group then sort_order before applying overflow', () => {
@@ -230,14 +231,14 @@ describe('AssistantSelectionArea', () => {
       />
     );
 
-    // CLI (generated) first, then user-created by sort_order (Early 5, Mid 15,
-    // Late 90); the official Writer sinks to the bottom group and overflows.
+    // Runtime-generated assistants remain first, then user-created assets by
+    // sort_order. There is no separate builtin/official local source group.
     expect(
       screen
         .getAllByRole('button')
         .slice(0, 4)
         .map((node) => node.textContent?.trim())
-    ).toEqual(['Tjuae CLI', 'Early', 'Mid', 'Late']);
+    ).toEqual(['Tjuae CLI', 'Writer', 'Early', 'Mid']);
   });
 
   it('keeps a selected overflow assistant visible in the top pill row', () => {
@@ -312,7 +313,6 @@ function assistants(): Assistant[] {
       preset_agent_type: 'tjuaecli',
       enabled_skills: [],
       custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: ['Summarize today'],
       prompts_i18n: {},
@@ -322,8 +322,8 @@ function assistants(): Assistant[] {
       deletable: false,
     },
     {
-      id: 'builtin-writer',
-      source: 'builtin',
+      id: 'generated-writer',
+      source: 'generated',
       name: 'Writer',
       name_i18n: {},
       description_i18n: {},
@@ -332,7 +332,6 @@ function assistants(): Assistant[] {
       preset_agent_type: 'claude',
       enabled_skills: [],
       custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: ['Draft a post'],
       prompts_i18n: {},
@@ -372,7 +371,6 @@ function mkAssistant(
     preset_agent_type,
     enabled_skills: [],
     custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

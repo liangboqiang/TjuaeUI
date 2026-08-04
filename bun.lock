@@ -208,6 +208,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "app-builder-lib@26.15.2": "patches/app-builder-lib@26.15.2.patch",
+  },
   "overrides": {
     "@codemirror/language": "6.12.3",
     "body-parser": "^2.2.1",

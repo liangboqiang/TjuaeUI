@@ -150,6 +150,9 @@ export function isBackendHttpError(error: unknown): error is BackendHttpError {
  */
 export type HttpRequestOptions = {
   silentStatuses?: number[];
+  headers?: Readonly<Record<string, string>>;
+  /** Send the real request body but never include it in console diagnostics. */
+  redactBody?: boolean;
 };
 
 const SENSITIVE_LOG_KEY_PATTERN = /api[_-]?key|authorization|auth[_-]?token|access[_-]?token|refresh[_-]?token|secret/i;
@@ -177,7 +180,7 @@ export async function httpRequest<T>(
   options?: HttpRequestOptions
 ): Promise<T> {
   const url = `${getBaseUrl()}${path}`;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options?.headers };
 
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
@@ -185,7 +188,11 @@ export async function httpRequest<T>(
 
   console.debug(
     `[httpBridge] ${method} ${path}`,
-    body !== undefined ? JSON.stringify(redactForLog(body)).slice(0, 500) : '(no body)'
+    body === undefined
+      ? '(no body)'
+      : options?.redactBody
+        ? '[REDACTED_BODY]'
+        : JSON.stringify(redactForLog(body)).slice(0, 500)
   );
 
   const response = await fetch(url, {
@@ -203,10 +210,16 @@ export async function httpRequest<T>(
     } catch {
       errorBody = rawText;
     }
+    const errorForLog =
+      options?.redactBody && errorBody && typeof errorBody === 'object'
+        ? { code: (errorBody as { code?: unknown }).code }
+        : options?.redactBody
+          ? '[REDACTED_BODY]'
+          : redactForLog(errorBody);
     if (options?.silentStatuses?.includes(response.status)) {
-      console.debug(`[httpBridge] ${method} ${path} → ${response.status} (silenced)`, errorBody);
+      console.debug(`[httpBridge] ${method} ${path} → ${response.status} (silenced)`, errorForLog);
     } else {
-      console.error(`[httpBridge] ${method} ${path} → ${response.status}`, errorBody);
+      console.error(`[httpBridge] ${method} ${path} → ${response.status}`, errorForLog);
     }
     throw new BackendHttpError({ method, path, status: response.status, body: errorBody });
   }
@@ -263,54 +276,58 @@ export function httpGet<Data, Params = undefined>(
 
 export function httpPost<Data, Params = undefined>(
   path: string | ((params: Params) => string),
-  mapBody?: (params: Params) => unknown
+  mapBody?: (params: Params) => unknown,
+  options?: HttpRequestOptions
 ): ProviderLike<Data, Params> {
   return {
     provider: () => {},
     invoke: (async (params?: Params) => {
       const resolvedPath = typeof path === 'function' ? path(params!) : path;
       const body = mapBody ? mapBody(params!) : params;
-      return httpRequest<Data>('POST', resolvedPath, body);
+      return httpRequest<Data>('POST', resolvedPath, body, options);
     }) as ProviderLike<Data, Params>['invoke'],
   };
 }
 
 export function httpPut<Data, Params = undefined>(
   path: string | ((params: Params) => string),
-  mapBody?: (params: Params) => unknown
+  mapBody?: (params: Params) => unknown,
+  options?: HttpRequestOptions
 ): ProviderLike<Data, Params> {
   return {
     provider: () => {},
     invoke: (async (params?: Params) => {
       const resolvedPath = typeof path === 'function' ? path(params!) : path;
       const body = mapBody ? mapBody(params!) : params;
-      return httpRequest<Data>('PUT', resolvedPath, body);
+      return httpRequest<Data>('PUT', resolvedPath, body, options);
     }) as ProviderLike<Data, Params>['invoke'],
   };
 }
 
 export function httpPatch<Data, Params = undefined>(
   path: string | ((params: Params) => string),
-  mapBody?: (params: Params) => unknown
+  mapBody?: (params: Params) => unknown,
+  options?: HttpRequestOptions
 ): ProviderLike<Data, Params> {
   return {
     provider: () => {},
     invoke: (async (params?: Params) => {
       const resolvedPath = typeof path === 'function' ? path(params!) : path;
       const body = mapBody ? mapBody(params!) : params;
-      return httpRequest<Data>('PATCH', resolvedPath, body);
+      return httpRequest<Data>('PATCH', resolvedPath, body, options);
     }) as ProviderLike<Data, Params>['invoke'],
   };
 }
 
 export function httpDelete<Data, Params = undefined>(
-  path: string | ((params: Params) => string)
+  path: string | ((params: Params) => string),
+  options?: HttpRequestOptions
 ): ProviderLike<Data, Params> {
   return {
     provider: () => {},
     invoke: (async (params?: Params) => {
       const resolvedPath = typeof path === 'function' ? path(params!) : path;
-      return httpRequest<Data>('DELETE', resolvedPath);
+      return httpRequest<Data>('DELETE', resolvedPath, undefined, options);
     }) as ProviderLike<Data, Params>['invoke'],
   };
 }

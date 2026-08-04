@@ -4,40 +4,92 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Button } from '@arco-design/web-react';
+import { Switch } from '@arco-design/web-react';
+import { Attention, CheckOne, Info } from '@icon-park/react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import PreferenceRow from './PreferenceRow';
 
 /**
- * WebUI-only control to request browser notification permission. In Electron
- * this is never rendered (native notifications are used instead). Renders a
- * grant button, the granted/denied state, or a hint when the page is not a
- * secure context (HTTPS / localhost), where the Notification API is unavailable.
+ * WebUI-only notification preference. The visible switch is the single entry
+ * point for both the app preference and the browser permission prompt, so the
+ * user never has to understand two separate "enable" controls.
  */
-const BrowserNotificationGrant: React.FC = () => {
+const BrowserNotificationGrant: React.FC<{
+  enabled: boolean;
+  onEnabledChange: (enabled: boolean) => void;
+}> = ({ enabled, onEnabledChange }) => {
   const { t } = useTranslation();
   const supported = typeof window !== 'undefined' && 'Notification' in window && window.isSecureContext;
   const [permission, setPermission] = useState<NotificationPermission>(supported ? Notification.permission : 'denied');
+  const [requesting, setRequesting] = useState(false);
 
-  const handleRequest = useCallback(() => {
-    if (!supported) return;
-    void Notification.requestPermission().then((result) => setPermission(result));
-  }, [supported]);
+  const handleToggle = useCallback(
+    (checked: boolean) => {
+      if (!checked) {
+        onEnabledChange(false);
+        return;
+      }
+      if (!supported || permission === 'denied') return;
+      if (permission === 'granted') {
+        onEnabledChange(true);
+        return;
+      }
 
-  if (!supported) {
-    return <div className='pl-12px text-12px text-3'>{t('settings.browserNotification.insecureContext')}</div>;
-  }
-  if (permission === 'granted') {
-    return <div className='pl-12px text-12px text-3'>{t('settings.browserNotification.granted')}</div>;
-  }
-  if (permission === 'denied') {
-    return <div className='pl-12px text-12px text-3'>{t('settings.browserNotification.denied')}</div>;
-  }
+      setRequesting(true);
+      void Notification.requestPermission()
+        .then((result) => {
+          setPermission(result);
+          onEnabledChange(result === 'granted');
+        })
+        .finally(() => setRequesting(false));
+    },
+    [onEnabledChange, permission, supported]
+  );
+
+  const switchChecked = supported && permission === 'granted' && enabled;
+  const status = !supported
+    ? {
+        icon: <Info aria-hidden='true' size='15' />,
+        text: t('settings.browserNotification.insecureContext'),
+        className: 'border-border-2 bg-fill-1 text-t-secondary',
+      }
+    : permission === 'granted'
+      ? {
+          icon: <CheckOne aria-hidden='true' size='15' />,
+          text: t('settings.browserNotification.granted'),
+          className: 'border-success-2 bg-success-1 text-success-7',
+        }
+      : permission === 'denied'
+        ? {
+            icon: <Attention aria-hidden='true' size='15' />,
+            text: t('settings.browserNotification.denied'),
+            className: 'border-warning-3 bg-warning-1 text-warning-7',
+          }
+        : {
+            icon: <Info aria-hidden='true' size='15' />,
+            text: t('settings.browserNotification.enableHint'),
+            className: 'border-primary-2 bg-primary-1 text-t-secondary',
+          };
+
   return (
-    <div className='pl-12px'>
-      <Button type='outline' size='small' onClick={handleRequest}>
-        {t('settings.browserNotification.enable')}
-      </Button>
+    <div data-testid='browser-notification-setting'>
+      <PreferenceRow label={t('settings.notification')} description={t('settings.notificationDesc')}>
+        <Switch
+          checked={switchChecked}
+          loading={requesting}
+          disabled={!supported || permission === 'denied'}
+          onChange={handleToggle}
+          aria-label={t('settings.notification')}
+        />
+      </PreferenceRow>
+      <div
+        className={`mb-10px flex items-start gap-7px rounded-9px border px-10px py-8px text-11px leading-17px ${status.className}`}
+        role='status'
+      >
+        <span className='mt-1px shrink-0'>{status.icon}</span>
+        <span>{status.text}</span>
+      </div>
     </div>
   );
 };

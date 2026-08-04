@@ -15,7 +15,11 @@ vi.mock('node:child_process', () => ({
 }));
 
 vi.mock('node:fs', () => ({
+  existsSync: vi.fn(() => false),
+  lstatSync: vi.fn(),
   mkdirSync: vi.fn(),
+  readFileSync: vi.fn(),
+  realpathSync: vi.fn((value) => value),
 }));
 
 vi.mock('node:net', () => ({
@@ -28,13 +32,15 @@ vi.mock('./agent-process-registry.js', () => ({
 }));
 
 import { spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import { connect, createServer } from 'node:net';
 import { cleanupRegisteredAgentProcesses } from './agent-process-registry.js';
 import {
   buildSpawnArgs,
   buildSpawnEnv,
+  buildOfflineHubSpawnEnv,
   findAvailablePort,
+  isLocalAcceptanceVersion,
   BackendLifecycleManager,
   BackendStartupError,
 } from './backend-launcher.js';
@@ -48,6 +54,10 @@ const APP_META: AppMetadata = {
 };
 
 const APP_META_PACKAGED: AppMetadata = { ...APP_META, isPackaged: true };
+const LOCAL_ACCEPTANCE_META: AppMetadata = {
+  ...APP_META_PACKAGED,
+  version: '3.0.0-local',
+};
 
 function makeFakeServer(port = 54321) {
   const server = new EventEmitter() as EventEmitter & {
@@ -106,11 +116,50 @@ function makeFakeSocket(): Socket {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(existsSync).mockReturnValue(false);
 });
 
 afterEach(() => {
   // Do NOT call restoreAllMocks; it would remove vi.mock() module factories.
   vi.useRealTimers();
+});
+
+describe('buildOfflineHubSpawnEnv', () => {
+  const localManifest = JSON.stringify({
+    $schema: 'tjuae://schemas/hub-offline-resources.v1',
+    schemaVersion: 1,
+    source: {
+      kind: 'localSibling',
+      repository: 'https://github.com/liangboqiang/TjuaeHub',
+      sourceRevision: 'a'.repeat(40),
+    },
+  });
+
+  beforeEach(() => {
+    vi.mocked(existsSync).mockReturnValue(true);
+    vi.mocked(lstatSync).mockReturnValue({
+      isFile: () => true,
+      isSymbolicLink: () => false,
+    } as ReturnType<typeof lstatSync>);
+    vi.mocked(readFileSync).mockReturnValue(localManifest);
+    vi.mocked(realpathSync).mockImplementation((value) => value as string);
+  });
+
+  it('allows the explicitly versioned local acceptance package', () => {
+    expect(buildOfflineHubSpawnEnv(LOCAL_ACCEPTANCE_META)).toMatchObject({
+      TJUAE_HUB_OFFLINE_DEVELOPMENT: '1',
+    });
+  });
+
+  it('rejects local sibling Hub content in a formal package', () => {
+    expect(() => buildOfflineHubSpawnEnv(APP_META_PACKAGED)).toThrow('正式安装包禁止使用本地 sibling TjuaeHub 资源');
+  });
+
+  it('recognizes only the exact local acceptance version suffix', () => {
+    expect(isLocalAcceptanceVersion('3.0.0-local')).toBe(true);
+    expect(isLocalAcceptanceVersion('3.0.0-local.extra')).toBe(false);
+    expect(isLocalAcceptanceVersion('3.0.0')).toBe(false);
+  });
 });
 
 describe('buildSpawnArgs', () => {

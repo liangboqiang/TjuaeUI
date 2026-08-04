@@ -5,6 +5,7 @@
  */
 
 import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
+import canonicalBrandLogo from '@/renderer/assets/logos/brand/app.svg';
 
 export type AssistantAvatar =
   | { kind: 'image'; value: string }
@@ -24,9 +25,20 @@ export function isLikelyLocalFilePath(value: string): boolean {
   return unixLocalPathPrefixes.some((prefix) => value.startsWith(prefix));
 }
 
+export function isTjuaeBrandLogoPath(value: string): boolean {
+  return /\/logos\/brand\/tjuae(?:-cli)?\.(?:png|svg)(?:[?#].*)?$/i.test(value.trim());
+}
+
+export function resolveTjuaeBrandLogoPath(value: string): string {
+  return isTjuaeBrandLogoPath(value) ? canonicalBrandLogo : value;
+}
+
 export function resolveAssistantAvatar(avatar: string | undefined): AssistantAvatar {
   const value = avatar?.trim();
   if (!value) return { kind: 'fallback' };
+  if (isTjuaeBrandLogoPath(value)) {
+    return { kind: 'image', value: canonicalBrandLogo };
+  }
 
   if (isLikelyLocalFilePath(value)) {
     return { kind: 'fallback' };
