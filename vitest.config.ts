@@ -18,6 +18,9 @@ export default defineConfig({
   test: {
     globals: true,
     testTimeout: 10000,
+    // CI 中直接写入原生控制台，避免 worker 退出时仍有
+    // onUserConsoleLog RPC 导致全部断言已通过却以 teardown 错误失败。
+    disableConsoleIntercept: process.env.CI === 'true',
     // Use projects to run different environments (Vitest 4+)
     projects: [
       // Node environment tests (existing tests)
