@@ -54,14 +54,15 @@ describe('发布打包配置', () => {
     expect(workflow).toContain('至少一个目标平台构建失败');
   });
 
-  it('标签发布强制 Windows 与 macOS 正式签名且公证失败不能放行', () => {
+  it('标签发布不以签名凭据为前置条件但保留可选严格签名能力', () => {
     const reusable = readProjectFile('.github/workflows/_build-reusable.yml');
     const release = readProjectFile('.github/workflows/build-and-release.yml');
     const manual = readProjectFile('.github/workflows/build-manual.yml');
     const afterSign = readProjectFile('scripts/afterSign.js');
     const config = readProjectFile('packages/desktop/electron-builder.yml');
 
-    expect(release).toContain('require_distribution_signing: true');
+    expect(release).toContain('require_distribution_signing: false');
+    expect(release).not.toContain('require_distribution_signing: true');
     expect(reusable).toContain('require_distribution_signing:');
     expect(reusable).toContain('WINDOWS_CERTIFICATE_BASE64');
     expect(reusable).toContain('CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}');

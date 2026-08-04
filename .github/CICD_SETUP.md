@@ -42,7 +42,7 @@ TjuaeUI 使用 GitHub Actions 完成代码门禁、多平台构建、Web CLI 打
    ```
 
 3. `build-and-release.yml` 构建全平台产物并创建草稿 Release。
-4. 维护者核对签名、安装、启动、自动更新元数据和哈希后发布 Release。
+4. 维护者核对安装、启动、自动更新元数据和哈希后发布 Release；如配置了代码签名，再核对签名结果。
 5. 发布后由用户和客户端直接从 GitHub Releases 获取产物，不再创建额外镜像。
 
 工作流生成的是草稿 Release，不会自动向用户发布。
@@ -70,7 +70,7 @@ TjuaeUI 使用 GitHub Actions 完成代码门禁、多平台构建、Web CLI 打
 - `P12_PASSWORD`
 - electron-builder 公证所需的 Apple 凭据
 
-未配置证书时可生成未签名应用，但不能作为正式 macOS 发布物。
+未配置证书时生成未签名应用；这不会阻塞本方案的版本发布，但系统可能在首次启动时显示安全警告。
 
 ## 权限与环境
 
@@ -102,7 +102,7 @@ TjuaeUI 使用 GitHub Actions 完成代码门禁、多平台构建、Web CLI 打
 
 ### macOS 签名或公证失败
 
-检查证书、密码、Apple 凭据和 runner 钥匙串日志。工作流可能保留已生成的 DMG 并标记公证警告，但公证失败的产物不能直接作为正式发布物。
+检查证书、密码、Apple 凭据和 runner 钥匙串日志。未启用签名增强时无需配置这些凭据；启用后，工作流会严格验证签名和公证结果。
 
 ### 发布创建失败
 

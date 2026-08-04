@@ -45,7 +45,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-all.ps1 -Skip
 | 仓库      | 版本    |
 | --------- | ------- |
 | TjuaeCLI  | `0.4.0` |
-| TjuaeCore | `0.3.0` |
+| TjuaeCore | `0.3.1` |
 | TjuaeHub  | `0.2.0` |
 | TjuaeUI   | `4.0.0` |
 
@@ -58,11 +58,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-all.ps1 -Skip
 
 1. **CLI**：提交并推送，通过远端门禁后创建 `v0.4.0`；记录完整提交 SHA。
 2. **Core**：把全部 TjuaeCLI Git 依赖固定到该 SHA，更新锁文件，提交并推送，通过远端门禁后
-   创建 `v0.3.0`，等待六平台 Release 产物和校验和完整。
+   创建 `v0.3.1`，等待六平台 Release 产物和校验和完整。
 3. **Hub**：提交并推送 `main`；等待 `build-assets.yml` 将 Index v2、原子 ZIP 和离线种子发布到
    `dist`，并创建 `dist-<main短SHA>` 标签。记录 `dist` 的完整 SHA，验证索引
    `metadata.sourceRevision` 等于 Hub main SHA。
-4. **UI**：固定 `tjuaeCoreVersion=v0.3.0` 和 `tjuaeHubRef=<dist完整SHA>`，重新生成离线种子并
+4. **UI**：固定 `tjuaeCoreVersion=v0.3.1` 和 `tjuaeHubRef=<dist完整SHA>`，重新生成离线种子并
    验证安装包；提交并推送，通过门禁后创建 `v4.0.0`。
 5. **根仓**：更新四个 gitlink 到上述已发布提交，提交并推送根仓。
 
@@ -73,15 +73,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-all.ps1 -Skip
 
 ```powershell
 $env:TJUAE_GITHUB_APP_CLIENT_ID = '<真实 GitHub App Client ID>'
+$env:TJUAE_GITHUB_APP_INSTALLATION_URL = 'https://github.com/apps/<真实-slug>/installations/new'
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-release-readiness.ps1 -Mode Published
 ```
 
 随后必须验证：
 
-- Windows 安装器、桌面主程序、随包 Core 等可执行文件的 Authenticode 签名有效；
-- macOS 应用的 Developer ID 签名、公证和装订有效；
 - 独立干净机器离线冷启动成功，市场显示 9 个助手、1 个引擎适配器、6 个技能、1 个 MCP；
 - 市场安装/同步/冲突/解除跟踪/卸载、四类配置/试跑/启停、Trace 和真实 GitHub PR 流程通过；
 - 安装目录、用户目录和市场包均不存在被分发的第三方 CLI。
 
-任一项缺少直接证据时，正式发布验收都必须保持阻断。
+任一项缺少直接证据时，正式发布验收都必须保持阻断。代码签名和 macOS 公证是可选的公开
+分发增强，不作为本方案的验收条件；如维护者以后启用，仍须通过工作流中的严格验证。
