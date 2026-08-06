@@ -245,6 +245,11 @@ describe('AssistantEditorSections', () => {
 
     const defaultsCard = screen.getByTestId('assistant-card-defaults');
     const defaultsScope = within(defaultsCard);
+    const agentSelector = screen.getByTestId('select-assistant-agent');
+    expect(defaultsCard).toContainElement(agentSelector);
+    expect(screen.queryByTestId('assistant-card-engine')).not.toBeInTheDocument();
+    const modelSelector = screen.getByTestId('select-assistant-default-model');
+    expect(agentSelector.compareDocumentPosition(modelSelector) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(defaultsScope.getByText('Model')).toBeInTheDocument();
     expect(defaultsScope.getByText('Permission')).toBeInTheDocument();
     expect(defaultsScope.getByText('Skills')).toBeInTheDocument();

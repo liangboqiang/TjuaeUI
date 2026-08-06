@@ -2,7 +2,7 @@ import type { BuiltinAutoSkill, SkillInfo } from '../types';
 import type { IMcpServer } from '@/common/config/storage';
 import { DROPDOWN_SEARCH_THRESHOLD } from '@/renderer/components/agent/runtimeSelectorOptions';
 import { Button, Select, Tooltip } from '@arco-design/web-react';
-import { Brain, Lightning, LinkCloud, Shield, Toolkit } from '@icon-park/react';
+import { Brain, Lightning, LinkCloud, Robot, Shield, Toolkit } from '@icon-park/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -68,6 +68,7 @@ type DefaultsSectionProps = {
   selectedItemsLabel: (count: number) => string;
   autoDefaultOptionLabel: string;
   readonlySelectionSummary: (items: string[], emptyLabel: string) => string;
+  agentSelector: React.ReactNode;
 };
 
 const DefaultsSection: React.FC<DefaultsSectionProps> = ({
@@ -104,6 +105,7 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
   selectedItemsLabel,
   autoDefaultOptionLabel,
   readonlySelectionSummary,
+  agentSelector,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -124,6 +126,16 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
       testId='assistant-card-defaults'
     >
       <div className='space-y-16px'>
+        <ConfigRow
+          icon={<Robot theme='outline' size='14' />}
+          label={t('settings.assistantMainAgent', { defaultValue: 'Agent' })}
+          hint={t('settings.assistantEngineAffectsDefaults', {
+            defaultValue: 'Changing the agent updates the available model and permission values.',
+          })}
+        >
+          {agentSelector}
+        </ConfigRow>
+
         <ConfigRow
           icon={<LinkCloud theme='outline' size='14' />}
           label={t('settings.assistantDefaultModelLabel', { defaultValue: 'Model' })}

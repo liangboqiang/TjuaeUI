@@ -1,6 +1,6 @@
 import type { IMcpServer } from '@/common/config/storage';
 import React, { useEffect, useState } from 'react';
-import JsonImportModal from './JsonImportModal';
+import ManualMcpServerModal from './ManualMcpServerModal';
 import OneClickImportModal from './OneClickImportModal';
 
 interface AddMcpServerModalProps {
@@ -12,7 +12,7 @@ interface AddMcpServerModalProps {
   onBatchImport?: (
     servers: Omit<IMcpServer, 'id' | 'created_at' | 'updated_at'>[]
   ) => Promise<IMcpServer[] | void> | IMcpServer[] | void;
-  importMode?: 'json' | 'oneclick';
+  importMode?: 'manual' | 'oneclick';
 }
 
 const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
@@ -22,28 +22,28 @@ const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
   onCancel,
   onSubmit,
   onBatchImport,
-  importMode = 'json',
+  importMode = 'manual',
 }) => {
-  const [showJsonModal, setShowJsonModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
   const [showOneClickModal, setShowOneClickModal] = useState(false);
 
   useEffect(() => {
     if (visible && !server) {
-      if (importMode === 'json') {
-        setShowJsonModal(true);
+      if (importMode === 'manual') {
+        setShowManualModal(true);
       } else if (importMode === 'oneclick') {
         setShowOneClickModal(true);
       }
     } else if (visible && server) {
-      setShowJsonModal(true);
+      setShowManualModal(true);
     } else if (!visible) {
-      setShowJsonModal(false);
+      setShowManualModal(false);
       setShowOneClickModal(false);
     }
   }, [visible, server, importMode]);
 
   const handleModalCancel = () => {
-    setShowJsonModal(false);
+    setShowManualModal(false);
     setShowOneClickModal(false);
     onCancel();
   };
@@ -52,12 +52,12 @@ const AddMcpServerModal: React.FC<AddMcpServerModalProps> = ({
 
   return (
     <>
-      <JsonImportModal
-        visible={showJsonModal}
+      <ManualMcpServerModal
+        visible={showManualModal}
         server={server}
+        existingServerNames={existingServerNames}
         onCancel={handleModalCancel}
         onSubmit={onSubmit}
-        onBatchImport={onBatchImport}
       />
       <OneClickImportModal
         visible={showOneClickModal}

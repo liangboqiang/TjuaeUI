@@ -240,10 +240,6 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
     }
   }, [highlightName, loading, availableSkills, setSearchParams]);
 
-  const showImportHistory = useCallback(() => {
-    void navigate('/settings/skills/import-history');
-  }, [navigate]);
-
   const showSkillList = useCallback(() => {
     void navigate('/settings/skills');
   }, [navigate]);
@@ -553,13 +549,14 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                 })}
               </p>
             </div>
-            <button
+            <Button
               data-testid='btn-back-to-skills'
-              className='flex items-center justify-center px-14px py-7px bg-base border border-border-1 hover:border-border-2 hover:bg-fill-1 text-t-primary rd-8px shadow-sm transition-all focus:outline-none shrink-0 cursor-pointer whitespace-nowrap text-13px font-medium'
+              type='outline'
+              className='!rounded-8px shrink-0'
               onClick={showSkillList}
             >
               {t('settings.skillsHub.backToSkills', { defaultValue: 'Back to skills' })}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -850,9 +847,13 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
               {!batchMode && (
                 <div className='shrink-0 sm:self-center flex items-center justify-end gap-10px mt-12px sm:mt-0 pl-4px'>
                   <SkillUsedByStack assistants={getAssistantsUsingSkill(skill.name, assistantCatalog ?? [])} />
-                  <button
+                  <Button
                     data-testid={`btn-delete-${normalizeTestId(skill.name)}`}
-                    className='p-8px hover:bg-danger-1 hover:text-danger-6 text-t-tertiary rd-6px outline-none flex items-center justify-center border border-transparent cursor-pointer transition-colors shadow-sm bg-base sm:bg-transparent sm:shadow-none opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity'
+                    type='text'
+                    status='danger'
+                    size='small'
+                    icon={<Delete size={16} />}
+                    className='!rounded-8px opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity'
                     onClick={(e) => {
                       e.stopPropagation();
                       Modal.confirm({
@@ -868,9 +869,7 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
                       });
                     }}
                     title={t('common.delete', { defaultValue: 'Delete' })}
-                  >
-                    <Delete size={16} />
-                  </button>
+                  />
                 </div>
               )}
             </div>
@@ -959,15 +958,6 @@ const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = tru
           <>
             {/* Mobile: the actions row is too crowded — drop the search box entirely. */}
             {!isMobile && searchBox('input-search-my-skills')}
-            <Button
-              type='text'
-              size='small'
-              data-testid='btn-open-import-history'
-              className='!text-t-secondary hover:!text-t-primary !px-8px'
-              onClick={showImportHistory}
-            >
-              {t('settings.skillsHub.importHistoryTitle', { defaultValue: 'Import history' })}
-            </Button>
             <TalkToButlerButton
               label={t('settings.skillsHub.addSkill', { defaultValue: 'Add Skill' })}
               chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: 'Add via chat' })}

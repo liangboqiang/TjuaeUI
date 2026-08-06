@@ -10,7 +10,7 @@ import { ipcBridge } from '@/common';
 import { uuid } from '@/common/utils';
 import { isGoogleApisHost } from '@/common/utils/urlValidation';
 import ModalHOC from '@/renderer/utils/ui/ModalHOC';
-import { Form, Input, Message, Select, Switch } from '@arco-design/web-react';
+import { Button, Form, Input, Message, Select, Switch } from '@arco-design/web-react';
 import { LinkCloud, Loading, PreviewOpen, Refresh, Search } from '@icon-park/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -133,9 +133,10 @@ const ProtocolDetectionStatus: React.FC<ProtocolDetectionStatusProps> = ({
           </div>
 
           {showSwitchButton && onSwitchPlatform && (
-            <button
-              type='button'
-              className='shrink-0 px-8px py-2px rounded-4px text-11px font-medium transition-colors'
+            <Button
+              type='text'
+              size='mini'
+              className='!h-auto !rounded-6px !px-8px !py-2px shrink-0 !text-11px'
               style={{
                 backgroundColor: iconConfig.bgColor,
                 color: iconConfig.color,
@@ -143,7 +144,7 @@ const ProtocolDetectionStatus: React.FC<ProtocolDetectionStatusProps> = ({
               onClick={() => onSwitchPlatform(suggestion.suggestedPlatform!)}
             >
               {t('settings.switchPlatform')}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -477,18 +478,18 @@ const AddPlatformModal = ModalHOC<{
               <span className='inline-flex items-center gap-4px'>
                 {t('settings.apiEndpoint', 'API 请求地址')}
                 {selectedPlatform?.base_url && !isFullUrl && (
-                  <button
-                    type='button'
+                  <Button
+                    type='text'
+                    size='mini'
                     aria-label={t('settings.baseUrlResetToDefault', 'Reset to default')}
                     title={t('settings.baseUrlResetToDefault', 'Reset to default')}
-                    className='inline-flex items-center justify-center border-none bg-transparent p-0 cursor-pointer text-t-tertiary hover:text-primary-6'
+                    className='!h-22px !w-22px !p-0 !text-t-tertiary hover:!text-primary-6'
+                    icon={<Refresh theme='outline' size={14} />}
                     onClick={() => {
                       form.setFieldValue('base_url', selectedPlatform.base_url ?? '');
                       void modelListState.mutate();
                     }}
-                  >
-                    <Refresh theme='outline' size={14} />
-                  </button>
+                  />
                 )}
               </span>
             }

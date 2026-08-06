@@ -1,4 +1,3 @@
-
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -50,6 +49,7 @@ vi.mock('@arco-design/web-react', () => {
 const renderDefaultsSection = () =>
   render(
     <DefaultsSection
+      agentSelector={<span data-testid='agent-selector'>Agent selector</span>}
       localeKey='en-US'
       isBuiltin={false}
       isReadOnlyAssistant={false}

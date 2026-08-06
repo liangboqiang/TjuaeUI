@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -108,8 +107,8 @@ vi.mock('@arco-design/web-react', () => {
   };
 });
 
-vi.mock('@/renderer/pages/settings/components/JsonImportModal', () => ({
-  default: ({ visible }: { visible: boolean }) => (visible ? <div data-testid='json-import-modal' /> : null),
+vi.mock('@/renderer/pages/settings/components/ManualMcpServerModal', () => ({
+  default: ({ visible }: { visible: boolean }) => (visible ? <div data-testid='manual-mcp-modal' /> : null),
 }));
 
 vi.mock('@/renderer/pages/settings/components/OneClickImportModal', async () => {
@@ -128,6 +127,22 @@ describe('MCP import flows', () => {
     getAgentMcpConfigsInvoke.mockResolvedValue([]);
     getManagedAgents.mockReset();
     getManagedAgents.mockResolvedValue([]);
+  });
+
+  it('opens the structured manual form instead of the raw JSON editor', async () => {
+    render(
+      <AddMcpServerModal
+        visible
+        existingServerNames={[]}
+        importMode='manual'
+        onCancel={vi.fn()}
+        onSubmit={vi.fn()}
+        onBatchImport={vi.fn()}
+      />
+    );
+
+    expect(await screen.findByTestId('manual-mcp-modal')).toBeInTheDocument();
+    expect(screen.queryByTestId('json-import-modal')).not.toBeInTheDocument();
   });
 
   it('opens the requested one-click import modal without probing managed agents first', async () => {

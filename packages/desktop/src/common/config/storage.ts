@@ -1,4 +1,3 @@
-
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
 import { buildStorage } from '@/common/platform/storage';
 
@@ -496,7 +495,7 @@ export type TProviderWithModel = Omit<IProvider, 'models'> & {
 };
 
 // MCP Server Configuration Types
-export type McpTransportType = 'stdio' | 'sse' | 'http';
+export type McpTransportType = 'stdio' | 'streamable_http' | 'sse';
 
 export interface IMcpServerTransportStdio {
   type: 'stdio';
@@ -512,6 +511,7 @@ export interface IMcpServerTransportSSE {
 }
 
 export interface IMcpServerTransportHTTP {
+  /** @deprecated Read-only compatibility shape. Normalize to streamable_http before saving. */
   type: 'http';
   url: string;
   headers?: Record<string, string>;
@@ -524,10 +524,7 @@ export interface IMcpServerTransportStreamableHTTP {
 }
 
 export type IMcpServerTransport =
-  | IMcpServerTransportStdio
-  | IMcpServerTransportSSE
-  | IMcpServerTransportHTTP
-  | IMcpServerTransportStreamableHTTP;
+  IMcpServerTransportStdio | IMcpServerTransportSSE | IMcpServerTransportHTTP | IMcpServerTransportStreamableHTTP;
 
 export interface IMcpServer {
   id: string;
@@ -537,6 +534,10 @@ export interface IMcpServer {
   transport: IMcpServerTransport;
   tools?: IMcpTool[];
   last_test_status?: 'connected' | 'disconnected' | 'error' | 'testing'; // 最近一次检测结果
+  /** Ephemeral diagnostic fields from the latest test; never contain credentials. */
+  last_test_code?: string;
+  last_test_error?: string;
+  last_test_details?: Record<string, unknown>;
   last_connected?: number;
   created_at: number;
   updated_at: number;

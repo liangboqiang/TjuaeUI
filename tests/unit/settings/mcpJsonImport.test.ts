@@ -82,7 +82,7 @@ describe('parseMcpJsonImport', () => {
     });
   });
 
-  it('maps streamable_http to http for the backend contract', () => {
+  it('keeps streamable_http as the normalized backend contract', () => {
     const result = parseMcpJsonImport({
       mcpServers: {
         docs: {
@@ -100,7 +100,7 @@ describe('parseMcpJsonImport', () => {
           name: 'docs',
           description: 'Imported from JSON',
           transport: {
-            type: 'http',
+            type: 'streamable_http',
             url: 'https://example.com/mcp',
             headers: { Authorization: 'Bearer token' },
           },

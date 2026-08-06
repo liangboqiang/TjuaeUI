@@ -108,7 +108,7 @@ const parseTransport = (
     return { isValid: false, errorKey: 'settings.mcpJsonUrlRequiredError' };
   }
 
-  const normalizedType = transportType === 'sse' || url.includes('/sse') ? 'sse' : 'http';
+  const normalizedType = transportType === 'sse' || url.includes('/sse') ? 'sse' : 'streamable_http';
   return {
     isValid: true,
     transport: {

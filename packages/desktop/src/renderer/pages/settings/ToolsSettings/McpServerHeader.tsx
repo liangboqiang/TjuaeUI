@@ -1,5 +1,5 @@
 import type { IMcpServer } from '@/common/config/storage';
-import { Button, Dropdown, Menu, Popover, Tooltip } from '@arco-design/web-react';
+import { Button, Dropdown, Menu, Popover, Tag, Tooltip } from '@arco-design/web-react';
 import { Check, CloseSmall, Info, LoadingOne, Refresh, Write, DeleteFour, SettingOne, Login } from '@icon-park/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +55,29 @@ const formatStatusTimestamp = (timestamp?: number): string | null => {
   return new Date(timestamp).toLocaleString();
 };
 
+const getTransportLabel = (server: IMcpServer): string => {
+  if (server.transport.type === 'stdio') return 'STDIO';
+  if (server.transport.type === 'sse') return 'SSE';
+  return 'Streamable HTTP';
+};
+
+const getDiagnosticStageKey = (server: IMcpServer): string => {
+  const stage = typeof server.last_test_details?.stage === 'string' ? server.last_test_details.stage : '';
+  if (server.last_test_status === 'connected') return 'settings.mcpStageToolDiscovery';
+  if (server.last_test_code === 'MCP_HTTP_ERROR' && Number(server.last_test_details?.status) === 401) {
+    return 'settings.mcpStageAuthentication';
+  }
+  if (stage.includes('tools_list')) return 'settings.mcpStageToolDiscovery';
+  if (
+    stage.includes('initialize') ||
+    server.last_test_code === 'MCP_PROTOCOL_ERROR' ||
+    server.last_test_code === 'MCP_RPC_ERROR'
+  ) {
+    return 'settings.mcpStageProtocol';
+  }
+  return 'settings.mcpStageEndpoint';
+};
+
 const getStatusPopoverContent = (
   server: IMcpServer,
   t?: (key: string, options?: Record<string, unknown>) => string
@@ -69,6 +92,11 @@ const getStatusPopoverContent = (
       <div className='max-w-300px space-y-2 text-13px leading-20px'>
         <div className='font-medium text-t-primary'>
           {t?.('settings.mcpCheckPassedSummary') || 'Manual check passed'}
+        </div>
+        <div className='text-12px leading-18px text-t-secondary'>
+          {t?.('settings.mcpDiagnosticPassed', {
+            stage: t?.(getDiagnosticStageKey(server)) || 'Tool discovery',
+          }) || 'Endpoint, authentication, protocol negotiation and tool discovery passed.'}
         </div>
         {checkedAt ? (
           <div className='text-12px leading-18px text-t-secondary'>{`${t?.('settings.mcpCheckedAtLabel') || 'Checked at:'} ${checkedAt}`}</div>
@@ -93,7 +121,13 @@ const getStatusPopoverContent = (
   return (
     <div className='max-w-300px space-y-2 text-13px leading-20px'>
       <div className='font-medium text-t-primary'>{t?.('settings.mcpCheckFailedSummary') || 'Manual check failed'}</div>
+      <div className='text-12px leading-18px text-t-secondary'>
+        {`${t?.('settings.mcpDiagnosticStage') || 'Stage'}: ${t?.(getDiagnosticStageKey(server)) || 'Endpoint'}`}
+      </div>
       <div className='text-t-primary'>{reasonText}</div>
+      {server.last_test_error ? (
+        <div className='text-12px leading-18px text-t-secondary'>{server.last_test_error}</div>
+      ) : null}
       {checkedAt ? (
         <div className='text-12px leading-18px text-t-secondary'>{`${t?.('settings.mcpCheckedAtLabel') || 'Checked at:'} ${checkedAt}`}</div>
       ) : null}
@@ -164,8 +198,11 @@ const McpServerHeader: React.FC<McpServerHeaderProps> = ({
 
   return (
     <div className='flex items-center justify-between group'>
-      <div className='flex items-center gap-2'>
-        <span>{server.name}</span>
+      <div className='flex min-w-0 items-center gap-2'>
+        <span className='truncate font-500 text-t-primary'>{server.name}</span>
+        <Tag size='small' color={server.transport.type === 'sse' ? 'orange' : 'arcoblue'}>
+          {getTransportLabel(server)}
+        </Tag>
         {statusPopoverContent ? (
           <Popover content={statusPopoverContent} trigger='hover' position='top'>
             <span className='flex items-center cursor-default'>{statusIcon}</span>

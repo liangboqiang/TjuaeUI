@@ -63,7 +63,7 @@ describe('configMigration', () => {
       expect(configFile.set).not.toHaveBeenCalled();
     });
 
-    it('collects multiple legacy keys and sends one PUT with merge strategy', async () => {
+    it('migrates supported legacy keys and ignores the removed image-theme key', async () => {
       const configFile: ConfigFile = {
         get: vi.fn((key: string) => {
           if (key === 'language') return Promise.resolve('zh-CN');
@@ -82,7 +82,6 @@ describe('configMigration', () => {
 
       expect(httpRequest).toHaveBeenCalledWith('PUT', '/api/settings/client', {
         language: 'zh-CN',
-        theme: 'dark',
       });
       expect(configFile.set).not.toHaveBeenCalled();
     });

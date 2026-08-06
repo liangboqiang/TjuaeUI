@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IProvider } from '@/common/config/storage';
 import { supportsOpenAiApiMode } from '@/common/utils/modelCapabilities';
@@ -274,31 +273,6 @@ const ModelModalContent: React.FC = () => {
     }
   };
 
-  const clearAllHealthData = () => {
-    if (!data) return;
-    const nextArray: IProvider[] = data.map((platform: IProvider) => ({
-      ...platform,
-      model_health: undefined as IProvider['model_health'],
-    }));
-    void mutate(nextArray, false);
-
-    Promise.all(
-      (data || []).map((platform) => ipcBridge.mode.updateProvider.invoke({ id: platform.id, model_health: {} }))
-    )
-      .then(() => {
-        void mutate();
-        Message.success({
-          content: t('settings.healthStatusCleared'),
-          duration: 2000,
-        });
-      })
-      .catch((error) => {
-        void mutate();
-        console.error('Failed to clear health status:', error);
-        message.error(t('settings.saveModelConfigFailed'));
-      });
-  };
-
   const [addPlatformModalCtrl, addPlatformModalContext] = AddPlatformModal.useModal({
     onSubmit(platform) {
       updatePlatform(platform, () => {
@@ -333,9 +307,6 @@ const ModelModalContent: React.FC = () => {
 
   const headerActions = (
     <>
-      <Button type='text' size='small' onClick={clearAllHealthData} className='!text-t-secondary hover:!text-t-primary'>
-        {t('settings.clearStatus')}
-      </Button>
       <TalkToButlerButton
         label={t('settings.addModel')}
         chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: 'Add via chat' })}

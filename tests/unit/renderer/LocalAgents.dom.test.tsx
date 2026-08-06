@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 
 // t() echoes the key so section labels/buttons are assertable.
@@ -204,7 +204,7 @@ describe('LocalAgents', () => {
     });
   });
 
-  it('reads the managed-agents view and renders detected + custom sections', () => {
+  it('reads the managed-agents view, keeps custom agents, and hides uninstalled third-party CLIs', () => {
     useManagedAgents.mockReturnValue({
       agents: makeAgents(),
       revalidate: vi.fn(),
@@ -213,10 +213,11 @@ describe('LocalAgents', () => {
 
     render(<LocalAgents />);
 
-    // Proves L30 (useManagedAgents) ran and fed the derived lists.
+    // The management hook still receives the complete scan result, while the
+    // primary list omits third-party CLIs that are not installed.
     expect(useManagedAgents).toHaveBeenCalled();
     expect(screen.getByText('Tjuae CLI')).toBeTruthy();
-    expect(screen.getByText('Claude Code')).toBeTruthy();
+    expect(screen.queryByText('Claude Code')).toBeNull();
     expect(screen.getByText('My Agent')).toBeTruthy();
   });
 
@@ -225,12 +226,12 @@ describe('LocalAgents', () => {
 
     render(<LocalAgents />);
 
-    expect(screen.getByText('settings.agentManagement.localAgentsEmpty')).toBeTruthy();
-    expect(screen.getByText('settings.agentManagement.customAgents')).toBeTruthy();
-    expect(screen.getByText('settings.agentManagement.customEmpty')).toBeTruthy();
+    expect(screen.getByTestId('agent-management-list')).toBeInTheDocument();
+    expect(screen.getByText('settings.agentManagement.groupEmpty')).toBeTruthy();
+    expect(screen.queryByText('settings.agentManagement.groupNative')).toBeNull();
   });
 
-  it('renders official/custom sections with management statuses and removes the chat shortcut', () => {
+  it('renders a unified list with detailed management statuses and removes the chat shortcut', () => {
     useManagedAgents.mockReturnValue({
       agents: makeAgents(),
       revalidate: vi.fn(),
@@ -240,13 +241,12 @@ describe('LocalAgents', () => {
     render(<LocalAgents />);
 
     expect(screen.getByText('settings.agents')).toBeTruthy();
-    expect(screen.getByText('settings.agentManagement.customAgents')).toBeTruthy();
-    // Only Claude Code shows 'missing' now; openclaw-gateway is filtered out as deprecated
-    expect(screen.getAllByText('settings.agentManagement.statusMissing')).not.toHaveLength(0);
-    expect(screen.getAllByText('settings.agentManagement.statusOffline')).not.toHaveLength(0);
+    expect(screen.getByTestId('agent-management-list')).toBeTruthy();
+    expect(screen.getAllByText('settings.agentManagement.statusConnectionFailed')).not.toHaveLength(0);
     expect(screen.queryByText('settings.agentManagement.goToChat')).toBeNull();
-    // Verify deprecated agent is filtered out
+    // Deprecated and uninstalled third-party agents are both absent from the primary list.
     expect(screen.queryByText('OpenClaw Gateway')).toBeNull();
+    expect(screen.queryByText('Claude Code')).toBeNull();
   });
 
   it('shows a lightweight refresh hint while the management view is revalidating', () => {
@@ -263,7 +263,7 @@ describe('LocalAgents', () => {
     expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
   });
 
-  it('renders official agents as diagnostics cards and filters out deprecated types', () => {
+  it('renders supported agents as diagnostics rows and filters out deprecated or uninstalled types', () => {
     useManagedAgents.mockReturnValue({
       agents: makeAgents(),
       revalidate: vi.fn(),
@@ -274,12 +274,13 @@ describe('LocalAgents', () => {
 
     // Agent names render
     expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
-    expect(screen.getByText('Claude Code')).toBeInTheDocument();
-    // Deprecated openclaw-gateway agent is filtered out
+    expect(screen.getByText('My Agent')).toBeInTheDocument();
+    // Deprecated and uninstalled third-party agents are filtered out.
+    expect(screen.queryByText('Claude Code')).toBeNull();
     expect(screen.queryByText('OpenClaw Gateway')).toBeNull();
     // Status tags render
     expect(screen.getAllByText('settings.agentManagement.statusOnline')).not.toHaveLength(0);
-    expect(screen.getAllByText('settings.agentManagement.statusMissing')).not.toHaveLength(0);
+    expect(screen.getAllByText('settings.agentManagement.statusConnectionFailed')).not.toHaveLength(0);
   });
 
   it('does not render the market-install CTA in the diagnostics-only agent page', () => {
@@ -367,7 +368,9 @@ describe('LocalAgents', () => {
   it('keeps the internal agent first and sorts other built-in agents by name', () => {
     useManagedAgents.mockReturnValue({
       agents: [
-        ...makeAgents(),
+        ...makeAgents().map((agent) =>
+          agent.id === 'acp-claude' ? { ...agent, installed: true, status: 'online' } : agent
+        ),
         {
           id: 'acp-kimi',
           name: 'Kimi',
@@ -376,8 +379,8 @@ describe('LocalAgents', () => {
           backend: 'kimi',
           enabled: true,
           available: false,
-          installed: false,
-          status: 'missing',
+          installed: true,
+          status: 'online',
         },
       ],
       revalidate: vi.fn(),
@@ -395,7 +398,7 @@ describe('LocalAgents', () => {
     expect(kimi.compareDocumentPosition(claude) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
-  it('renders agent management as a single diagnostics page without local/remote tabs', () => {
+  it('renders the agreed scope tabs without changing the settings route', () => {
     useManagedAgents.mockReturnValue({
       agents: makeAgents(),
       revalidate: vi.fn(),
@@ -411,7 +414,11 @@ describe('LocalAgents', () => {
     );
 
     expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
-    expect(screen.queryByText('settings.agentManagement.localAgents')).toBeNull();
+    expect(screen.getByTestId('settings-tab-all')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-tab-builtin')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-tab-local')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-tab-remote')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-tab-disabled')).toBeInTheDocument();
   });
 
   it('surfaces custom-agent toggle failures to the user', async () => {
@@ -439,7 +446,7 @@ describe('LocalAgents', () => {
     expect(refreshCatalog).not.toHaveBeenCalled();
   });
 
-  it('renders the availability filter as underline tabs and switches the visible official agents', () => {
+  it('keeps search in the shared header and health actions in the diagnostics strip', () => {
     useManagedAgents.mockReturnValue({
       agents: makeAgents(),
       revalidate: vi.fn(),
@@ -448,24 +455,13 @@ describe('LocalAgents', () => {
 
     render(<LocalAgents />);
 
-    // Filter tabs render as buttons (underline-tab style), not an Arco radio group.
-    const allTab = screen.getByTestId('settings-tab-all');
-    const availableTab = screen.getByTestId('settings-tab-online');
-    const unavailableTab = screen.getByTestId('settings-tab-missing');
-    expect(allTab.tagName).toBe('BUTTON');
-
-    // Default "all": both official agents visible (Tjuae CLI online, Claude Code missing).
-    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
-    expect(screen.getByText('Claude Code')).toBeInTheDocument();
-
-    // "available" keeps only the online agent.
-    fireEvent.click(availableTab);
-    expect(screen.getByText('Tjuae CLI')).toBeInTheDocument();
-    expect(screen.queryByText('Claude Code')).toBeNull();
-
-    // "unavailable" keeps only the non-online agent.
-    fireEvent.click(unavailableTab);
-    expect(screen.queryByText('Tjuae CLI')).toBeNull();
-    expect(screen.getByText('Claude Code')).toBeInTheDocument();
+    const header = screen.getByTestId('agent-management-header');
+    const scanPanel = screen.getByTestId('agent-scan-panel');
+    expect(within(header).getByTestId('input-search-agents')).toBeInTheDocument();
+    expect(within(scanPanel).getByTestId('btn-test-all-agents')).toBeInTheDocument();
+    expect(within(scanPanel).queryByTestId('input-search-agents')).toBeNull();
+    expect(within(screen.getByTestId('agent-management-list')).getByText('Tjuae CLI')).toBeInTheDocument();
+    expect(within(screen.getByTestId('agent-management-list')).getByText('My Agent')).toBeInTheDocument();
+    expect(screen.queryByText('OpenClaw Gateway')).toBeNull();
   });
 });

@@ -1,4 +1,3 @@
-
 /**
  * SettingsPageHeader — the shared header paradigm for settings pages.
  *
@@ -13,6 +12,7 @@
 
 import classNames from 'classnames';
 import React from 'react';
+import { Button } from '@arco-design/web-react';
 
 export type SettingsPageTab = {
   key: string;
@@ -62,15 +62,15 @@ const SettingsPageHeader: React.FC<SettingsPageHeaderProps> = ({
           {tabs.map((tab) => {
             const isActive = tab.key === activeTab;
             return (
-              <button
+              <Button
                 key={tab.key}
-                type='button'
+                type='text'
                 role='tab'
                 aria-selected={isActive}
                 data-testid={`settings-tab-${tab.key}`}
                 onClick={() => onTabChange?.(tab.key)}
                 className={classNames(
-                  'relative inline-flex cursor-pointer items-center border-none bg-transparent px-2px pb-12px text-14px leading-none transition-colors',
+                  '!relative !h-auto !rounded-none !border-none !bg-transparent !px-2px !pb-12px !pt-0 !text-14px !leading-none transition-colors',
                   isActive ? 'font-600 text-t-primary' : 'font-500 text-t-tertiary hover:text-t-secondary'
                 )}
               >
@@ -86,7 +86,7 @@ const SettingsPageHeader: React.FC<SettingsPageHeaderProps> = ({
                   </span>
                 ) : null}
                 {isActive ? <span className='absolute inset-x-0 -bottom-1px h-2px rounded-2px bg-primary-6' /> : null}
-              </button>
+              </Button>
             );
           })}
         </div>

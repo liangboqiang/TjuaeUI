@@ -43,4 +43,11 @@ describe('arco tooltip and popover overlay styles', () => {
     expect(css).not.toContain('.arco-popover-inner,');
     expect(css).not.toContain('.arco-tooltip-inner,');
   });
+
+  it('keeps selected button-style radio text legible in dark mode', () => {
+    const css = fs.readFileSync(arcoOverridePath, 'utf8');
+
+    expect(css).toContain("body[arco-theme='dark'] .arco-radio-button.arco-radio-checked {");
+    expect(css).toContain('color: var(--text-primary) !important;');
+  });
 });

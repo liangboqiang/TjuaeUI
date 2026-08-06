@@ -2,12 +2,10 @@ import { mcpService } from '@/common/adapter/ipcBridge';
 import type { IMcpServer, IMcpServerTransport, ISessionMcpServer } from '@/common/config/storage';
 import { getClientBusinessSetting } from '@/renderer/services/clientBusinessSettings';
 
-type BackendMcpTransport = Exclude<IMcpServerTransport, { type: 'streamable_http' }>;
-
 type BackendMcpPayload = {
   name: string;
   description?: string;
-  transport: BackendMcpTransport;
+  transport: Exclude<IMcpServerTransport, { type: 'http' }>;
   original_json: string;
   builtin?: boolean;
 };
@@ -40,10 +38,12 @@ const dedupeServers = (servers: IMcpServer[]) => {
   return deduped;
 };
 
-const normalizeTransportForBackend = (transport: IMcpServerTransport): BackendMcpTransport => {
-  if (transport.type === 'streamable_http') {
+const normalizeTransportForBackend = (
+  transport: IMcpServerTransport
+): Exclude<IMcpServerTransport, { type: 'http' }> => {
+  if (transport.type === 'http') {
     return {
-      type: 'http',
+      type: 'streamable_http',
       url: transport.url,
       headers: transport.headers,
     };

@@ -10,6 +10,8 @@ import {
   formatManagedAgentDiagnosticMessage,
 } from '@/renderer/utils/model/agentTypes';
 import { BoundAssistantStack } from './BoundAssistants';
+import { buildAgentRuntimeModelInfo } from '@/renderer/utils/model/agentRuntimeCatalog';
+import SettingsStatus, { type SettingsStatusTone } from '../components/management/SettingsStatus';
 
 type AgentCardProps =
   | {
@@ -37,37 +39,46 @@ type AgentCardProps =
 // `auth_required` is "reachable but not signed in" — distinct from a truly
 // unreachable agent. We surface that as its own `needs_auth` chip so users
 // see "one step away (log in)" vs "broken" vs "not installed".
-type DisplayStatus = 'online' | 'needs_auth' | 'offline' | 'missing' | 'unchecked' | 'unknown';
+type DisplayStatus =
+  'online' | 'needs_auth' | 'connection_failed' | 'protocol_error' | 'not_detected' | 'disabled' | 'unknown';
 
-const resolveDisplayStatus = (status?: AgentManagementStatus, errorCode?: string): DisplayStatus => {
+const stopRowNavigation = (event: React.MouseEvent) => event.stopPropagation();
+
+const resolveDisplayStatus = (status?: AgentManagementStatus, errorCode?: string, enabled = true): DisplayStatus => {
+  if (!enabled) return 'disabled';
   switch (status) {
     case 'online':
       return 'online';
     case 'offline':
-      return errorCode === 'auth_required' ? 'needs_auth' : 'offline';
+      if (errorCode === 'auth_required') return 'needs_auth';
+      if (errorCode === 'acp_init_failed' || errorCode === 'protocol_error' || errorCode === 'rpc_error') {
+        return 'protocol_error';
+      }
+      return 'connection_failed';
     case 'missing':
-      return 'missing';
+      return 'not_detected';
     case 'unchecked':
-      return 'unchecked';
+      return 'not_detected';
     default:
       return 'unknown';
   }
 };
 
-const statusColor = (display: DisplayStatus): 'green' | 'gold' | 'orange' | 'red' | 'gray' => {
+const statusTone = (display: DisplayStatus): SettingsStatusTone => {
   switch (display) {
     case 'online':
-      return 'green';
+      return 'success';
     case 'needs_auth':
-      return 'gold';
-    case 'offline':
-      return 'orange';
-    case 'missing':
-      return 'red';
-    case 'unchecked':
-      return 'gray';
+      return 'warning';
+    case 'connection_failed':
+      return 'danger';
+    case 'protocol_error':
+      return 'danger';
+    case 'not_detected':
+    case 'disabled':
+      return 'neutral';
     default:
-      return 'gray';
+      return 'neutral';
   }
 };
 
@@ -77,12 +88,14 @@ const statusLabelKey = (display: DisplayStatus) => {
       return 'settings.agentManagement.statusOnline';
     case 'needs_auth':
       return 'settings.agentManagement.statusNeedsAuth';
-    case 'offline':
-      return 'settings.agentManagement.statusOffline';
-    case 'missing':
-      return 'settings.agentManagement.statusMissing';
-    case 'unchecked':
-      return 'settings.agentManagement.statusUnchecked';
+    case 'connection_failed':
+      return 'settings.agentManagement.statusConnectionFailed';
+    case 'protocol_error':
+      return 'settings.agentManagement.statusProtocolError';
+    case 'not_detected':
+      return 'settings.agentManagement.statusNotDetected';
+    case 'disabled':
+      return 'settings.agentManagement.statusDisabled';
     default:
       return 'settings.agentManagement.statusUnknown';
   }
@@ -102,8 +115,12 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
   const isCustom = props.type === 'custom';
   const isDisabled = isCustom && agent.enabled === false;
   const diagnostics = formatManagedAgentDiagnosticMessage(t, agent);
-  const displayStatus = resolveDisplayStatus(agent.status, agent.last_check_error_code);
-  const protocolLabel = agent.agent_type === 'tjuaecli' ? null : agent.agent_type.toUpperCase();
+  const displayStatus = resolveDisplayStatus(agent.status, agent.last_check_error_code, agent.enabled);
+  const protocolLabel = agent.agent_type === 'tjuaecli' ? 'Core' : agent.agent_type.toUpperCase();
+  const runtimeModelInfo = buildAgentRuntimeModelInfo(agent);
+  const modelCount = runtimeModelInfo?.available_models.length ?? 0;
+  const capabilityCount = [agent.team_capable, agent.behavior_policy?.supports_side_question].filter(Boolean).length;
+  const lastChecked = agent.last_check_at ? new Date(agent.last_check_at).toLocaleString() : null;
 
   const avatar = resolveAgentAvatar(logos, {
     icon: agent.avatar || agent.icon,
@@ -111,8 +128,6 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
     custom_agent_id: agent.custom_agent_id,
     isExtension: agent.isExtension,
   });
-
-  const stop = (event: React.MouseEvent) => event.stopPropagation();
 
   return (
     <div
@@ -137,36 +152,61 @@ const AgentCard: React.FC<AgentCardProps> = (props) => {
         <div className='min-w-0 flex-1'>
           <div className='flex min-w-0 items-center gap-8px'>
             <Typography.Text className='truncate text-14px font-medium text-t-primary'>{agent.name}</Typography.Text>
-            <Tag
+            <SettingsStatus
               data-testid={`agent-row-status-${agent.id}`}
-              size='small'
-              color={statusColor(displayStatus)}
-              className='flex-shrink-0'
-            >
-              {t(statusLabelKey(displayStatus))}
+              tone={statusTone(displayStatus)}
+              label={t(statusLabelKey(displayStatus))}
+            />
+            <Tag size='small' color='arcoblue' className='flex-shrink-0'>
+              {protocolLabel}
             </Tag>
-            {protocolLabel && (
-              <Tag size='small' color='arcoblue' className='flex-shrink-0'>
-                {protocolLabel}
+            {modelCount > 0 ? (
+              <Tag size='small' color='purple' className='flex-shrink-0'>
+                {t('settings.agentManagement.modelCount', {
+                  count: modelCount,
+                  defaultValue: '{{count}} 个模型',
+                })}
               </Tag>
-            )}
+            ) : null}
             {diagnostics && (
               <Tooltip content={diagnostics}>
                 <Typography.Text className='flex-shrink-0 text-11px text-t-secondary'>ⓘ</Typography.Text>
               </Tooltip>
             )}
           </div>
+          <div className='mt-3px flex min-w-0 flex-wrap items-center gap-x-10px gap-y-2px text-11px text-t-tertiary'>
+            <span>
+              {modelCount > 0
+                ? runtimeModelInfo?.current_model_label || runtimeModelInfo?.current_model_id
+                : t('settings.agentManagement.modelsPending', { defaultValue: '模型待检测' })}
+            </span>
+            <span>
+              {t('settings.agentManagement.capabilityCount', {
+                count: capabilityCount,
+                defaultValue: '{{count}} 项能力',
+              })}
+            </span>
+            <span>
+              {lastChecked
+                ? t('settings.agentManagement.lastCheckedAt', {
+                    time: lastChecked,
+                    defaultValue: '最近测试：{{time}}',
+                  })
+                : t('settings.agentManagement.neverChecked', { defaultValue: '尚未测试' })}
+            </span>
+            {typeof agent.last_check_latency_ms === 'number' ? <span>{agent.last_check_latency_ms} ms</span> : null}
+          </div>
         </div>
       </div>
 
-      <div className='ml-12px flex flex-shrink-0 items-center gap-8px' onClick={stop}>
+      <div className='ml-12px flex flex-shrink-0 items-center gap-8px' onClick={stopRowNavigation}>
         <BoundAssistantStack assistants={boundAssistants} />
         <Button
           data-testid={`agent-row-test-${agent.id}`}
           size='small'
           type='outline'
           loading={isTesting}
-          disabled={!agent.installed || agent.enabled === false}
+          disabled={!agent.installed}
           onClick={onTestConnection}
           className='!h-30px !rounded-8px !border-border-2 !bg-base !px-10px !text-12px !font-500 !text-t-primary hover:!border-border-1 hover:!bg-fill-1'
         >

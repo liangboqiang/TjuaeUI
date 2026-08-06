@@ -110,7 +110,7 @@ describe('AgentCard (official variant)', () => {
       last_check_error_message: 'CLI command not found',
     });
 
-    expect(screen.getByText('settings.agentManagement.statusMissing')).toBeInTheDocument();
+    expect(screen.getByText('settings.agentManagement.statusNotDetected')).toBeInTheDocument();
     // F2-02: test-connection stays available in every state, including missing.
     expect(screen.getByText('settings.agentManagement.testConnection')).toBeInTheDocument();
     expect(screen.getByText('common.edit')).toBeInTheDocument();
@@ -146,11 +146,11 @@ describe('AgentCard (official variant)', () => {
       status: 'unchecked',
     });
 
-    expect(screen.getByText('settings.agentManagement.statusUnchecked')).toBeInTheDocument();
+    expect(screen.getByText('settings.agentManagement.statusNotDetected')).toBeInTheDocument();
     expect(screen.queryByText('settings.agentManagement.statusUnknown')).toBeNull();
   });
 
-  it('shows the generic unavailable status for a non-auth offline agent', () => {
+  it('shows the protocol-error status when the ACP handshake fails', () => {
     renderOfficial({
       id: 'droid',
       name: 'Droid',
@@ -163,7 +163,7 @@ describe('AgentCard (official variant)', () => {
       last_check_error_code: 'acp_init_failed',
     });
 
-    expect(screen.getByText('settings.agentManagement.statusOffline')).toBeInTheDocument();
+    expect(screen.getByText('settings.agentManagement.statusProtocolError')).toBeInTheDocument();
     expect(screen.queryByText('settings.agentManagement.statusNeedsAuth')).toBeNull();
   });
 

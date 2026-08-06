@@ -107,7 +107,7 @@ const McpManagement: React.FC<McpManagementProps> = ({ message }) => {
     [handleBatchImportMcpServers, handleTestMcpConnections]
   );
 
-  const [importMode, setImportMode] = React.useState<'json' | 'oneclick'>('json');
+  const [importMode, setImportMode] = React.useState<'manual' | 'oneclick'>('manual');
 
   React.useEffect(() => {
     mcpServers.filter(isOAuthCapableServer).forEach((server) => {
@@ -136,14 +136,14 @@ const McpManagement: React.FC<McpManagementProps> = ({ message }) => {
               droplist={
                 <Menu>
                   <Menu.Item
-                    key='json'
+                    key='manual'
                     onClick={(e) => {
                       e.stopPropagation();
-                      setImportMode('json');
+                      setImportMode('manual');
                       showAddMcpModal();
                     }}
                   >
-                    {t('settings.mcpImportFromJSON')}
+                    {t('settings.mcpManualAdd', { defaultValue: '手动添加' })}
                   </Menu.Item>
                   <Menu.Item
                     key='oneclick'

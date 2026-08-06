@@ -195,10 +195,10 @@ describe('SkillsHubSettings', () => {
     expect(screen.getAllByText(/movie\.bin/).length).toBeGreaterThan(0);
   });
 
-  it('renders import history entry point when history is empty', async () => {
+  it('does not render the removed recent-import entry point', async () => {
     render(<SkillsHubSettings withWrapper={false} />);
 
-    await waitFor(() => expect(screen.getByTestId('btn-open-import-history')).toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByTestId('btn-open-import-history')).not.toBeInTheDocument());
     expect(screen.queryByText('No import records yet.')).not.toBeInTheDocument();
   });
 

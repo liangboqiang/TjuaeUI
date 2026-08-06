@@ -1,4 +1,3 @@
-
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -70,6 +69,7 @@ const makeMcpServers = (count: number) =>
 const renderDefaultsSection = (overrides: Partial<React.ComponentProps<typeof DefaultsSection>> = {}) =>
   render(
     <DefaultsSection
+      agentSelector={<span data-testid='agent-selector'>Agent selector</span>}
       localeKey='en-US'
       isBuiltin={false}
       isReadOnlyAssistant={false}

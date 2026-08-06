@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ArrowCircleLeft, ArrowLeft, ArrowRight, ExpandLeft, ExpandRight, Peoples, Search } from '@icon-park/react';
+import {
+  ArrowCircleLeft,
+  ArrowLeft,
+  ArrowRight,
+  ExpandLeft,
+  ExpandRight,
+  Home,
+  Peoples,
+  Search,
+} from '@icon-park/react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -113,6 +122,7 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
   // mobile keeps search inside the sidebar.
   const showSearchButton = !layout?.isMobile;
   const searchTooltip = t('conversation.historySearch.tooltip', { defaultValue: 'Search conversations' });
+  const homeTooltip = t('common.home', { defaultValue: 'Home' });
 
   const handleSiderToggle = () => {
     if (!showSiderToggle || !layout?.setSiderCollapsed) return;
@@ -305,6 +315,23 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
               </button>
             )}
           />
+        )}
+        {!layout?.isMobile && (
+          <button
+            type='button'
+            className='app-titlebar__button'
+            onClick={() => void navigate('/guid')}
+            aria-label={homeTooltip}
+            title={homeTooltip}
+          >
+            <Home
+              theme='outline'
+              size={iconSize}
+              fill='currentColor'
+              strokeWidth={desktopIconStroke}
+              className='block leading-none'
+            />
+          </button>
         )}
         {showHistoryNav && (
           <>

@@ -1,4 +1,3 @@
-
 import type { ImageGenerationModelSetting } from '@/common/config/clientSettings';
 import { removeImageGenerationEnvKeys, resolveImageGenerationMcpEnv } from '@/common/config/imageGenerationMcpEnv';
 import { mcpService } from '@/common/adapter/ipcBridge';
@@ -11,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import useConfigModelListWithImage from '@/renderer/hooks/agent/useConfigModelListWithImage';
 import TjuaeScrollArea from '@/renderer/components/base/TjuaeScrollArea';
 import TjuaeSelect from '@/renderer/components/base/TjuaeSelect';
+import { TjuaeSearchInput } from '@/renderer/components/base';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import AddMcpServerModal from '@/renderer/pages/settings/components/AddMcpServerModal';
 import McpServerItem from '@/renderer/pages/settings/ToolsSettings/McpServerItem';
@@ -29,6 +29,8 @@ import {
 } from '@/renderer/services/clientBusinessSettings';
 import classNames from 'classnames';
 import { useSettingsTabNavigate, useSettingsViewMode } from '../settingsViewContext';
+import SettingsPageHeader from '@/renderer/pages/settings/components/SettingsPageHeader';
+import SettingsManagementList from '@/renderer/pages/settings/components/management/SettingsManagementList';
 
 type MessageInstance = ReturnType<typeof Message.useMessage>[0];
 
@@ -48,10 +50,35 @@ const ModalMcpManagementSection: React.FC<{
   isPageMode?: boolean;
 }> = ({ message, mcpServers, extensionMcpServers, setMcpServers, saveMcpServers, isPageMode }) => {
   const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState('');
   const { oauthStatus, loggingIn, checkOAuthStatus, markLoginRequired, clearLoginRequired, login } = useMcpOAuth();
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const visibleMcpServers = useMemo(
-    () => mcpServers.filter((server) => !isBuiltinImageGenServer(server)),
-    [mcpServers]
+    () =>
+      mcpServers.filter(
+        (server) =>
+          !isBuiltinImageGenServer(server) &&
+          (!normalizedSearchQuery ||
+            [server.name, server.description, server.transport.type]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+              .includes(normalizedSearchQuery))
+      ),
+    [mcpServers, normalizedSearchQuery]
+  );
+  const visibleExtensionMcpServers = useMemo(
+    () =>
+      extensionMcpServers.filter(
+        (server) =>
+          !normalizedSearchQuery ||
+          [server.name, server.description, server.transport.type]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+            .includes(normalizedSearchQuery)
+      ),
+    [extensionMcpServers, normalizedSearchQuery]
   );
 
   const handleAuthRequired = useCallback(
@@ -134,7 +161,7 @@ const ModalMcpManagementSection: React.FC<{
     [handleBatchImportMcpServers, handleTestMcpConnections]
   );
 
-  const [importMode, setImportMode] = useState<'json' | 'oneclick'>('json');
+  const [importMode, setImportMode] = useState<'manual' | 'oneclick'>('manual');
 
   useEffect(() => {
     const httpServers = mcpServers.filter(
@@ -161,10 +188,10 @@ const ModalMcpManagementSection: React.FC<{
         prompt={t('settings.talkToButler.prompt.addMcp', { defaultValue: 'Help me set up an MCP server.' })}
         extraActions={[
           {
-            key: 'json',
-            label: t('settings.mcpImportFromJSON'),
+            key: 'manual',
+            label: t('settings.mcpManualAdd', { defaultValue: '手动添加' }),
             onClick: () => {
-              setImportMode('json');
+              setImportMode('manual');
               showAddMcpModal();
             },
           },
@@ -183,21 +210,85 @@ const ModalMcpManagementSection: React.FC<{
 
   return (
     <div className='flex flex-col gap-16px min-h-0'>
-      <div className='flex gap-8px items-center justify-between'>
-        <div className='text-14px text-t-primary'>{t('settings.mcpSettings')}</div>
-        <div>{renderAddButton()}</div>
-      </div>
+      {isPageMode ? (
+        <SettingsPageHeader
+          data-testid='tools-header'
+          title={t('settings.tools', { defaultValue: 'Tools' })}
+          description={t('settings.toolsDescription', {
+            defaultValue: 'Configure MCP servers and built-in tools such as image generation.',
+          })}
+          actions={
+            <>
+              <TjuaeSearchInput
+                className='hidden w-[200px] shrink-0 md:flex'
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={t('settings.mcpSearchPlaceholder', { defaultValue: '搜索 MCP 服务器' })}
+                data-testid='input-search-mcp-servers'
+              />
+              {renderAddButton()}
+            </>
+          }
+        />
+      ) : (
+        <div className='flex flex-wrap items-center justify-between gap-8px'>
+          <div className='text-14px text-t-primary'>{t('settings.mcpSettings')}</div>
+          <div className='flex items-center gap-8px'>
+            <TjuaeSearchInput
+              className='hidden w-[200px] shrink-0 md:flex'
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('settings.mcpSearchPlaceholder', { defaultValue: '搜索 MCP 服务器' })}
+              data-testid='input-search-mcp-servers'
+            />
+            {renderAddButton()}
+          </div>
+        </div>
+      )}
 
       <div className='flex-1 min-h-0'>
-        {visibleMcpServers.length === 0 && extensionMcpServers.length === 0 ? (
+        {isPageMode ? (
+          <SettingsManagementList
+            empty={visibleMcpServers.length === 0 && visibleExtensionMcpServers.length === 0}
+            emptyText={t('settings.mcpNoServersFound')}
+          >
+            <div className='space-y-8px'>
+              {visibleMcpServers.map((server) => (
+                <McpServerItem
+                  key={server.id}
+                  server={server}
+                  isCollapsed={mcpCollapseKey[server.id] || false}
+                  isTestingConnection={testingServers[server.id] || false}
+                  oauthStatus={oauthStatus[server.id]}
+                  isLoggingIn={loggingIn[server.id]}
+                  onToggleCollapse={() => toggleServerCollapse(server.id)}
+                  onTestConnection={handleTestMcpConnection}
+                  onEditServer={showEditMcpModal}
+                  onDeleteServer={showDeleteConfirm}
+                  onOAuthLogin={handleOAuthLogin}
+                />
+              ))}
+              {visibleExtensionMcpServers.map((server) => (
+                <McpServerItem
+                  key={server.id}
+                  server={server}
+                  isCollapsed={mcpCollapseKey[server.id] || false}
+                  isTestingConnection={false}
+                  onToggleCollapse={() => toggleServerCollapse(server.id)}
+                  onTestConnection={handleTestMcpConnection}
+                  onEditServer={() => {}}
+                  onDeleteServer={() => {}}
+                  isReadOnly
+                />
+              ))}
+            </div>
+          </SettingsManagementList>
+        ) : visibleMcpServers.length === 0 && visibleExtensionMcpServers.length === 0 ? (
           <div className='py-24px text-center text-t-secondary text-14px border border-dashed border-border-2 rd-12px'>
             {t('settings.mcpNoServersFound')}
           </div>
         ) : (
-          <TjuaeScrollArea
-            className={classNames('max-h-360px', isPageMode && 'max-h-none')}
-            disableOverflow={isPageMode}
-          >
+          <TjuaeScrollArea className='max-h-360px'>
             <div className='space-y-12px'>
               {visibleMcpServers.map((server) => (
                 <McpServerItem
@@ -214,7 +305,7 @@ const ModalMcpManagementSection: React.FC<{
                   onOAuthLogin={handleOAuthLogin}
                 />
               ))}
-              {extensionMcpServers.map((server) => (
+              {visibleExtensionMcpServers.map((server) => (
                 <McpServerItem
                   key={server.id}
                   server={server}
@@ -486,7 +577,14 @@ const ToolsModalContent: React.FC = () => {
       <TjuaeScrollArea className='flex-1 min-h-0 pb-16px' disableOverflow={isPageMode}>
         <div className='space-y-16px'>
           {/* MCP 工具配置 */}
-          <div className='px-[12px] md:px-[32px] py-[24px] bg-2 rd-12px md:rd-16px flex flex-col min-h-0 border border-border-2'>
+          <div
+            className={classNames(
+              'flex flex-col min-h-0',
+              isPageMode
+                ? 'gap-16px'
+                : 'px-[12px] md:px-[32px] py-[24px] bg-2 rd-12px md:rd-16px border border-border-2'
+            )}
+          >
             <div className='flex-1 min-h-0'>
               <TjuaeScrollArea
                 className={classNames('h-full', isPageMode && 'overflow-visible')}

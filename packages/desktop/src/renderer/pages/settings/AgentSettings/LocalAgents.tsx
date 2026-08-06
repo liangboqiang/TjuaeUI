@@ -3,10 +3,9 @@ import { parseError } from '@/common/utils';
 import { formatManagedAgentDiagnosticMessage, type ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import TjuaeModal from '@/renderer/components/base/TjuaeModal';
 import { TjuaeSearchInput } from '@/renderer/components/base';
-import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useManagedAgents } from '@/renderer/hooks/agent/useManagedAgents';
 import { openExternalUrl } from '@/renderer/utils/platform';
-import { Button, Message, Typography } from '@arco-design/web-react';
+import { Button, Message, Select } from '@arco-design/web-react';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +14,7 @@ import { isDeprecatedRuntimeAgentType } from '@/renderer/utils/model/agentTypeSu
 import InlineAgentEditor, { type CustomAgentDraft } from './InlineAgentEditor';
 import { getBoundAssistants, useAssistantsForAgents } from './BoundAssistants';
 import SettingsPageHeader from '../components/SettingsPageHeader';
+import { SettingsFilterBar, SettingsManagementList } from '../components/management';
 import { useNavigate } from 'react-router-dom';
 import {
   filterAgentsByAvailability,
@@ -24,14 +24,22 @@ import {
 
 const LOCAL_AGENT_SETUP_GUIDE_URL = 'https://github.com/liangboqiang/TjuaeUI/tree/main/docs/prds/conversations/acp';
 
+type AgentScopeFilter = 'all' | 'builtin' | 'local' | 'remote' | 'disabled';
+
+const getAgentScope = (agent: ManagedAgent): Exclude<AgentScopeFilter, 'all'> => {
+  if (agent.enabled === false) return 'disabled';
+  if (agent.agent_type === 'a2a') return 'remote';
+  if (agent.agent_type === 'tjuaecli') return 'builtin';
+  return 'local';
+};
+
 const LocalAgents: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const layout = useLayoutContext();
-  const isMobile = layout?.isMobile ?? false;
   const [testingAgentId, setTestingAgentId] = useState<string | null>(null);
   const [isTestingAll, setIsTestingAll] = useState(false);
   const [agentFilter, setAgentFilter] = useState<AgentAvailabilityFilter>('all');
+  const [scopeFilter, setScopeFilter] = useState<AgentScopeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const { assistants } = useAssistantsForAgents();
 
@@ -143,12 +151,35 @@ const LocalAgents: React.FC = () => {
       }),
     [officialAgents]
   );
-  const officialFilterStats = getAgentAvailabilityFilterStats(sortedOfficialAgents);
-  const visibleOfficialAgents = filterAgentsByAvailability(
-    sortedOfficialAgents.filter(matchesAgentSearch),
-    agentFilter
+  const sortedCustomAgents = useMemo(
+    () => customAgents.toSorted((left, right) => left.name.localeCompare(right.name)),
+    [customAgents]
   );
-  const visibleCustomAgents = customAgents.filter(matchesAgentSearch);
+  const supportedAgents = useMemo(
+    () =>
+      [...sortedOfficialAgents, ...sortedCustomAgents].filter(
+        (agent) => agent.agent_type === 'tjuaecli' || agent.agent_source === 'custom' || agent.installed
+      ),
+    [sortedCustomAgents, sortedOfficialAgents]
+  );
+  const filterStats = getAgentAvailabilityFilterStats(supportedAgents);
+  const scopeStats = useMemo(
+    () => ({
+      all: supportedAgents.length,
+      builtin: supportedAgents.filter((agent) => getAgentScope(agent) === 'builtin').length,
+      local: supportedAgents.filter((agent) => getAgentScope(agent) === 'local').length,
+      remote: supportedAgents.filter((agent) => getAgentScope(agent) === 'remote').length,
+      disabled: supportedAgents.filter((agent) => getAgentScope(agent) === 'disabled').length,
+    }),
+    [supportedAgents]
+  );
+  const visibleAgents = useMemo(
+    () =>
+      filterAgentsByAvailability(supportedAgents.filter(matchesAgentSearch), agentFilter).filter(
+        (agent) => scopeFilter === 'all' || getAgentScope(agent) === scopeFilter
+      ),
+    [agentFilter, matchesAgentSearch, scopeFilter, supportedAgents]
+  );
 
   const openCustomAgentEditor = useCallback(() => {
     setEditingAgent(null);
@@ -213,7 +244,7 @@ const LocalAgents: React.FC = () => {
       ).length;
       Message.success(
         t('settings.agentManagement.testAllComplete', {
-          defaultValue: '扫描完成：{{online}} 个就绪，{{needsAuth}} 个需授权',
+          defaultValue: '扫描和模型预加载完成：{{online}} 个就绪，{{needsAuth}} 个需授权',
           online,
           needsAuth,
         })
@@ -231,48 +262,26 @@ const LocalAgents: React.FC = () => {
       <SettingsPageHeader
         data-testid='agent-management-header'
         title={t('settings.agents', { defaultValue: 'Agents' })}
-        description={
-          <>
-            <span>{t('settings.agentManagement.localAgentsDescription')} </span>
-            <Button
-              type='text'
-              size='mini'
-              className='!h-auto !p-0 !align-baseline !text-13px !font-normal !text-primary-6 hover:!text-primary-7 hover:!underline underline-offset-2'
-              onClick={() => {
-                void openExternalUrl(LOCAL_AGENT_SETUP_GUIDE_URL).catch(console.error);
-              }}
-            >
-              {t('settings.agentManagement.localAgentsSetupLink')}
-            </Button>
-          </>
-        }
+        description={t('settings.agentManagement.pageDescription', {
+          defaultValue: '管理可用于会话的内置、本机和远程智能体连接。',
+        })}
         actions={
           <>
-            {!isMobile && (
-              <TjuaeSearchInput
-                className='shrink-0 w-[200px] hidden md:flex'
-                data-testid='input-search-agents'
-                placeholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: 'Search agents...' })}
-                value={searchQuery}
-                onChange={setSearchQuery}
-              />
-            )}
-            <Button
-              type='outline'
-              loading={isTestingAll}
-              onClick={() => void handleTestAll()}
-              className='!rounded-8px'
-              data-testid='btn-test-all-agents'
-            >
-              {t('settings.agentManagement.testAll', { defaultValue: '一键测试' })}
-            </Button>
+            <TjuaeSearchInput
+              className='hidden w-[200px] shrink-0 md:flex'
+              data-testid='input-search-agents'
+              placeholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: '搜索智能体' })}
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
             <TalkToButlerButton
-              label={t('settings.agentManagement.addCustomAgent', { defaultValue: 'Add custom Agent' })}
-              chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: 'Add via chat' })}
+              className='shrink-0'
+              label={t('settings.agentManagement.addCustomAgent', { defaultValue: '添加智能体' })}
+              chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: '通过对话添加' })}
               onManual={openCustomAgentEditor}
-              manualLabel={t('settings.talkToButler.addManually', { defaultValue: 'Add manually' })}
+              manualLabel={t('settings.talkToButler.addManually', { defaultValue: '手动添加' })}
               prompt={t('settings.talkToButler.prompt.addCustomAgent', {
-                defaultValue: '帮我添加一个自定义 Agent，并先询问使用 ACP 还是 A2A 协议。',
+                defaultValue: '帮我添加一个自定义智能体，并先询问使用 ACP 还是 A2A 协议。',
               })}
               data-testid='btn-add-custom-agent'
             />
@@ -281,76 +290,100 @@ const LocalAgents: React.FC = () => {
         tabs={[
           {
             key: 'all',
-            label: t('settings.agentManagement.filterAll', { defaultValue: 'All' }),
-            count: officialFilterStats.all,
+            label: t('settings.agentManagement.scopeAll', { defaultValue: '全部' }),
+            count: scopeStats.all,
           },
           {
-            key: 'online',
-            label: t('settings.agentManagement.statusOnline'),
-            count: officialFilterStats.online,
+            key: 'builtin',
+            label: t('settings.agentManagement.scopeBuiltin', { defaultValue: '内置' }),
+            count: scopeStats.builtin,
           },
           {
-            key: 'needs_auth',
-            label: t('settings.agentManagement.statusNeedsAuth'),
-            count: officialFilterStats.needs_auth,
+            key: 'local',
+            label: t('settings.agentManagement.scopeLocal', { defaultValue: '本机' }),
+            count: scopeStats.local,
           },
           {
-            key: 'offline',
-            label: t('settings.agentManagement.statusOffline'),
-            count: officialFilterStats.offline,
+            key: 'remote',
+            label: t('settings.agentManagement.scopeRemote', { defaultValue: '远程' }),
+            count: scopeStats.remote,
           },
           {
-            key: 'missing',
-            label: t('settings.agentManagement.statusMissing'),
-            count: officialFilterStats.missing,
-          },
-          {
-            key: 'unchecked',
-            label: t('settings.agentManagement.statusUnchecked'),
-            count: officialFilterStats.unchecked,
+            key: 'disabled',
+            label: t('settings.agentManagement.scopeDisabled', { defaultValue: '已停用' }),
+            count: scopeStats.disabled,
           },
         ]}
-        activeTab={agentFilter}
-        onTabChange={(key) => setAgentFilter(key as AgentAvailabilityFilter)}
+        activeTab={scopeFilter}
+        onTabChange={(key) => setScopeFilter(key as AgentScopeFilter)}
       />
 
-      {isRefreshing ? (
-        <div className='text-11px text-t-tertiary'>{t('settings.agentManagement.refreshingStatuses')}</div>
-      ) : null}
-
-      {/* Detected Agents section */}
-      <div data-testid='agent-management-official-section'>
-        <div className='flex flex-col gap-8px rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>
-          {visibleOfficialAgents.map((agent) => (
-            <AgentCard
-              key={agent.id}
-              type='official'
-              agent={agent}
-              boundAssistants={getBoundAssistants(agent, assistants)}
-              onTestConnection={() => void handleTestConnection(agent.id)}
-              onConfigure={() => openAgentConfig(agent.id)}
-              isTesting={testingAgentId === agent.id}
-            />
-          ))}
-          {visibleOfficialAgents.length === 0 && (
-            <Typography.Text type='secondary' className='block py-16px text-center text-12px'>
-              {normalizedSearchQuery
-                ? t('settings.agentManagement.noSearchResults', { defaultValue: 'No matching agents.' })
-                : t('settings.agentManagement.localAgentsEmpty')}
-            </Typography.Text>
-          )}
-        </div>
-      </div>
-
-      {/* Custom Agents section */}
-      <div data-testid='agent-management-custom-header' className='flex flex-col gap-2px'>
-        <Typography.Text className='text-13px font-medium text-t-secondary block'>
-          {t('settings.agentManagement.customAgents', { defaultValue: 'Custom Agents' })}
-        </Typography.Text>
-        <Typography.Text className='block text-12px text-t-tertiary'>
-          {t('settings.agentManagement.customEmptyDescription')}
-        </Typography.Text>
-      </div>
+      <SettingsFilterBar
+        data-testid='agent-scan-panel'
+        summary={
+          isRefreshing
+            ? t('settings.agentManagement.refreshingStatuses')
+            : t('settings.agentManagement.scanSummary', {
+                defaultValue: '已扫描 {{count}} 个连接：{{online}} 个就绪，{{needsAuth}} 个需授权',
+                count: supportedAgents.length,
+                online: filterStats.online,
+                needsAuth: filterStats.needs_auth,
+              })
+        }
+        mobileContent={
+          <TjuaeSearchInput
+            className='w-full'
+            data-testid='input-search-agents-mobile'
+            placeholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: '搜索智能体' })}
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+        }
+      >
+        <Button
+          type='text'
+          size='small'
+          className='!text-t-secondary'
+          onClick={() => void openExternalUrl(LOCAL_AGENT_SETUP_GUIDE_URL).catch(console.error)}
+        >
+          {t('settings.agentManagement.localAgentsSetupLink')}
+        </Button>
+        <Select
+          size='small'
+          value={agentFilter}
+          onChange={(value) => setAgentFilter(value as AgentAvailabilityFilter)}
+          aria-label={t('settings.agentManagement.statusFilter', { defaultValue: '状态筛选' })}
+          className='w-150px'
+        >
+          <Select.Option value='all'>
+            {t('settings.agentManagement.filterAll')} · {filterStats.all}
+          </Select.Option>
+          <Select.Option value='online'>{t('settings.agentManagement.statusOnline')}</Select.Option>
+          <Select.Option value='needs_auth'>{t('settings.agentManagement.statusNeedsAuth')}</Select.Option>
+          <Select.Option value='connection_failed'>
+            {t('settings.agentManagement.statusConnectionFailed', { defaultValue: '连接失败' })}
+          </Select.Option>
+          <Select.Option value='protocol_error'>
+            {t('settings.agentManagement.statusProtocolError', { defaultValue: '协议异常' })}
+          </Select.Option>
+          <Select.Option value='not_detected'>
+            {t('settings.agentManagement.statusNotDetected', { defaultValue: '未检测' })}
+          </Select.Option>
+          <Select.Option value='disabled'>
+            {t('settings.agentManagement.statusDisabled', { defaultValue: '已停用' })}
+          </Select.Option>
+        </Select>
+        <Button
+          type='primary'
+          size='small'
+          loading={isTestingAll}
+          onClick={() => void handleTestAll()}
+          className='!rounded-8px'
+          data-testid='btn-test-all-agents'
+        >
+          {t('settings.agentManagement.testAll', { defaultValue: '一键测试' })}
+        </Button>
+      </SettingsFilterBar>
 
       <TjuaeModal
         visible={editorVisible}
@@ -391,17 +424,31 @@ const LocalAgents: React.FC = () => {
         )}
       </TjuaeModal>
 
-      <div data-testid='agent-management-custom-section'>
-        <div className='flex flex-col gap-8px rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>
-          {visibleCustomAgents?.map((agent) => (
+      <SettingsManagementList
+        data-testid='agent-management-list'
+        loading={isRefreshing && supportedAgents.length === 0}
+        empty={visibleAgents.length === 0}
+        emptyText={
+          normalizedSearchQuery || agentFilter !== 'all'
+            ? t('settings.agentManagement.noSearchResults', { defaultValue: '没有匹配的智能体。' })
+            : t('settings.agentManagement.groupEmpty', { defaultValue: '此分类暂无智能体。' })
+        }
+      >
+        {visibleAgents.map((agent) => {
+          const sharedProps = {
+            agent,
+            boundAssistants: getBoundAssistants(agent, assistants),
+            onTestConnection: (): void => {
+              void handleTestConnection(agent.id);
+            },
+            onConfigure: () => openAgentConfig(agent.id),
+            isTesting: testingAgentId === agent.id,
+          };
+          return agent.agent_source === 'custom' ? (
             <AgentCard
               key={agent.id}
               type='custom'
-              agent={agent}
-              boundAssistants={getBoundAssistants(agent, assistants)}
-              onTestConnection={() => void handleTestConnection(agent.id)}
-              onConfigure={() => openAgentConfig(agent.id)}
-              isTesting={testingAgentId === agent.id}
+              {...sharedProps}
               onEdit={() => {
                 setEditingAgent(agent);
                 setEditorVisible(true);
@@ -409,16 +456,11 @@ const LocalAgents: React.FC = () => {
               onDelete={() => void handleDeleteCustomAgent(agent.id)}
               onToggle={(enabled) => void handleToggleCustomAgent(agent.id, enabled)}
             />
-          ))}
-          {visibleCustomAgents.length === 0 ? (
-            <Typography.Text type='secondary' className='block py-12px text-center text-12px'>
-              {normalizedSearchQuery
-                ? t('settings.agentManagement.noSearchResults', { defaultValue: 'No matching agents.' })
-                : t('settings.agentManagement.customEmpty')}
-            </Typography.Text>
-          ) : null}
-        </div>
-      </div>
+          ) : (
+            <AgentCard key={agent.id} type='official' {...sharedProps} />
+          );
+        })}
+      </SettingsManagementList>
     </div>
   );
 };

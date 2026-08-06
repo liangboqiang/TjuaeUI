@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import {
   filterAgentsByAvailability,
@@ -7,32 +6,48 @@ import {
 } from '@/renderer/pages/settings/AgentSettings/agentFilters';
 import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
 
-const agent = (id: string, status: ManagedAgent['status']): ManagedAgent =>
+const agent = (id: string, status: ManagedAgent['status'], errorCode?: string, enabled = true): ManagedAgent =>
   ({
     id,
     name: id,
     agent_type: 'acp',
     agent_source: 'builtin',
-    enabled: true,
+    enabled,
     installed: status !== 'missing',
     status,
+    last_check_error_code: errorCode,
   }) as ManagedAgent;
 
 describe('agent availability filters', () => {
-  const agents = [agent('a', 'offline'), agent('b', 'online'), agent('c', 'missing'), agent('d', 'online')];
+  const agents = [
+    agent('connection', 'offline', 'connection_failed'),
+    agent('online', 'online'),
+    agent('missing', 'missing'),
+    agent('auth', 'offline', 'auth_required'),
+    agent('protocol', 'offline', 'acp_init_failed'),
+    agent('disabled', 'online', undefined, false),
+  ];
 
-  it('counts all, available, and unavailable agents', () => {
+  it('counts every detailed availability state', () => {
     expect(getAgentAvailabilityFilterStats(agents)).toEqual({
-      all: 4,
-      available: 2,
-      unavailable: 2,
+      all: 6,
+      online: 1,
+      needs_auth: 1,
+      connection_failed: 1,
+      protocol_error: 1,
+      not_detected: 1,
+      disabled: 1,
     });
   });
 
   it.each<[AgentAvailabilityFilter, string[]]>([
-    ['all', ['a', 'b', 'c', 'd']],
-    ['available', ['b', 'd']],
-    ['unavailable', ['a', 'c']],
+    ['all', ['connection', 'online', 'missing', 'auth', 'protocol', 'disabled']],
+    ['online', ['online']],
+    ['needs_auth', ['auth']],
+    ['connection_failed', ['connection']],
+    ['protocol_error', ['protocol']],
+    ['not_detected', ['missing']],
+    ['disabled', ['disabled']],
   ])('filters %s agents without changing relative order', (filter, expectedIds) => {
     expect(filterAgentsByAvailability(agents, filter).map((item) => item.id)).toEqual(expectedIds);
   });

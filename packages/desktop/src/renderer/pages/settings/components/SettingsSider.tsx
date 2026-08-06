@@ -7,6 +7,7 @@ import {
   Communication,
   Computer,
   Earth,
+  Ghost,
   Info,
   Lightning,
   LinkCloud,
@@ -24,6 +25,7 @@ import { getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
 
 /** Builtin settings tab IDs in display order (must match router paths). */
 export const BUILTIN_TAB_IDS = [
+  'assistants',
   'agent',
   'model',
   'skills',
@@ -51,7 +53,7 @@ export const LEGACY_ANCHOR_REMAP: Record<string, string> = {
  * Extension tabs anchored between these builtins inherit the enclosing group visually.
  */
 const GROUP_HEADER_BEFORE: Record<string, string> = {
-  agent: 'settings.groupAiCore',
+  assistants: 'settings.groupAiCore',
   appearance: 'settings.groupApp',
   about: 'settings.groupAbout',
 };
@@ -80,6 +82,12 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
   const { menus, groupHeaderAt } = useMemo(() => {
     // Build builtin items
     const builtinMap: Record<string, SiderItem> = {
+      assistants: {
+        id: 'assistants',
+        label: t('settings.assistants', { defaultValue: 'Assistants' }),
+        icon: <Ghost />,
+        path: 'assistants',
+      },
       model: { id: 'model', label: t('settings.model'), icon: <LinkCloud />, path: 'model' },
       agent: {
         id: 'agent',

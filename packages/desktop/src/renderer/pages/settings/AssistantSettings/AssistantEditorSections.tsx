@@ -408,69 +408,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
         readOnlyLabel={readOnlyLabel}
       />
 
-      <div
-        className='rounded-12px border border-border-2 bg-2 px-[12px] py-[16px] md:rounded-16px md:px-[24px] md:py-[20px]'
-        data-testid='assistant-card-engine'
-      >
-        <div className='mb-12px flex items-center gap-8px'>
-          <div className='text-14px font-500 text-t-primary'>
-            {t('settings.assistantEngineSection', { defaultValue: 'Engine' })}
-          </div>
-          <span className='rounded-6px border border-warning-8 bg-warning-8 px-8px py-2px text-10px font-600 text-white'>
-            {t('settings.assistantOnlyNewConversation', { defaultValue: 'New conversations only' })}
-          </span>
-        </div>
-        <div className='flex items-center gap-12px'>
-          <div className='w-86px flex-shrink-0 text-13px text-t-secondary'>
-            <span className='flex items-center gap-6px leading-none'>
-              <span className='inline-flex shrink-0 items-center text-t-tertiary'>
-                <Robot theme='outline' size='14' />
-              </span>
-              <span>{t('settings.assistantMainAgent', { defaultValue: 'Agent' })}</span>
-            </span>
-          </div>
-          <div className='min-w-0 flex-1'>
-            <Select
-              className='w-full'
-              getPopupContainer={getEditorSelectPopupContainer}
-              value={editAgent}
-              onChange={(value) => setEditAgent(value as string)}
-              disabled={isGenerated}
-              data-testid='select-assistant-agent'
-              renderFormat={(_option, value) => {
-                const selected = availableBackends.find((item) => item.id === value);
-                if (!selected) return (value as string) ?? '';
-                return (
-                  <span className='flex items-center gap-8px'>
-                    {renderAgentAvatar(selected)}
-                    <span className='truncate'>{selected.name}</span>
-                  </span>
-                );
-              }}
-            >
-              {availableBackends.map((option) => (
-                <Select.Option key={option.id} value={option.id}>
-                  <span className='flex items-center gap-8px'>
-                    {renderAgentAvatar(option)}
-                    <span className='truncate'>{option.name}</span>
-                    {option.isExtension ? (
-                      <Tag size='small' color='arcoblue'>
-                        ext
-                      </Tag>
-                    ) : null}
-                  </span>
-                </Select.Option>
-              ))}
-            </Select>
-            <div className='mt-6px text-11px text-t-tertiary'>
-              {t('settings.assistantEngineAffectsDefaults', {
-                defaultValue: 'Changing the main agent updates which model and permission values are available below.',
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <DefaultsSection
         key={`assistant-defaults-${localeKey}-${editAgent}`}
         localeKey={localeKey}
@@ -507,6 +444,40 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
         selectedItemsLabel={selectedItemsLabel}
         autoDefaultOptionLabel={autoDefaultOptionLabel}
         readonlySelectionSummary={readonlySelectionSummary}
+        agentSelector={
+          <Select
+            className='w-full'
+            getPopupContainer={getEditorSelectPopupContainer}
+            value={editAgent}
+            onChange={(value) => setEditAgent(value as string)}
+            disabled={isGenerated}
+            data-testid='select-assistant-agent'
+            renderFormat={(_option, value) => {
+              const selected = availableBackends.find((item) => item.id === value);
+              if (!selected) return (value as string) ?? '';
+              return (
+                <span className='flex items-center gap-8px'>
+                  {renderAgentAvatar(selected)}
+                  <span className='truncate'>{selected.name}</span>
+                </span>
+              );
+            }}
+          >
+            {availableBackends.map((option) => (
+              <Select.Option key={option.id} value={option.id}>
+                <span className='flex items-center gap-8px'>
+                  {renderAgentAvatar(option)}
+                  <span className='truncate'>{option.name}</span>
+                  {option.isExtension ? (
+                    <Tag size='small' color='arcoblue'>
+                      ext
+                    </Tag>
+                  ) : null}
+                </span>
+              </Select.Option>
+            ))}
+          </Select>
+        }
       />
 
       <RulesSection

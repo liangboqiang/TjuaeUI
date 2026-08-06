@@ -31,6 +31,8 @@ type McpErrorDetails = {
   status?: number;
   method?: string;
   rpc_code?: number;
+  stage?: string;
+  transport?: string;
 };
 
 const getMcpErrorDetails = (details: unknown): McpErrorDetails => {
@@ -197,6 +199,9 @@ export const useMcpConnection = (
               ...(tool._meta ? { _meta: tool._meta } : {}),
             })),
             last_connected: Date.now(),
+            last_test_code: undefined,
+            last_test_error: undefined,
+            last_test_details: { stage: 'tool_discovery', transport: server.transport.type },
           });
           if (notify) {
             await globalMessageQueue.add(() => {
@@ -211,7 +216,11 @@ export const useMcpConnection = (
           // 连接测试成功，不执行额外操作
         } else {
           // Record the latest failed availability test in local UI state.
-          await updateServerStatus('error');
+          await updateServerStatus('error', {
+            last_test_code: result.code,
+            last_test_error: result.error,
+            last_test_details: getMcpErrorDetails(result.details),
+          });
           const errorMsg = truncateErrorMessage(formatMcpErrorMessage(t, result));
           if (notify) {
             await globalMessageQueue.add(() => {
@@ -232,7 +241,18 @@ export const useMcpConnection = (
         }
       } catch (error) {
         // Record the latest failed availability test in local UI state.
-        await updateServerStatus('error');
+        const backendPayload: McpErrorPayload = isBackendHttpError(error)
+          ? {
+              code: error.code,
+              error: error.backendMessage,
+              details: getMcpErrorDetails(error.details),
+            }
+          : { error: error instanceof Error ? error.message : String(error) };
+        await updateServerStatus('error', {
+          last_test_code: backendPayload.code,
+          last_test_error: backendPayload.error,
+          last_test_details: getMcpErrorDetails(backendPayload.details),
+        });
         const errorMsg = truncateErrorMessage(formatThrownMcpErrorMessage(t, error));
         if (notify) {
           await globalMessageQueue.add(() => {

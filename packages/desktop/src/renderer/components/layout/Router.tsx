@@ -72,9 +72,9 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           />
           <Route path='/settings/model' element={withRouteFallback(ModeSettings)} />
           <Route path='/assistants' element={withRouteFallback(AssistantSettings)} />
-          {/* Assistants moved out of Settings to a top-level entry; keep a redirect
-              so old deep links / back-nav still land on the new page. */}
-          <Route path='/settings/assistants' element={<Navigate to='/assistants' replace />} />
+          {/* Both entries share this content while preserving the surrounding
+              navigation context selected by the user. */}
+          <Route path='/settings/assistants' element={withRouteFallback(AssistantSettings)} />
           <Route path='/settings/agent' element={withRouteFallback(AgentSettings)} />
           <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
           {/* Skills and Tools are top-level settings entries. */}
