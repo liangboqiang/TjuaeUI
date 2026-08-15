@@ -29,14 +29,14 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import './chat-layout.css';
 
-type EditorLayoutMode = 'side' | 'bottom';
+type EditorLayoutMode = 'side' | 'stacked';
 type RightPanelMode = 'workspace' | 'trace';
 
 const EDITOR_LAYOUT_STORAGE_KEY = 'chat-editor-layout-mode';
 
 const getInitialEditorLayout = (): EditorLayoutMode => {
   try {
-    return localStorage.getItem(EDITOR_LAYOUT_STORAGE_KEY) === 'bottom' ? 'bottom' : 'side';
+    return localStorage.getItem(EDITOR_LAYOUT_STORAGE_KEY) === 'stacked' ? 'stacked' : 'side';
   } catch {
     return 'side';
   }
@@ -194,11 +194,11 @@ const ChatLayout: React.FC<{
   const rightPanelWidthPx = isTracePanelOpen
     ? Math.max(MIN_WORKSPACE_PANEL_PX, Math.min(MAX_WORKSPACE_PANEL_PX, workspaceWidthPxPref))
     : workspaceWidthPx;
-  const isEditorBottom = isPreviewOpen && isDesktop && editorLayout === 'bottom';
+  const isStackedLayout = isPreviewOpen && isDesktop && editorLayout === 'stacked';
 
   const toggleEditorLayout = () => {
     setEditorLayout((current) => {
-      const next: EditorLayoutMode = current === 'side' ? 'bottom' : 'side';
+      const next: EditorLayoutMode = current === 'side' ? 'stacked' : 'side';
       try {
         localStorage.setItem(EDITOR_LAYOUT_STORAGE_KEY, next);
       } catch {
@@ -222,7 +222,7 @@ const ChatLayout: React.FC<{
   };
 
   const editorLayoutAction = isDesktop ? (
-    <Tooltip content={editorLayout === 'side' ? t('preview.moveEditorBottom') : t('preview.moveEditorRight')}>
+    <Tooltip content={editorLayout === 'side' ? t('preview.switchToStackedLayout') : t('preview.switchToSideLayout')}>
       <Button
         type='text'
         shape='circle'
@@ -230,7 +230,7 @@ const ChatLayout: React.FC<{
         icon={
           editorLayout === 'side' ? <LayoutTwo theme='outline' size='16' /> : <LayoutOne theme='outline' size='16' />
         }
-        aria-label={editorLayout === 'side' ? t('preview.moveEditorBottom') : t('preview.moveEditorRight')}
+        aria-label={editorLayout === 'side' ? t('preview.switchToStackedLayout') : t('preview.switchToSideLayout')}
         onClick={toggleEditorLayout}
       />
     </Tooltip>
@@ -342,17 +342,23 @@ const ChatLayout: React.FC<{
           }}
         >
           <div className='shrink-0 !bg-1'>{headerBlock}</div>
-          <div className={classNames('flex flex-1 min-h-0 relative', isEditorBottom && 'flex-col')}>
+          <div
+            className={classNames('flex flex-1 min-h-0 relative', isStackedLayout && 'flex-col')}
+            data-testid='conversation-editor-layout'
+            data-editor-layout={editorLayout}
+          >
             {/* Chat area - always mounted, never unmounted on preview toggle */}
             <div
               className='flex flex-col relative'
+              data-workbench-pane='conversation'
               style={{
+                order: isStackedLayout ? 2 : undefined,
                 flexGrow: isPreviewOpen && isDesktop ? 0 : 1,
                 flexShrink: 0,
-                flexBasis: isEditorBottom ? `${chatHeightRatio}%` : isPreviewOpen && isDesktop ? `${chatFlex}%` : 0,
+                flexBasis: isStackedLayout ? `${chatHeightRatio}%` : isPreviewOpen && isDesktop ? `${chatFlex}%` : 0,
                 display: isPreviewOpen && isMobile ? 'none' : 'flex',
                 minWidth: '240px',
-                minHeight: isEditorBottom ? '220px' : 0,
+                minHeight: isStackedLayout ? '220px' : 0,
               }}
               onClick={() => {
                 if (window.innerWidth < 768 && !rightSiderCollapsed) setRightSiderCollapsed(true);
@@ -366,32 +372,31 @@ const ChatLayout: React.FC<{
             {isPreviewOpen && (
               <div
                 className={classNames(
-                  'preview-panel flex flex-col relative overflow-visible rounded-[15px]',
-                  isDesktop
-                    ? isEditorBottom
-                      ? 'mx-[12px] mt-[8px] mb-[12px]'
-                      : 'mb-[12px] mr-[12px] ml-[8px]'
-                    : 'm-[8px]'
+                  'preview-panel flex flex-col relative overflow-visible',
+                  !isStackedLayout && 'rounded-[15px]',
+                  isDesktop ? (isStackedLayout ? null : 'mb-[12px] mr-[12px] ml-[8px]') : 'm-[8px]'
                 )}
+                data-workbench-pane='editor'
                 style={{
+                  order: isStackedLayout ? 1 : undefined,
                   flexGrow: 1,
                   flexShrink: 1,
                   flexBasis: 0,
-                  border: '1px solid var(--bg-3)',
-                  minWidth: isDesktop ? '260px' : 0,
-                  minHeight: isEditorBottom ? '220px' : 0,
+                  border: isStackedLayout ? 'none' : '1px solid var(--bg-3)',
+                  minWidth: isStackedLayout ? 0 : isDesktop ? '260px' : 0,
+                  minHeight: isStackedLayout ? '220px' : 0,
                   maxWidth: isMobile ? 'calc(100% - 16px)' : undefined,
                   width: isMobile ? 'calc(100% - 16px)' : undefined,
                   boxSizing: 'border-box',
                 }}
               >
                 {isDesktop &&
-                  (isEditorBottom
+                  (isStackedLayout
                     ? createPreviewVerticalDragHandle({
                         className: 'absolute left-0 right-0 z-30',
-                        style: { height: '20px', top: '-20px' },
-                        linePlacement: 'end',
-                        lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
+                        style: { height: '20px', bottom: '-20px' },
+                        linePlacement: 'start',
+                        lineClassName: 'opacity-0 group-hover:opacity-100 group-active:opacity-100',
                         lineStyle: { height: '2px' },
                       })
                     : createPreviewDragHandle({
@@ -401,7 +406,7 @@ const ChatLayout: React.FC<{
                         lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
                         lineStyle: { width: '2px' },
                       }))}
-                <div className='h-full w-full overflow-hidden rounded-[15px]'>
+                <div className={classNames('h-full w-full overflow-hidden', !isStackedLayout && 'rounded-[15px]')}>
                   <PreviewPanel panelActions={editorLayoutAction} />
                 </div>
               </div>
