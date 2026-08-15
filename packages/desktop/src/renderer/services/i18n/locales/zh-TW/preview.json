@@ -16,6 +16,8 @@
   "downloadFile": "下載檔案",
   "closePreview": "關閉預覽",
   "collapsePanel": "收起面板",
+  "moveEditorBottom": "將編輯器欄移至對話下方",
+  "moveEditorRight": "將編輯器欄移至對話右側",
   "source": "原文",
   "code": "程式碼",
   "preview": "預覽",

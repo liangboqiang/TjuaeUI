@@ -4,6 +4,7 @@ import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
 import ChatTitleEditor from '@/renderer/pages/conversation/components/ChatTitleEditor';
+import { TracePanel } from '@/renderer/pages/conversation/components/TraceDrawer';
 import MobileWorkspaceOverlay from './MobileWorkspaceOverlay';
 import WorkspacePanelHeader, { DesktopWorkspaceToggle } from './WorkspacePanelHeader';
 import { useContainerWidth } from '@/renderer/pages/conversation/hooks/useContainerWidth';
@@ -21,13 +22,27 @@ import {
   WORKSPACE_HEADER_HEIGHT,
   calcLayoutMetrics,
 } from '@/renderer/pages/conversation/utils/layoutCalc';
-import { Layout as ArcoLayout } from '@arco-design/web-react';
-import { ExpandLeft, ExpandRight } from '@icon-park/react';
+import { Button, Layout as ArcoLayout, Tooltip } from '@arco-design/web-react';
+import { ExpandLeft, ExpandRight, LayoutOne, LayoutTwo, Trace } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import './chat-layout.css';
 
-// headerExtra allows injecting custom actions (e.g., model picker) into the header's right area
+type EditorLayoutMode = 'side' | 'bottom';
+type RightPanelMode = 'workspace' | 'trace';
+
+const EDITOR_LAYOUT_STORAGE_KEY = 'chat-editor-layout-mode';
+
+const getInitialEditorLayout = (): EditorLayoutMode => {
+  try {
+    return localStorage.getItem(EDITOR_LAYOUT_STORAGE_KEY) === 'bottom' ? 'bottom' : 'side';
+  } catch {
+    return 'side';
+  }
+};
+
+// headerExtra keeps lightweight page actions such as cron controls in the header.
 const ChatLayout: React.FC<{
   children: React.ReactNode;
   title?: React.ReactNode;
@@ -59,6 +74,7 @@ const ChatLayout: React.FC<{
   /** Optional override for the leading icon shown before the title (e.g. team Peoples icon) */
   headerLeading?: React.ReactNode;
 }> = (props) => {
+  const { t } = useTranslation();
   const { conversation_id, workspacePath, isTemporaryWorkspace } = props;
   const { backend, presetAssistant, agent_name, workspaceEnabled = true, workspacePreferenceKey } = props;
   const layout = useLayoutContext();
@@ -66,6 +82,8 @@ const ChatLayout: React.FC<{
   const isWindowsRuntime = isWindowsEnvironment();
   const isDesktop = !layout?.isMobile;
   const isMobile = Boolean(layout?.isMobile);
+  const [editorLayout, setEditorLayout] = useState<EditorLayoutMode>(getInitialEditorLayout);
+  const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('workspace');
 
   // Preview panel state
   const { isOpen: isPreviewOpen } = usePreviewContext();
@@ -105,6 +123,14 @@ const ChatLayout: React.FC<{
     minWidth: MIN_WORKSPACE_PANEL_PX,
     maxWidth: MAX_WORKSPACE_PANEL_PX,
     storageKey: 'chat-workspace-width-px',
+  });
+
+  const { splitRatio: chatHeightRatio, createDragHandle: createPreviewVerticalDragHandle } = useResizableSplit({
+    axis: 'vertical',
+    defaultWidth: 56,
+    minWidth: 28,
+    maxWidth: 72,
+    storageKey: 'chat-editor-bottom-split-ratio',
   });
 
   // Pre-hook metrics: compute dynamic min/max for the chat-preview split hook
@@ -158,6 +184,58 @@ const ChatLayout: React.FC<{
     dynamicChatMaxRatio,
   });
 
+  useEffect(() => {
+    setRightPanelMode('workspace');
+  }, [conversation_id]);
+
+  const isTracePanelOpen = isDesktop && rightPanelMode === 'trace' && Boolean(conversation_id);
+  const isWorkspacePanelOpen = workspaceEnabled && !rightSiderCollapsed && !isTracePanelOpen;
+  const isRightPanelOpen = isTracePanelOpen || isWorkspacePanelOpen;
+  const rightPanelWidthPx = isTracePanelOpen
+    ? Math.max(MIN_WORKSPACE_PANEL_PX, Math.min(MAX_WORKSPACE_PANEL_PX, workspaceWidthPxPref))
+    : workspaceWidthPx;
+  const isEditorBottom = isPreviewOpen && isDesktop && editorLayout === 'bottom';
+
+  const toggleEditorLayout = () => {
+    setEditorLayout((current) => {
+      const next: EditorLayoutMode = current === 'side' ? 'bottom' : 'side';
+      try {
+        localStorage.setItem(EDITOR_LAYOUT_STORAGE_KEY, next);
+      } catch {
+        // 忽略偏好保存失败，当前会话中的布局切换仍然生效。
+      }
+      return next;
+    });
+  };
+
+  const toggleTracePanel = () => {
+    setRightPanelMode((current) => (current === 'trace' ? 'workspace' : 'trace'));
+  };
+
+  const toggleWorkspacePanel = () => {
+    if (isTracePanelOpen) {
+      setRightPanelMode('workspace');
+      if (rightSiderCollapsed) setRightSiderCollapsed(false);
+      return;
+    }
+    dispatchWorkspaceToggleEvent();
+  };
+
+  const editorLayoutAction = isDesktop ? (
+    <Tooltip content={editorLayout === 'side' ? t('preview.moveEditorBottom') : t('preview.moveEditorRight')}>
+      <Button
+        type='text'
+        shape='circle'
+        size='mini'
+        icon={
+          editorLayout === 'side' ? <LayoutTwo theme='outline' size='16' /> : <LayoutOne theme='outline' size='16' />
+        }
+        aria-label={editorLayout === 'side' ? t('preview.moveEditorBottom') : t('preview.moveEditorRight')}
+        onClick={toggleEditorLayout}
+      />
+    </Tooltip>
+  ) : null;
+
   const [mobileActionsSlot, setMobileActionsSlot] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (!layout?.isMobile) {
@@ -208,15 +286,30 @@ const ChatLayout: React.FC<{
       </FlexFullContainer>
       <div className='flex items-center gap-12px shrink-0'>
         {props.headerExtra}
+        {conversation_id && (
+          <Tooltip content={t('conversation.trace.title')}>
+            <Button
+              type='text'
+              shape='circle'
+              size='mini'
+              className={isTracePanelOpen ? '!bg-3 text-brand' : undefined}
+              icon={<Trace theme='outline' size='16' />}
+              aria-label={t('conversation.trace.title')}
+              aria-pressed={isTracePanelOpen}
+              onClick={toggleTracePanel}
+            />
+          </Tooltip>
+        )}
         {isWindowsRuntime && workspaceEnabled && (
-          <button
-            type='button'
+          <Button
+            type='text'
+            shape='circle'
+            size='mini'
             className='workspace-header__toggle'
-            aria-label='Toggle workspace'
-            onClick={() => dispatchWorkspaceToggleEvent()}
-          >
-            {rightSiderCollapsed ? <ExpandRight size={16} /> : <ExpandLeft size={16} />}
-          </button>
+            aria-label={t('conversation.workspace.title')}
+            onClick={toggleWorkspacePanel}
+            icon={rightSiderCollapsed || isTracePanelOpen ? <ExpandRight size={16} /> : <ExpandLeft size={16} />}
+          />
         )}
       </div>
     </ArcoLayout.Header>
@@ -249,16 +342,17 @@ const ChatLayout: React.FC<{
           }}
         >
           <div className='shrink-0 !bg-1'>{headerBlock}</div>
-          <div className='flex flex-1 min-h-0 relative'>
+          <div className={classNames('flex flex-1 min-h-0 relative', isEditorBottom && 'flex-col')}>
             {/* Chat area - always mounted, never unmounted on preview toggle */}
             <div
               className='flex flex-col relative'
               style={{
                 flexGrow: isPreviewOpen && isDesktop ? 0 : 1,
                 flexShrink: 0,
-                flexBasis: isPreviewOpen && isDesktop ? `${chatFlex}%` : 0,
+                flexBasis: isEditorBottom ? `${chatHeightRatio}%` : isPreviewOpen && isDesktop ? `${chatFlex}%` : 0,
                 display: isPreviewOpen && isMobile ? 'none' : 'flex',
                 minWidth: '240px',
+                minHeight: isEditorBottom ? '220px' : 0,
               }}
               onClick={() => {
                 if (window.innerWidth < 768 && !rightSiderCollapsed) setRightSiderCollapsed(true);
@@ -273,7 +367,11 @@ const ChatLayout: React.FC<{
               <div
                 className={classNames(
                   'preview-panel flex flex-col relative overflow-visible rounded-[15px]',
-                  isDesktop ? 'mb-[12px] mr-[12px] ml-[8px]' : 'm-[8px]'
+                  isDesktop
+                    ? isEditorBottom
+                      ? 'mx-[12px] mt-[8px] mb-[12px]'
+                      : 'mb-[12px] mr-[12px] ml-[8px]'
+                    : 'm-[8px]'
                 )}
                 style={{
                   flexGrow: 1,
@@ -281,55 +379,69 @@ const ChatLayout: React.FC<{
                   flexBasis: 0,
                   border: '1px solid var(--bg-3)',
                   minWidth: isDesktop ? '260px' : 0,
+                  minHeight: isEditorBottom ? '220px' : 0,
                   maxWidth: isMobile ? 'calc(100% - 16px)' : undefined,
                   width: isMobile ? 'calc(100% - 16px)' : undefined,
                   boxSizing: 'border-box',
                 }}
               >
                 {isDesktop &&
-                  createPreviewDragHandle({
-                    className: 'absolute top-0 bottom-0 z-30',
-                    style: { width: '20px', left: '-20px' },
-                    linePlacement: 'end',
-                    lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
-                    lineStyle: { width: '2px' },
-                  })}
+                  (isEditorBottom
+                    ? createPreviewVerticalDragHandle({
+                        className: 'absolute left-0 right-0 z-30',
+                        style: { height: '20px', top: '-20px' },
+                        linePlacement: 'end',
+                        lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
+                        lineStyle: { height: '2px' },
+                      })
+                    : createPreviewDragHandle({
+                        className: 'absolute top-0 bottom-0 z-30',
+                        style: { width: '20px', left: '-20px' },
+                        linePlacement: 'end',
+                        lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
+                        lineStyle: { width: '2px' },
+                      }))}
                 <div className='h-full w-full overflow-hidden rounded-[15px]'>
-                  <PreviewPanel />
+                  <PreviewPanel panelActions={editorLayoutAction} />
                 </div>
               </div>
             )}
           </div>
         </div>
-        {workspaceEnabled && !layout?.isMobile && (
+        {isRightPanelOpen && !layout?.isMobile && (
           <div
             className={classNames('!bg-1 relative chat-layout-right-sider layout-sider')}
             style={{
               flexGrow: 0,
               flexShrink: 0,
-              flexBasis: rightSiderCollapsed ? '0px' : `${Math.round(workspaceWidthPx)}px`,
-              width: rightSiderCollapsed ? '0px' : `${Math.round(workspaceWidthPx)}px`,
-              minWidth: rightSiderCollapsed ? '0px' : `${MIN_WORKSPACE_PANEL_PX}px`,
+              flexBasis: `${Math.round(rightPanelWidthPx)}px`,
+              width: `${Math.round(rightPanelWidthPx)}px`,
+              minWidth: `${MIN_WORKSPACE_PANEL_PX}px`,
               overflow: 'hidden',
-              borderLeft: rightSiderCollapsed ? 'none' : '1px solid var(--bg-3)',
+              borderLeft: '1px solid var(--bg-3)',
             }}
           >
             {isDesktop &&
-              !rightSiderCollapsed &&
               createWorkspaceDragHandle({ className: 'absolute left-0 top-0 bottom-0', style: {}, reverse: true })}
-            <WorkspacePanelHeader
-              showToggle={!isMacRuntime && !isWindowsRuntime}
-              collapsed={rightSiderCollapsed}
-              onToggle={() => dispatchWorkspaceToggleEvent()}
-              togglePlacement={layout?.isMobile ? 'left' : 'right'}
-              workspacePath={workspacePath}
-              isTemporaryWorkspace={isTemporaryWorkspace}
-            >
-              {props.siderTitle}
-            </WorkspacePanelHeader>
-            <ArcoLayout.Content style={{ height: `calc(100% - ${WORKSPACE_HEADER_HEIGHT}px)` }}>
-              {props.sider}
-            </ArcoLayout.Content>
+            {isTracePanelOpen && conversation_id ? (
+              <TracePanel conversationId={conversation_id} />
+            ) : (
+              <>
+                <WorkspacePanelHeader
+                  showToggle={!isMacRuntime && !isWindowsRuntime}
+                  collapsed={rightSiderCollapsed}
+                  onToggle={() => dispatchWorkspaceToggleEvent()}
+                  togglePlacement={layout?.isMobile ? 'left' : 'right'}
+                  workspacePath={workspacePath}
+                  isTemporaryWorkspace={isTemporaryWorkspace}
+                >
+                  {props.siderTitle}
+                </WorkspacePanelHeader>
+                <ArcoLayout.Content style={{ height: `calc(100% - ${WORKSPACE_HEADER_HEIGHT}px)` }}>
+                  {props.sider}
+                </ArcoLayout.Content>
+              </>
+            )}
           </div>
         )}
 
@@ -348,9 +460,12 @@ const ChatLayout: React.FC<{
         )}
 
         {/* Desktop expand button when workspace is collapsed */}
-        {!isMacRuntime && !isWindowsRuntime && workspaceEnabled && rightSiderCollapsed && !layout?.isMobile && (
-          <DesktopWorkspaceToggle />
-        )}
+        {!isMacRuntime &&
+          !isWindowsRuntime &&
+          workspaceEnabled &&
+          rightSiderCollapsed &&
+          !isTracePanelOpen &&
+          !layout?.isMobile && <DesktopWorkspaceToggle />}
       </div>
     </ArcoLayout>
   );

@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { CSSProperties } from 'react';
 import classNames from 'classnames';
 import { removeStack } from '@/renderer/utils/common';
@@ -28,6 +27,8 @@ interface UseResizableSplitOptions {
   storageKey?: string;
   /** 单位：百分比或像素。默认 'ratio'（向后兼容） */
   unit?: 'ratio' | 'px';
+  /** 拖动方向：horizontal 调整宽度，vertical 调整高度 */
+  axis?: 'horizontal' | 'vertical';
 }
 
 /**
@@ -38,8 +39,9 @@ interface UseResizableSplitOptions {
  * @returns 分割比例、拖动句柄和设置函数 / Split ratio, drag handle, and setter function
  */
 export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
-  const { defaultWidth = 50, minWidth = 20, maxWidth = 80, storageKey, unit = 'ratio' } = options;
+  const { defaultWidth = 50, minWidth = 20, maxWidth = 80, storageKey, unit = 'ratio', axis = 'horizontal' } = options;
   const isPx = unit === 'px';
+  const isVertical = axis === 'vertical';
 
   // 从 LocalStorage 读取保存的比例 / Read saved ratio from LocalStorage
   const getStoredRatio = (): number => {
@@ -95,21 +97,21 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
         const dragHandle = event.currentTarget as HTMLElement;
         const parent = dragHandle.parentElement;
         const outerContainer = parent?.parentElement;
-        const containerWidth = outerContainer?.offsetWidth || 0;
-        if (!isPx && !containerWidth) {
+        const containerSize = (isVertical ? outerContainer?.offsetHeight : outerContainer?.offsetWidth) || 0;
+        if (!isPx && !containerSize) {
           return;
         }
 
-        const startX = event.clientX;
+        const startPosition = isVertical ? event.clientY : event.clientX;
         const startRatio = splitRatio;
         const pointerId = event.pointerId;
-        // px 模式下拖动直接换算为像素差，不再除以容器宽度
-        const computeRatio = (clientX: number): number => {
-          const deltaX = reverse ? startX - clientX : clientX - startX;
+        // px 模式下拖动直接换算为像素差，不再除以容器尺寸
+        const computeRatio = (clientPosition: number): number => {
+          const delta = reverse ? startPosition - clientPosition : clientPosition - startPosition;
           if (isPx) {
-            return Math.max(minWidth, Math.min(maxWidth, startRatio + deltaX));
+            return Math.max(minWidth, Math.min(maxWidth, startRatio + delta));
           }
-          const deltaRatio = (deltaX / containerWidth) * 100;
+          const deltaRatio = (delta / containerSize) * 100;
           return Math.max(minWidth, Math.min(maxWidth, startRatio + deltaRatio));
         };
         let rafId: number | null = null;
@@ -131,7 +133,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
         const initDragStyle = () => {
           const originalUserSelect = document.body.style.userSelect;
           document.body.style.userSelect = 'none';
-          document.body.style.cursor = 'col-resize';
+          document.body.style.cursor = isVertical ? 'row-resize' : 'col-resize';
 
           const layoutSider = dragHandle.closest('.layout-sider');
           if (layoutSider) {
@@ -164,8 +166,9 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
           flushPendingRatio();
 
           let finalRatio = latestRatio;
-          if (e && 'clientX' in e && typeof e.clientX === 'number') {
-            finalRatio = computeRatio(e.clientX);
+          if (e && 'clientX' in e) {
+            const finalPosition = isVertical ? e.clientY : e.clientX;
+            finalRatio = computeRatio(finalPosition);
             latestRatio = finalRatio;
           }
 
@@ -181,7 +184,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
             finishDrag(e);
             return;
           }
-          pendingRatio = computeRatio(e.clientX);
+          pendingRatio = computeRatio(isVertical ? e.clientY : e.clientX);
           if (rafId === null) {
             rafId = requestAnimationFrame(() => {
               rafId = null;
@@ -200,7 +203,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
           try {
             dragHandle.setPointerCapture(pointerId);
             dragHandle.addEventListener('lostpointercapture', handleLostPointerCapture);
-          } catch (error) {
+          } catch {
             // 忽略 pointer capture 失败，继续使用备用逻辑 / Ignore failures silently
           }
         }
@@ -222,7 +225,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
           addWindowEventListener('blur', () => finishDrag())
         );
       },
-    [splitRatio, minWidth, maxWidth, setSplitRatio, dispatchSplitResizeEvent, isPx]
+    [splitRatio, minWidth, maxWidth, setSplitRatio, dispatchSplitResizeEvent, isPx, isVertical]
   );
 
   const renderHandle = ({
@@ -242,7 +245,8 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
   } = {}) => (
     <div
       className={classNames(
-        'group absolute top-0 bottom-0 z-20 cursor-col-resize flex items-center',
+        'group absolute z-20 flex items-center',
+        isVertical ? 'left-0 right-0 cursor-row-resize flex-col' : 'top-0 bottom-0 cursor-col-resize',
         linePlacement
           ? linePlacement === 'start'
             ? 'justify-start'
@@ -252,13 +256,16 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
             : 'justify-end',
         className
       )}
-      style={{ width: '12px', ...style }}
+      style={{ ...(isVertical ? { height: '12px' } : { width: '12px' }), ...style }}
       onPointerDown={handleDragStart(reverse)}
       onDoubleClick={() => setSplitRatio(defaultWidth)}
     >
       <span
         className={classNames(
-          'pointer-events-none block h-full w-2px bg-bg-3 opacity-90 rd-full transition-all duration-150 group-hover:w-6px group-hover:bg-aou-6 group-active:w-6px group-active:bg-aou-6',
+          'pointer-events-none block bg-bg-3 opacity-90 rd-full transition-all duration-150 group-hover:bg-aou-6 group-active:bg-aou-6',
+          isVertical
+            ? 'h-2px w-full group-hover:h-6px group-active:h-6px'
+            : 'h-full w-2px group-hover:w-6px group-active:w-6px',
           lineClassName
         )}
         style={lineStyle}
@@ -268,7 +275,7 @@ export const useResizableSplit = (options: UseResizableSplitOptions = {}) => {
 
   return {
     splitRatio,
-    dragHandle: renderHandle({ className: 'right-0' }),
+    dragHandle: renderHandle({ className: isVertical ? 'bottom-0' : 'right-0' }),
     setSplitRatio,
     createDragHandle: renderHandle,
   };

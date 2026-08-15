@@ -7,7 +7,6 @@ import ChatConversation from '@/renderer/pages/conversation/components/ChatConve
 
 const usePresetAssistantInfoMock = vi.fn();
 const acpChatMock = vi.fn(() => <div data-testid='mock-acp-chat'>acp chat</div>);
-const acpModelSelectorMock = vi.fn(() => <div data-testid='mock-acp-model-selector'>model selector</div>);
 
 vi.mock('@/renderer/pages/conversation/Messages/MessageList', () => ({
   default: ({ className }: { className?: string }) => <div className={className}>message history</div>,
@@ -36,11 +35,6 @@ vi.mock('@/renderer/pages/conversation/components/ChatLayout', () => ({
 vi.mock('@/renderer/pages/conversation/platforms/acp/AcpChat', () => ({
   __esModule: true,
   default: (props: unknown) => acpChatMock(props),
-}));
-
-vi.mock('@/renderer/components/agent/AcpModelSelector', () => ({
-  __esModule: true,
-  default: (props: unknown) => acpModelSelectorMock(props),
 }));
 
 vi.mock('@/renderer/pages/conversation/components/ChatSlider.tsx', () => ({
@@ -84,7 +78,6 @@ describe('ChatConversation legacy runtime rendering', () => {
   beforeEach(() => {
     usePresetAssistantInfoMock.mockReset();
     acpChatMock.mockClear();
-    acpModelSelectorMock.mockClear();
     usePresetAssistantInfoMock.mockReturnValue({ info: undefined, isLoading: false });
   });
 
@@ -142,7 +135,7 @@ describe('ChatConversation legacy runtime rendering', () => {
     );
   });
 
-  it('passes the resolved assistant backend to the ACP model selector for ACP conversations', () => {
+  it('passes the resolved backend and initial model to the ACP send-box flow', () => {
     usePresetAssistantInfoMock.mockReturnValue({
       info: {
         name: 'Research Assistant',
@@ -174,13 +167,10 @@ describe('ChatConversation legacy runtime rendering', () => {
       />
     );
 
-    expect(screen.getByTestId('mock-acp-model-selector')).toBeInTheDocument();
-    expect(acpModelSelectorMock).toHaveBeenCalledWith(
+    expect(acpChatMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        conversation_id: 'conv-acp',
         backend: 'codex',
         initialModelId: 'model-1',
-        waitForWarmup: true,
       })
     );
   });

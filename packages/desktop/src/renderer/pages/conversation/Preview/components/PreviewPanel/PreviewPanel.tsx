@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { downloadFileFromPath, downloadTextContent } from '@/renderer/utils/file/download';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
@@ -46,7 +45,7 @@ import './preview.css';
  * 支持多 Tab 切换，每个 Tab 可以显示不同类型的内容
  * Supports multiple tabs, each tab can display different types of content
  */
-const PreviewPanel: React.FC = () => {
+const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActions }) => {
   const { t } = useTranslation();
   const {
     isOpen,
@@ -660,6 +659,7 @@ const PreviewPanel: React.FC = () => {
           onCloseTab={handleCloseTab}
           onContextMenu={handleTabContextMenu}
           onClosePanel={closePreview}
+          panelActions={panelActions}
         />
 
         {/* 工具栏（URL 类型不显示工具栏，因为不需要下载/编辑等功能）/ Toolbar (hidden for URL type as it doesn't need download/edit features) */}

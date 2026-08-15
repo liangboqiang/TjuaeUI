@@ -1,6 +1,7 @@
 import { ipcBridge } from '@/common';
 import type { TMessage } from '@/common/chat/chatLib';
-import { Button, Drawer, Empty, Spin, Tag, Timeline, Typography } from '@arco-design/web-react';
+import { Button, Drawer, Empty, Spin, Tag, Timeline, Tooltip, Typography } from '@arco-design/web-react';
+import { Refresh, Trace } from '@icon-park/react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
@@ -44,38 +45,44 @@ const traceColor = (message: TMessage): string => {
   return 'green';
 };
 
-const TraceDrawer: React.FC<{ conversationId: string }> = ({ conversationId }) => {
+export const TracePanel: React.FC<{
+  conversationId: string;
+  active?: boolean;
+  showHeader?: boolean;
+}> = ({ conversationId, active = true, showHeader = true }) => {
   const { t, i18n } = useTranslation();
-  const [visible, setVisible] = useState(false);
   const { data, error, isLoading, mutate } = useSWR(
-    visible ? ['conversation-trace', conversationId] : null,
+    active ? ['conversation-trace', conversationId] : null,
     () => ipcBridge.database.getConversationMessages.invoke({ conversation_id: conversationId, limit: 200 }),
-    { refreshInterval: visible ? 1500 : 0, revalidateOnFocus: false }
+    { refreshInterval: active ? 1500 : 0, revalidateOnFocus: false }
   );
   const events = useMemo(
-    () => [...(data?.items ?? [])].sort((left, right) => (left.created_at ?? 0) - (right.created_at ?? 0)),
+    () => (data?.items ?? []).toSorted((left, right) => (left.created_at ?? 0) - (right.created_at ?? 0)),
     [data?.items]
   );
 
   return (
-    <>
-      <Button size='mini' onClick={() => setVisible(true)}>
-        {t('conversation.trace.open')}
-      </Button>
-      <Drawer
-        width={560}
-        visible={visible}
-        title={t('conversation.trace.title')}
-        onCancel={() => setVisible(false)}
-        footer={null}
-        unmountOnExit
-      >
-        <div className='flex items-center justify-between mb-20px'>
-          <Typography.Text type='secondary'>{t('conversation.trace.description')}</Typography.Text>
-          <Button size='small' loading={isLoading} onClick={() => void mutate()}>
-            {t('conversation.trace.refresh')}
-          </Button>
+    <div className='flex h-full min-h-0 flex-col bg-1'>
+      {showHeader && (
+        <div className='flex h-32px shrink-0 items-center justify-between border-b border-border-1 px-12px'>
+          <Typography.Text bold>{t('conversation.trace.title')}</Typography.Text>
+          <Tooltip content={t('conversation.trace.refresh')}>
+            <Button
+              type='text'
+              shape='circle'
+              size='mini'
+              loading={isLoading}
+              icon={<Refresh theme='outline' size='16' />}
+              aria-label={t('conversation.trace.refresh')}
+              onClick={() => void mutate()}
+            />
+          </Tooltip>
         </div>
+      )}
+      <div className='min-h-0 flex-1 overflow-y-auto p-16px'>
+        <Typography.Paragraph type='secondary' className='mb-20px'>
+          {t('conversation.trace.description')}
+        </Typography.Paragraph>
         {isLoading && !data ? (
           <div className='flex justify-center py-48px'>
             <Spin />
@@ -90,7 +97,7 @@ const TraceDrawer: React.FC<{ conversationId: string }> = ({ conversationId }) =
               const preview = messageText(event);
               return (
                 <Timeline.Item key={event.id} dotColor={traceColor(event)}>
-                  <div className='flex items-center gap-8px mb-4px'>
+                  <div className='mb-4px flex items-center gap-8px'>
                     <Tag color={traceColor(event)} size='small'>
                       {t(`conversation.trace.kind.${event.type}` as const, { defaultValue: event.type })}
                     </Tag>
@@ -111,6 +118,36 @@ const TraceDrawer: React.FC<{ conversationId: string }> = ({ conversationId }) =
             })}
           </Timeline>
         )}
+      </div>
+    </div>
+  );
+};
+
+const TraceDrawer: React.FC<{ conversationId: string }> = ({ conversationId }) => {
+  const { t } = useTranslation();
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <>
+      <Tooltip content={t('conversation.trace.title')}>
+        <Button
+          type='text'
+          shape='circle'
+          size='mini'
+          icon={<Trace theme='outline' size='16' />}
+          aria-label={t('conversation.trace.title')}
+          onClick={() => setVisible(true)}
+        />
+      </Tooltip>
+      <Drawer
+        width={560}
+        visible={visible}
+        title={t('conversation.trace.title')}
+        onCancel={() => setVisible(false)}
+        footer={null}
+        unmountOnExit
+      >
+        <TracePanel conversationId={conversationId} active={visible} showHeader={false} />
       </Drawer>
     </>
   );

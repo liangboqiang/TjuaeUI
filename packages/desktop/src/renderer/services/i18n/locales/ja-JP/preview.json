@@ -16,6 +16,8 @@
   "downloadFile": "ファイルをダウンロード",
   "closePreview": "プレビューを閉じる",
   "collapsePanel": "パネルを閉じる",
+  "moveEditorBottom": "エディター欄を会話の下に移動",
+  "moveEditorRight": "エディター欄を会話の右側に移動",
   "source": "ソース",
   "code": "Code",
   "preview": "プレビュー",

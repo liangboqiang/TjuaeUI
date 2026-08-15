@@ -16,6 +16,8 @@
   "downloadFile": "Download file",
   "closePreview": "Close preview",
   "collapsePanel": "Collapse panel",
+  "moveEditorBottom": "Move editor below the conversation",
+  "moveEditorRight": "Move editor to the right of the conversation",
   "source": "Source",
   "code": "Code",
   "preview": "Preview",

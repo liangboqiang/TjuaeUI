@@ -16,6 +16,8 @@
   "downloadFile": "Télécharger le fichier",
   "closePreview": "Fermer l'aperçu",
   "collapsePanel": "Réduire le panneau",
+  "moveEditorBottom": "Déplacer le panneau de l’éditeur sous la conversation",
+  "moveEditorRight": "Déplacer le panneau de l’éditeur à droite de la conversation",
   "source": "Source",
   "code": "Code",
   "preview": "Aperçu",

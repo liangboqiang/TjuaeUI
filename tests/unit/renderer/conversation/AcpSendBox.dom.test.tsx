@@ -1,4 +1,3 @@
-
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
@@ -78,6 +77,9 @@ vi.mock('@/renderer/components/chat/SendBox', () => ({
 }));
 
 vi.mock('@/renderer/components/agent/AgentModeSelector', () => ({ default: () => null }));
+vi.mock('@/renderer/components/agent/AcpModelSelector', () => ({
+  default: () => <div data-testid='acp-input-model-selector' />,
+}));
 vi.mock('@/renderer/components/chat/CommandQueuePanel', () => ({ default: () => null }));
 vi.mock('@/renderer/components/chat/MobileActionSheet', () => ({
   default: ({
@@ -318,6 +320,19 @@ describe('AcpSendBox', () => {
     expect(wrapper?.className).not.toContain('w-[calc(100%-24px)]');
     expect(wrapper?.className).not.toContain('md:w-[calc(100%-clamp(80px,10vw,240px))]');
     expect(wrapper?.className).not.toContain('max-w-800px');
+  });
+
+  it('renders the model selector inside the send box control area', () => {
+    render(
+      <AcpSendBox
+        conversation_id='conv-1'
+        backend='codex'
+        workspacePath='/tmp/workspace'
+        messageState={makeMessageState()}
+      />
+    );
+
+    expect(screen.getByTestId('acp-input-model-selector')).toBeInTheDocument();
   });
 
   it('uses the full available width in team mode', () => {

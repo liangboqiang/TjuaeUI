@@ -1,4 +1,3 @@
-
 import type { IConversationMcpStatus } from '@/common/config/storage';
 import { ConversationProvider } from '@/renderer/hooks/context/ConversationContext';
 import { CHAT_SURFACE_CONTAINER_CLASS } from '@/renderer/pages/conversation/utils/chatSurfaceWidth';
@@ -24,6 +23,7 @@ const AcpChat: React.FC<{
   conversation_id: string;
   workspace?: string;
   backend: string;
+  initialModelId?: string;
   session_mode?: string;
   agent_name?: string;
   cron_job_id?: string;
@@ -39,6 +39,7 @@ const AcpChat: React.FC<{
   conversation_id,
   workspace,
   backend,
+  initialModelId,
   session_mode,
   agent_name,
   cron_job_id,
@@ -83,6 +84,7 @@ const AcpChat: React.FC<{
             <AcpSendBox
               conversation_id={conversation_id}
               backend={backend}
+              initialModelId={initialModelId}
               session_mode={session_mode}
               agent_name={agent_name}
               workspacePath={workspace}

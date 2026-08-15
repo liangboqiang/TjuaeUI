@@ -16,6 +16,8 @@
   "downloadFile": "Descargar archivo",
   "closePreview": "Cerrar vista previa",
   "collapsePanel": "Contraer panel",
+  "moveEditorBottom": "Mover el panel del editor debajo de la conversación",
+  "moveEditorRight": "Mover el panel del editor a la derecha de la conversación",
   "source": "Fuente",
   "code": "Código",
   "preview": "Vista previa",

@@ -1,4 +1,3 @@
-
 import { iconColors } from '@/renderer/styles/colors';
 import { Close } from '@icon-park/react';
 import { IconShrink } from '@arco-design/web-react/icon';
@@ -81,6 +80,9 @@ interface PreviewTabsProps {
    * Close preview panel callback
    */
   onClosePanel?: () => void;
+
+  /** 面板级操作，例如编辑器栏布局切换 */
+  panelActions?: React.ReactNode;
 }
 
 /**
@@ -102,6 +104,7 @@ const PreviewTabs: React.FC<PreviewTabsProps> = ({
   onCloseTab,
   onContextMenu,
   onClosePanel,
+  panelActions,
 }) => {
   const { t } = useTranslation();
   const { left: showLeftFade, right: showRightFade } = tabFadeState;
@@ -146,16 +149,19 @@ const PreviewTabs: React.FC<PreviewTabsProps> = ({
           )}
         </div>
 
-        {/* 收起面板按钮 / Collapse panel button */}
-        {onClosePanel && (
+        {/* 面板级操作与收起按钮 / Panel actions and collapse button */}
+        {(panelActions || onClosePanel) && (
           <div className='flex items-center h-full px-10px flex-shrink-0 rounded-tr-[16px]'>
-            <div
-              className='flex items-center justify-center w-20px h-20px rd-4px cursor-pointer hover:bg-bg-3 transition-colors'
-              onClick={onClosePanel}
-              title={t('preview.collapsePanel')}
-            >
-              <IconShrink style={{ fontSize: 14, color: iconColors.secondary }} />
-            </div>
+            {panelActions}
+            {onClosePanel && (
+              <div
+                className='flex items-center justify-center w-20px h-20px rd-4px cursor-pointer hover:bg-bg-3 transition-colors'
+                onClick={onClosePanel}
+                title={t('preview.collapsePanel')}
+              >
+                <IconShrink style={{ fontSize: 14, color: iconColors.secondary }} />
+              </div>
+            )}
           </div>
         )}
       </div>

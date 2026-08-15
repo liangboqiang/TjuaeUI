@@ -1076,6 +1076,8 @@ export type I18nKey =
   | 'preview.mermaidTitle'
   | 'preview.missingFile.openInNewTab'
   | 'preview.missingFile.title'
+  | 'preview.moveEditorBottom'
+  | 'preview.moveEditorRight'
   | 'preview.noHistory'
   | 'preview.noTabs'
   | 'preview.office.openOrDownloadHint'

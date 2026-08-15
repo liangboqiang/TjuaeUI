@@ -43,11 +43,14 @@ vi.mock('@/renderer/components/chat/SendBox', () => ({
   default: ({
     onSend,
     onChange,
+    rightTools,
   }: {
     onSend: (message: string) => Promise<void>;
     onChange?: (value: string) => void;
+    rightTools?: React.ReactNode;
   }) => (
     <div>
+      {rightTools}
       <button type='button' onClick={() => onChange?.('hello')}>
         change
       </button>
@@ -59,6 +62,9 @@ vi.mock('@/renderer/components/chat/SendBox', () => ({
 }));
 
 vi.mock('@/renderer/components/agent/AgentModeSelector', () => ({ default: () => null }));
+vi.mock('@/renderer/pages/conversation/platforms/tjuaecli/TjuaeCliModelSelector', () => ({
+  default: () => <div data-testid='tjuaecli-input-model-selector' />,
+}));
 vi.mock('@/renderer/components/chat/CommandQueuePanel', () => ({ default: () => null }));
 vi.mock('@/renderer/components/chat/MobileActionSheet', () => ({
   default: () => null,
@@ -306,6 +312,12 @@ describe('TjuaeCliSendBox', () => {
     await waitFor(() => {
       expect(ensureConversationRuntimeMock).toHaveBeenCalledWith('conv-1');
     });
+  });
+
+  it('renders the model selector inside the send box control area', () => {
+    render(<TjuaeCliSendBox conversation_id='conv-1' modelSelection={modelSelection} />);
+
+    expect(screen.getByTestId('tjuaecli-input-model-selector')).toBeInTheDocument();
   });
 
   it('suppresses visible error and preserves runtime gate for active-turn busy conflicts', async () => {

@@ -36,6 +36,7 @@ import { getConversationRuntimeWorkspaceErrorMessage } from '@/renderer/pages/co
 import { getChatSurfaceWidthClass } from '@/renderer/pages/conversation/utils/chatSurfaceWidth';
 import { useTeamPermission } from '@/renderer/pages/team/hooks/TeamPermissionContext';
 import type { TeamSendBoxRuntime } from '@/renderer/pages/team/components/teamSendRuntime';
+import AcpModelSelector from '@/renderer/components/agent/AcpModelSelector';
 import { allSupportedExts } from '@/renderer/services/FileService';
 import { iconColors } from '@/renderer/styles/colors';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
@@ -103,6 +104,7 @@ const useSendBoxDraft = (conversation_id: string) => {
 const AcpSendBox: React.FC<{
   conversation_id: string;
   backend: string;
+  initialModelId?: string;
   session_mode?: string;
   agent_name?: string;
   workspacePath?: string;
@@ -112,6 +114,7 @@ const AcpSendBox: React.FC<{
 }> = ({
   conversation_id,
   backend,
+  initialModelId,
   session_mode,
   agent_name,
   workspacePath,
@@ -713,6 +716,16 @@ Please check your local CLI tool authentication status`,
         }
         rightTools={
           <div className='flex items-center gap-8px min-w-0'>
+            {!isMobile && (
+              <AcpModelSelector
+                conversation_id={conversation_id}
+                backend={backend}
+                initialModelId={initialModelId}
+                prepareRuntime={prepareRuntimeConfig}
+                prepareSetRuntime={teamPermission?.warmupSession}
+                loadConfigOptions={teamPermission?.loadConfigOptions}
+              />
+            )}
             {showModeSelector && (
               <AgentModeSelector
                 backend={backend}
