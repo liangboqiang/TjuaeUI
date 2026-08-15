@@ -18,6 +18,8 @@
   "collapsePanel": "收起面板",
   "switchToStackedLayout": "切换为上下布局",
   "switchToSideLayout": "切换为左右布局",
+  "hideConversationPane": "隐藏对话窗口",
+  "showConversationPane": "显示对话窗口",
   "source": "原文",
   "code": "代码",
   "preview": "预览",

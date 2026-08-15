@@ -18,6 +18,8 @@
   "collapsePanel": "Contraer panel",
   "switchToStackedLayout": "Cambiar al diseño vertical",
   "switchToSideLayout": "Cambiar al diseño en paralelo",
+  "hideConversationPane": "Ocultar panel de conversación",
+  "showConversationPane": "Mostrar panel de conversación",
   "source": "Fuente",
   "code": "Código",
   "preview": "Vista previa",

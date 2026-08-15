@@ -18,6 +18,8 @@
   "collapsePanel": "Réduire le panneau",
   "switchToStackedLayout": "Passer à la disposition verticale",
   "switchToSideLayout": "Passer à la disposition côte à côte",
+  "hideConversationPane": "Masquer le panneau de conversation",
+  "showConversationPane": "Afficher le panneau de conversation",
   "source": "Source",
   "code": "Code",
   "preview": "Aperçu",

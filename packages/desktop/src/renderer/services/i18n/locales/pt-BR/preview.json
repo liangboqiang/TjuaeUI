@@ -18,6 +18,8 @@
   "collapsePanel": "Recolher painel",
   "switchToStackedLayout": "Alternar para layout vertical",
   "switchToSideLayout": "Alternar para layout lado a lado",
+  "hideConversationPane": "Ocultar painel de conversa",
+  "showConversationPane": "Mostrar painel de conversa",
   "source": "Fonte",
   "code": "Código",
   "preview": "Pré-visualização",

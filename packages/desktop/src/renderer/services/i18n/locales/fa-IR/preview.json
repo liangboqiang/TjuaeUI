@@ -18,6 +18,8 @@
   "collapsePanel": "جمع کردن پنل",
   "switchToStackedLayout": "تغییر به چیدمان عمودی",
   "switchToSideLayout": "تغییر به چیدمان کنارهم",
+  "hideConversationPane": "پنهان کردن پنجره گفتگو",
+  "showConversationPane": "نمایش پنجره گفتگو",
   "source": "منبع",
   "code": "کد",
   "preview": "پیش‌نمایش",

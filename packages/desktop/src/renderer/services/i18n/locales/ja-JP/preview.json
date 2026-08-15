@@ -18,6 +18,8 @@
   "collapsePanel": "パネルを閉じる",
   "switchToStackedLayout": "上下レイアウトに切り替える",
   "switchToSideLayout": "左右レイアウトに切り替える",
+  "hideConversationPane": "会話パネルを非表示にする",
+  "showConversationPane": "会話パネルを表示する",
   "source": "ソース",
   "code": "Code",
   "preview": "プレビュー",

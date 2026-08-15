@@ -18,6 +18,8 @@
   "collapsePanel": "Panel einklappen",
   "switchToStackedLayout": "Zum vertikalen Layout wechseln",
   "switchToSideLayout": "Zum nebeneinander angeordneten Layout wechseln",
+  "hideConversationPane": "Unterhaltungsbereich ausblenden",
+  "showConversationPane": "Unterhaltungsbereich anzeigen",
   "source": "Quelle",
   "code": "Code",
   "preview": "Vorschau",

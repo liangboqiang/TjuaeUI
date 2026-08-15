@@ -23,7 +23,7 @@ import {
   calcLayoutMetrics,
 } from '@/renderer/pages/conversation/utils/layoutCalc';
 import { Button, Layout as ArcoLayout, Tooltip } from '@arco-design/web-react';
-import { ExpandLeft, ExpandRight, LayoutOne, LayoutTwo, Trace } from '@icon-park/react';
+import { Down, ExpandLeft, ExpandRight, LayoutOne, LayoutTwo, Trace, Up } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -84,6 +84,7 @@ const ChatLayout: React.FC<{
   const isMobile = Boolean(layout?.isMobile);
   const [editorLayout, setEditorLayout] = useState<EditorLayoutMode>(getInitialEditorLayout);
   const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('workspace');
+  const [isStackedConversationCollapsed, setIsStackedConversationCollapsed] = useState(false);
 
   // Preview panel state
   const { isOpen: isPreviewOpen } = usePreviewContext();
@@ -195,17 +196,17 @@ const ChatLayout: React.FC<{
     ? Math.max(MIN_WORKSPACE_PANEL_PX, Math.min(MAX_WORKSPACE_PANEL_PX, workspaceWidthPxPref))
     : workspaceWidthPx;
   const isStackedLayout = isPreviewOpen && isDesktop && editorLayout === 'stacked';
+  const isConversationPaneHidden = isStackedLayout && isStackedConversationCollapsed;
 
   const toggleEditorLayout = () => {
-    setEditorLayout((current) => {
-      const next: EditorLayoutMode = current === 'side' ? 'stacked' : 'side';
-      try {
-        localStorage.setItem(EDITOR_LAYOUT_STORAGE_KEY, next);
-      } catch {
-        // 忽略偏好保存失败，当前会话中的布局切换仍然生效。
-      }
-      return next;
-    });
+    const next: EditorLayoutMode = editorLayout === 'side' ? 'stacked' : 'side';
+    setEditorLayout(next);
+    if (next === 'side') setIsStackedConversationCollapsed(false);
+    try {
+      localStorage.setItem(EDITOR_LAYOUT_STORAGE_KEY, next);
+    } catch {
+      // 忽略偏好保存失败，当前会话中的布局切换仍然生效。
+    }
   };
 
   const toggleTracePanel = () => {
@@ -352,11 +353,11 @@ const ChatLayout: React.FC<{
               className='flex flex-col relative'
               data-workbench-pane='conversation'
               style={{
-                order: isStackedLayout ? 2 : undefined,
+                order: isStackedLayout ? 3 : undefined,
                 flexGrow: isPreviewOpen && isDesktop ? 0 : 1,
                 flexShrink: 0,
                 flexBasis: isStackedLayout ? `${chatHeightRatio}%` : isPreviewOpen && isDesktop ? `${chatFlex}%` : 0,
-                display: isPreviewOpen && isMobile ? 'none' : 'flex',
+                display: isConversationPaneHidden || (isPreviewOpen && isMobile) ? 'none' : 'flex',
                 minWidth: '240px',
                 minHeight: isStackedLayout ? '220px' : 0,
               }}
@@ -391,24 +392,53 @@ const ChatLayout: React.FC<{
                 }}
               >
                 {isDesktop &&
-                  (isStackedLayout
-                    ? createPreviewVerticalDragHandle({
-                        className: 'absolute left-0 right-0 z-30',
-                        style: { height: '20px', bottom: '-20px' },
-                        linePlacement: 'start',
-                        lineClassName: 'opacity-0 group-hover:opacity-100 group-active:opacity-100',
-                        lineStyle: { height: '2px' },
-                      })
-                    : createPreviewDragHandle({
-                        className: 'absolute top-0 bottom-0 z-30',
-                        style: { width: '20px', left: '-20px' },
-                        linePlacement: 'end',
-                        lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
-                        lineStyle: { width: '2px' },
-                      }))}
+                  !isStackedLayout &&
+                  createPreviewDragHandle({
+                    className: 'absolute top-0 bottom-0 z-30',
+                    style: { width: '20px', left: '-20px' },
+                    linePlacement: 'end',
+                    lineClassName: 'opacity-30 group-hover:opacity-100 group-active:opacity-100',
+                    lineStyle: { width: '2px' },
+                  })}
                 <div className={classNames('h-full w-full overflow-hidden', !isStackedLayout && 'rounded-[15px]')}>
                   <PreviewPanel panelActions={editorLayoutAction} />
                 </div>
+              </div>
+            )}
+            {isStackedLayout && (
+              <div className='relative order-2 h-2px shrink-0 bg-border-1' data-stacked-divider>
+                {!isConversationPaneHidden &&
+                  createPreviewVerticalDragHandle({
+                    className: 'absolute left-0 right-0 z-30',
+                    style: { height: '12px', top: '-6px' },
+                    linePlacement: 'start',
+                    lineClassName: 'opacity-0 group-hover:opacity-100 group-active:opacity-100',
+                    lineStyle: { height: '2px' },
+                  })}
+                <Tooltip
+                  content={
+                    isConversationPaneHidden ? t('preview.showConversationPane') : t('preview.hideConversationPane')
+                  }
+                >
+                  <Button
+                    type='text'
+                    shape='round'
+                    size='mini'
+                    className={classNames(
+                      'absolute left-1/2 z-40 !h-18px !min-w-30px !border !border-border-2 !bg-1 !px-6px -translate-x-1/2',
+                      !isConversationPaneHidden && '-translate-y-1/2'
+                    )}
+                    style={{ top: isConversationPaneHidden ? '-20px' : '50%' }}
+                    icon={
+                      isConversationPaneHidden ? <Up theme='outline' size='13' /> : <Down theme='outline' size='13' />
+                    }
+                    aria-label={
+                      isConversationPaneHidden ? t('preview.showConversationPane') : t('preview.hideConversationPane')
+                    }
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={() => setIsStackedConversationCollapsed((current) => !current)}
+                  />
+                </Tooltip>
               </div>
             )}
           </div>

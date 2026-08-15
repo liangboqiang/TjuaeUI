@@ -18,6 +18,8 @@
   "collapsePanel": "Свернуть панель",
   "switchToStackedLayout": "Переключить на вертикальную компоновку",
   "switchToSideLayout": "Переключить на компоновку рядом",
+  "hideConversationPane": "Скрыть панель диалога",
+  "showConversationPane": "Показать панель диалога",
   "source": "Исходник",
   "code": "Код",
   "preview": "Предпросмотр",

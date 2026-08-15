@@ -18,6 +18,8 @@
   "collapsePanel": "Згорнути панель",
   "switchToStackedLayout": "Перемкнути на вертикальне компонування",
   "switchToSideLayout": "Перемкнути на компонування поруч",
+  "hideConversationPane": "Сховати панель розмови",
+  "showConversationPane": "Показати панель розмови",
   "source": "Вихідний код",
   "code": "Код",
   "preview": "Перегляд",

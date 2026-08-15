@@ -18,6 +18,8 @@
   "collapsePanel": "Collapse panel",
   "switchToStackedLayout": "Switch to stacked layout",
   "switchToSideLayout": "Switch to side-by-side layout",
+  "hideConversationPane": "Hide conversation pane",
+  "showConversationPane": "Show conversation pane",
   "source": "Source",
   "code": "Code",
   "preview": "Preview",

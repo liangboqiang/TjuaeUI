@@ -18,6 +18,8 @@
   "collapsePanel": "패널 접기",
   "switchToStackedLayout": "상하 레이아웃으로 전환",
   "switchToSideLayout": "좌우 레이아웃으로 전환",
+  "hideConversationPane": "대화 창 숨기기",
+  "showConversationPane": "대화 창 표시",
   "source": "소스",
   "code": "코드",
   "preview": "미리보기",

@@ -107,11 +107,13 @@ vi.mock('@arco-design/web-react', () => {
   };
 });
 vi.mock('@icon-park/react', () => ({
+  Down: () => null,
   ExpandLeft: () => null,
   ExpandRight: () => null,
   LayoutOne: () => null,
   LayoutTwo: () => null,
   Trace: () => null,
+  Up: () => null,
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -140,7 +142,7 @@ describe('ChatLayout editor placement', () => {
 
     expect(layout).toHaveAttribute('data-editor-layout', 'stacked');
     expect(editorPane?.style.order).toBe('1');
-    expect(conversationPane?.style.order).toBe('2');
+    expect(conversationPane?.style.order).toBe('3');
   });
 
   it('removes card framing and gaps from the upper editor pane', () => {
@@ -154,6 +156,29 @@ describe('ChatLayout editor placement', () => {
     expect(editorPane?.style.borderStyle).toBe('none');
     expect(editorPane?.className).not.toContain('rounded-[15px]');
     expect(editorPane?.className).not.toContain('mx-[12px]');
+  });
+
+  it('keeps a visible divider between the editor and conversation', () => {
+    localStorage.setItem('chat-editor-layout-mode', 'stacked');
+
+    renderLayout();
+
+    const divider = document.querySelector<HTMLElement>('[data-stacked-divider]');
+    expect(divider?.className).toContain('bg-border-1');
+    expect(screen.getByRole('button', { name: 'preview.hideConversationPane' })).toBeInTheDocument();
+  });
+
+  it('hides and restores the conversation from the divider control', () => {
+    localStorage.setItem('chat-editor-layout-mode', 'stacked');
+
+    renderLayout();
+
+    const conversationPane = document.querySelector<HTMLElement>("[data-workbench-pane='conversation']");
+    fireEvent.click(screen.getByRole('button', { name: 'preview.hideConversationPane' }));
+    expect(conversationPane?.style.display).toBe('none');
+
+    fireEvent.click(screen.getByRole('button', { name: 'preview.showConversationPane' }));
+    expect(conversationPane?.style.display).toBe('flex');
   });
 
   it('falls back to side-by-side layout for an invalid stored preference', () => {
