@@ -406,13 +406,17 @@ const ChatLayout: React.FC<{
               </div>
             )}
             {isStackedLayout && (
-              <div className='relative order-2 h-2px shrink-0 bg-border-1' data-stacked-divider>
+              <div
+                className='relative order-2 h-8px shrink-0 border-b border-t border-border-2 bg-fill-2 transition-colors duration-150 hover:bg-fill-3'
+                data-stacked-divider
+              >
                 {!isConversationPaneHidden &&
                   createPreviewVerticalDragHandle({
                     className: 'absolute left-0 right-0 z-30',
-                    style: { height: '12px', top: '-6px' },
+                    style: { height: '14px', top: '-4px' },
+                    reverse: true,
                     linePlacement: 'start',
-                    lineClassName: 'opacity-0 group-hover:opacity-100 group-active:opacity-100',
+                    lineClassName: 'opacity-70 group-hover:opacity-100 group-active:opacity-100',
                     lineStyle: { height: '2px' },
                   })}
                 <Tooltip

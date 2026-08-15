@@ -3,8 +3,11 @@ import React from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
 
-const VerticalSplitHarness: React.FC<{ storageKey?: string }> = ({ storageKey }) => {
-  const { splitRatio, dragHandle } = useResizableSplit({
+const VerticalSplitHarness: React.FC<{ storageKey?: string; reverse?: boolean }> = ({
+  storageKey,
+  reverse = false,
+}) => {
+  const { splitRatio, dragHandle, createDragHandle } = useResizableSplit({
     axis: 'vertical',
     defaultWidth: 50,
     minWidth: 20,
@@ -16,7 +19,7 @@ const VerticalSplitHarness: React.FC<{ storageKey?: string }> = ({ storageKey })
     <div data-testid='outer-container'>
       <div>
         <output data-testid='split-ratio'>{splitRatio}</output>
-        {dragHandle}
+        {reverse ? createDragHandle({ reverse: true }) : dragHandle}
       </div>
     </div>
   );
@@ -54,5 +57,24 @@ describe('useResizableSplit vertical axis', () => {
     render(<VerticalSplitHarness storageKey='vertical-split' />);
 
     expect(screen.getByTestId('split-ratio')).toHaveTextContent('50');
+  });
+
+  it('moves a bottom pane divider down when the reversed handle is dragged down', () => {
+    render(<VerticalSplitHarness storageKey='vertical-split' reverse />);
+
+    const outerContainer = screen.getByTestId('outer-container');
+    Object.defineProperty(outerContainer, 'offsetHeight', { configurable: true, value: 400 });
+
+    const dragHandle = outerContainer.querySelector('.cursor-row-resize');
+    fireEvent.pointerDown(dragHandle as Element, {
+      pointerType: 'mouse',
+      pointerId: 1,
+      button: 0,
+      clientY: 100,
+    });
+    fireEvent.pointerUp(window, { pointerId: 1, clientY: 180 });
+
+    expect(screen.getByTestId('split-ratio')).toHaveTextContent('30');
+    expect(localStorage.getItem('vertical-split')).toBe('30');
   });
 });

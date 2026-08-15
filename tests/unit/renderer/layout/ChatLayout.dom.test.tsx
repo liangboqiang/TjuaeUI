@@ -14,11 +14,17 @@ vi.mock('@/renderer/hooks/ui/useResizableSplit', () => ({
   useResizableSplit: (options: { axis?: string; unit?: string }) => ({
     splitRatio: options.unit === 'px' ? 320 : options.axis === 'vertical' ? 56 : 60,
     setSplitRatio: vi.fn(),
-    createDragHandle: (props?: { style?: React.CSSProperties; linePlacement?: string; lineClassName?: string }) => (
+    createDragHandle: (props?: {
+      style?: React.CSSProperties;
+      reverse?: boolean;
+      linePlacement?: string;
+      lineClassName?: string;
+    }) => (
       <div
         data-testid={options.axis === 'vertical' ? 'vertical-resize-handle' : 'horizontal-resize-handle'}
         data-line-placement={props?.linePlacement}
         data-line-class={props?.lineClassName}
+        data-reverse={String(props?.reverse)}
         style={props?.style}
       />
     ),
@@ -164,7 +170,8 @@ describe('ChatLayout editor placement', () => {
     renderLayout();
 
     const divider = document.querySelector<HTMLElement>('[data-stacked-divider]');
-    expect(divider?.className).toContain('bg-border-1');
+    expect(divider?.className).toContain('bg-fill-2');
+    expect(screen.getByTestId('vertical-resize-handle')).toHaveAttribute('data-reverse', 'true');
     expect(screen.getByRole('button', { name: 'preview.hideConversationPane' })).toBeInTheDocument();
   });
 
