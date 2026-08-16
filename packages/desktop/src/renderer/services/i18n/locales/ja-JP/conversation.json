@@ -73,7 +73,21 @@
     "removeProjectConfirm": "プロジェクト「{{name}}」を削除しますか？プロジェクト内の {{count}} 件の会話も削除されます。",
     "newConversationInProject": "このプロジェクト内で新しい会話",
     "deleting": "削除中...",
-    "reorderPinned": "ドラッグしてピン留め会話の順序を変更"
+    "reorderPinned": "ドラッグしてピン留め会話の順序を変更",
+    "openInExplorer": "エクスプローラーで開く",
+    "archive": "アーカイブ",
+    "archiveConversationConfirm": "「{{name}}」をアーカイブしますか？",
+    "archiveSuccess": "アーカイブしました",
+    "archiveFailed": "アーカイブに失敗しました",
+    "archiveProject": "プロジェクトをアーカイブ",
+    "archiveProjectConfirm": "「{{name}}」と {{count}} 件の会話をアーカイブしますか？",
+    "archiveProjectSuccess": "プロジェクトをアーカイブしました",
+    "workspaceUnavailable": "この会話には利用可能なワークスペースがありません。",
+    "openInExplorerFailed": "エクスプローラーを開けませんでした。",
+    "pinProject": "プロジェクトを固定",
+    "unpinProject": "プロジェクトの固定を解除",
+    "editProject": "プロジェクトを編集",
+    "projectNamePlaceholder": "プロジェクト表示名"
   },
   "historySearch": {
     "tooltip": "メッセージを検索",
@@ -410,6 +424,115 @@
       "reset": "変更を元に戻す",
       "noUnstaged": "ステージされていない変更はありません",
       "noStaged": "ステージ済みの変更はありません"
+    },
+    "git": {
+      "resourceManagement": "ソース管理",
+      "operationFailed": "Git 操作に失敗しました",
+      "timeline": "タイムライン",
+      "toggleTimeline": "タイムラインを展開または折りたたむ",
+      "noHistory": "履歴はありません",
+      "selectFileForTimeline": "ファイルを選択してタイムラインを表示",
+      "noTextDiff": "このバージョンには比較できるテキストがありません",
+      "compareWithCurrent": "現在のバージョンと比較",
+      "conflicts": "競合",
+      "workingChanges": "作業ツリーの変更",
+      "stagedChanges": "ステージ済みの変更",
+      "cleanWorkspace": "ワークスペースはクリーンです",
+      "workspaceChanges": "ワークスペースの変更",
+      "compare": "比較",
+      "discardTitle": "変更を破棄",
+      "discardUntrackedWarning": "{{path}} は未追跡です。破棄するとファイルは完全に削除されます。",
+      "discardWarning": "{{path}} のローカル変更を破棄しますか？",
+      "repositoryUnavailable": "Git リポジトリを利用できません",
+      "commitPlaceholder": "コミットメッセージ",
+      "commitSucceeded": "コミットしました",
+      "commitStaged": "ステージ済みの変更をコミット",
+      "remoteSync": "リモート同期",
+      "fetch": "フェッチ",
+      "pull": "プル",
+      "push": "プッシュ",
+      "sync": "同期",
+      "detached": "分離 HEAD",
+      "commitGraph": "コミットグラフ",
+      "createBranch": "ブランチを作成",
+      "branchName": "ブランチ名",
+      "openChanges": "変更を開く",
+      "checkoutCommit": "コミットをチェックアウト",
+      "createBranchHere": "ここからブランチを作成",
+      "checkoutCommitWarning": "コミット {{hash}} を detached HEAD でチェックアウトしますか？",
+      "noChangedFiles": "このコミットに変更ファイルはありません",
+      "followCurrentBranch": "現在のブランチに追従",
+      "aiReview": "TjuaeUI 管家で変更をレビュー",
+      "aiReviewTitle": "TjuaeUI 管家のレビュー",
+      "generateCommitMessage": "コミットメッセージを生成",
+      "butlerActionFailed": "TjuaeUI 管家がこの操作を完了できませんでした。",
+      "errors": {
+        "localChanges": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "untrackedOverwrite": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "conflict": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "nonFastForward": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "noUpstream": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "authentication": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "repositoryNotFound": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "network": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "locked": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "branchExists": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "branchMissing": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "nothingToCommit": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        },
+        "generic": {
+          "title": "Git 操作に失敗しました",
+          "description": "要求された Git 操作を完了できませんでした。",
+          "guidance": "リポジトリ、ブランチ、変更、ネットワークを確認して再試行してください。"
+        }
+      }
     },
     "openWorkspace": "プロジェクトフォルダを開く",
     "openWith": {

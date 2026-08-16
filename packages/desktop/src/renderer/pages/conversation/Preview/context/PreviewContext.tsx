@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { PreviewContentType } from '@/common/types/office/preview';
 import { emitter } from '@/renderer/utils/emitter';
@@ -15,6 +14,7 @@ export interface DomSnippet {
 }
 
 export interface PreviewMetadata {
+  resource_key?: string; // 稳定资源身份；真实文件必须由调用方提供 / Stable resource identity
   language?: string;
   title?: string;
   diff?: string;
@@ -36,6 +36,7 @@ export interface PreviewTab {
   title: string; // Tab 标题
   isDirty?: boolean; // 是否有未保存的修改 / Whether there are unsaved changes
   originalContent?: string; // 原始内容，用于对比 / Original content for comparison
+  resource_key: string;
 }
 
 export interface OpenPreviewOptions {
@@ -87,9 +88,8 @@ export interface PreviewContextValue {
 const PreviewContext = createContext<PreviewContextValue | null>(null);
 
 // 持久化 key / Persistence keys
-const PREVIEW_TABS_KEY = 'tjuaeui_preview_tabs';
-const PREVIEW_ACTIVE_TAB_ID_KEY = 'tjuaeui_preview_active_tab_id';
-const LEGACY_PREVIEW_STATE_KEY = 'tjuaeui_preview_state';
+const PREVIEW_TABS_KEY = 'tjuaeui_preview_tabs_v2';
+const PREVIEW_ACTIVE_TAB_ID_KEY = 'tjuaeui_preview_active_tab_id_v2';
 
 // 仅持久化小体积文本预览，避免大文本导致 localStorage 写入卡顿
 // Persist only lightweight text previews to avoid localStorage jank on large files
@@ -100,11 +100,12 @@ const sanitizeTabsForPersistence = (input: PreviewTab[]): PreviewTab[] => {
   return input
     .filter((tab) => PERSISTABLE_CONTENT_TYPES.has(tab.content_type))
     .filter((tab) => tab.content.length <= MAX_PERSISTED_TAB_CONTENT_LENGTH)
-    .map((tab) => ({
-      ...tab,
-      isDirty: false,
-      originalContent: tab.content,
-    }));
+    .map((tab) =>
+      Object.assign({}, tab, {
+        isDirty: false,
+        originalContent: tab.content,
+      })
+    );
 };
 
 const parsePersistedTabs = (value: unknown): PreviewTab[] => {
@@ -118,16 +119,18 @@ const parsePersistedTabs = (value: unknown): PreviewTab[] => {
         typeof candidate.id === 'string' &&
         typeof candidate.title === 'string' &&
         typeof candidate.content === 'string' &&
-        typeof candidate.content_type === 'string'
+        typeof candidate.content_type === 'string' &&
+        typeof candidate.resource_key === 'string'
       );
     })
     .filter((tab) => PERSISTABLE_CONTENT_TYPES.has(tab.content_type))
     .filter((tab) => tab.content.length <= MAX_PERSISTED_TAB_CONTENT_LENGTH)
-    .map((tab) => ({
-      ...tab,
-      originalContent: typeof tab.originalContent === 'string' ? tab.originalContent : tab.content,
-      isDirty: false,
-    }));
+    .map((tab) =>
+      Object.assign({}, tab, {
+        originalContent: typeof tab.originalContent === 'string' ? tab.originalContent : tab.content,
+        isDirty: false,
+      })
+    );
 };
 
 // 从 localStorage 恢复状态 / Restore state from localStorage
@@ -137,16 +140,6 @@ const loadPersistedState = (): { isOpen: boolean; tabs: PreviewTab[]; activeTabI
   try {
     let tabs = parsePersistedTabs(JSON.parse(localStorage.getItem(PREVIEW_TABS_KEY) || '[]'));
     let activeTabId = localStorage.getItem(PREVIEW_ACTIVE_TAB_ID_KEY);
-
-    // 兼容旧版单 key 存储 / Backward compatibility for legacy single-key storage
-    if (tabs.length === 0) {
-      const legacyStored = localStorage.getItem(LEGACY_PREVIEW_STATE_KEY);
-      if (legacyStored) {
-        const parsed = JSON.parse(legacyStored) as { tabs?: unknown; activeTabId?: unknown };
-        tabs = parsePersistedTabs(parsed.tabs);
-        activeTabId = typeof parsed.activeTabId === 'string' ? parsed.activeTabId : activeTabId;
-      }
-    }
 
     if (activeTabId && !tabs.some((tab) => tab.id === activeTabId)) {
       activeTabId = tabs[0]?.id || null;
@@ -182,9 +175,6 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const timer = setTimeout(() => {
       try {
         localStorage.setItem(PREVIEW_TABS_KEY, JSON.stringify(sanitizeTabsForPersistence(tabs)));
-        // 迁移后清理旧 key，减少重复解析
-        // Remove legacy key after migration to avoid duplicate parsing
-        localStorage.removeItem(LEGACY_PREVIEW_STATE_KEY);
       } catch {
         // 忽略存储错误（如存储空间不足）/ Ignore storage errors (e.g., quota exceeded)
       }
@@ -216,8 +206,6 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return tabs.find((tab) => tab.id === activeTabId) || null;
   }, [tabs, activeTabId]);
 
-  const normalize = useCallback((value?: string | null) => value?.trim() || '', []);
-
   // 从可能包含描述的字符串中提取文件名 / Extract filename from string that may contain description
   const extractFileName = useCallback((str?: string): string | undefined => {
     if (!str) return undefined;
@@ -228,54 +216,13 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const findPreviewTabInList = useCallback(
     (tabList: PreviewTab[], type: PreviewContentType, content?: string, meta?: PreviewMetadata) => {
-      const normalizedFileName = normalize(meta?.file_name);
-      const normalizedTitle = normalize(meta?.title);
-      const normalizedFilePath = normalize(meta?.file_path);
-
-      return (
-        tabList.find((tab) => {
-          if (tab.content_type !== type) return false;
-          const tabFileName = normalize(tab.metadata?.file_name);
-          const tabTitle = normalize(tab.metadata?.title);
-          const tabFilePath = normalize(tab.metadata?.file_path);
-
-          // 优先通过 file_path 匹配（最可靠）/ Prefer matching by file_path (most reliable)
-          if (normalizedFilePath && tabFilePath && normalizedFilePath === tabFilePath) return true;
-
-          // 通过 file_name 匹配时，需要确保路径兼容（避免同名文件在不同目录的冲突）
-          // When matching by file_name, ensure path compatibility (avoid conflicts of same-named files in different directories)
-          if (normalizedFileName && tabFileName && normalizedFileName === tabFileName) {
-            // 如果两边都有 file_path，则必须完全匹配
-            // If both have file_path, they must match exactly
-            if (normalizedFilePath && tabFilePath) {
-              return normalizedFilePath === tabFilePath;
-            }
-            // 如果只有一边有 file_path，不能仅凭 file_name 匹配
-            // If only one side has file_path, cannot match by file_name alone
-            if (normalizedFilePath || tabFilePath) {
-              return false;
-            }
-            // 都没有 file_path 时，可以通过 file_name 匹配
-            // When neither has file_path, can match by file_name
-            return true;
-          }
-
-          // 再通过 title 匹配 / Then match by title
-          if (!normalizedFileName && normalizedTitle && tabTitle && normalizedTitle === tabTitle) return true;
-
-          // 最后才通过 content 匹配（仅用于小文件）/ Finally match by content (only for small files)
-          // 对于大文件（PPT/Excel/Word），不使用 content 比较，避免性能问题
-          // For large files (PPT/Excel/Word), skip content comparison to avoid performance issues
-          if (!normalizedFileName && !normalizedTitle && !normalizedFilePath && content !== undefined) {
-            // 只对小于 100KB 的内容进行比较 / Only compare content smaller than 100KB
-            if (content.length < 100000 && tab.content === content) return true;
-          }
-
-          return false;
-        }) || null
-      );
+      void type;
+      void content;
+      const resourceKey = meta?.resource_key?.trim();
+      if (!resourceKey) return null;
+      return tabList.find((tab) => tab.resource_key === resourceKey) || null;
     },
-    [normalize]
+    []
   );
 
   const findPreviewTab = useCallback(
@@ -336,6 +283,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
           title,
           isDirty: false,
           originalContent: new_content, // 保存原始内容 / Save original content
+          resource_key: meta?.resource_key?.trim() || `virtual:${type}:${tabId}`,
         };
 
         // Single-preview browse mode: reuse the active tab in place instead of
@@ -345,10 +293,10 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
           const activeIdx = activeTabIdRef.current
             ? prevTabs.findIndex((tab) => tab.id === activeTabIdRef.current)
             : -1;
-          const activeTab = activeIdx >= 0 ? prevTabs[activeIdx] : null;
-          if (activeTab && !activeTab.isDirty) {
-            nextActiveTabId = activeTab.id;
-            const replacedTab: PreviewTab = { ...newTab, id: activeTab.id };
+          const activePreviewTab = activeIdx >= 0 ? prevTabs[activeIdx] : null;
+          if (activePreviewTab && !activePreviewTab.isDirty) {
+            nextActiveTabId = activePreviewTab.id;
+            const replacedTab: PreviewTab = { ...newTab, id: activePreviewTab.id };
             return prevTabs.map((tab, idx) => (idx === activeIdx ? replacedTab : tab));
           }
         }

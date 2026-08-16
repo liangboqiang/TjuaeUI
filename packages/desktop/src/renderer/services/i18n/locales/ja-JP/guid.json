@@ -12,6 +12,10 @@
     "clearWorkspace": "クリア",
     "specifyWorkspace": "プロジェクトフォルダを選択",
     "searchPlaceholder": "プロジェクトを検索…",
-    "noProject": "プロジェクトなし"
+    "noProject": "プロジェクトなし",
+    "cloneRepository": "Git リポジトリをクローン",
+    "chooseCloneFolder": "フォルダーを選択してクローン",
+    "cloneRepositoryDescription": "Git URL を入力し、次にクローン先の親フォルダーを選択します。",
+    "repositoryUrlPlaceholder": "https://github.com/owner/repository.git"
   }
 }

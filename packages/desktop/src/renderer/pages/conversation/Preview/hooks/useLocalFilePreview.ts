@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { PreviewContentType } from '@/common/types/office/preview';
 import type { LocalFileLinkReference } from '@/renderer/components/Markdown/markdownUtils';
@@ -9,6 +8,7 @@ import {
 import { getContentTypeByExtension } from '@/renderer/pages/conversation/Preview/fileUtils';
 import { usePreviewContext } from '@/renderer/pages/conversation/Preview/context/PreviewContext';
 import { useCallback } from 'react';
+import { createFileResourceKey } from '@/renderer/utils/file/resourceKey';
 
 const getFileNameFromPath = (file_path: string): string => {
   const normalized = file_path.replace(/\\/g, '/');
@@ -56,6 +56,7 @@ export const useLocalFilePreview = (workspace?: string) => {
           content,
           contentType,
           {
+            resource_key: createFileResourceKey(workspace ?? '', file_path),
             title: fileName,
             file_name: fileName,
             file_path,
@@ -73,6 +74,7 @@ export const useLocalFilePreview = (workspace?: string) => {
           '',
           contentType,
           {
+            resource_key: createFileResourceKey(workspace ?? '', file_path),
             title: fileName,
             file_name: fileName,
             file_path,

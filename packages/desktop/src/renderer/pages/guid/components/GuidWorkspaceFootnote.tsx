@@ -1,9 +1,10 @@
-
 import { ipcBridge } from '@/common';
 import { addRecentWorkspace, getRecentWorkspaces } from '@/renderer/components/workspace';
 import { TjuaeInlineSearchInput } from '@/renderer/components/base';
-import { Tooltip } from '@arco-design/web-react';
-import { Close, Down } from '@icon-park/react';
+import { showGitError } from '@/renderer/pages/conversation/Workspace/utils/gitError';
+import type { GitRepositoryInfo } from '@/common/types/platform/gitWorkspace';
+import { Button, Input, Modal, Select, Tooltip } from '@arco-design/web-react';
+import { Branch, Close, Down, DownloadOne, Plus } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -53,6 +54,13 @@ const GuidWorkspaceFootnote: React.FC<GuidWorkspaceFootnoteProps> = ({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+  const [repository, setRepository] = useState<GitRepositoryInfo | null>(null);
+  const [gitLoading, setGitLoading] = useState(false);
+  const [branchModalVisible, setBranchModalVisible] = useState(false);
+  const [newBranchName, setNewBranchName] = useState('');
+  const [cloneModalVisible, setCloneModalVisible] = useState(false);
+  const [cloneUrl, setCloneUrl] = useState('');
+  const [cloneLoading, setCloneLoading] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -136,6 +144,86 @@ const GuidWorkspaceFootnote: React.FC<GuidWorkspaceFootnoteProps> = ({
 
   const workspaceName = workspaceDir ? workspaceDir.split(/[\\/]/).pop() || workspaceDir : '';
 
+  const refreshRepository = useCallback(async () => {
+    if (!workspaceDir) {
+      setRepository(null);
+      return;
+    }
+    setGitLoading(true);
+    try {
+      setRepository(await ipcBridge.git.ensure.invoke({ workspace: workspaceDir }));
+    } catch (error) {
+      console.error('[GuidWorkspaceFootnote] Failed to prepare Git workspace:', error);
+      showGitError(t, error);
+    } finally {
+      setGitLoading(false);
+    }
+  }, [t, workspaceDir]);
+
+  useEffect(() => {
+    void refreshRepository();
+  }, [refreshRepository]);
+
+  const switchBranch = useCallback(
+    async (name: string) => {
+      if (!workspaceDir || name === repository?.branch) return;
+      setGitLoading(true);
+      try {
+        await ipcBridge.git.switchBranch.invoke({ workspace: workspaceDir, name });
+        await refreshRepository();
+      } catch (error) {
+        console.error('[GuidWorkspaceFootnote] Failed to switch branch:', error);
+        showGitError(t, error);
+      } finally {
+        setGitLoading(false);
+      }
+    },
+    [refreshRepository, repository?.branch, t, workspaceDir]
+  );
+
+  const createBranch = useCallback(async () => {
+    const name = newBranchName.trim();
+    if (!workspaceDir || !name) return;
+    setGitLoading(true);
+    try {
+      await ipcBridge.git.createBranch.invoke({ workspace: workspaceDir, name });
+      await refreshRepository();
+      setBranchModalVisible(false);
+      setNewBranchName('');
+    } catch (error) {
+      console.error('[GuidWorkspaceFootnote] Failed to create branch:', error);
+      showGitError(t, error);
+    } finally {
+      setGitLoading(false);
+    }
+  }, [newBranchName, refreshRepository, t, workspaceDir]);
+
+  const handleCloneRepository = useCallback(async () => {
+    const repositoryUrl = cloneUrl.trim();
+    if (!repositoryUrl) return;
+
+    setCloneLoading(true);
+    try {
+      const directories = await ipcBridge.dialog.showOpen.invoke({ properties: ['openDirectory', 'createDirectory'] });
+      const parentDirectory = directories?.[0];
+      if (!parentDirectory) return;
+
+      const clonedRepository = await ipcBridge.git.clone.invoke({
+        repository_url: repositoryUrl,
+        parent_directory: parentDirectory,
+      });
+      addRecentWorkspace(clonedRepository.workspacePath);
+      onSelectWorkspace(clonedRepository.workspacePath);
+      setCloneModalVisible(false);
+      setCloneUrl('');
+    } catch (error) {
+      console.error('[GuidWorkspaceFootnote] Failed to clone Git repository:', error);
+      showGitError(t, error);
+    } finally {
+      setCloneLoading(false);
+    }
+  }, [cloneUrl, onSelectWorkspace, t]);
+
   const dropdownEl = open
     ? createPortal(
         <div ref={dropdownRef} className={styles.wsDropdown} style={dropdownStyle}>
@@ -182,6 +270,16 @@ const GuidWorkspaceFootnote: React.FC<GuidWorkspaceFootnoteProps> = ({
           <div className={`${styles.wsDropdownItem} ${styles.wsDropdownItemAccent}`} onClick={handleBrowseWorkspace}>
             <PlusIcon />
             <span>{t('team.create.chooseDifferentFolder')}</span>
+          </div>
+          <div
+            className={`${styles.wsDropdownItem} ${styles.wsDropdownItemAccent}`}
+            onClick={() => {
+              closeDropdown();
+              setCloneModalVisible(true);
+            }}
+          >
+            <DownloadOne size={13} />
+            <span>{t('guid.workspace.cloneRepository')}</span>
           </div>
 
           <>
@@ -246,6 +344,30 @@ const GuidWorkspaceFootnote: React.FC<GuidWorkspaceFootnoteProps> = ({
               </span>
             </div>
           </Tooltip>
+          <Select
+            size='mini'
+            showSearch
+            loading={gitLoading}
+            value={repository?.branch}
+            className='!ml-6px !w-118px'
+            prefix={<Branch size={12} />}
+            options={(repository?.branches ?? []).map((branch) => ({
+              label: branch.name,
+              value: branch.name,
+              disabled: branch.checkedOut && !branch.current,
+            }))}
+            onChange={(value) => void switchBranch(String(value))}
+          />
+          <Tooltip mini content={t('conversation.workspace.git.createBranch')}>
+            <Button
+              type='text'
+              size='mini'
+              className='!ml-2px !h-24px !w-24px !p-0'
+              icon={<Plus size={12} />}
+              disabled={!repository || gitLoading}
+              onClick={() => setBranchModalVisible(true)}
+            />
+          </Tooltip>
           {dropdownEl}
         </>
       ) : (
@@ -254,22 +376,55 @@ const GuidWorkspaceFootnote: React.FC<GuidWorkspaceFootnoteProps> = ({
             ref={triggerRef as React.RefObject<HTMLButtonElement>}
             className={styles.workspaceEmptyBtn}
             data-testid='workspace-selector-btn'
-            onClick={recentWorkspaces.length > 0 ? toggleOpen : handleBrowseWorkspace}
+            onClick={toggleOpen}
           >
             <FolderIcon size={14} />
             <span>{t('guid.workspace.workInProject')}</span>
-            {recentWorkspaces.length > 0 && (
-              <Down
-                theme='outline'
-                size='12'
-                fill='currentColor'
-                style={{ flexShrink: 0, transform: 'translateY(1px)' }}
-              />
-            )}
+            <Down
+              theme='outline'
+              size='12'
+              fill='currentColor'
+              style={{ flexShrink: 0, transform: 'translateY(1px)' }}
+            />
           </button>
           {dropdownEl}
         </>
       )}
+      <Modal
+        title={t('conversation.workspace.git.createBranch')}
+        visible={branchModalVisible}
+        okButtonProps={{ disabled: !newBranchName.trim(), loading: gitLoading }}
+        onCancel={() => setBranchModalVisible(false)}
+        onOk={createBranch}
+      >
+        <Input
+          value={newBranchName}
+          placeholder={t('conversation.workspace.git.branchName')}
+          onChange={setNewBranchName}
+          onPressEnter={() => void createBranch()}
+        />
+      </Modal>
+      <Modal
+        title={t('guid.workspace.cloneRepository')}
+        visible={cloneModalVisible}
+        okText={t('guid.workspace.chooseCloneFolder')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ disabled: !cloneUrl.trim(), loading: cloneLoading }}
+        onCancel={() => {
+          if (cloneLoading) return;
+          setCloneModalVisible(false);
+          setCloneUrl('');
+        }}
+        onOk={() => void handleCloneRepository()}
+      >
+        <div className='mb-8px text-13px text-t-secondary'>{t('guid.workspace.cloneRepositoryDescription')}</div>
+        <Input
+          value={cloneUrl}
+          placeholder={t('guid.workspace.repositoryUrlPlaceholder')}
+          onChange={setCloneUrl}
+          onPressEnter={() => void handleCloneRepository()}
+        />
+      </Modal>
     </div>
   );
 };

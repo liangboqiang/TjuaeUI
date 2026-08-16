@@ -12,6 +12,10 @@
     "clearWorkspace": "Limpar",
     "specifyWorkspace": "Selecionar pasta do projeto",
     "searchPlaceholder": "Procurar projetos…",
-    "noProject": "Nenhum Projeto"
+    "noProject": "Nenhum Projeto",
+    "cloneRepository": "Clonar repositório Git",
+    "chooseCloneFolder": "Escolher pasta e clonar",
+    "cloneRepositoryDescription": "Informe a URL Git e depois escolha a pasta pai de destino.",
+    "repositoryUrlPlaceholder": "https://github.com/proprietário/repositório.git"
   }
 }

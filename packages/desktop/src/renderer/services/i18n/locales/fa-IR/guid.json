@@ -12,6 +12,10 @@
     "clearWorkspace": "پاک کردن",
     "specifyWorkspace": "انتخاب پوشه پروژه",
     "searchPlaceholder": "جستجوی پروژه‌ها…",
-    "noProject": "بدون پروژه"
+    "noProject": "بدون پروژه",
+    "cloneRepository": "کلون مخزن Git",
+    "chooseCloneFolder": "انتخاب پوشه و کلون",
+    "cloneRepositoryDescription": "نشانی Git را وارد و سپس پوشهٔ والد مقصد را انتخاب کنید.",
+    "repositoryUrlPlaceholder": "https://github.com/owner/repository.git"
   }
 }

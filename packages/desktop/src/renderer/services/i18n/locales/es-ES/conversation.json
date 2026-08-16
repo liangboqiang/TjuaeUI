@@ -73,7 +73,21 @@
     "removeProjectConfirm": "¿Quitar el proyecto \"{{name}}\"? Sus {{count}} conversación(es) también se quitarán.",
     "newConversationInProject": "Nuevo chat en este proyecto",
     "deleting": "Eliminando...",
-    "reorderPinned": "Arrastra para reordenar la conversación fijada"
+    "reorderPinned": "Arrastra para reordenar la conversación fijada",
+    "openInExplorer": "Abrir en el Explorador",
+    "archive": "Archivar",
+    "archiveConversationConfirm": "¿Archivar «{{name}}»?",
+    "archiveSuccess": "Archivado",
+    "archiveFailed": "Error al archivar",
+    "archiveProject": "Archivar proyecto",
+    "archiveProjectConfirm": "¿Archivar «{{name}}» y sus {{count}} conversaciones?",
+    "archiveProjectSuccess": "Proyecto archivado",
+    "workspaceUnavailable": "Esta conversación no tiene un espacio de trabajo disponible.",
+    "openInExplorerFailed": "No se pudo abrir el Explorador.",
+    "pinProject": "Fijar proyecto",
+    "unpinProject": "Desfijar proyecto",
+    "editProject": "Editar proyecto",
+    "projectNamePlaceholder": "Nombre visible del proyecto"
   },
   "historySearch": {
     "tooltip": "Buscar mensajes",
@@ -410,6 +424,115 @@
       "reset": "Revertir cambios",
       "noUnstaged": "Sin cambios sin preparar",
       "noStaged": "Sin cambios preparados"
+    },
+    "git": {
+      "resourceManagement": "Control de código fuente",
+      "operationFailed": "La operación de Git falló",
+      "timeline": "Línea de tiempo",
+      "toggleTimeline": "Expandir o contraer la línea de tiempo",
+      "noHistory": "No hay historial",
+      "selectFileForTimeline": "Selecciona un archivo para ver su línea de tiempo",
+      "noTextDiff": "Esta versión no contiene texto que se pueda comparar",
+      "compareWithCurrent": "Comparar con la versión actual",
+      "conflicts": "Conflictos",
+      "workingChanges": "Cambios del árbol de trabajo",
+      "stagedChanges": "Cambios preparados",
+      "cleanWorkspace": "El espacio de trabajo está limpio",
+      "workspaceChanges": "Cambios del espacio de trabajo",
+      "compare": "Comparar",
+      "discardTitle": "Descartar cambios",
+      "discardUntrackedWarning": "{{path}} no está bajo seguimiento. Al descartarlo se eliminará el archivo de forma permanente.",
+      "discardWarning": "¿Descartar los cambios locales de {{path}}?",
+      "repositoryUnavailable": "El repositorio Git no está disponible",
+      "commitPlaceholder": "Mensaje del commit",
+      "commitSucceeded": "Commit creado",
+      "commitStaged": "Confirmar cambios preparados",
+      "remoteSync": "Sincronización remota",
+      "fetch": "Obtener",
+      "pull": "Descargar",
+      "push": "Enviar",
+      "sync": "Sincronizar",
+      "detached": "HEAD separado",
+      "commitGraph": "Gráfico de commits",
+      "createBranch": "Crear rama",
+      "branchName": "Nombre de la rama",
+      "openChanges": "Abrir cambios",
+      "checkoutCommit": "Cambiar al commit",
+      "createBranchHere": "Crear rama aquí",
+      "checkoutCommitWarning": "¿Cambiar al commit {{hash}} en modo HEAD separado?",
+      "noChangedFiles": "Este commit no tiene archivos modificados",
+      "followCurrentBranch": "Seguir la rama actual",
+      "aiReview": "Revisar cambios con TjuaeUI Butler",
+      "aiReviewTitle": "Revisión de TjuaeUI Butler",
+      "generateCommitMessage": "Generar mensaje de commit",
+      "butlerActionFailed": "TjuaeUI Butler no pudo completar la acción.",
+      "errors": {
+        "localChanges": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "untrackedOverwrite": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "conflict": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "nonFastForward": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "noUpstream": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "authentication": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "repositoryNotFound": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "network": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "locked": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "branchExists": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "branchMissing": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "nothingToCommit": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        },
+        "generic": {
+          "title": "Operación Git fallida",
+          "description": "No se pudo completar la operación Git solicitada.",
+          "guidance": "Revisa el repositorio, la rama, los cambios y la red, e inténtalo de nuevo."
+        }
+      }
     },
     "openWorkspace": "Abrir carpeta del proyecto",
     "openWith": {

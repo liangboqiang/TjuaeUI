@@ -1,12 +1,9 @@
-
 import type { PreviewMetadata } from '../../context/PreviewContext';
 import { useTextSelection } from '@/renderer/hooks/ui/useTextSelection';
-import { Checkbox } from '@arco-design/web-react';
 import classNames from 'classnames';
 import { html } from 'diff2html';
 import 'diff2html/bundles/css/diff2html.min.css';
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import SelectionToolbar from '../renderers/SelectionToolbar';
@@ -19,6 +16,7 @@ interface DiffPreviewProps {
   hideToolbar?: boolean;
   viewMode?: 'source' | 'preview';
   onViewModeChange?: (mode: 'source' | 'preview') => void;
+  sideBySide?: boolean;
 }
 
 /**
@@ -29,6 +27,7 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
   hideToolbar = false,
   viewMode: externalViewMode,
   onViewModeChange,
+  sideBySide = false,
 }) => {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,7 +36,6 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
     return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || 'light';
   });
   const [internalViewMode, setInternalViewMode] = useState<'source' | 'preview'>('preview');
-  const [sideBySide, setSideBySide] = useState(false);
 
   const viewMode = externalViewMode !== undefined ? externalViewMode : internalViewMode;
 
@@ -70,28 +68,6 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
       renderNothingWhenEmpty: false,
     });
   }, [content, sideBySide]);
-
-  // Portal container for injecting side-by-side toggle into d2h-file-header
-  const operatorRef = useRef<HTMLDivElement | null>(null);
-  if (!operatorRef.current) {
-    operatorRef.current = document.createElement('div');
-  }
-
-  // Inject operator into d2h-file-header after diff content changes
-  useLayoutEffect(() => {
-    const el = diffContainerRef.current;
-    if (!el || viewMode !== 'preview') return;
-
-    const header = el.querySelector('.d2h-file-header') as HTMLDivElement;
-    if (header && operatorRef.current) {
-      header.style.alignItems = 'center';
-      operatorRef.current.className = 'flex items-center justify-center gap-10px';
-
-      if (!header.contains(operatorRef.current)) {
-        header.appendChild(operatorRef.current);
-      }
-    }
-  }, [diffHtmlContent, viewMode]);
 
   const handleDownload = () => {
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -133,15 +109,6 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
           </div>
 
           <div className='flex items-center gap-8px'>
-            {viewMode === 'preview' && (
-              <Checkbox
-                className='whitespace-nowrap text-12px'
-                checked={sideBySide}
-                onChange={(value) => setSideBySide(value)}
-              >
-                <span className='text-12px text-t-secondary'>side-by-side</span>
-              </Checkbox>
-            )}
             <div
               className='flex items-center gap-4px px-8px py-4px rd-4px cursor-pointer hover:bg-bg-3 transition-colors'
               onClick={handleDownload}
@@ -195,16 +162,6 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
           />
         )}
       </div>
-
-      {/* Portal: inject side-by-side toggle into d2h-file-header */}
-      {viewMode === 'preview' &&
-        operatorRef.current &&
-        ReactDOM.createPortal(
-          <Checkbox className='whitespace-nowrap' checked={sideBySide} onChange={(value) => setSideBySide(value)}>
-            <span className='whitespace-nowrap'>side-by-side</span>
-          </Checkbox>,
-          operatorRef.current
-        )}
 
       {selectedText && (
         <SelectionToolbar selectedText={selectedText} position={selectionPosition} onClear={clearSelection} />

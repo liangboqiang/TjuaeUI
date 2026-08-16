@@ -15,7 +15,11 @@
     "clearWorkspace": "Limpiar",
     "specifyWorkspace": "Seleccionar carpeta del proyecto",
     "searchPlaceholder": "Buscar proyectos...",
-    "noProject": "Sin proyecto"
+    "noProject": "Sin proyecto",
+    "cloneRepository": "Clonar repositorio Git",
+    "chooseCloneFolder": "Elegir carpeta y clonar",
+    "cloneRepositoryDescription": "Introduce la URL de Git y después elige la carpeta principal de destino.",
+    "repositoryUrlPlaceholder": "https://github.com/propietario/repositorio.git"
   },
   "scanning": {
     "initialMessage": "El agente actual no está disponible, detectando otros agentes disponibles...",

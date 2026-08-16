@@ -73,7 +73,21 @@
     "removeProjectConfirm": "Remover o projeto \"{{name}}\"? Suas {{count}} conversa(s) também serão removidas.",
     "newConversationInProject": "Novo chat neste projeto",
     "deleting": "Excluindo...",
-    "reorderPinned": "Arraste para reordenar a conversa fixada"
+    "reorderPinned": "Arraste para reordenar a conversa fixada",
+    "openInExplorer": "Abrir no Explorador",
+    "archive": "Arquivar",
+    "archiveConversationConfirm": "Arquivar “{{name}}”?",
+    "archiveSuccess": "Arquivado",
+    "archiveFailed": "Falha ao arquivar",
+    "archiveProject": "Arquivar projeto",
+    "archiveProjectConfirm": "Arquivar “{{name}}” e suas {{count}} conversas?",
+    "archiveProjectSuccess": "Projeto arquivado",
+    "workspaceUnavailable": "Esta conversa não tem workspace disponível.",
+    "openInExplorerFailed": "Não foi possível abrir o Explorador.",
+    "pinProject": "Fixar projeto",
+    "unpinProject": "Desafixar projeto",
+    "editProject": "Editar projeto",
+    "projectNamePlaceholder": "Nome de exibição do projeto"
   },
   "historySearch": {
     "tooltip": "Pesquisar mensagens",
@@ -416,6 +430,115 @@
       "reset": "Reverter Alterações",
       "noUnstaged": "Nenhuma alteração fora do stage",
       "noStaged": "Nenhuma alteração em stage"
+    },
+    "git": {
+      "resourceManagement": "Controle de código-fonte",
+      "operationFailed": "A operação do Git falhou",
+      "timeline": "Linha do tempo",
+      "toggleTimeline": "Expandir ou recolher a linha do tempo",
+      "noHistory": "Sem histórico",
+      "selectFileForTimeline": "Selecione um arquivo para ver sua linha do tempo",
+      "noTextDiff": "Esta versão não contém texto para comparação",
+      "compareWithCurrent": "Comparar com a versão atual",
+      "conflicts": "Conflitos",
+      "workingChanges": "Alterações da árvore de trabalho",
+      "stagedChanges": "Alterações preparadas",
+      "cleanWorkspace": "O espaço de trabalho está limpo",
+      "workspaceChanges": "Alterações do espaço de trabalho",
+      "compare": "Comparar",
+      "discardTitle": "Descartar alterações",
+      "discardUntrackedWarning": "{{path}} não é rastreado. Descartá-lo excluirá o arquivo permanentemente.",
+      "discardWarning": "Descartar as alterações locais de {{path}}?",
+      "repositoryUnavailable": "O repositório Git não está disponível",
+      "commitPlaceholder": "Mensagem do commit",
+      "commitSucceeded": "Commit criado",
+      "commitStaged": "Confirmar alterações preparadas",
+      "remoteSync": "Sincronização remota",
+      "fetch": "Buscar",
+      "pull": "Baixar",
+      "push": "Enviar",
+      "sync": "Sincronizar",
+      "detached": "HEAD desanexado",
+      "commitGraph": "Gráfico de commits",
+      "createBranch": "Criar branch",
+      "branchName": "Nome da branch",
+      "openChanges": "Abrir alterações",
+      "checkoutCommit": "Fazer checkout do commit",
+      "createBranchHere": "Criar branch aqui",
+      "checkoutCommitWarning": "Fazer checkout do commit {{hash}} em HEAD destacado?",
+      "noChangedFiles": "Nenhum arquivo alterado neste commit",
+      "followCurrentBranch": "Seguir branch atual",
+      "aiReview": "Revisar com o assistente TjuaeUI",
+      "aiReviewTitle": "Revisão do assistente TjuaeUI",
+      "generateCommitMessage": "Gerar mensagem de commit",
+      "butlerActionFailed": "O assistente TjuaeUI não concluiu a ação.",
+      "errors": {
+        "localChanges": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "untrackedOverwrite": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "conflict": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "nonFastForward": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "noUpstream": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "authentication": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "repositoryNotFound": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "network": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "locked": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "branchExists": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "branchMissing": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "nothingToCommit": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        },
+        "generic": {
+          "title": "Falha na operação Git",
+          "description": "Não foi possível concluir a operação Git solicitada.",
+          "guidance": "Verifique o repositório, branch, alterações e rede e tente novamente."
+        }
+      }
     },
     "openWorkspace": "Abrir pasta do projeto",
     "openWith": {

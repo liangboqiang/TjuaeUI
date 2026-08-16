@@ -12,6 +12,10 @@
     "clearWorkspace": "Очистити",
     "specifyWorkspace": "Вибрати папку проєкту",
     "searchPlaceholder": "Пошук проєктів…",
-    "noProject": "Без проєкту"
+    "noProject": "Без проєкту",
+    "cloneRepository": "Клонувати Git-репозиторій",
+    "chooseCloneFolder": "Вибрати папку й клонувати",
+    "cloneRepositoryDescription": "Введіть Git URL, а потім виберіть батьківську папку призначення.",
+    "repositoryUrlPlaceholder": "https://github.com/власник/репозиторій.git"
   }
 }

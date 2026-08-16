@@ -1,4 +1,4 @@
-
+import { ipcBridge } from '@/common';
 import type { TChatConversation } from '@/common/config/storage';
 import TjuaeModal from '@/renderer/components/base/TjuaeModal';
 import DirectorySelectionModal from '@/renderer/components/settings/DirectorySelectionModal';
@@ -7,10 +7,10 @@ import { useCronJobsMap } from '@/renderer/pages/cron';
 import { restrictToVerticalAxis } from '@/renderer/utils/ui/dndModifiers';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Button, Dropdown, Empty, Input, Menu, Modal, Tooltip } from '@arco-design/web-react';
-import { Delete, FolderOpen, MoreOne, Plus, Right } from '@icon-park/react';
+import { Button, Dropdown, Empty, Input, Menu, Message, Modal, Tooltip } from '@arco-design/web-react';
+import { Delete, EditOne, FolderOpen, Inbox, MoreOne, Plus, Pushpin, Right } from '@icon-park/react';
 import classNames from 'classnames';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -23,6 +23,18 @@ import { useConversations } from './hooks/useConversations';
 import { useDragAndDrop } from './hooks/useDragAndDrop';
 import { useExport } from './hooks/useExport';
 import type { ConversationRowProps, WorkspaceGroupedHistoryProps } from './types';
+
+const PROJECT_PREFERENCES_KEY = 'tjuaeui-project-preferences';
+type ProjectPreference = { alias?: string; pinned?: boolean };
+
+const readProjectPreferences = (): Record<string, ProjectPreference> => {
+  try {
+    const value = JSON.parse(localStorage.getItem(PROJECT_PREFERENCES_KEY) ?? '{}') as unknown;
+    return value && typeof value === 'object' ? (value as Record<string, ProjectPreference>) : {};
+  } catch {
+    return {};
+  }
+};
 
 const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
   onSessionClick,
@@ -37,6 +49,10 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
   const navigate = useNavigate();
   const layout = useLayoutContext();
   const isMobile = layout?.isMobile ?? false;
+  const [projectPreferences, setProjectPreferences] =
+    useState<Record<string, ProjectPreference>>(readProjectPreferences);
+  const [editProjectTarget, setEditProjectTarget] = useState<{ workspace: string; name: string } | null>(null);
+  const [editProjectName, setEditProjectName] = useState('');
   const { getJobStatus, markAsRead, setActiveConversation } = useCronJobsMap();
 
   const {
@@ -110,6 +126,9 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
     handleRenameConfirm,
     handleRenameCancel,
     handleTogglePin,
+    handleOpenInExplorer,
+    handleArchive,
+    handleArchiveProject,
     handleMenuVisibleChange,
     handleOpenMenu,
     handleCreateCronTask,
@@ -178,6 +197,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
       // underlying handleExportConversation logic from useExport is kept for a
       // future per-platform re-enable.
       onTogglePin: handleTogglePin,
+      onOpenInExplorer: handleOpenInExplorer,
+      onArchive: handleArchive,
       getJobStatus,
     }),
     [
@@ -197,6 +218,8 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
       handleCreateCronTask,
       handleDeleteClick,
       handleTogglePin,
+      handleOpenInExplorer,
+      handleArchive,
       getJobStatus,
     ]
   );
@@ -213,21 +236,48 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
   // Projects section: collect all workspace groups across timeline sections, ordered by recency.
   const projectGroups = useMemo(() => {
     const seen = new Set<string>();
-    const groups: Array<{ workspace: string; displayName: string; conversations: TChatConversation[] }> = [];
+    const groups: Array<{
+      workspace: string;
+      displayName: string;
+      baseDisplayName: string;
+      pinned: boolean;
+      conversations: TChatConversation[];
+    }> = [];
     for (const section of timelineSections) {
       for (const item of section.items) {
         if (item.type === 'workspace' && item.workspaceGroup && !seen.has(item.workspaceGroup.workspace)) {
           seen.add(item.workspaceGroup.workspace);
+          const preference = projectPreferences[item.workspaceGroup.workspace];
           groups.push({
             workspace: item.workspaceGroup.workspace,
-            displayName: item.workspaceGroup.display_name,
+            displayName: preference?.alias || item.workspaceGroup.display_name,
+            baseDisplayName: item.workspaceGroup.display_name,
+            pinned: preference?.pinned === true,
             conversations: item.workspaceGroup.conversations,
           });
         }
       }
     }
-    return groups;
-  }, [timelineSections]);
+    return groups.toSorted((a, b) => Number(b.pinned) - Number(a.pinned));
+  }, [projectPreferences, timelineSections]);
+
+  const updateProjectPreference = useCallback((workspace: string, update: ProjectPreference) => {
+    setProjectPreferences((current) => {
+      const next = { ...current, [workspace]: { ...current[workspace], ...update } };
+      localStorage.setItem(PROJECT_PREFERENCES_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const confirmProjectEdit = useCallback(() => {
+    if (!editProjectTarget) return;
+    const alias = editProjectName.trim();
+    updateProjectPreference(editProjectTarget.workspace, {
+      alias: alias && alias !== editProjectTarget.name ? alias : undefined,
+    });
+    setEditProjectTarget(null);
+    setEditProjectName('');
+  }, [editProjectName, editProjectTarget, updateProjectPreference]);
 
   // Conversations section: keep timeline grouping (today/yesterday/...) but only show non-workspace conversations.
   const conversationOnlySections = useMemo(
@@ -274,6 +324,27 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
           onPressEnter={handleRenameConfirm}
           placeholder={t('conversation.history.renamePlaceholder')}
           allowClear
+        />
+      </Modal>
+
+      <Modal
+        title={t('conversation.history.editProject')}
+        visible={editProjectTarget !== null}
+        okText={t('common.save')}
+        cancelText={t('common.cancel')}
+        okButtonProps={{ disabled: !editProjectName.trim() }}
+        onOk={confirmProjectEdit}
+        onCancel={() => {
+          setEditProjectTarget(null);
+          setEditProjectName('');
+        }}
+      >
+        <Input
+          autoFocus
+          value={editProjectName}
+          placeholder={t('conversation.history.projectNamePlaceholder')}
+          onChange={setEditProjectName}
+          onPressEnter={confirmProjectEdit}
         />
       </Modal>
 
@@ -515,11 +586,57 @@ const WorkspaceGroupedHistory: React.FC<WorkspaceGroupedHistoryProps> = ({
                 const projectMenu = (
                   <Menu
                     onClickMenuItem={(key) => {
+                      if (key === 'pin') {
+                        updateProjectPreference(group.workspace, { pinned: !group.pinned });
+                        return;
+                      }
+                      if (key === 'open') {
+                        void ipcBridge.shell.openFolderWith
+                          .invoke({ folder_path: group.workspace, tool: 'explorer' })
+                          .catch((error) => {
+                            console.error('Failed to open project workspace:', error);
+                            Message.error(t('conversation.history.openInExplorerFailed'));
+                          });
+                        return;
+                      }
+                      if (key === 'archive') {
+                        handleArchiveProject(group.displayName, group.conversations);
+                        return;
+                      }
+                      if (key === 'edit') {
+                        setEditProjectTarget({ workspace: group.workspace, name: group.baseDisplayName });
+                        setEditProjectName(group.displayName);
+                        return;
+                      }
                       if (key === 'remove') {
                         handleRemoveProject(group.displayName, group.conversations);
                       }
                     }}
                   >
+                    <Menu.Item key='pin'>
+                      <span className='flex items-center gap-8px'>
+                        <Pushpin theme='outline' size='14' />
+                        {group.pinned ? t('conversation.history.unpinProject') : t('conversation.history.pinProject')}
+                      </span>
+                    </Menu.Item>
+                    <Menu.Item key='open'>
+                      <span className='flex items-center gap-8px'>
+                        <FolderOpen theme='outline' size='14' />
+                        {t('conversation.history.openInExplorer')}
+                      </span>
+                    </Menu.Item>
+                    <Menu.Item key='edit'>
+                      <span className='flex items-center gap-8px'>
+                        <EditOne theme='outline' size='14' />
+                        {t('conversation.history.editProject')}
+                      </span>
+                    </Menu.Item>
+                    <Menu.Item key='archive'>
+                      <span className='flex items-center gap-8px'>
+                        <Inbox theme='outline' size='14' />
+                        {t('conversation.history.archiveProject')}
+                      </span>
+                    </Menu.Item>
                     <Menu.Item key='remove' className='!text-[rgb(var(--danger-6))]'>
                       <span className='flex items-center gap-8px'>
                         <Delete theme='outline' size='14' />

@@ -73,7 +73,21 @@
     "removeProjectConfirm": "Supprimer le projet \"{{name}}\" ? Sa ou ses conversations {{count}} seront également supprimées.",
     "newConversationInProject": "Nouveau chat dans ce projet",
     "deleting": "Suppression...",
-    "reorderPinned": "Faites glisser pour réorganiser la conversation épinglée"
+    "reorderPinned": "Faites glisser pour réorganiser la conversation épinglée",
+    "openInExplorer": "Ouvrir dans l’Explorateur",
+    "archive": "Archiver",
+    "archiveConversationConfirm": "Archiver « {{name}} » ?",
+    "archiveSuccess": "Archivé",
+    "archiveFailed": "Échec de l’archivage",
+    "archiveProject": "Archiver le projet",
+    "archiveProjectConfirm": "Archiver « {{name}} » et ses {{count}} conversations ?",
+    "archiveProjectSuccess": "Projet archivé",
+    "workspaceUnavailable": "Cette conversation ne possède aucun espace de travail disponible.",
+    "openInExplorerFailed": "Impossible d’ouvrir l’Explorateur.",
+    "pinProject": "Épingler le projet",
+    "unpinProject": "Désépingler le projet",
+    "editProject": "Modifier le projet",
+    "projectNamePlaceholder": "Nom d’affichage du projet"
   },
   "historySearch": {
     "tooltip": "Rechercher des messages",
@@ -410,6 +424,115 @@
       "reset": "Annuler les modifications",
       "noUnstaged": "Aucune modification non indexée",
       "noStaged": "Aucune modification indexée"
+    },
+    "git": {
+      "resourceManagement": "Gestion du code source",
+      "operationFailed": "L’opération Git a échoué",
+      "timeline": "Chronologie",
+      "toggleTimeline": "Développer ou réduire la chronologie",
+      "noHistory": "Aucun historique",
+      "selectFileForTimeline": "Sélectionnez un fichier pour afficher sa chronologie",
+      "noTextDiff": "Cette version ne contient aucun texte comparable",
+      "compareWithCurrent": "Comparer à la version actuelle",
+      "conflicts": "Conflits",
+      "workingChanges": "Modifications de l’arbre de travail",
+      "stagedChanges": "Modifications indexées",
+      "cleanWorkspace": "L’espace de travail est propre",
+      "workspaceChanges": "Modifications de l’espace de travail",
+      "compare": "Comparer",
+      "discardTitle": "Abandonner les modifications",
+      "discardUntrackedWarning": "{{path}} n’est pas suivi. L’abandon supprimera définitivement le fichier.",
+      "discardWarning": "Abandonner les modifications locales de {{path}} ?",
+      "repositoryUnavailable": "Le dépôt Git n’est pas disponible",
+      "commitPlaceholder": "Message de commit",
+      "commitSucceeded": "Commit créé",
+      "commitStaged": "Commiter les modifications indexées",
+      "remoteSync": "Synchronisation distante",
+      "fetch": "Récupérer",
+      "pull": "Tirer",
+      "push": "Pousser",
+      "sync": "Synchroniser",
+      "detached": "HEAD détachée",
+      "commitGraph": "Graphe des commits",
+      "createBranch": "Créer une branche",
+      "branchName": "Nom de la branche",
+      "openChanges": "Ouvrir les modifications",
+      "checkoutCommit": "Extraire le commit",
+      "createBranchHere": "Créer une branche ici",
+      "checkoutCommitWarning": "Extraire le commit {{hash}} en mode HEAD détaché ?",
+      "noChangedFiles": "Aucun fichier modifié dans ce commit",
+      "followCurrentBranch": "Suivre la branche actuelle",
+      "aiReview": "Examiner avec le majordome TjuaeUI",
+      "aiReviewTitle": "Examen du majordome TjuaeUI",
+      "generateCommitMessage": "Générer le message de commit",
+      "butlerActionFailed": "Le majordome TjuaeUI n’a pas pu terminer cette action.",
+      "errors": {
+        "localChanges": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "untrackedOverwrite": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "conflict": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "nonFastForward": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "noUpstream": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "authentication": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "repositoryNotFound": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "network": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "locked": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "branchExists": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "branchMissing": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "nothingToCommit": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        },
+        "generic": {
+          "title": "Échec de l’opération Git",
+          "description": "L’opération Git demandée n’a pas pu être effectuée.",
+          "guidance": "Vérifiez le dépôt, la branche, les modifications et le réseau, puis réessayez."
+        }
+      }
     },
     "openWorkspace": "Ouvrir le dossier de l'espace de travail",
     "openWith": {

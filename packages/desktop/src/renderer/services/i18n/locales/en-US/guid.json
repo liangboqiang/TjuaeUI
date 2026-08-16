@@ -12,6 +12,10 @@
     "clearWorkspace": "Clear",
     "specifyWorkspace": "Select project folder",
     "searchPlaceholder": "Search projects…",
-    "noProject": "No Project"
+    "noProject": "No Project",
+    "cloneRepository": "Clone Git Repository",
+    "chooseCloneFolder": "Choose Folder and Clone",
+    "cloneRepositoryDescription": "Enter a Git repository URL. Next, choose the parent folder where the repository will be cloned.",
+    "repositoryUrlPlaceholder": "https://github.com/owner/repository.git"
   }
 }

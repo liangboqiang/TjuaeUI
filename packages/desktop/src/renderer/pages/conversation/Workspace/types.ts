@@ -1,4 +1,3 @@
-
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import type { NodeInstance } from '@arco-design/web-react/es/Tree/interface';
 import type { Message } from '@arco-design/web-react';
@@ -106,4 +105,4 @@ export type ExtractNodeKeyFn = (node: NodeInstance | null | undefined) => string
 export type GetPathSeparatorFn = (targetPath: string) => string;
 export type FindNodeByKeyFn = (list: IDirOrFile[], key: string) => IDirOrFile | null;
 
-export type WorkspaceTab = 'files' | 'changes';
+export type WorkspaceTab = 'files' | 'sourceControl';

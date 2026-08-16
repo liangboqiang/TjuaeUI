@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { joinPath } from '@/common/chat/chatLib';
 import type { PreviewContentType } from '@/common/types/office/preview';
@@ -9,6 +8,7 @@ import {
   LARGE_TEXT_PREVIEW_THRESHOLD,
 } from '@/renderer/pages/conversation/Preview/constants';
 import { classifyPreviewError, type PreviewErrorKind } from '@/renderer/utils/previewError';
+import { createDiffResourceKey, createFileResourceKey } from '@/renderer/utils/file/resourceKey';
 import { useCallback, useState } from 'react';
 
 const LARGE_TEXT_PREVIEW_TYPES = new Set<PreviewContentType>(['code', 'markdown', 'html', 'diff']);
@@ -99,6 +99,7 @@ export const usePreviewLauncher = () => {
 
       // 预览元数据 / Preview metadata
       const metadata = {
+        resource_key: resolvedPath ? createFileResourceKey(workspace ?? '', resolvedPath) : undefined,
         title: previewTitle,
         file_name: computedFileName || previewTitle,
         file_path: resolvedPath,
@@ -181,6 +182,7 @@ export const usePreviewLauncher = () => {
           if (diffContent) {
             openPreview(diffContent, 'diff', {
               ...metadata,
+              resource_key: createDiffResourceKey(workspace ?? '', resolvedPath ?? previewTitle),
               editable: false,
             });
             return;

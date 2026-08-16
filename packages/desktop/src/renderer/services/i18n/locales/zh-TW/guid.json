@@ -12,6 +12,10 @@
     "clearWorkspace": "清除",
     "specifyWorkspace": "選擇專案資料夾",
     "searchPlaceholder": "搜尋專案…",
-    "noProject": "不使用專案"
+    "noProject": "不使用專案",
+    "cloneRepository": "複製 Git 儲存庫",
+    "chooseCloneFolder": "選擇資料夾並複製",
+    "cloneRepositoryDescription": "輸入 Git 儲存庫網址；下一步選擇用來存放複製儲存庫的本機上層資料夾。",
+    "repositoryUrlPlaceholder": "https://github.com/擁有者/儲存庫.git"
   }
 }

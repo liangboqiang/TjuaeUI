@@ -73,7 +73,21 @@
     "removeProjectConfirm": "پروژه «{{name}}» حذف شود؟ {{count}} مکالمه مرتبط نیز حذف خواهند شد.",
     "newConversationInProject": "چت جدید در این پروژه",
     "deleting": "در حال حذف...",
-    "reorderPinned": "برای تغییر ترتیب گفتگوی سنجاق‌شده بکشید"
+    "reorderPinned": "برای تغییر ترتیب گفتگوی سنجاق‌شده بکشید",
+    "openInExplorer": "باز کردن در فایل‌کاوشگر",
+    "archive": "بایگانی",
+    "archiveConversationConfirm": "«{{name}}» بایگانی شود؟",
+    "archiveSuccess": "بایگانی شد",
+    "archiveFailed": "بایگانی ناموفق بود",
+    "archiveProject": "بایگانی پروژه",
+    "archiveProjectConfirm": "«{{name}}» و {{count}} گفتگو بایگانی شوند؟",
+    "archiveProjectSuccess": "پروژه بایگانی شد",
+    "workspaceUnavailable": "این گفتگو فضای کاری قابل استفاده ندارد.",
+    "openInExplorerFailed": "فایل‌کاوشگر باز نشد.",
+    "pinProject": "سنجاق کردن پروژه",
+    "unpinProject": "برداشتن سنجاق پروژه",
+    "editProject": "ویرایش پروژه",
+    "projectNamePlaceholder": "نام نمایشی پروژه"
   },
   "historySearch": {
     "tooltip": "جستجوی پیام‌ها",
@@ -410,6 +424,115 @@
       "reset": "بازگرداندن تغییرات",
       "noUnstaged": "تغییر آماده‌نشده‌ای وجود ندارد",
       "noStaged": "تغییر آماده ثبت‌شده‌ای وجود ندارد"
+    },
+    "git": {
+      "resourceManagement": "مدیریت کد منبع",
+      "operationFailed": "عملیات Git ناموفق بود",
+      "timeline": "خط زمانی",
+      "toggleTimeline": "باز یا بسته کردن خط زمانی",
+      "noHistory": "تاریخچه‌ای وجود ندارد",
+      "selectFileForTimeline": "برای دیدن خط زمانی یک فایل انتخاب کنید",
+      "noTextDiff": "این نسخه متن قابل مقایسه‌ای ندارد",
+      "compareWithCurrent": "مقایسه با نسخه فعلی",
+      "conflicts": "تداخل‌ها",
+      "workingChanges": "تغییرات درخت کاری",
+      "stagedChanges": "تغییرات آماده‌شده",
+      "cleanWorkspace": "فضای کاری پاک است",
+      "workspaceChanges": "تغییرات فضای کاری",
+      "compare": "مقایسه",
+      "discardTitle": "کنار گذاشتن تغییرات",
+      "discardUntrackedWarning": "فایل {{path}} ردیابی نمی‌شود. کنار گذاشتن آن فایل را برای همیشه حذف می‌کند.",
+      "discardWarning": "تغییرات محلی {{path}} کنار گذاشته شود؟",
+      "repositoryUnavailable": "مخزن Git در دسترس نیست",
+      "commitPlaceholder": "پیام کامیت",
+      "commitSucceeded": "کامیت ایجاد شد",
+      "commitStaged": "کامیت تغییرات آماده‌شده",
+      "remoteSync": "همگام‌سازی راه‌دور",
+      "fetch": "دریافت",
+      "pull": "کشیدن",
+      "push": "فرستادن",
+      "sync": "همگام‌سازی",
+      "detached": "HEAD جداشده",
+      "commitGraph": "نمودار کامیت‌ها",
+      "createBranch": "ایجاد شاخه",
+      "branchName": "نام شاخه",
+      "openChanges": "باز کردن تغییرات",
+      "checkoutCommit": "برداشت کامیت",
+      "createBranchHere": "ایجاد شاخه از اینجا",
+      "checkoutCommitWarning": "کامیت {{hash}} در حالت HEAD جدا برداشت شود؟",
+      "noChangedFiles": "این کامیت فایل تغییریافته‌ای ندارد",
+      "followCurrentBranch": "دنبال کردن شاخهٔ جاری",
+      "aiReview": "بازبینی با دستیار TjuaeUI",
+      "aiReviewTitle": "بازبینی دستیار TjuaeUI",
+      "generateCommitMessage": "تولید پیام کامیت",
+      "butlerActionFailed": "دستیار TjuaeUI نتوانست این کار را کامل کند.",
+      "errors": {
+        "localChanges": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "untrackedOverwrite": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "conflict": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "nonFastForward": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "noUpstream": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "authentication": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "repositoryNotFound": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "network": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "locked": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "branchExists": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "branchMissing": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "nothingToCommit": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        },
+        "generic": {
+          "title": "عملیات Git ناموفق بود",
+          "description": "عملیات Git درخواستی کامل نشد.",
+          "guidance": "مخزن، شاخه، تغییرات و شبکه را بررسی و دوباره تلاش کنید."
+        }
+      }
     },
     "openWorkspace": "باز کردن پوشه پروژه",
     "openWith": {

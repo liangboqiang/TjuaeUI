@@ -1,194 +1,73 @@
-
 import { ipcBridge } from '@/common';
-import type { FileChangeInfo, SnapshotInfo } from '@/common/types/platform/fileSnapshot';
-import Diff2Html from '@/renderer/components/media/Diff2Html';
-import { Button, Empty, Spin, Tooltip } from '@arco-design/web-react';
-import { Down, Minus, Plus, PreviewOpen, Redo, Refresh, Right } from '@icon-park/react';
+import type { FileChangeInfo, GitFileStatus } from '@/common/types/platform/gitWorkspace';
+import { Button, Empty, Modal, Spin, Tooltip } from '@arco-design/web-react';
+import { Minus, Plus, PreviewOpen, Redo, Refresh } from '@icon-park/react';
 import { createTwoFilesPatch } from 'diff';
 import type { TFunction } from 'i18next';
 import React, { useCallback, useMemo, useState } from 'react';
-import { isDiffableWorkspaceFile, resolveWorkspaceChangeReadPath } from '../utils/fileChangePaths';
+import { resolveWorkspaceChangeReadPath } from '../utils/fileChangePaths';
+import { showGitError } from '../utils/gitError';
 
 type FileChangeListProps = {
   t: TFunction;
   workspace: string;
+  conflicted: FileChangeInfo[];
   staged: FileChangeInfo[];
   unstaged: FileChangeInfo[];
   loading: boolean;
-  snapshotInfo: SnapshotInfo | null;
-  onRefresh: () => void;
-  onOpenDiff: (diffContent: string, file_name: string, file_path: string) => void;
-  onStageFile: (file_path: string) => void;
-  onStageAll: () => void;
-  onUnstageFile: (file_path: string) => void;
-  onUnstageAll: () => void;
-  onDiscardFile: (file_path: string, operation: FileChangeInfo['operation']) => void;
-  onResetFile: (file_path: string, operation: FileChangeInfo['operation']) => void;
+  onRefresh: () => Promise<void>;
+  onOpenDiff: (diffContent: string, fileName: string, filePath: string) => void;
+  onStageFile: (filePath: string) => Promise<void>;
+  onStageAll: () => Promise<void>;
+  onUnstageFile: (filePath: string) => Promise<void>;
+  onUnstageAll: () => Promise<void>;
+  onDiscardFile: (filePath: string) => Promise<void>;
 };
 
-const STATUS_COLORS: Record<FileChangeInfo['operation'], string> = {
-  create: 'text-success-6',
-  modify: 'text-warning-6',
-  delete: 'text-danger-6',
+const STATUS_LABELS: Record<GitFileStatus, string> = {
+  added: 'A',
+  modified: 'M',
+  deleted: 'D',
+  renamed: 'R',
+  untracked: 'U',
+  conflicted: '!',
 };
 
-const STATUS_LABELS: Record<FileChangeInfo['operation'], string> = {
-  create: 'A',
-  modify: 'M',
-  delete: 'D',
+const STATUS_COLORS: Record<GitFileStatus, string> = {
+  added: 'text-success-6',
+  modified: 'text-warning-6',
+  deleted: 'text-danger-6',
+  renamed: 'text-primary-6',
+  untracked: 'text-success-6',
+  conflicted: 'text-danger-6',
 };
 
-type DiffState = {
-  diff: string;
-  additions: number;
-  deletions: number;
-};
-
-const createDiffStats = (diffContent: string): { additions: number; deletions: number } => {
-  let additions = 0;
-  let deletions = 0;
-
-  for (const line of diffContent.split('\n')) {
-    if (!line) continue;
-    if (line.startsWith('+++') || line.startsWith('---')) continue;
-    if (line.startsWith('+')) additions += 1;
-    if (line.startsWith('-')) deletions += 1;
-  }
-
-  return { additions, deletions };
-};
-
-const readCurrentFileContent = async (
-  primaryPath: string,
-  fallbackPath: string,
-  workspace: string
-): Promise<string | null> => {
-  const paths = primaryPath === fallbackPath ? [primaryPath] : [primaryPath, fallbackPath];
-  let lastError: unknown;
-
-  for (const path of paths) {
-    try {
-      const current = await ipcBridge.fs.readFile.invoke({ path, workspace });
-      if (typeof current === 'string') {
-        return current;
-      }
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  console.error('[FileChangeList] Failed to read current file content:', {
-    primaryPath,
-    fallbackPath,
-    error: lastError,
-  });
-  return null;
-};
-
-const FileChangeItem: React.FC<{
-  change: FileChangeInfo;
-  diffState?: DiffState;
-  expanded: boolean;
-  loading: boolean;
-  expandable: boolean;
-  onToggle: () => void;
-  actions: React.ReactNode;
-  children?: React.ReactNode;
-}> = ({ change, diffState, expanded, loading, expandable, onToggle, actions, children }) => {
-  const statusColor = STATUS_COLORS[change.operation];
-  const statusLabel = STATUS_LABELS[change.operation];
-
-  return (
-    <div className='border-b border-b-base last:border-b-0'>
-      <div
-        className={`group flex items-center justify-between px-8px py-6px transition-colors ${
-          expandable ? 'cursor-pointer hover:bg-fill-2' : ''
-        }`}
-        onClick={expandable ? onToggle : undefined}
-        role={expandable ? 'button' : undefined}
-        tabIndex={expandable ? 0 : undefined}
-        onKeyDown={
-          expandable
-            ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onToggle();
-                }
-              }
-            : undefined
-        }
-      >
-        <div className='flex items-center gap-6px min-w-0 flex-1'>
-          <span className='w-14px flex items-center justify-center flex-shrink-0 text-t-quaternary'>
-            {expandable ? expanded ? <Down size={12} /> : <Right size={12} /> : null}
-          </span>
-          <span className={`text-11px font-semibold w-14px text-center flex-shrink-0 ${statusColor}`}>
-            {statusLabel}
-          </span>
-          <span
-            className={`overflow-hidden text-ellipsis whitespace-nowrap text-12px ${
-              change.operation === 'delete' ? 'line-through text-t-tertiary' : 'text-t-primary'
-            }`}
-          >
-            {change.relativePath}
-          </span>
-        </div>
-        <div className='flex items-center gap-8px flex-shrink-0 ml-8px'>
-          {diffState ? (
-            <div className='flex items-center gap-6px text-12px font-medium'>
-              <span className='text-success-6'>+{diffState.additions}</span>
-              <span className='text-danger-6'>-{diffState.deletions}</span>
-            </div>
-          ) : loading ? (
-            <span className='text-12px text-t-quaternary'>...</span>
-          ) : null}
-          <div
-            className='hidden group-hover:flex items-center gap-2px flex-shrink-0'
-            onClick={(e) => e.stopPropagation()}
-          >
-            {actions}
-          </div>
-        </div>
-      </div>
-      {expanded ? <div className='px-8px pb-8px'>{children}</div> : null}
-    </div>
-  );
-};
-
-const PanelHeader: React.FC<{
-  title: string;
-  count: number;
-  actions?: React.ReactNode;
-}> = ({ title, count, actions }) => (
-  <div className='flex items-center justify-between px-8px py-4px bg-fill-2 border-b border-b-base select-none flex-shrink-0'>
-    <span className='text-12px font-medium text-t-secondary'>
-      {title} ({count})
-    </span>
-    {actions && (
-      <div className='flex items-center gap-2px' onClick={(e) => e.stopPropagation()}>
-        {actions}
-      </div>
-    )}
-  </div>
-);
-
-const ActionBtn: React.FC<{
-  tooltip: string;
+const IconAction: React.FC<{
+  label: string;
   icon: React.ReactNode;
+  loading?: boolean;
   onClick: () => void;
-}> = ({ tooltip, icon, onClick }) => (
-  <Tooltip mini content={tooltip}>
-    <Button size='mini' type='text' className='!p-2px !h-20px !w-20px' icon={icon} onClick={onClick} />
+}> = ({ label, icon, loading, onClick }) => (
+  <Tooltip mini content={label}>
+    <Button
+      type='text'
+      size='mini'
+      aria-label={label}
+      loading={loading}
+      className='!h-22px !w-22px !p-0'
+      icon={icon}
+      onClick={onClick}
+    />
   </Tooltip>
 );
 
 const FileChangeList: React.FC<FileChangeListProps> = ({
   t,
   workspace,
+  conflicted,
   staged,
   unstaged,
   loading,
-  snapshotInfo,
   onRefresh,
   onOpenDiff,
   onStageFile,
@@ -196,261 +75,191 @@ const FileChangeList: React.FC<FileChangeListProps> = ({
   onUnstageFile,
   onUnstageAll,
   onDiscardFile,
-  onResetFile,
 }) => {
-  const isGitRepo = snapshotInfo?.mode === 'git-repo';
-  const [expandedFilePath, setExpandedFilePath] = useState<string | null>(null);
-  const [diffCache, setDiffCache] = useState<Record<string, DiffState>>({});
-  const [loadingFilePath, setLoadingFilePath] = useState<string | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
-  const loadDiffState = useCallback(
-    async (change: FileChangeInfo) => {
-      const file_name = change.relativePath;
-      if (!isDiffableWorkspaceFile(file_name)) return null;
-
+  const run = useCallback(
+    async (key: string, operation: () => Promise<void>) => {
+      if (pending) return;
+      setPending(key);
       try {
-        let before = '';
-        let after = '';
-        const readPath = resolveWorkspaceChangeReadPath(workspace, change.file_path, change.relativePath);
+        await operation();
+      } catch (error) {
+        console.error('[FileChangeList] Git operation failed:', error);
+        showGitError(t, error);
+      } finally {
+        setPending(null);
+      }
+    },
+    [pending, t]
+  );
 
-        if (change.operation === 'modify' || change.operation === 'delete') {
-          const baseline = await ipcBridge.fileSnapshot.getBaselineContent.invoke({
-            workspace,
-            file_path: change.relativePath,
-          });
-          before = baseline ?? '';
+  const openDiff = useCallback(
+    async (change: FileChangeInfo, kind: 'staged' | 'working') => {
+      const key = `diff:${kind}:${change.relativePath}`;
+      await run(key, async () => {
+        const [baseline, index] = await Promise.all([
+          ipcBridge.git.baselineContent.invoke({ workspace, file_path: change.relativePath }),
+          ipcBridge.git.indexContent.invoke({ workspace, file_path: change.relativePath }),
+        ]);
+        let current: string | null = null;
+        if (kind === 'working' && change.status !== 'deleted') {
+          const readPath = resolveWorkspaceChangeReadPath(workspace, change.file_path, change.relativePath);
+          current = await ipcBridge.fs.readFile.invoke({ path: readPath, workspace });
         }
-
-        if (change.operation === 'modify' || change.operation === 'create') {
-          const current = await readCurrentFileContent(readPath, change.file_path, workspace);
-          if (current == null) return null;
-          after = current;
-        }
-
-        const diffContent = createTwoFilesPatch(file_name, file_name, before, after);
-        const stats = createDiffStats(diffContent);
-        return {
-          diff: diffContent,
-          additions: stats.additions,
-          deletions: stats.deletions,
-        } satisfies DiffState;
-      } catch (err) {
-        console.error('[FileChangeList] Failed to compute diff:', err);
-        return null;
-      }
+        const before = kind === 'staged' ? baseline : (index ?? baseline);
+        const after = kind === 'staged' ? index : current;
+        const patch = createTwoFilesPatch(change.relativePath, change.relativePath, before ?? '', after ?? '');
+        onOpenDiff(patch, change.relativePath, change.file_path);
+      });
     },
-    [workspace]
+    [onOpenDiff, run, workspace]
   );
 
-  const handleToggleDiff = useCallback(
-    async (change: FileChangeInfo) => {
-      const file_name = change.relativePath;
-      if (!isDiffableWorkspaceFile(file_name)) return;
-
-      if (expandedFilePath === change.file_path) {
-        setExpandedFilePath(null);
-        return;
-      }
-
-      if (diffCache[change.file_path]) {
-        setExpandedFilePath(change.file_path);
-        return;
-      }
-
-      setLoadingFilePath(change.file_path);
-      const nextDiff = await loadDiffState(change);
-      setLoadingFilePath((current) => (current === change.file_path ? null : current));
-      if (!nextDiff) {
-        return;
-      }
-
-      setDiffCache((current) => ({
-        ...current,
-        [change.file_path]: nextDiff,
-      }));
-      setExpandedFilePath(change.file_path);
+  const discard = useCallback(
+    (change: FileChangeInfo) => {
+      const execute = (): void => {
+        void run(`discard:${change.relativePath}`, () => onDiscardFile(change.relativePath));
+      };
+      Modal.confirm({
+        title: t('conversation.workspace.git.discardTitle'),
+        content:
+          change.status === 'untracked'
+            ? t('conversation.workspace.git.discardUntrackedWarning', { path: change.relativePath })
+            : t('conversation.workspace.git.discardWarning', { path: change.relativePath }),
+        okButtonProps: { status: 'danger' },
+        onOk: execute,
+      });
     },
-    [diffCache, expandedFilePath, loadDiffState]
+    [onDiscardFile, run, t]
   );
 
-  const handleOpenPreview = useCallback(
-    async (change: FileChangeInfo) => {
-      const cached = diffCache[change.file_path] ?? (await loadDiffState(change));
-      if (!cached) {
-        return;
-      }
-      onOpenDiff(cached.diff, change.relativePath, change.file_path);
-    },
-    [diffCache, loadDiffState, onOpenDiff]
+  const groups = useMemo(
+    () => [
+      {
+        key: 'conflicted',
+        title: t('conversation.workspace.git.conflicts'),
+        items: conflicted,
+        kind: 'working' as const,
+      },
+      {
+        key: 'unstaged',
+        title: t('conversation.workspace.git.workingChanges'),
+        items: unstaged,
+        kind: 'working' as const,
+      },
+      { key: 'staged', title: t('conversation.workspace.git.stagedChanges'), items: staged, kind: 'staged' as const },
+    ],
+    [conflicted, staged, t, unstaged]
   );
+  const total = conflicted.length + staged.length + unstaged.length;
 
-  const groupedChanges = useMemo(
-    () =>
-      isGitRepo
-        ? [
-            {
-              key: 'unstaged',
-              title: t('conversation.workspace.changes.unstaged'),
-              count: unstaged.length,
-              emptyText: t('conversation.workspace.changes.noUnstaged'),
-              items: unstaged,
-              headerAction:
-                unstaged.length > 0 ? (
-                  <ActionBtn
-                    tooltip={t('conversation.workspace.changes.stageAll')}
-                    icon={<Plus size={14} />}
-                    onClick={onStageAll}
-                  />
-                ) : undefined,
-              renderActions: (change: FileChangeInfo) => (
-                <>
-                  <ActionBtn
-                    tooltip={t('conversation.workspace.changes.discard')}
-                    icon={<Redo size={14} />}
-                    onClick={() => onDiscardFile(change.relativePath, change.operation)}
-                  />
-                  <ActionBtn
-                    tooltip={t('conversation.workspace.changes.stage')}
-                    icon={<Plus size={14} />}
-                    onClick={() => onStageFile(change.relativePath)}
-                  />
-                </>
-              ),
-            },
-            {
-              key: 'staged',
-              title: t('conversation.workspace.changes.staged'),
-              count: staged.length,
-              emptyText: t('conversation.workspace.changes.noStaged'),
-              items: staged,
-              headerAction:
-                staged.length > 0 ? (
-                  <ActionBtn
-                    tooltip={t('conversation.workspace.changes.unstageAll')}
-                    icon={<Minus size={14} />}
-                    onClick={onUnstageAll}
-                  />
-                ) : undefined,
-              renderActions: (change: FileChangeInfo) => (
-                <ActionBtn
-                  tooltip={t('conversation.workspace.changes.unstage')}
-                  icon={<Minus size={14} />}
-                  onClick={() => onUnstageFile(change.relativePath)}
-                />
-              ),
-            },
-          ]
-        : [
-            {
-              key: 'changed',
-              title: t('conversation.workspace.changes.changedFiles'),
-              count: unstaged.length,
-              emptyText: t('conversation.workspace.changes.empty'),
-              items: unstaged,
-              headerAction: undefined,
-              renderActions: (change: FileChangeInfo) => (
-                <ActionBtn
-                  tooltip={t('conversation.workspace.changes.reset')}
-                  icon={<Redo size={14} />}
-                  onClick={() => onResetFile(change.relativePath, change.operation)}
-                />
-              ),
-            },
-          ],
-    [isGitRepo, onDiscardFile, onResetFile, onStageAll, onStageFile, onUnstageAll, onUnstageFile, staged, t, unstaged]
-  );
-
-  if (loading) {
+  if (loading && total === 0) {
     return (
-      <div className='flex-1 size-full flex items-center justify-center'>
-        <Spin />
+      <div className='flex h-80px items-center justify-center'>
+        <Spin size={16} />
       </div>
     );
   }
-
-  const totalCount = staged.length + unstaged.length;
-
-  if (totalCount === 0) {
+  if (total === 0) {
     return (
-      <div className='flex-1 size-full flex items-center justify-center px-12px'>
-        <Empty
-          description={
-            <div>
-              <span className='text-t-secondary font-bold text-14px'>{t('conversation.workspace.changes.empty')}</span>
-              <div className='text-t-secondary'>{t('conversation.workspace.changes.emptyDescription')}</div>
-            </div>
-          }
-        />
+      <div className='flex min-h-100px items-center justify-center px-12px'>
+        <Empty description={t('conversation.workspace.git.cleanWorkspace')} />
       </div>
     );
   }
 
   return (
-    <div className='flex flex-col size-full'>
-      {/* Top toolbar */}
-      <div className='px-8px py-4px border-b border-b-base flex items-center justify-between flex-shrink-0'>
-        <span className='text-12px text-t-secondary'>
-          {t('conversation.workspace.changes.summary', { count: totalCount })}
+    <div className='flex min-h-0 flex-col' data-testid='workspace-git-changes'>
+      <div className='flex h-30px shrink-0 items-center border-b border-border-2 px-9px'>
+        <span className='min-w-0 flex-1 text-11px font-600 text-t-secondary'>
+          {t('conversation.workspace.git.workspaceChanges')} · {total}
         </span>
-        <ActionBtn
-          tooltip={t('conversation.workspace.changes.refresh')}
-          icon={<Refresh size={14} />}
-          onClick={onRefresh}
+        {unstaged.length > 0 || conflicted.length > 0 ? (
+          <IconAction
+            label={t('conversation.workspace.changes.stageAll')}
+            icon={<Plus size={12} />}
+            loading={pending === 'stage-all'}
+            onClick={() => void run('stage-all', onStageAll)}
+          />
+        ) : null}
+        {staged.length > 0 ? (
+          <IconAction
+            label={t('conversation.workspace.changes.unstageAll')}
+            icon={<Minus size={12} />}
+            loading={pending === 'unstage-all'}
+            onClick={() => void run('unstage-all', onUnstageAll)}
+          />
+        ) : null}
+        <IconAction
+          label={t('common.refresh')}
+          icon={<Refresh size={12} />}
+          loading={loading}
+          onClick={() => void run('refresh', onRefresh)}
         />
       </div>
-      <div className='flex-1 overflow-y-auto p-8px flex flex-col gap-10px'>
-        {groupedChanges.map((group) => (
-          <div key={group.key} className='border border-base rounded-10px overflow-hidden bg-bg-1'>
-            <PanelHeader title={group.title} count={group.count} actions={group.headerAction} />
-            {group.items.length === 0 ? (
-              <div className='flex items-center justify-center py-16px text-12px text-t-quaternary'>
-                {group.emptyText}
-              </div>
-            ) : (
-              group.items.map((change) => {
-                const diffState = diffCache[change.file_path];
-                const isExpanded = expandedFilePath === change.file_path;
-                const isLoadingDiff = loadingFilePath === change.file_path;
-                const canExpand = isDiffableWorkspaceFile(change.relativePath);
-                const readPath = resolveWorkspaceChangeReadPath(workspace, change.file_path, change.relativePath);
 
+      <div className='min-h-0 overflow-y-auto py-2px'>
+        {groups.map((group) =>
+          group.items.length === 0 ? null : (
+            <section key={group.key}>
+              {group.key === 'unstaged' ? null : (
+                <div className='flex h-24px items-center bg-fill-1 px-9px text-10px font-600 text-t-secondary'>
+                  {group.title}
+                  <span className='ml-5px text-t-tertiary'>{group.items.length}</span>
+                </div>
+              )}
+              {group.items.map((change) => {
+                const rowKey = `${group.key}:${change.relativePath}`;
                 return (
-                  <FileChangeItem
-                    key={`${group.key}-${change.file_path}`}
-                    change={change}
-                    diffState={diffState}
-                    expanded={isExpanded}
-                    loading={isLoadingDiff}
-                    expandable={canExpand}
-                    onToggle={() => {
-                      void handleToggleDiff(change);
-                    }}
-                    actions={
-                      <>
-                        <ActionBtn
-                          tooltip={t('preview.preview')}
-                          icon={<PreviewOpen size={14} />}
-                          onClick={() => {
-                            void handleOpenPreview(change);
-                          }}
+                  <div key={rowKey} className='group flex h-28px items-center px-9px hover:bg-fill-2'>
+                    <span className={`w-16px shrink-0 text-10px font-700 ${STATUS_COLORS[change.status]}`}>
+                      {STATUS_LABELS[change.status]}
+                    </span>
+                    <Tooltip mini content={change.relativePath}>
+                      <span className='min-w-0 flex-1 truncate text-11px text-t-primary'>{change.relativePath}</span>
+                    </Tooltip>
+                    <span className='hidden shrink-0 items-center group-hover:flex'>
+                      <IconAction
+                        label={t('conversation.workspace.git.compare')}
+                        icon={<PreviewOpen size={12} />}
+                        loading={pending === `diff:${group.kind}:${change.relativePath}`}
+                        onClick={() => void openDiff(change, group.kind)}
+                      />
+                      {group.key === 'staged' ? (
+                        <IconAction
+                          label={t('conversation.workspace.changes.unstage')}
+                          icon={<Minus size={12} />}
+                          loading={pending === `unstage:${change.relativePath}`}
+                          onClick={() =>
+                            void run(`unstage:${change.relativePath}`, () => onUnstageFile(change.relativePath))
+                          }
                         />
-                        {group.renderActions(change)}
-                      </>
-                    }
-                  >
-                    {diffState ? (
-                      <Diff2Html diff={diffState.diff} title={change.relativePath} file_path={readPath} />
-                    ) : isLoadingDiff ? (
-                      <div className='flex items-center justify-center py-12px text-12px text-t-quaternary'>
-                        <Spin size={14} />
-                      </div>
-                    ) : null}
-                  </FileChangeItem>
+                      ) : (
+                        <>
+                          <IconAction
+                            label={t('conversation.workspace.changes.discard')}
+                            icon={<Redo size={12} />}
+                            loading={pending === `discard:${change.relativePath}`}
+                            onClick={() => discard(change)}
+                          />
+                          <IconAction
+                            label={t('conversation.workspace.changes.stage')}
+                            icon={<Plus size={12} />}
+                            loading={pending === `stage:${change.relativePath}`}
+                            onClick={() =>
+                              void run(`stage:${change.relativePath}`, () => onStageFile(change.relativePath))
+                            }
+                          />
+                        </>
+                      )}
+                    </span>
+                  </div>
                 );
-              })
-            )}
-          </div>
-        ))}
+              })}
+            </section>
+          )
+        )}
       </div>
     </div>
   );

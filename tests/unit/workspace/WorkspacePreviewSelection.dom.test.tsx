@@ -1,4 +1,3 @@
-
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import ChatWorkspace from '@/renderer/pages/conversation/Workspace';
 import type { NodeInstance } from '@arco-design/web-react/es/Tree/interface';
@@ -112,17 +111,43 @@ vi.mock('@/renderer/pages/conversation/Workspace/hooks/useWorkspaceFileOps', () 
 
 vi.mock('@/renderer/pages/conversation/Workspace/hooks/useFileChanges', () => ({
   useFileChanges: () => ({
+    conflicted: [],
     staged: [],
     unstaged: [],
+    changeCount: 0,
     loading: false,
-    snapshotInfo: null,
+    error: null,
+    repository: null,
     refreshChanges: vi.fn(),
     stageFile: vi.fn(),
     stageAll: vi.fn(),
     unstageFile: vi.fn(),
     unstageAll: vi.fn(),
     discardFile: vi.fn(),
-    resetFile: vi.fn(),
+  }),
+}));
+
+vi.mock('@/renderer/pages/conversation/Workspace/hooks/useGitWorkspace', () => ({
+  useGitWorkspace: () => ({
+    repository: null,
+    timeline: [],
+    graph: [],
+    repositoryLoading: false,
+    timelineLoading: false,
+    graphLoading: false,
+    refreshRepository: vi.fn(),
+    refreshTimeline: vi.fn(),
+    refreshGraph: vi.fn(),
+    revision: vi.fn(),
+    createBranch: vi.fn(),
+    switchBranch: vi.fn(),
+    commit: vi.fn(),
+    fetch: vi.fn(),
+    pull: vi.fn(),
+    push: vi.fn(),
+    sync: vi.fn(),
+    createWorktree: vi.fn(),
+    removeWorktree: vi.fn(),
   }),
 }));
 
@@ -198,7 +223,11 @@ vi.mock('@/renderer/pages/conversation/Workspace/components/PasteConfirmModal', 
   default: () => null,
 }));
 
-vi.mock('@/renderer/pages/conversation/Workspace/components/FileChangeList', () => ({
+vi.mock('@/renderer/pages/conversation/Workspace/components/WorkspaceTimeline', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/renderer/pages/conversation/Workspace/components/WorkspaceSourceControl', () => ({
   default: () => null,
 }));
 

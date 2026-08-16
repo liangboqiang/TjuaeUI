@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
@@ -9,14 +8,16 @@ import { Empty, Message, Tree } from '@arco-design/web-react';
 import { Right } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import FileChangeList from './components/FileChangeList';
 import PasteConfirmModal from './components/PasteConfirmModal';
 import WorkspaceContextMenu from './components/WorkspaceContextMenu';
 import WorkspaceDialogs from './components/WorkspaceDialogs';
 import WorkspaceTabBar from './components/WorkspaceTabBar';
+import WorkspaceTimeline from './components/WorkspaceTimeline';
+import WorkspaceSourceControl from './components/WorkspaceSourceControl';
 import WorkspaceToolbar from './components/WorkspaceToolbar';
 import FileTypeIcon from './components/FileTypeIcon';
 import { useFileChanges } from './hooks/useFileChanges';
+import { useGitWorkspace } from './hooks/useGitWorkspace';
 import { useWorkspaceCollapse } from './hooks/useWorkspaceCollapse';
 import { useWorkspaceDragImport } from './hooks/useWorkspaceDragImport';
 import { useWorkspaceEvents } from './hooks/useWorkspaceEvents';
@@ -35,7 +36,13 @@ import {
   getTargetFolderPath,
 } from './utils/treeHelpers';
 import { setWorkspaceTreeSnapshot } from './utils/workspaceTreeCache';
+import { getContentTypeByExtension } from '@/renderer/pages/conversation/Preview/fileUtils';
+import { createTwoFilesPatch } from 'diff';
+import { createDiffResourceKey, createRevisionResourceKey } from '@/renderer/utils/file/resourceKey';
+import type { GitCommitFileInfo, GitCommitInfo } from '@/common/types/platform/gitWorkspace';
 import './workspace.css';
+
+const normalizeTextForDiff = (content: string): string => content.replace(/\r\n?/gu, '\n');
 
 const ChatWorkspace: React.FC<WorkspaceProps> = ({
   conversation_id,
@@ -56,7 +63,9 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
 
   // Tab state and file changes
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('files');
+  const [timelineFilePath, setTimelineFilePath] = useState<string | undefined>();
   const fileChangesHook = useFileChanges({ workspace });
+  const gitWorkspaceHook = useGitWorkspace(workspace, timelineFilePath);
 
   // Bind workspace uploads to the conversation lifecycle: switching the
   // workspace conversation or unmounting the panel cancels in-flight uploads.
@@ -178,6 +187,7 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
   const handleOpenChangeDiff = useCallback(
     (diffContent: string, file_name: string, file_path: string) => {
       openPreview(diffContent, 'diff', {
+        resource_key: createDiffResourceKey(workspace, file_path),
         file_name,
         file_path,
         workspace,
@@ -186,12 +196,83 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
     [openPreview, workspace]
   );
 
-  // Auto-refresh changes when switching to changes tab
+  const handleOpenHistoricalRevision = useCallback(
+    async (commit: GitCommitInfo) => {
+      if (!timelineFilePath) return;
+      const revision = await gitWorkspaceHook.revision(commit.hash, timelineFilePath);
+      if (revision.binary || revision.modifiedContent == null) {
+        Message.warning(t('conversation.workspace.git.noTextDiff'));
+        return;
+      }
+      const fileName = timelineFilePath.split(/[\\/]/).pop() || timelineFilePath;
+      openPreview(revision.modifiedContent, getContentTypeByExtension(fileName), {
+        resource_key: createRevisionResourceKey(workspace, timelineFilePath, commit.hash),
+        title: `${fileName} · ${commit.shortHash}`,
+        file_name: fileName,
+        file_path: `${workspace}#${timelineFilePath}@${commit.hash}`,
+        editable: false,
+      });
+    },
+    [gitWorkspaceHook.revision, openPreview, t, timelineFilePath, workspace]
+  );
+
+  const handleCompareHistoricalRevision = useCallback(
+    async (commit: GitCommitInfo) => {
+      if (!timelineFilePath) return;
+      const revision = await gitWorkspaceHook.revision(commit.hash, timelineFilePath);
+      if (revision.binary || revision.modifiedContent == null) {
+        Message.warning(t('conversation.workspace.git.noTextDiff'));
+        return;
+      }
+      const separator = workspace.includes('\\') ? '\\' : '/';
+      const absolute = `${workspace.replace(/[\\/]+$/u, '')}${separator}${timelineFilePath.replace(/[\\/]+/gu, separator)}`;
+      const current = await ipcBridge.fs.readFile.invoke({ path: absolute, workspace });
+      const patch = createTwoFilesPatch(
+        timelineFilePath,
+        timelineFilePath,
+        normalizeTextForDiff(revision.modifiedContent),
+        normalizeTextForDiff(current ?? '')
+      );
+      handleOpenChangeDiff(patch, timelineFilePath, absolute);
+    },
+    [gitWorkspaceHook.revision, handleOpenChangeDiff, t, timelineFilePath, workspace]
+  );
+
+  const handleOpenCommitFile = useCallback(
+    async (commit: GitCommitInfo, file: GitCommitFileInfo) => {
+      const revision = await gitWorkspaceHook.revision(commit.hash, file.path);
+      if (revision.binary || !revision.patch) {
+        Message.warning(t('conversation.workspace.git.noTextDiff'));
+        return;
+      }
+      const separator = workspace.includes('\\') ? '\\' : '/';
+      const absolute = `${workspace.replace(/[\\/]+$/u, '')}${separator}${file.path.replace(/[\\/]+/gu, separator)}`;
+      openPreview(revision.patch, 'diff', {
+        resource_key: createDiffResourceKey(workspace, absolute, commit.hash),
+        title: `${file.path} · ${commit.shortHash}`,
+        file_name: file.path,
+        file_path: absolute,
+        workspace,
+        editable: false,
+      });
+    },
+    [gitWorkspaceHook.revision, openPreview, t, workspace]
+  );
+
+  // Source control data is lazy; file timeline is loaded only for one selected file.
   useEffect(() => {
-    if (activeTab === 'changes') {
-      fileChangesHook.refreshChanges();
+    if (activeTab === 'sourceControl') {
+      void (async () => {
+        // Repository provisioning may create the first `main` commit.  Status
+        // and graph reads must start afterwards or the first render can retain
+        // the pre-initialization untracked list and an empty history.
+        await gitWorkspaceHook.refreshRepository();
+        await Promise.all([fileChangesHook.refreshChanges(), gitWorkspaceHook.refreshGraph()]);
+      })().catch((error) => {
+        console.error('[Workspace] Failed to refresh source control:', error);
+      });
     }
-  }, [activeTab, fileChangesHook.refreshChanges]);
+  }, [activeTab, fileChangesHook.refreshChanges, gitWorkspaceHook.refreshGraph, gitWorkspaceHook.refreshRepository]);
 
   // Get target folder path for paste confirm modal
   const targetFolderPathForModal = getTargetFolderPath(
@@ -279,7 +360,6 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
           activeTab={activeTab}
           onTabChange={setActiveTab}
           changeCount={fileChangesHook.changeCount}
-          branch={fileChangesHook.snapshotInfo?.branch ?? null}
         />
 
         {/* Toolbar: search input + directory name + action buttons */}
@@ -304,225 +384,259 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
 
         {/* Main content area */}
         {!isWorkspaceCollapsed && activeTab === 'files' && (
-          <FlexFullContainer containerClassName='overflow-y-auto'>
-            {/* Context Menu */}
-            <WorkspaceContextMenu
-              visible={modalsHook.contextMenu.visible}
-              style={contextMenuStyle}
-              node={modalsHook.contextMenu.node}
-              t={t}
-              handleAddToChat={fileOpsHook.handleAddToChat}
-              handleOpenNode={fileOpsHook.handleOpenNode}
-              handleRevealNode={fileOpsHook.handleRevealNode}
-              handlePreviewFile={fileOpsHook.handlePreviewFile}
-              handleDownloadFile={fileOpsHook.handleDownloadFile}
-              handleDeleteNode={fileOpsHook.handleDeleteNode}
-              openRenameModal={fileOpsHook.openRenameModal}
-              closeContextMenu={modalsHook.closeContextMenu}
-            />
+          <FlexFullContainer containerClassName='flex min-h-0 flex-col overflow-hidden'>
+            <div className='relative min-h-0 flex-1 overflow-y-auto'>
+              {/* Context Menu */}
+              <WorkspaceContextMenu
+                visible={modalsHook.contextMenu.visible}
+                style={contextMenuStyle}
+                node={modalsHook.contextMenu.node}
+                t={t}
+                handleAddToChat={fileOpsHook.handleAddToChat}
+                handleOpenNode={fileOpsHook.handleOpenNode}
+                handleRevealNode={fileOpsHook.handleRevealNode}
+                handlePreviewFile={fileOpsHook.handlePreviewFile}
+                handleDownloadFile={fileOpsHook.handleDownloadFile}
+                handleDeleteNode={fileOpsHook.handleDeleteNode}
+                openRenameModal={fileOpsHook.openRenameModal}
+                closeContextMenu={modalsHook.closeContextMenu}
+              />
 
-            {/* Empty state or Tree */}
-            {!hasOriginalFiles ? (
-              <div className=' flex-1 size-full flex items-center justify-center px-12px box-border'>
-                <Empty
-                  description={
-                    <div>
-                      <span className='text-t-secondary font-bold text-14px'>
-                        {searchHook.searchText
-                          ? t('conversation.workspace.search.empty')
-                          : t('conversation.workspace.empty')}
-                      </span>
-                      <div className='text-t-secondary'>
-                        {searchHook.searchText ? '' : t('conversation.workspace.emptyDescription')}
+              {/* Empty state or Tree */}
+              {!hasOriginalFiles ? (
+                <div className=' flex-1 size-full flex items-center justify-center px-12px box-border'>
+                  <Empty
+                    description={
+                      <div>
+                        <span className='text-t-secondary font-bold text-14px'>
+                          {searchHook.searchText
+                            ? t('conversation.workspace.search.empty')
+                            : t('conversation.workspace.empty')}
+                        </span>
+                        <div className='text-t-secondary'>
+                          {searchHook.searchText ? '' : t('conversation.workspace.emptyDescription')}
+                        </div>
                       </div>
-                    </div>
-                  }
-                />
-              </div>
-            ) : (
-              <Tree
-                className={`${isMobile ? '!pl-12px !pr-8px chat-workspace-tree--mobile' : '!pl-16px !pr-16px'} workspace-tree`}
-                key={treeHook.treeKey}
-                selectedKeys={treeHook.selected}
-                expandedKeys={treeHook.expandedKeys}
-                actionOnClick={['select', 'expand']}
-                // VSCode-style explorer: no connector lines, a chevron switcher
-                // for folders (none for files), and per-type icons via FileTypeIcon.
-                // Reuse the chevron as the lazy-load icon so the switcher doesn't
-                // flash a spinner on first expand of each folder.
-                icons={(nodeProps) => {
-                  if (nodeProps.dataRef?.isFile) return { switcherIcon: null };
-                  // Rotation is owned by CSS (.workspace-tree-chevron): right when
-                  // collapsed, down when expanded — overriding Arco's default.
-                  const chevron = (
-                    <Right theme='outline' size={14} fill='currentColor' className='workspace-tree-chevron' />
-                  );
-                  return { switcherIcon: chevron, loadingIcon: chevron };
-                }}
-                treeData={treeData}
-                fieldNames={{
-                  children: 'children',
-                  title: 'name',
-                  key: 'relativePath',
-                  isLeaf: 'isFile',
-                }}
-                multiple
-                renderTitle={(node) => {
-                  const relativePath = node.dataRef.relativePath;
-                  const isFile = node.dataRef.isFile;
-                  const isPasteTarget = !isFile && pasteHook.pasteTargetFolder === relativePath;
-                  const nodeData = node.dataRef as IDirOrFile;
+                    }
+                  />
+                </div>
+              ) : (
+                <Tree
+                  className={`${isMobile ? '!pl-12px !pr-8px chat-workspace-tree--mobile' : '!pl-16px !pr-16px'} workspace-tree`}
+                  key={treeHook.treeKey}
+                  selectedKeys={treeHook.selected}
+                  expandedKeys={treeHook.expandedKeys}
+                  actionOnClick={['select', 'expand']}
+                  // VSCode-style explorer: no connector lines, a chevron switcher
+                  // for folders (none for files), and per-type icons via FileTypeIcon.
+                  // Reuse the chevron as the lazy-load icon so the switcher doesn't
+                  // flash a spinner on first expand of each folder.
+                  icons={(nodeProps) => {
+                    if (nodeProps.dataRef?.isFile) return { switcherIcon: null };
+                    // Rotation is owned by CSS (.workspace-tree-chevron): right when
+                    // collapsed, down when expanded — overriding Arco's default.
+                    const chevron = (
+                      <Right theme='outline' size={14} fill='currentColor' className='workspace-tree-chevron' />
+                    );
+                    return { switcherIcon: chevron, loadingIcon: chevron };
+                  }}
+                  treeData={treeData}
+                  fieldNames={{
+                    children: 'children',
+                    title: 'name',
+                    key: 'relativePath',
+                    isLeaf: 'isFile',
+                  }}
+                  multiple
+                  renderTitle={(node) => {
+                    const relativePath = node.dataRef.relativePath;
+                    const isFile = node.dataRef.isFile;
+                    const isPasteTarget = !isFile && pasteHook.pasteTargetFolder === relativePath;
+                    const nodeData = node.dataRef as IDirOrFile;
 
-                  return (
-                    <div
-                      className='flex items-center justify-between gap-6px min-w-0'
-                      style={{ color: 'inherit' }}
-                      onDoubleClick={() => {
-                        if (isFile) {
-                          fileOpsHook.handleAddToChat(nodeData);
-                        }
-                      }}
-                      onContextMenu={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        openNodeContextMenu(nodeData, event.clientX, event.clientY);
-                      }}
-                    >
-                      <span className='flex items-center gap-4px min-w-0'>
-                        <FileTypeIcon node={nodeData} expanded={treeHook.expandedKeys.includes(relativePath)} />
-                        <span className='overflow-hidden text-ellipsis whitespace-nowrap'>{node.title}</span>
-                        {isPasteTarget && (
-                          <span className='ml-1 text-xs text-blue-700 font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded'>
-                            PASTE
-                          </span>
-                        )}
-                      </span>
-                      {isMobile && (
-                        <button
-                          type='button'
-                          className='workspace-header__toggle workspace-node-more-btn h-24px w-24px rd-6px flex items-center justify-center text-t-secondary hover:text-t-primary active:text-t-primary flex-shrink-0'
-                          aria-label={t('common.more')}
-                          onMouseDown={(event) => {
-                            event.stopPropagation();
-                          }}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            const rect = (event.currentTarget as HTMLButtonElement).getBoundingClientRect();
-                            const menuWidth = 220;
-                            const menuHeight = 220;
-                            const maxX =
-                              typeof window !== 'undefined'
-                                ? Math.max(8, window.innerWidth - menuWidth - 8)
-                                : rect.left;
-                            const maxY =
-                              typeof window !== 'undefined'
-                                ? Math.max(8, window.innerHeight - menuHeight - 8)
-                                : rect.bottom;
-                            const menuX = Math.min(Math.max(8, rect.left - menuWidth + rect.width), maxX);
-                            const menuY = Math.min(Math.max(8, rect.bottom + 4), maxY);
-                            openNodeContextMenu(nodeData, menuX, menuY);
-                          }}
-                        >
-                          <div
-                            className='flex flex-col gap-1.5px items-center justify-center'
-                            style={{ width: '10px', height: '10px' }}
+                    return (
+                      <div
+                        className='flex items-center justify-between gap-6px min-w-0'
+                        style={{ color: 'inherit' }}
+                        onDoubleClick={() => {
+                          if (isFile) {
+                            fileOpsHook.handleAddToChat(nodeData);
+                          }
+                        }}
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          openNodeContextMenu(nodeData, event.clientX, event.clientY);
+                        }}
+                      >
+                        <span className='flex items-center gap-4px min-w-0'>
+                          <FileTypeIcon node={nodeData} expanded={treeHook.expandedKeys.includes(relativePath)} />
+                          <span className='overflow-hidden text-ellipsis whitespace-nowrap'>{node.title}</span>
+                          {isPasteTarget && (
+                            <span className='ml-1 text-xs text-blue-700 font-bold bg-blue-500 text-white px-1.5 py-0.5 rounded'>
+                              PASTE
+                            </span>
+                          )}
+                        </span>
+                        {isMobile && (
+                          <button
+                            type='button'
+                            className='workspace-header__toggle workspace-node-more-btn h-24px w-24px rd-6px flex items-center justify-center text-t-secondary hover:text-t-primary active:text-t-primary flex-shrink-0'
+                            aria-label={t('common.more')}
+                            onMouseDown={(event) => {
+                              event.stopPropagation();
+                            }}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              const rect = (event.currentTarget as HTMLButtonElement).getBoundingClientRect();
+                              const menuWidth = 220;
+                              const menuHeight = 220;
+                              const maxX =
+                                typeof window !== 'undefined'
+                                  ? Math.max(8, window.innerWidth - menuWidth - 8)
+                                  : rect.left;
+                              const maxY =
+                                typeof window !== 'undefined'
+                                  ? Math.max(8, window.innerHeight - menuHeight - 8)
+                                  : rect.bottom;
+                              const menuX = Math.min(Math.max(8, rect.left - menuWidth + rect.width), maxX);
+                              const menuY = Math.min(Math.max(8, rect.bottom + 4), maxY);
+                              openNodeContextMenu(nodeData, menuX, menuY);
+                            }}
                           >
-                            <div className='w-1.5px h-1.5px rounded-full bg-current'></div>
-                            <div className='w-1.5px h-1.5px rounded-full bg-current'></div>
-                            <div className='w-1.5px h-1.5px rounded-full bg-current'></div>
-                          </div>
-                        </button>
-                      )}
-                    </div>
-                  );
-                }}
-                onSelect={(_keys, extra) => {
-                  const clickedKey = extractNodeKey(extra?.node);
-                  const nodeData = extra && extra.node ? extractNodeData(extra.node) : null;
-                  const isFileNode = Boolean(nodeData?.isFile);
-                  const wasSelected = clickedKey ? treeHook.selectedKeysRef.current.includes(clickedKey) : false;
+                            <div
+                              className='flex flex-col gap-1.5px items-center justify-center'
+                              style={{ width: '10px', height: '10px' }}
+                            >
+                              <div className='w-1.5px h-1.5px rounded-full bg-current'></div>
+                              <div className='w-1.5px h-1.5px rounded-full bg-current'></div>
+                              <div className='w-1.5px h-1.5px rounded-full bg-current'></div>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  }}
+                  onSelect={(_keys, extra) => {
+                    const clickedKey = extractNodeKey(extra?.node);
+                    const nodeData = extra && extra.node ? extractNodeData(extra.node) : null;
+                    const isFileNode = Boolean(nodeData?.isFile);
+                    const wasSelected = clickedKey ? treeHook.selectedKeysRef.current.includes(clickedKey) : false;
 
-                  if (isFileNode) {
-                    // Single-click a file: highlight it as the sole selection and open its preview.
-                    if (nodeData) {
-                      treeHook.ensureNodeSelected(nodeData);
+                    if (isFileNode) {
+                      // Single-click a file: highlight it as the sole selection and open its preview.
+                      if (nodeData) {
+                        treeHook.ensureNodeSelected(nodeData);
+                        setTimelineFilePath(nodeData.relativePath);
+                      }
+                      if (nodeData) {
+                        void ipcBridge.application?.writeRendererLog.invoke({
+                          level: 'debug',
+                          tag: 'Workspace',
+                          message: 'workspace_file_preview_requested',
+                          data: {
+                            fileName: nodeData.name,
+                            wasSelected,
+                            hasKey: Boolean(clickedKey),
+                          },
+                        });
+                        void fileOpsHook.handlePreviewFile(nodeData);
+                      }
+                      return;
                     }
-                    if (nodeData) {
-                      void ipcBridge.application?.writeRendererLog.invoke({
-                        level: 'debug',
-                        tag: 'Workspace',
-                        message: 'workspace_file_preview_requested',
-                        data: {
-                          fileName: nodeData.name,
-                          wasSelected,
-                          hasKey: Boolean(clickedKey),
-                        },
+                    setTimelineFilePath(undefined);
+                    // Folder: actionOnClick={['select','expand']} on the Tree
+                    // already toggles expand via onExpand. Right-click menu
+                    // remains the entry point for "Add to Chat".
+                  }}
+                  onExpand={(keys) => {
+                    treeHook.setExpandedKeys(keys);
+                  }}
+                  loadMore={(treeNode) => {
+                    const path = treeNode.props.dataRef.fullPath;
+                    const targetRelPath = treeNode.props.dataRef.relativePath;
+                    return ipcBridge.conversation.getWorkspace
+                      .invoke({ conversation_id, workspace, path })
+                      .then((res) => {
+                        const newChildren = res[0]?.children;
+                        if (!newChildren?.length) return;
+                        treeHook.setFiles((prev) => {
+                          const assign = (nodes: IDirOrFile[]): IDirOrFile[] =>
+                            nodes.map((n) => {
+                              if (n.relativePath === targetRelPath) return { ...n, children: newChildren };
+                              if (n.children) return { ...n, children: assign(n.children) };
+                              return n;
+                            });
+                          const next = assign(prev);
+                          // Persist lazy-loaded children so refreshWorkspace and
+                          // cache-based rehydration don't drop them on next render.
+                          if (workspace) {
+                            setWorkspaceTreeSnapshot(workspace, {
+                              files: next,
+                              expandedKeys: treeHook.expandedKeys,
+                            });
+                          }
+                          return next;
+                        });
+                      })
+                      .catch((err) => {
+                        console.error('[Workspace] loadMore failed:', err);
                       });
-                      void fileOpsHook.handlePreviewFile(nodeData);
-                    }
-                    return;
-                  }
-                  // Folder: actionOnClick={['select','expand']} on the Tree
-                  // already toggles expand via onExpand. Right-click menu
-                  // remains the entry point for "Add to Chat".
-                }}
-                onExpand={(keys) => {
-                  treeHook.setExpandedKeys(keys);
-                }}
-                loadMore={(treeNode) => {
-                  const path = treeNode.props.dataRef.fullPath;
-                  const targetRelPath = treeNode.props.dataRef.relativePath;
-                  return ipcBridge.conversation.getWorkspace
-                    .invoke({ conversation_id, workspace, path })
-                    .then((res) => {
-                      const newChildren = res[0]?.children;
-                      if (!newChildren?.length) return;
-                      treeHook.setFiles((prev) => {
-                        const assign = (nodes: IDirOrFile[]): IDirOrFile[] =>
-                          nodes.map((n) => {
-                            if (n.relativePath === targetRelPath) return { ...n, children: newChildren };
-                            if (n.children) return { ...n, children: assign(n.children) };
-                            return n;
-                          });
-                        const next = assign(prev);
-                        // Persist lazy-loaded children so refreshWorkspace and
-                        // cache-based rehydration don't drop them on next render.
-                        if (workspace) {
-                          setWorkspaceTreeSnapshot(workspace, {
-                            files: next,
-                            expandedKeys: treeHook.expandedKeys,
-                          });
-                        }
-                        return next;
-                      });
-                    })
-                    .catch((err) => {
-                      console.error('[Workspace] loadMore failed:', err);
-                    });
-                }}
-              ></Tree>
-            )}
+                  }}
+                ></Tree>
+              )}
+            </div>
+            <WorkspaceTimeline
+              t={t}
+              filePath={timelineFilePath}
+              history={gitWorkspaceHook.timeline}
+              loading={gitWorkspaceHook.timelineLoading}
+              onRefresh={gitWorkspaceHook.refreshTimeline}
+              onOpen={handleOpenHistoricalRevision}
+              onCompare={handleCompareHistoricalRevision}
+            />
           </FlexFullContainer>
         )}
 
-        {/* Changes tab content */}
-        {!isWorkspaceCollapsed && activeTab === 'changes' && (
-          <FlexFullContainer containerClassName='overflow-y-auto'>
-            <FileChangeList
+        {/* Repository-level source control */}
+        {!isWorkspaceCollapsed && activeTab === 'sourceControl' && (
+          <FlexFullContainer containerClassName='overflow-hidden'>
+            <WorkspaceSourceControl
               t={t}
               workspace={workspace}
+              displayName={workspaceDisplayName}
+              repository={gitWorkspaceHook.repository ?? fileChangesHook.repository}
+              repositoryLoading={gitWorkspaceHook.repositoryLoading}
+              graph={gitWorkspaceHook.graph}
+              graphLoading={gitWorkspaceHook.graphLoading}
+              graphReference={gitWorkspaceHook.graphReference}
+              conflicted={fileChangesHook.conflicted}
               staged={fileChangesHook.staged}
               unstaged={fileChangesHook.unstaged}
-              loading={fileChangesHook.loading}
-              snapshotInfo={fileChangesHook.snapshotInfo}
-              onRefresh={fileChangesHook.refreshChanges}
+              changesLoading={fileChangesHook.loading}
+              onRefresh={async () => {
+                await gitWorkspaceHook.refreshRepository();
+                await Promise.all([fileChangesHook.refreshChanges(), gitWorkspaceHook.refreshGraph()]);
+              }}
+              onRefreshGraph={gitWorkspaceHook.refreshGraph}
+              onSelectGraphReference={gitWorkspaceHook.selectGraphReference}
+              onFollowCurrentGraphBranch={gitWorkspaceHook.followCurrentGraphBranch}
+              onLoadCommitFiles={(commit) => gitWorkspaceHook.commitFiles(commit.hash)}
+              onOpenCommitFile={handleOpenCommitFile}
+              onCheckoutCommit={(commit) => gitWorkspaceHook.checkoutRevision(commit.hash)}
               onOpenDiff={handleOpenChangeDiff}
               onStageFile={fileChangesHook.stageFile}
               onStageAll={fileChangesHook.stageAll}
               onUnstageFile={fileChangesHook.unstageFile}
               onUnstageAll={fileChangesHook.unstageAll}
               onDiscardFile={fileChangesHook.discardFile}
-              onResetFile={fileChangesHook.resetFile}
+              onCreateBranch={gitWorkspaceHook.createBranch}
+              onSwitchBranch={gitWorkspaceHook.switchBranch}
+              onCommit={gitWorkspaceHook.commit}
+              onFetch={gitWorkspaceHook.fetch}
+              onPull={gitWorkspaceHook.pull}
+              onPush={gitWorkspaceHook.push}
+              onSync={gitWorkspaceHook.sync}
             />
           </FlexFullContainer>
         )}

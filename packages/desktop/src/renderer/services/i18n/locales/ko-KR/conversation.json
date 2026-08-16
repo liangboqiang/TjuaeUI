@@ -73,7 +73,21 @@
     "removeProjectConfirm": "\"{{name}}\" 프로젝트를 제거하시겠습니까? 프로젝트의 {{count}}개 대화도 함께 제거됩니다.",
     "newConversationInProject": "이 프로젝트에서 새 대화",
     "deleting": "삭제 중...",
-    "reorderPinned": "드래그하여 고정된 대화 순서 변경"
+    "reorderPinned": "드래그하여 고정된 대화 순서 변경",
+    "openInExplorer": "파일 탐색기에서 열기",
+    "archive": "보관",
+    "archiveConversationConfirm": "“{{name}}”을(를) 보관할까요?",
+    "archiveSuccess": "보관됨",
+    "archiveFailed": "보관 실패",
+    "archiveProject": "프로젝트 보관",
+    "archiveProjectConfirm": "“{{name}}”과(와) 대화 {{count}}개를 보관할까요?",
+    "archiveProjectSuccess": "프로젝트가 보관됨",
+    "workspaceUnavailable": "이 대화에는 사용할 수 있는 작업 공간이 없습니다.",
+    "openInExplorerFailed": "파일 탐색기를 열 수 없습니다.",
+    "pinProject": "프로젝트 고정",
+    "unpinProject": "프로젝트 고정 해제",
+    "editProject": "프로젝트 편집",
+    "projectNamePlaceholder": "프로젝트 표시 이름"
   },
   "historySearch": {
     "tooltip": "메시지 검색",
@@ -410,6 +424,115 @@
       "reset": "변경 사항 되돌리기",
       "noUnstaged": "스테이지되지 않은 변경 사항 없음",
       "noStaged": "스테이지된 변경 사항 없음"
+    },
+    "git": {
+      "resourceManagement": "소스 관리",
+      "operationFailed": "Git 작업에 실패했습니다",
+      "timeline": "타임라인",
+      "toggleTimeline": "타임라인 펼치기 또는 접기",
+      "noHistory": "기록이 없습니다",
+      "selectFileForTimeline": "파일을 선택하여 타임라인 보기",
+      "noTextDiff": "이 버전에는 비교할 텍스트 내용이 없습니다",
+      "compareWithCurrent": "현재 버전과 비교",
+      "conflicts": "충돌",
+      "workingChanges": "작업 트리 변경 사항",
+      "stagedChanges": "스테이징된 변경 사항",
+      "cleanWorkspace": "작업 공간이 깨끗합니다",
+      "workspaceChanges": "작업 공간 변경 사항",
+      "compare": "비교",
+      "discardTitle": "변경 사항 버리기",
+      "discardUntrackedWarning": "{{path}}은(는) 추적되지 않습니다. 버리면 파일이 영구적으로 삭제됩니다.",
+      "discardWarning": "{{path}}의 로컬 변경 사항을 버리시겠습니까?",
+      "repositoryUnavailable": "Git 저장소를 사용할 수 없습니다",
+      "commitPlaceholder": "커밋 메시지",
+      "commitSucceeded": "커밋되었습니다",
+      "commitStaged": "스테이징된 변경 사항 커밋",
+      "remoteSync": "원격 동기화",
+      "fetch": "가져오기",
+      "pull": "풀",
+      "push": "푸시",
+      "sync": "동기화",
+      "detached": "분리된 HEAD",
+      "commitGraph": "커밋 그래프",
+      "createBranch": "브랜치 만들기",
+      "branchName": "브랜치 이름",
+      "openChanges": "변경 내용 열기",
+      "checkoutCommit": "커밋 체크아웃",
+      "createBranchHere": "여기서 브랜치 만들기",
+      "checkoutCommitWarning": "커밋 {{hash}}을(를) 분리된 HEAD로 체크아웃할까요?",
+      "noChangedFiles": "이 커밋에 변경된 파일이 없습니다",
+      "followCurrentBranch": "현재 브랜치 따라가기",
+      "aiReview": "TjuaeUI 집사로 변경 검토",
+      "aiReviewTitle": "TjuaeUI 집사 검토",
+      "generateCommitMessage": "커밋 메시지 생성",
+      "butlerActionFailed": "TjuaeUI 집사가 작업을 완료하지 못했습니다.",
+      "errors": {
+        "localChanges": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "untrackedOverwrite": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "conflict": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "nonFastForward": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "noUpstream": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "authentication": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "repositoryNotFound": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "network": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "locked": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "branchExists": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "branchMissing": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "nothingToCommit": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        },
+        "generic": {
+          "title": "Git 작업 실패",
+          "description": "요청한 Git 작업을 완료할 수 없습니다.",
+          "guidance": "저장소, 브랜치, 변경 내용 및 네트워크를 확인한 후 다시 시도하세요."
+        }
+      }
     },
     "openWorkspace": "프로젝트 폴더 열기",
     "openWith": {

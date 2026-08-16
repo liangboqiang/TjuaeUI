@@ -12,6 +12,10 @@
     "clearWorkspace": "Temizle",
     "specifyWorkspace": "Proje klasörü seç",
     "searchPlaceholder": "Proje ara…",
-    "noProject": "Proje Yok"
+    "noProject": "Proje Yok",
+    "cloneRepository": "Git deposunu klonla",
+    "chooseCloneFolder": "Klasör seç ve klonla",
+    "cloneRepositoryDescription": "Git URL’sini girin ve ardından hedef üst klasörü seçin.",
+    "repositoryUrlPlaceholder": "https://github.com/sahip/depo.git"
   }
 }

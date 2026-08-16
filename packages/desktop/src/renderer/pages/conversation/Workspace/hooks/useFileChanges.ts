@@ -1,140 +1,122 @@
-
 import { ipcBridge } from '@/common';
-import type { CompareResult, FileChangeInfo, SnapshotInfo } from '@/common/types/platform/fileSnapshot';
+import type { FileChangeInfo, GitRepositoryInfo, GitStatus } from '@/common/types/platform/gitWorkspace';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type UseFileChangesParams = {
-  workspace: string;
-};
+type UseFileChangesParams = { workspace: string };
 
-type UseFileChangesReturn = {
-  staged: FileChangeInfo[];
-  unstaged: FileChangeInfo[];
-  changeCount: number;
-  loading: boolean;
-  snapshotInfo: SnapshotInfo | null;
-  refreshChanges: () => Promise<void>;
-  stageFile: (file_path: string) => Promise<void>;
-  stageAll: () => Promise<void>;
-  unstageFile: (file_path: string) => Promise<void>;
-  unstageAll: () => Promise<void>;
-  discardFile: (file_path: string, operation: FileChangeInfo['operation']) => Promise<void>;
-  resetFile: (file_path: string, operation: FileChangeInfo['operation']) => Promise<void>;
-};
+const EMPTY_STATUS: GitStatus = { conflicted: [], staged: [], unstaged: [] };
 
-export function useFileChanges({ workspace }: UseFileChangesParams): UseFileChangesReturn {
-  const [result, setResult] = useState<CompareResult>({ staged: [], unstaged: [] });
+export function useFileChanges({ workspace }: UseFileChangesParams) {
+  const [status, setStatus] = useState<GitStatus>(EMPTY_STATUS);
+  const [repository, setRepository] = useState<GitRepositoryInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [snapshotInfo, setSnapshotInfo] = useState<SnapshotInfo | null>(null);
-  const initializedRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
+
+  const refreshChanges = useCallback(async () => {
+    if (!workspace) return;
+    const requestId = ++requestIdRef.current;
+    setLoading(true);
+    try {
+      const [nextStatus, nextRepository] = await Promise.all([
+        ipcBridge.git.status.invoke({ workspace }),
+        ipcBridge.git.info.invoke({ workspace }),
+      ]);
+      if (requestId !== requestIdRef.current) return;
+      setStatus(nextStatus);
+      setRepository(nextRepository);
+      setError(null);
+    } catch (reason) {
+      if (requestId !== requestIdRef.current) return;
+      setError(reason instanceof Error ? reason.message : String(reason));
+      throw reason;
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false);
+    }
+  }, [workspace]);
 
   useEffect(() => {
     if (!workspace) return;
-
-    initializedRef.current = false;
-    setResult({ staged: [], unstaged: [] });
-    setSnapshotInfo(null);
-
-    ipcBridge.fileSnapshot.init
+    const requestId = ++requestIdRef.current;
+    setStatus(EMPTY_STATUS);
+    setRepository(null);
+    setError(null);
+    setLoading(true);
+    ipcBridge.git.ensure
       .invoke({ workspace })
-      .then((info) => {
-        setSnapshotInfo(info);
-        initializedRef.current = true;
+      .then(async (nextRepository) => {
+        const nextStatus = await ipcBridge.git.status.invoke({ workspace });
+        if (requestId !== requestIdRef.current) return;
+        setRepository(nextRepository);
+        setStatus(nextStatus);
       })
-      .catch((err) => {
-        console.error('[useFileChanges] Failed to init snapshot:', err);
+      .catch((reason) => {
+        if (requestId !== requestIdRef.current) return;
+        console.error('[useFileChanges] Failed to prepare Git workspace:', reason);
+        setError(reason instanceof Error ? reason.message : String(reason));
+      })
+      .finally(() => {
+        if (requestId === requestIdRef.current) setLoading(false);
       });
-
     return () => {
-      ipcBridge.fileSnapshot.dispose.invoke({ workspace }).catch(() => {});
+      requestIdRef.current += 1;
     };
   }, [workspace]);
 
-  // Silent refresh: update data without showing loading spinner (used after git operations)
-  const silentRefresh = useCallback(async () => {
-    if (!workspace || !initializedRef.current) return;
-    try {
-      const res = await ipcBridge.fileSnapshot.compare.invoke({ workspace });
-      setResult(res);
-    } catch (err) {
-      console.error('[useFileChanges] Failed to compare:', err);
-    }
-  }, [workspace]);
-
-  // Full refresh with loading indicator (used for manual refresh button)
-  const refreshChanges = useCallback(async () => {
-    if (!workspace || !initializedRef.current) return;
-    setLoading(true);
-    try {
-      const res = await ipcBridge.fileSnapshot.compare.invoke({ workspace });
-      setResult(res);
-    } catch (err) {
-      console.error('[useFileChanges] Failed to compare:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [workspace]);
+  const mutate = useCallback(
+    async (operation: () => Promise<unknown>) => {
+      await operation();
+      await refreshChanges();
+    },
+    [refreshChanges]
+  );
 
   const stageFile = useCallback(
-    async (file_path: string) => {
-      if (!workspace) return;
-      await ipcBridge.fileSnapshot.stageFile.invoke({ workspace, file_path });
-      await silentRefresh();
-    },
-    [workspace, silentRefresh]
+    (filePath: string) => mutate(() => ipcBridge.git.stageFile.invoke({ workspace, file_path: filePath })),
+    [mutate, workspace]
   );
-
-  const stageAll = useCallback(async () => {
-    if (!workspace) return;
-    await ipcBridge.fileSnapshot.stageAll.invoke({ workspace });
-    await silentRefresh();
-  }, [workspace, silentRefresh]);
-
+  const stageAll = useCallback(() => mutate(() => ipcBridge.git.stageAll.invoke({ workspace })), [mutate, workspace]);
   const unstageFile = useCallback(
-    async (file_path: string) => {
-      if (!workspace) return;
-      await ipcBridge.fileSnapshot.unstageFile.invoke({ workspace, file_path });
-      await silentRefresh();
-    },
-    [workspace, silentRefresh]
+    (filePath: string) => mutate(() => ipcBridge.git.unstageFile.invoke({ workspace, file_path: filePath })),
+    [mutate, workspace]
   );
-
-  const unstageAll = useCallback(async () => {
-    if (!workspace) return;
-    await ipcBridge.fileSnapshot.unstageAll.invoke({ workspace });
-    await silentRefresh();
-  }, [workspace, silentRefresh]);
-
+  const unstageAll = useCallback(
+    () => mutate(() => ipcBridge.git.unstageAll.invoke({ workspace })),
+    [mutate, workspace]
+  );
   const discardFile = useCallback(
-    async (file_path: string, operation: FileChangeInfo['operation']) => {
-      if (!workspace) return;
-      await ipcBridge.fileSnapshot.discardFile.invoke({ workspace, file_path, operation });
-      await silentRefresh();
-    },
-    [workspace, silentRefresh]
+    (filePath: string) => mutate(() => ipcBridge.git.discardFile.invoke({ workspace, file_path: filePath })),
+    [mutate, workspace]
   );
 
-  const resetFile = useCallback(
-    async (file_path: string, operation: FileChangeInfo['operation']) => {
-      if (!workspace) return;
-      await ipcBridge.fileSnapshot.resetFile.invoke({ workspace, file_path, operation });
-      await silentRefresh();
-    },
-    [workspace, silentRefresh]
-  );
-
+  const changeCount = status.conflicted.length + status.staged.length + status.unstaged.length;
   return {
-    staged: result.staged,
-    unstaged: result.unstaged,
-    changeCount: result.staged.length + result.unstaged.length,
+    conflicted: status.conflicted,
+    staged: status.staged,
+    unstaged: status.unstaged,
+    changeCount,
     loading,
-    snapshotInfo,
+    error,
+    repository,
     refreshChanges,
     stageFile,
     stageAll,
     unstageFile,
     unstageAll,
     discardFile,
-    resetFile,
+  } satisfies {
+    conflicted: FileChangeInfo[];
+    staged: FileChangeInfo[];
+    unstaged: FileChangeInfo[];
+    changeCount: number;
+    loading: boolean;
+    error: string | null;
+    repository: GitRepositoryInfo | null;
+    refreshChanges: () => Promise<void>;
+    stageFile: (path: string) => Promise<void>;
+    stageAll: () => Promise<void>;
+    unstageFile: (path: string) => Promise<void>;
+    unstageAll: () => Promise<void>;
+    discardFile: (path: string) => Promise<void>;
   };
 }

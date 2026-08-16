@@ -73,7 +73,21 @@
     "removeProjectConfirm": "Видалити проєкт «{{name}}»? Також буде видалено {{count}} розмов у ньому.",
     "newConversationInProject": "Нова розмова в цьому проєкті",
     "deleting": "Видалення...",
-    "reorderPinned": "Перетягніть, щоб змінити порядок закріплених розмов"
+    "reorderPinned": "Перетягніть, щоб змінити порядок закріплених розмов",
+    "openInExplorer": "Відкрити у Провіднику",
+    "archive": "Архівувати",
+    "archiveConversationConfirm": "Архівувати «{{name}}»?",
+    "archiveSuccess": "Архівовано",
+    "archiveFailed": "Не вдалося архівувати",
+    "archiveProject": "Архівувати проєкт",
+    "archiveProjectConfirm": "Архівувати «{{name}}» і {{count}} розмов?",
+    "archiveProjectSuccess": "Проєкт архівовано",
+    "workspaceUnavailable": "Ця розмова не має доступного робочого простору.",
+    "openInExplorerFailed": "Не вдалося відкрити Провідник.",
+    "pinProject": "Закріпити проєкт",
+    "unpinProject": "Відкріпити проєкт",
+    "editProject": "Редагувати проєкт",
+    "projectNamePlaceholder": "Відображуване ім’я проєкту"
   },
   "historySearch": {
     "tooltip": "Пошук повідомлень",
@@ -410,6 +424,115 @@
       "reset": "Відкотити зміни",
       "noUnstaged": "Немає неіндексованих змін",
       "noStaged": "Немає індексованих змін"
+    },
+    "git": {
+      "resourceManagement": "Керування вихідним кодом",
+      "operationFailed": "Операція Git завершилася помилкою",
+      "timeline": "Часова шкала",
+      "toggleTimeline": "Розгорнути або згорнути часову шкалу",
+      "noHistory": "Історія відсутня",
+      "selectFileForTimeline": "Виберіть файл, щоб переглянути його історію",
+      "noTextDiff": "У цій версії немає тексту для порівняння",
+      "compareWithCurrent": "Порівняти з поточною версією",
+      "conflicts": "Конфлікти",
+      "workingChanges": "Зміни робочого дерева",
+      "stagedChanges": "Підготовлені зміни",
+      "cleanWorkspace": "Робоча область без змін",
+      "workspaceChanges": "Зміни робочої області",
+      "compare": "Порівняти",
+      "discardTitle": "Відкинути зміни",
+      "discardUntrackedWarning": "Файл {{path}} не відстежується. Після відкидання його буде видалено назавжди.",
+      "discardWarning": "Відкинути локальні зміни у {{path}}?",
+      "repositoryUnavailable": "Репозиторій Git недоступний",
+      "commitPlaceholder": "Повідомлення коміту",
+      "commitSucceeded": "Коміт створено",
+      "commitStaged": "Зафіксувати підготовлені зміни",
+      "remoteSync": "Віддалена синхронізація",
+      "fetch": "Отримати",
+      "pull": "Завантажити",
+      "push": "Надіслати",
+      "sync": "Синхронізувати",
+      "detached": "Від’єднаний HEAD",
+      "commitGraph": "Граф комітів",
+      "createBranch": "Створити гілку",
+      "branchName": "Назва гілки",
+      "openChanges": "Відкрити зміни",
+      "checkoutCommit": "Перейти на коміт",
+      "createBranchHere": "Створити гілку тут",
+      "checkoutCommitWarning": "Перейти на коміт {{hash}} у режимі detached HEAD?",
+      "noChangedFiles": "У цьому коміті немає змінених файлів",
+      "followCurrentBranch": "Слідувати за поточною гілкою",
+      "aiReview": "Перевірити з TjuaeUI Butler",
+      "aiReviewTitle": "Перевірка TjuaeUI Butler",
+      "generateCommitMessage": "Створити повідомлення коміту",
+      "butlerActionFailed": "TjuaeUI Butler не зміг завершити дію.",
+      "errors": {
+        "localChanges": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "untrackedOverwrite": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "conflict": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "nonFastForward": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "noUpstream": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "authentication": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "repositoryNotFound": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "network": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "locked": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "branchExists": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "branchMissing": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "nothingToCommit": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        },
+        "generic": {
+          "title": "Помилка операції Git",
+          "description": "Не вдалося виконати запитану операцію Git.",
+          "guidance": "Перевірте репозиторій, гілку, зміни та мережу й повторіть спробу."
+        }
+      }
     },
     "openWorkspace": "Відкрити папку проєкту",
     "openWith": {

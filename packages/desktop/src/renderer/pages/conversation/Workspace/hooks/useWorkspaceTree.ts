@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import { emitter } from '@/renderer/utils/emitter';
@@ -14,6 +13,16 @@ interface UseWorkspaceTreeOptions {
   eventPrefix: 'acp' | 'codex' | 'tjuaecli';
 }
 
+const hideWorkspaceInternalEntries = (entries: IDirOrFile[]): IDirOrFile[] => {
+  const visible: IDirOrFile[] = [];
+  for (const entry of entries) {
+    if (entry.name === '.git') continue;
+    if (entry.children) entry.children = hideWorkspaceInternalEntries(entry.children);
+    visible.push(entry);
+  }
+  return visible;
+};
+
 /**
  * useWorkspaceTree - 合并树状态管理和选择逻辑
  * Merge tree state management and selection logic
@@ -25,7 +34,7 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
   const initialSnapshot = getWorkspaceTreeSnapshot(workspace);
 
   // Tree state / 树状态
-  const [files, setFiles] = useState<IDirOrFile[]>(initialSnapshot?.files ?? []);
+  const [files, setFiles] = useState<IDirOrFile[]>(hideWorkspaceInternalEntries(initialSnapshot?.files ?? []));
   const [loading, setLoading] = useState(false);
   const [treeKey, setTreeKey] = useState(Math.random());
   const [expandedKeys, setExpandedKeys] = useState<string[]>(initialSnapshot?.expandedKeys ?? []);
@@ -70,7 +79,7 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
     if (hydratedWorkspaceRef.current === workspace) return;
     hydratedWorkspaceRef.current = workspace;
     const snapshot = getWorkspaceTreeSnapshot(workspace);
-    setFiles(snapshot?.files ?? []);
+    setFiles(hideWorkspaceInternalEntries(snapshot?.files ?? []));
     setExpandedKeys(snapshot?.expandedKeys ?? []);
     isFirstLoadRef.current = !snapshot;
   }, [workspace]);
@@ -126,7 +135,9 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
       const seq = ++loadSeqRef.current;
       setLoadingHandler(true);
 
-      const rootPromise = ipcBridge.conversation.getWorkspace.invoke({ path, workspace, conversation_id, search: '' });
+      const rootPromise = ipcBridge.conversation.getWorkspace
+        .invoke({ path, workspace, conversation_id, search: '' })
+        .then(hideWorkspaceInternalEntries);
 
       // Also re-fetch every expanded directory so their latest contents (incl.
       // newly created files) splice in without collapsing anything.
@@ -136,7 +147,7 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
       const childPromises = expandedDirs.map((dir) =>
         ipcBridge.conversation.getWorkspace
           .invoke({ path: dir.fullPath, workspace, conversation_id })
-          .then((res) => ({ dir, children: res[0]?.children ?? [] }))
+          .then((res) => ({ dir, children: hideWorkspaceInternalEntries(res[0]?.children ?? []) }))
           .catch(() => ({ dir, children: [] as IDirOrFile[] }))
       );
 

@@ -1,9 +1,9 @@
-
 import { ipcBridge } from '@/common';
 import type { ConversationContextValue } from '@/renderer/hooks/context/ConversationContext';
 import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
 import { useAutoPreviewOfficeFilesEnabled } from '@/renderer/hooks/system/useAutoPreviewOfficeFilesEnabled';
 import { getFileTypeInfo } from '@/renderer/utils/file/fileType';
+import { createFileResourceKey } from '@/renderer/utils/file/resourceKey';
 import { useCallback, useEffect, useRef } from 'react';
 
 const OFFICE_OPEN_DELAY_MS = 1000;
@@ -58,8 +58,16 @@ export const useAutoPreviewOfficeFiles = (
       const timer = setTimeout(() => {
         openTimersRef.current.delete(normalizedFilePath);
 
-        if (!findPreviewTab(contentType, '', { file_path, file_name })) {
-          openPreview('', contentType, { file_path, file_name, title: file_name, workspace, editable: false });
+        const resource_key = createFileResourceKey(workspace, file_path);
+        if (!findPreviewTab(contentType, '', { resource_key })) {
+          openPreview('', contentType, {
+            resource_key,
+            file_path,
+            file_name,
+            title: file_name,
+            workspace,
+            editable: false,
+          });
         }
       }, OFFICE_OPEN_DELAY_MS);
 

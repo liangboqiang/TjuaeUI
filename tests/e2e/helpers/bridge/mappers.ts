@@ -9,7 +9,7 @@
 export type ResponseMapperKey =
   | 'dirOrFileTree'
   | 'flatFileList'
-  | 'snapshotCompare'
+  | 'gitStatus'
   | 'renameResult'
   | 'previewSnapshotInfo'
   | 'previewSnapshotContent'
@@ -105,10 +105,13 @@ function mapConversation(data: unknown): unknown {
 export const RESPONSE_MAPPERS: Record<ResponseMapperKey, (data: unknown) => unknown> = {
   dirOrFileTree: (data) => (Array.isArray(data) ? data.map(mapDirOrFile) : data),
   flatFileList: (data) => (Array.isArray(data) ? data.map((e) => mapFlatFile(e as Record<string, unknown>)) : data),
-  snapshotCompare: (data) => {
+  gitStatus: (data) => {
     if (!data || typeof data !== 'object') return data;
-    const d = data as { staged?: unknown; unstaged?: unknown };
+    const d = data as { conflicted?: unknown; staged?: unknown; unstaged?: unknown };
     return {
+      conflicted: Array.isArray(d.conflicted)
+        ? d.conflicted.map((e) => mapFileChange(e as Record<string, unknown>))
+        : [],
       staged: Array.isArray(d.staged) ? d.staged.map((e) => mapFileChange(e as Record<string, unknown>)) : [],
       unstaged: Array.isArray(d.unstaged) ? d.unstaged.map((e) => mapFileChange(e as Record<string, unknown>)) : [],
     };

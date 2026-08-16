@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { TChatConversation } from '@/common/config/storage';
 import { requestConversationSendBoxPrefill } from '@/renderer/hooks/chat/useSendBoxDraft';
@@ -220,6 +219,88 @@ export const useConversationActions = ({
     [t]
   );
 
+  const handleOpenInExplorer = useCallback(
+    (conversation: TChatConversation) => {
+      const workspace = conversation.extra?.workspace;
+      if (!workspace) {
+        Message.warning(t('conversation.history.workspaceUnavailable'));
+        return;
+      }
+      void ipcBridge.shell.openFolderWith.invoke({ folder_path: workspace, tool: 'explorer' }).catch((error) => {
+        console.error('Failed to open conversation workspace:', error);
+        Message.error(t('conversation.history.openInExplorerFailed'));
+      });
+    },
+    [t]
+  );
+
+  const archiveConversations = useCallback(
+    async (targets: TChatConversation[]) => {
+      const results = await Promise.all(
+        targets.map((conversation) =>
+          ipcBridge.conversation.update.invoke({
+            id: conversation.id,
+            updates: {
+              extra: {
+                archived: true,
+                archived_at: Date.now(),
+                pinned: false,
+                pinned_at: undefined,
+              } as Partial<TChatConversation['extra']>,
+            } as Partial<TChatConversation>,
+            merge_extra: true,
+          })
+        )
+      );
+      if (!results.every(Boolean)) throw new Error('One or more conversations could not be archived');
+      emitter.emit('chat.history.refresh');
+      if (id && targets.some((conversation) => conversation.id === id)) void navigate('/');
+    },
+    [id, navigate]
+  );
+
+  const handleArchive = useCallback(
+    (conversation: TChatConversation) => {
+      Modal.confirm({
+        title: t('conversation.history.archive'),
+        content: t('conversation.history.archiveConversationConfirm', { name: conversation.name }),
+        okText: t('conversation.history.archive'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          try {
+            await archiveConversations([conversation]);
+            Message.success(t('conversation.history.archiveSuccess'));
+          } catch (error) {
+            console.error('Failed to archive conversation:', error);
+            Message.error(t('conversation.history.archiveFailed'));
+          }
+        },
+      });
+    },
+    [archiveConversations, t]
+  );
+
+  const handleArchiveProject = useCallback(
+    (projectName: string, targets: TChatConversation[]) => {
+      Modal.confirm({
+        title: t('conversation.history.archiveProject'),
+        content: t('conversation.history.archiveProjectConfirm', { name: projectName, count: targets.length }),
+        okText: t('conversation.history.archive'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          try {
+            await archiveConversations(targets);
+            Message.success(t('conversation.history.archiveProjectSuccess'));
+          } catch (error) {
+            console.error('Failed to archive project:', error);
+            Message.error(t('conversation.history.archiveFailed'));
+          }
+        },
+      });
+    },
+    [archiveConversations, t]
+  );
+
   const handleMenuVisibleChange = useCallback((conversation_id: string, visible: boolean) => {
     setDropdownVisibleId(visible ? conversation_id : null);
   }, []);
@@ -311,6 +392,9 @@ export const useConversationActions = ({
     handleRenameConfirm,
     handleRenameCancel,
     handleTogglePin,
+    handleOpenInExplorer,
+    handleArchive,
+    handleArchiveProject,
     handleMenuVisibleChange,
     handleOpenMenu,
     handleCreateCronTask,

@@ -12,6 +12,10 @@
     "clearWorkspace": "清除",
     "specifyWorkspace": "选择项目文件夹",
     "searchPlaceholder": "搜索项目…",
-    "noProject": "不使用项目"
+    "noProject": "不使用项目",
+    "cloneRepository": "克隆 Git 仓库",
+    "chooseCloneFolder": "选择文件夹并克隆",
+    "cloneRepositoryDescription": "输入 Git 仓库地址；下一步选择用于存放克隆仓库的本地父文件夹。",
+    "repositoryUrlPlaceholder": "https://github.com/所有者/仓库.git"
   }
 }

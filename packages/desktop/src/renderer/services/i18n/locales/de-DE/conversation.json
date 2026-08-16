@@ -73,7 +73,21 @@
     "removeProjectConfirm": "Projekt \"{{name}}\" entfernen? Die {{count}} zugehörige(n) Unterhaltung(en) werden ebenfalls entfernt.",
     "newConversationInProject": "Neuer Chat in diesem Projekt",
     "deleting": "Wird gelöscht...",
-    "reorderPinned": "Ziehen, um angeheftete Unterhaltung neu anzuordnen"
+    "reorderPinned": "Ziehen, um angeheftete Unterhaltung neu anzuordnen",
+    "openInExplorer": "Im Datei-Explorer öffnen",
+    "archive": "Archivieren",
+    "archiveConversationConfirm": "„{{name}}“ archivieren?",
+    "archiveSuccess": "Archiviert",
+    "archiveFailed": "Archivierung fehlgeschlagen",
+    "archiveProject": "Projekt archivieren",
+    "archiveProjectConfirm": "Projekt „{{name}}“ und {{count}} Unterhaltungen archivieren?",
+    "archiveProjectSuccess": "Projekt archiviert",
+    "workspaceUnavailable": "Für diese Unterhaltung ist kein Arbeitsbereich verfügbar.",
+    "openInExplorerFailed": "Datei-Explorer konnte nicht geöffnet werden.",
+    "pinProject": "Projekt anheften",
+    "unpinProject": "Projekt lösen",
+    "editProject": "Projekt bearbeiten",
+    "projectNamePlaceholder": "Anzeigename des Projekts"
   },
   "historySearch": {
     "tooltip": "Nachrichten durchsuchen",
@@ -410,6 +424,115 @@
       "reset": "Änderungen zurücksetzen",
       "noUnstaged": "Keine nicht bereitgestellten Änderungen",
       "noStaged": "Keine bereitgestellten Änderungen"
+    },
+    "git": {
+      "resourceManagement": "Quellcodeverwaltung",
+      "operationFailed": "Git-Vorgang fehlgeschlagen",
+      "timeline": "Zeitleiste",
+      "toggleTimeline": "Zeitleiste ein- oder ausklappen",
+      "noHistory": "Kein Verlauf",
+      "selectFileForTimeline": "Datei auswählen, um ihre Zeitleiste anzuzeigen",
+      "noTextDiff": "Diese Version enthält keinen vergleichbaren Text",
+      "compareWithCurrent": "Mit aktueller Version vergleichen",
+      "conflicts": "Konflikte",
+      "workingChanges": "Änderungen im Arbeitsbaum",
+      "stagedChanges": "Bereitgestellte Änderungen",
+      "cleanWorkspace": "Arbeitsbereich ist sauber",
+      "workspaceChanges": "Arbeitsbereichsänderungen",
+      "compare": "Vergleichen",
+      "discardTitle": "Änderungen verwerfen",
+      "discardUntrackedWarning": "{{path}} ist nicht nachverfolgt. Beim Verwerfen wird die Datei dauerhaft gelöscht.",
+      "discardWarning": "Lokale Änderungen an {{path}} verwerfen?",
+      "repositoryUnavailable": "Git-Repository ist nicht verfügbar",
+      "commitPlaceholder": "Commit-Nachricht",
+      "commitSucceeded": "Commit erstellt",
+      "commitStaged": "Bereitgestellte Änderungen committen",
+      "remoteSync": "Remote-Synchronisierung",
+      "fetch": "Abrufen",
+      "pull": "Pullen",
+      "push": "Pushen",
+      "sync": "Synchronisieren",
+      "detached": "Losgelöster HEAD",
+      "commitGraph": "Commit-Graph",
+      "createBranch": "Branch erstellen",
+      "branchName": "Branch-Name",
+      "openChanges": "Änderungen öffnen",
+      "checkoutCommit": "Commit auschecken",
+      "createBranchHere": "Branch hier erstellen",
+      "checkoutCommitWarning": "Commit {{hash}} im Detached-HEAD-Modus auschecken?",
+      "noChangedFiles": "Keine geänderten Dateien in diesem Commit",
+      "followCurrentBranch": "Aktuellem Branch folgen",
+      "aiReview": "Änderungen mit dem TjuaeUI-Butler prüfen",
+      "aiReviewTitle": "Prüfung durch TjuaeUI-Butler",
+      "generateCommitMessage": "Commit-Nachricht erzeugen",
+      "butlerActionFailed": "Der TjuaeUI-Butler konnte die Aktion nicht abschließen.",
+      "errors": {
+        "localChanges": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "untrackedOverwrite": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "conflict": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "nonFastForward": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "noUpstream": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "authentication": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "repositoryNotFound": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "network": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "locked": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "branchExists": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "branchMissing": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "nothingToCommit": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        },
+        "generic": {
+          "title": "Git-Vorgang fehlgeschlagen",
+          "description": "Der angeforderte Git-Vorgang konnte nicht abgeschlossen werden.",
+          "guidance": "Prüfen Sie Repository, Branch, Änderungen und Netzwerk und versuchen Sie es erneut."
+        }
+      }
     },
     "openWorkspace": "Arbeitsbereichsordner öffnen",
     "openWith": {

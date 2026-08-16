@@ -1,9 +1,9 @@
-
 import { ipcBridge } from '@/common';
 import { downloadFileFromPath } from '@/renderer/utils/file/download';
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import type { PreviewContentType } from '@/common/types/office/preview';
 import { getContentTypeByExtension } from '@/renderer/pages/conversation/Preview/fileUtils';
+import type { OpenPreviewOptions, PreviewMetadata } from '@/renderer/pages/conversation/Preview/context/PreviewContext';
 import { emitter } from '@/renderer/utils/emitter';
 import {
   LARGE_TEXT_PREVIEW_MAX_LENGTH,
@@ -11,6 +11,7 @@ import {
 } from '@/renderer/pages/conversation/Preview/constants';
 import { classifyPreviewError, previewErrorToI18nKey } from '@/renderer/utils/previewError';
 import { removeWorkspaceEntry, renameWorkspaceEntry } from '@/renderer/utils/file/workspaceFs';
+import { createFileResourceKey } from '@/renderer/utils/file/resourceKey';
 import { useCallback } from 'react';
 import type { MessageApi, RenameModalState, DeleteModalState } from '../types';
 import type { FileOrFolderItem } from '@/renderer/utils/file/fileTypes';
@@ -40,14 +41,19 @@ interface UseWorkspaceFileOpsOptions {
   setDeleteModal: React.Dispatch<React.SetStateAction<DeleteModalState>>;
 
   // Dependencies from preview context
-  openPreview: (content: string, type: PreviewContentType, metadata?: any, options?: { replace?: boolean }) => void;
+  openPreview: (
+    content: string,
+    type: PreviewContentType,
+    metadata?: PreviewMetadata,
+    options?: OpenPreviewOptions
+  ) => void;
 }
 
 /**
  * useWorkspaceFileOps - 文件操作逻辑（打开、删除、重命名、预览、添加到聊天）
  * File operations logic (open, delete, rename, preview, add to chat)
  */
-export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
+export function useWorkspaceFileOps(config: UseWorkspaceFileOpsOptions) {
   const {
     workspace,
     eventPrefix,
@@ -68,7 +74,7 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
     setRenameModal,
     setDeleteModal,
     openPreview,
-  } = options;
+  } = config;
 
   /**
    * 打开文件或文件夹（使用系统默认程序）
@@ -79,7 +85,7 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
       if (!nodeData) return;
       try {
         await ipcBridge.shell.openFile.invoke(nodeData.fullPath);
-      } catch (error) {
+      } catch {
         messageApi.error(t('conversation.workspace.contextMenu.openFailed') || 'Failed to open');
       }
     },
@@ -95,7 +101,7 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
       if (!nodeData) return;
       try {
         await ipcBridge.shell.showItemInFolder.invoke(nodeData.fullPath);
-      } catch (error) {
+      } catch {
         messageApi.error(t('conversation.workspace.contextMenu.revealFailed') || 'Failed to reveal');
       }
     },
@@ -107,9 +113,9 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
    * Show delete confirmation modal
    */
   const handleDeleteNode = useCallback(
-    (nodeData: IDirOrFile | null, options?: { emit?: boolean }) => {
+    (nodeData: IDirOrFile | null, selectionOptions?: { emit?: boolean }) => {
       if (!nodeData || !nodeData.relativePath) return;
-      ensureNodeSelected(nodeData, { emit: Boolean(options?.emit) });
+      ensureNodeSelected(nodeData, { emit: Boolean(selectionOptions?.emit) });
       closeContextMenu();
       setDeleteModal({ visible: true, target: nodeData, loading: false });
     },
@@ -133,7 +139,7 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
       emitter.emit(`${eventPrefix}.selected.file`, []);
       closeDeleteModal();
       setTimeout(() => refreshWorkspace(), 200);
-    } catch (error) {
+    } catch {
       messageApi.error(t('conversation.workspace.contextMenu.deleteFailed'));
       setDeleteModal((prev) => ({ ...prev, loading: false }));
     }
@@ -292,6 +298,7 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
 
         // 打开预览面板并传入文件元数据 / Open preview panel with file metadata.
         openPreview(content, contentType, {
+          resource_key: createFileResourceKey(workspace, nodeData.fullPath),
           title: nodeData.name,
           file_name: nodeData.name,
           file_path: nodeData.fullPath,
@@ -336,7 +343,7 @@ export function useWorkspaceFileOps(options: UseWorkspaceFileOpsOptions) {
       try {
         await downloadFileFromPath(nodeData.fullPath, nodeData.name, workspace);
         messageApi.success(t('conversation.workspace.contextMenu.downloadSuccess'));
-      } catch (error) {
+      } catch {
         messageApi.error(t('conversation.workspace.contextMenu.downloadFailed'));
       }
     },

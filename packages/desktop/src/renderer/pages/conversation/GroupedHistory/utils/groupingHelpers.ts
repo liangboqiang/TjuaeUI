@@ -1,4 +1,3 @@
-
 import type { TChatConversation } from '@/common/config/storage';
 import { getActivityTime } from '@/renderer/utils/chat/timeline';
 import { getWorkspaceDisplayName } from '@/renderer/utils/workspace/workspace';
@@ -94,7 +93,10 @@ export const buildGroupedHistory = (
   t: (key: string) => string
 ): GroupedHistoryResult => {
   // Filter out team-owned conversations; they are only visible via the Teams panel
-  const visibleConversations = conversations.filter((conv) => !isTeamConversation(conv));
+  const visibleConversations = conversations.filter((conv) => {
+    const extra = conv.extra as { archived?: boolean; system_action?: boolean } | undefined;
+    return !isTeamConversation(conv) && extra?.archived !== true && extra?.system_action !== true;
+  });
 
   const pinnedConversations = visibleConversations
     .filter((conversation) => isConversationPinned(conversation))

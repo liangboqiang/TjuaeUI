@@ -1,8 +1,5 @@
-
 import type { PreviewHistoryTarget } from '@/common/types/office/preview';
-import { iconColors } from '@/renderer/styles/colors';
 import { Dropdown } from '@arco-design/web-react';
-import { Close } from '@icon-park/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { shouldShowDownload } from './previewToolbarUtils';
@@ -160,7 +157,6 @@ const PreviewToolbar: React.FC<PreviewToolbarProps> = ({
   isHTML,
   viewMode,
   isSplitScreenEnabled,
-  file_name,
   showOpenInSystemButton,
   historyTarget,
   snapshotSaving,
@@ -171,7 +167,6 @@ const PreviewToolbar: React.FC<PreviewToolbarProps> = ({
   renderHistoryDropdown,
   onOpenInSystem,
   onDownload,
-  onClose,
   inspectMode,
   onInspectModeToggle,
   leftExtra,
@@ -221,31 +216,31 @@ const PreviewToolbar: React.FC<PreviewToolbarProps> = ({
                   {t('preview.preview')}
                 </div>
               </div>
-              {!isDiff && (
-                <div
-                  className={`flex items-center px-8px py-3px rd-4px cursor-pointer transition-colors duration-150 ${isSplitScreenEnabled ? toolbarBtnActive : 'text-t-secondary hover:bg-bg-3'}`}
-                  onClick={() => {
-                    try {
-                      onSplitScreenToggle();
-                    } catch {
-                      /* ignore */
-                    }
-                  }}
-                  title={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
+              <div
+                role='button'
+                aria-label={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
+                className={`flex h-24px w-24px items-center justify-center rd-4px cursor-pointer transition-colors duration-150 ${isSplitScreenEnabled ? toolbarBtnActive : 'text-t-secondary hover:bg-bg-3'}`}
+                onClick={() => {
+                  try {
+                    onSplitScreenToggle();
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                title={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
+              >
+                <svg
+                  width={toolbarIconSize}
+                  height={toolbarIconSize}
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
                 >
-                  <svg
-                    width={toolbarIconSize}
-                    height={toolbarIconSize}
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                  >
-                    <rect x='3' y='3' width='18' height='18' rx='2' />
-                    <line x1='12' y1='3' x2='12' y2='21' />
-                  </svg>
-                </div>
-              )}
+                  <rect x='3' y='3' width='18' height='18' rx='2' />
+                  <line x1='12' y1='3' x2='12' y2='21' />
+                </svg>
+              </div>
             </>
           )}
 

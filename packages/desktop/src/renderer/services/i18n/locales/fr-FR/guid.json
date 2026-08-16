@@ -12,6 +12,10 @@
     "clearWorkspace": "Clair",
     "specifyWorkspace": "Sélectionnez le dossier du projet",
     "searchPlaceholder": "Rechercher des projets…",
-    "noProject": "Aucun projet"
+    "noProject": "Aucun projet",
+    "cloneRepository": "Cloner un dépôt Git",
+    "chooseCloneFolder": "Choisir le dossier et cloner",
+    "cloneRepositoryDescription": "Saisissez l’URL Git, puis choisissez le dossier parent de destination.",
+    "repositoryUrlPlaceholder": "https://github.com/propriétaire/dépôt.git"
   }
 }

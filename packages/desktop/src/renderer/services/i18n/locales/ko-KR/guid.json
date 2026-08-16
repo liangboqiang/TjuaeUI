@@ -12,6 +12,10 @@
     "clearWorkspace": "지우기",
     "specifyWorkspace": "프로젝트 폴더 선택",
     "searchPlaceholder": "프로젝트 검색…",
-    "noProject": "프로젝트 없음"
+    "noProject": "프로젝트 없음",
+    "cloneRepository": "Git 저장소 복제",
+    "chooseCloneFolder": "폴더 선택 후 복제",
+    "cloneRepositoryDescription": "Git URL을 입력한 다음 복제할 상위 폴더를 선택하세요.",
+    "repositoryUrlPlaceholder": "https://github.com/owner/repository.git"
   }
 }

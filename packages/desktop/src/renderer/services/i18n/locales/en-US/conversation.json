@@ -73,7 +73,21 @@
     "removeProjectConfirm": "Remove project \"{{name}}\"? Its {{count}} conversation(s) will be removed too.",
     "newConversationInProject": "New chat in this project",
     "deleting": "Deleting...",
-    "reorderPinned": "Drag to reorder pinned conversation"
+    "reorderPinned": "Drag to reorder pinned conversation",
+    "openInExplorer": "Open in File Explorer",
+    "archive": "Archive",
+    "archiveConversationConfirm": "Archive “{{name}}”?",
+    "archiveSuccess": "Archived",
+    "archiveFailed": "Archive failed",
+    "archiveProject": "Archive Project",
+    "archiveProjectConfirm": "Archive project “{{name}}” and its {{count}} conversations?",
+    "archiveProjectSuccess": "Project archived",
+    "workspaceUnavailable": "This conversation has no available workspace.",
+    "openInExplorerFailed": "Could not open File Explorer.",
+    "pinProject": "Pin Project",
+    "unpinProject": "Unpin Project",
+    "editProject": "Edit Project",
+    "projectNamePlaceholder": "Project display name"
   },
   "historySearch": {
     "tooltip": "Search messages",
@@ -410,6 +424,115 @@
       "reset": "Revert Changes",
       "noUnstaged": "No unstaged changes",
       "noStaged": "No staged changes"
+    },
+    "git": {
+      "resourceManagement": "Resource management",
+      "operationFailed": "Git operation failed",
+      "timeline": "Timeline",
+      "toggleTimeline": "Toggle timeline",
+      "noHistory": "No history",
+      "selectFileForTimeline": "Select a file to view its timeline",
+      "noTextDiff": "This version has no text content to compare",
+      "compareWithCurrent": "Compare with current",
+      "conflicts": "Conflicts",
+      "workingChanges": "Working tree changes",
+      "stagedChanges": "Staged changes",
+      "cleanWorkspace": "Workspace is clean",
+      "workspaceChanges": "Workspace changes",
+      "compare": "Compare",
+      "discardTitle": "Discard changes",
+      "discardUntrackedWarning": "{{path}} is untracked. Discarding it permanently deletes the file.",
+      "discardWarning": "Discard local changes to {{path}}?",
+      "repositoryUnavailable": "Git repository is unavailable",
+      "commitPlaceholder": "Commit message",
+      "commitSucceeded": "Committed",
+      "commitStaged": "Commit staged changes",
+      "remoteSync": "Remote sync",
+      "fetch": "Fetch",
+      "pull": "Pull",
+      "push": "Push",
+      "sync": "Sync",
+      "detached": "Detached HEAD",
+      "commitGraph": "Commit graph",
+      "createBranch": "Create branch",
+      "branchName": "Branch name",
+      "openChanges": "Open Changes",
+      "checkoutCommit": "Checkout Commit",
+      "createBranchHere": "Create Branch Here",
+      "checkoutCommitWarning": "Checkout commit {{hash}} in detached HEAD mode?",
+      "noChangedFiles": "No changed files in this commit",
+      "followCurrentBranch": "Follow Current Branch",
+      "aiReview": "Review Changes with TjuaeUI Butler",
+      "aiReviewTitle": "TjuaeUI Butler Review",
+      "generateCommitMessage": "Generate Commit Message",
+      "butlerActionFailed": "TjuaeUI Butler could not complete this action.",
+      "errors": {
+        "localChanges": {
+          "title": "Local changes would be overwritten",
+          "description": "Your uncommitted changes conflict with the requested operation.",
+          "guidance": "Commit, stash, or discard the affected changes, then try again."
+        },
+        "untrackedOverwrite": {
+          "title": "Untracked files would be overwritten",
+          "description": "Untracked files conflict with files from the target branch.",
+          "guidance": "Move, commit, or remove those files before continuing."
+        },
+        "conflict": {
+          "title": "Resolve conflicts first",
+          "description": "The repository has unresolved merge or rebase conflicts.",
+          "guidance": "Resolve the conflicted files and stage them, or abort the current operation."
+        },
+        "nonFastForward": {
+          "title": "Remote history has changed",
+          "description": "The push is not a fast-forward update.",
+          "guidance": "Pull and reconcile the remote changes before pushing again."
+        },
+        "noUpstream": {
+          "title": "No upstream branch",
+          "description": "The current branch is not linked to a remote branch.",
+          "guidance": "Publish the branch and set its upstream first."
+        },
+        "authentication": {
+          "title": "Git authentication failed",
+          "description": "The remote rejected the current credentials.",
+          "guidance": "Check your Git credential manager, SSH key, and repository permission."
+        },
+        "repositoryNotFound": {
+          "title": "Repository unavailable",
+          "description": "The Git repository or remote could not be found.",
+          "guidance": "Check the repository path and remote URL."
+        },
+        "network": {
+          "title": "Git network unavailable",
+          "description": "The remote host could not be reached.",
+          "guidance": "Check the network and proxy, then retry."
+        },
+        "locked": {
+          "title": "Repository is busy",
+          "description": "Another Git process or a stale lock is blocking the operation.",
+          "guidance": "Wait for other Git tasks to finish; remove a stale lock only when no Git process is running."
+        },
+        "branchExists": {
+          "title": "Branch already exists",
+          "description": "A branch with this name already exists.",
+          "guidance": "Choose another name or switch to the existing branch."
+        },
+        "branchMissing": {
+          "title": "Branch or revision not found",
+          "description": "Git could not resolve the selected branch or commit.",
+          "guidance": "Refresh the repository and select an existing reference."
+        },
+        "nothingToCommit": {
+          "title": "Nothing to commit",
+          "description": "There are no staged changes to commit.",
+          "guidance": "Stage the intended files first."
+        },
+        "generic": {
+          "title": "Git operation failed",
+          "description": "The requested Git operation could not be completed.",
+          "guidance": "Review the repository state and try again."
+        }
+      }
     },
     "openWorkspace": "Open project folder",
     "openWith": {

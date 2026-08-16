@@ -110,7 +110,18 @@ import {
   fromBackendTeamOptional,
   toBackendAssistant,
 } from './teamMapper';
-import { fromBackendCompareResult, type RawCompareResult } from './fileSnapshotMapper';
+import {
+  fromBackendGitCommit,
+  fromBackendGitCommitFile,
+  fromBackendGitRepository,
+  fromBackendGitRevision,
+  fromBackendGitStatus,
+  type RawGitCommit,
+  type RawGitCommitFile,
+  type RawGitRepository,
+  type RawGitRevision,
+  type RawGitStatus,
+} from './gitWorkspaceMapper';
 import {
   absoluteToRelativePath,
   fromBackendWorkspaceFlatFiles,
@@ -707,41 +718,64 @@ export const fileStream = {
   }>('fileStream.contentUpdate'),
 };
 
-// File snapshot providers
-export const fileSnapshot = {
-  init: httpPost<import('@/common/types/platform/fileSnapshot').SnapshotInfo, { workspace: string }>(
-    '/api/fs/snapshot/init'
+// Persistent workspace Git
+export const git = {
+  ensure: withResponseMap(
+    httpPost<RawGitRepository, { workspace: string }>('/api/fs/git/ensure'),
+    fromBackendGitRepository
   ),
-  compare: withResponseMap(
-    httpPost<RawCompareResult, { workspace: string }>('/api/fs/snapshot/compare'),
-    fromBackendCompareResult
+  info: withResponseMap(
+    httpPost<RawGitRepository, { workspace: string }>('/api/fs/git/info'),
+    fromBackendGitRepository
   ),
-  getBaselineContent: httpPost<string | null, { workspace: string; file_path: string }>('/api/fs/snapshot/baseline'),
-  getInfo: httpPost<import('@/common/types/platform/fileSnapshot').SnapshotInfo, { workspace: string }>(
-    '/api/fs/snapshot/info'
+  status: withResponseMap(httpPost<RawGitStatus, { workspace: string }>('/api/fs/git/status'), fromBackendGitStatus),
+  baselineContent: httpPost<string | null, { workspace: string; file_path: string }>('/api/fs/git/baseline'),
+  indexContent: httpPost<string | null, { workspace: string; file_path: string }>('/api/fs/git/index-content'),
+  stageFile: httpPost<void, { workspace: string; file_path: string }>('/api/fs/git/stage'),
+  stageAll: httpPost<void, { workspace: string }>('/api/fs/git/stage-all'),
+  unstageFile: httpPost<void, { workspace: string; file_path: string }>('/api/fs/git/unstage'),
+  unstageAll: httpPost<void, { workspace: string }>('/api/fs/git/unstage-all'),
+  discardFile: httpPost<void, { workspace: string; file_path: string }>('/api/fs/git/discard'),
+  history: withResponseMap(
+    httpPost<RawGitCommit[], { workspace: string; file_path?: string; reference?: string; limit?: number }>(
+      '/api/fs/git/history'
+    ),
+    (items) => (items ?? []).map(fromBackendGitCommit)
   ),
-  dispose: httpPost<void, { workspace: string }>('/api/fs/snapshot/dispose'),
-  stageFile: httpPost<void, { workspace: string; file_path: string }>('/api/fs/snapshot/stage'),
-  stageAll: httpPost<void, { workspace: string }>('/api/fs/snapshot/stage-all'),
-  unstageFile: httpPost<void, { workspace: string; file_path: string }>('/api/fs/snapshot/unstage'),
-  unstageAll: httpPost<void, { workspace: string }>('/api/fs/snapshot/unstage-all'),
-  discardFile: httpPost<
-    void,
-    {
-      workspace: string;
-      file_path: string;
-      operation: import('@/common/types/platform/fileSnapshot').FileChangeOperation;
-    }
-  >('/api/fs/snapshot/discard'),
-  resetFile: httpPost<
-    void,
-    {
-      workspace: string;
-      file_path: string;
-      operation: import('@/common/types/platform/fileSnapshot').FileChangeOperation;
-    }
-  >('/api/fs/snapshot/reset'),
-  getBranches: httpPost<string[], { workspace: string }>('/api/fs/snapshot/branches'),
+  commitFiles: withResponseMap(
+    httpPost<RawGitCommitFile[], { workspace: string; revision: string }>('/api/fs/git/commit-files'),
+    (items) => (items ?? []).map(fromBackendGitCommitFile)
+  ),
+  revision: withResponseMap(
+    httpPost<RawGitRevision, { workspace: string; file_path: string; revision: string }>('/api/fs/git/revision'),
+    fromBackendGitRevision
+  ),
+  createBranch: httpPost<void, { workspace: string; name: string; start_point?: string }>('/api/fs/git/branch/create'),
+  switchBranch: httpPost<void, { workspace: string; name: string }>('/api/fs/git/branch/switch'),
+  checkoutRevision: httpPost<void, { workspace: string; revision: string }>('/api/fs/git/revision/checkout'),
+  clone: withResponseMap(
+    httpPost<RawGitRepository, { repository_url: string; parent_directory: string }>('/api/fs/git/clone'),
+    fromBackendGitRepository
+  ),
+  commit: httpPost<string, { workspace: string; message: string; include_unstaged: boolean }>('/api/fs/git/commit'),
+  fetch: httpPost<void, { workspace: string }>('/api/fs/git/fetch'),
+  pull: httpPost<void, { workspace: string }>('/api/fs/git/pull'),
+  push: httpPost<void, { workspace: string }>('/api/fs/git/push'),
+  sync: httpPost<void, { workspace: string }>('/api/fs/git/sync'),
+  createWorktree: withResponseMap(
+    httpPost<
+      import('./gitWorkspaceMapper').RawGitWorktree,
+      { workspace: string; path: string; branch: string; start_point?: string }
+    >('/api/fs/git/worktree/create'),
+    (worktree) => ({
+      path: worktree.path,
+      branch: worktree.branch,
+      head: worktree.head,
+      current: worktree.current,
+      locked: worktree.locked,
+    })
+  ),
+  removeWorktree: httpPost<void, { workspace: string; path: string }>('/api/fs/git/worktree/remove'),
 };
 
 // ---------------------------------------------------------------------------
@@ -1563,6 +1597,8 @@ export interface ICreateConversationParams {
     remote_agent_id?: string;
     extra_skill_paths?: string[];
     team_id?: string;
+    /** Hidden, one-shot assistant action such as Git review or commit-message generation. */
+    system_action?: boolean;
   };
 }
 

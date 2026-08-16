@@ -165,7 +165,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
   // 处理关闭tab / Handle close tab
   const handleCloseTab = useCallback(
     (tabId: string) => {
-      const tab = tabs.find((t) => t.id === tabId);
+      const tab = tabs.find((candidate) => candidate.id === tabId);
       // 如果tab有未保存的修改，显示确认对话框 / If tab has unsaved changes, show confirmation dialog
       if (tab?.isDirty) {
         setCloseTabConfirm({ show: true, tabId });
@@ -221,7 +221,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
   // 关闭左侧 tabs / Close tabs to the left
   const handleCloseLeft = useCallback(
     (tabId: string) => {
-      const currentIndex = tabs.findIndex((t) => t.id === tabId);
+      const currentIndex = tabs.findIndex((candidate) => candidate.id === tabId);
       if (currentIndex <= 0) return;
 
       const tabsToClose = tabs.slice(0, currentIndex);
@@ -234,7 +234,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
   // 关闭右侧 tabs / Close tabs to the right
   const handleCloseRight = useCallback(
     (tabId: string) => {
-      const currentIndex = tabs.findIndex((t) => t.id === tabId);
+      const currentIndex = tabs.findIndex((candidate) => candidate.id === tabId);
       if (currentIndex < 0 || currentIndex >= tabs.length - 1) return;
 
       const tabsToClose = tabs.slice(currentIndex + 1);
@@ -247,7 +247,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
   // 关闭其他 tabs / Close other tabs
   const handleCloseOthers = useCallback(
     (tabId: string) => {
-      const tabsToClose = tabs.filter((t) => t.id !== tabId);
+      const tabsToClose = tabs.filter((candidate) => candidate.id !== tabId);
       tabsToClose.forEach((tab) => closeTab(tab.id));
       setContextMenu({ show: false, x: 0, y: 0, tabId: null });
     },
@@ -362,7 +362,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
       } catch {
         // Context holder may be unmounted after async operation
       }
-    } catch (err) {
+    } catch {
       try {
         messageApi.error(t('preview.openInSystemFailed'));
       } catch {
@@ -584,6 +584,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
           hideToolbar
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          sideBySide={isSplitScreenEnabled}
         />
       );
     } else if (content_type === 'code') {
@@ -676,7 +677,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
             snapshotSaving={snapshotSaving}
             onViewModeChange={(mode) => {
               setViewMode(mode);
-              setIsSplitScreenEnabled(false); // 切换视图模式时关闭分屏 / Disable split when switching view mode
+              if (content_type !== 'diff') setIsSplitScreenEnabled(false);
             }}
             onSplitScreenToggle={() => setIsSplitScreenEnabled(!isSplitScreenEnabled)}
             onSaveSnapshot={handleSaveSnapshot}

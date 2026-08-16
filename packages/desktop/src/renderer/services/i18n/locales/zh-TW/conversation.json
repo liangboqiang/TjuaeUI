@@ -73,7 +73,21 @@
     "removeProjectConfirm": "確定要移除專案「{{name}}」嗎？專案下的 {{count}} 個對話也會被一起移除。",
     "newConversationInProject": "在此專案中新建對話",
     "deleting": "刪除中...",
-    "reorderPinned": "拖動以調整置頂會話順序"
+    "reorderPinned": "拖動以調整置頂會話順序",
+    "openInExplorer": "在檔案總管中開啟",
+    "archive": "封存",
+    "archiveConversationConfirm": "確定封存對話「{{name}}」嗎？",
+    "archiveSuccess": "已封存",
+    "archiveFailed": "封存失敗",
+    "archiveProject": "封存專案",
+    "archiveProjectConfirm": "確定封存專案「{{name}}」及其中的 {{count}} 個對話嗎？",
+    "archiveProjectSuccess": "專案已封存",
+    "workspaceUnavailable": "此對話沒有可用的工作區。",
+    "openInExplorerFailed": "無法開啟檔案總管。",
+    "pinProject": "釘選專案",
+    "unpinProject": "取消釘選專案",
+    "editProject": "編輯專案",
+    "projectNamePlaceholder": "專案顯示名稱"
   },
   "historySearch": {
     "tooltip": "搜尋訊息",
@@ -410,6 +424,115 @@
       "reset": "還原變更",
       "noUnstaged": "沒有未暫存的變更",
       "noStaged": "沒有已暫存的變更"
+    },
+    "git": {
+      "resourceManagement": "資源管理",
+      "operationFailed": "Git 操作失敗",
+      "timeline": "時間軸",
+      "toggleTimeline": "展開或收合時間軸",
+      "noHistory": "暫無歷史版本",
+      "selectFileForTimeline": "選擇一個檔案以查看其時間軸",
+      "noTextDiff": "此版本沒有可比較的文字內容",
+      "compareWithCurrent": "與目前版本比較",
+      "conflicts": "衝突",
+      "workingChanges": "工作區變更",
+      "stagedChanges": "已暫存變更",
+      "cleanWorkspace": "工作區乾淨",
+      "workspaceChanges": "工作區變更",
+      "compare": "比較",
+      "discardTitle": "放棄變更",
+      "discardUntrackedWarning": "{{path}} 是未追蹤檔案，放棄後將永久刪除該檔案。",
+      "discardWarning": "確定放棄 {{path}} 的本機變更嗎？",
+      "repositoryUnavailable": "Git 儲存庫無法使用",
+      "commitPlaceholder": "輸入提交說明",
+      "commitSucceeded": "提交成功",
+      "commitStaged": "提交已暫存的變更",
+      "remoteSync": "遠端同步",
+      "fetch": "擷取",
+      "pull": "拉取",
+      "push": "推送",
+      "sync": "同步",
+      "detached": "分離 HEAD",
+      "commitGraph": "提交圖",
+      "createBranch": "新增分支",
+      "branchName": "分支名稱",
+      "openChanges": "開啟變更",
+      "checkoutCommit": "簽出提交",
+      "createBranchHere": "從此處建立分支",
+      "checkoutCommitWarning": "確定以分離 HEAD 模式簽出提交 {{hash}} 嗎？",
+      "noChangedFiles": "此提交沒有變更檔案",
+      "followCurrentBranch": "跟隨目前儲存庫分支",
+      "aiReview": "使用 TjuaeUI 管家審查變更",
+      "aiReviewTitle": "TjuaeUI 管家審查",
+      "generateCommitMessage": "智慧產生提交說明",
+      "butlerActionFailed": "TjuaeUI 管家未能完成此操作，請確認預設智慧體可用後重試。",
+      "errors": {
+        "localChanges": {
+          "title": "本地更改会被覆盖",
+          "description": "未提交的本地更改与当前操作冲突。",
+          "guidance": "请先提交、暂存或放弃相关更改，然后重试。"
+        },
+        "untrackedOverwrite": {
+          "title": "未跟踪文件会被覆盖",
+          "description": "目标分支中的文件与本地未跟踪文件冲突。",
+          "guidance": "请先移动、提交或删除这些文件。"
+        },
+        "conflict": {
+          "title": "请先解决冲突",
+          "description": "仓库中仍有未解决的合并或变基冲突。",
+          "guidance": "请解决冲突并暂存结果，或中止当前操作。"
+        },
+        "nonFastForward": {
+          "title": "远程历史已更新",
+          "description": "当前推送不是快进更新。",
+          "guidance": "请先拉取并处理远程更改，再重新推送。"
+        },
+        "noUpstream": {
+          "title": "尚未设置上游分支",
+          "description": "当前分支没有关联远程分支。",
+          "guidance": "请先发布当前分支并设置上游。"
+        },
+        "authentication": {
+          "title": "Git 身份验证失败",
+          "description": "远程仓库拒绝了当前凭据。",
+          "guidance": "请检查凭据管理器、SSH 密钥和仓库权限。"
+        },
+        "repositoryNotFound": {
+          "title": "仓库不可用",
+          "description": "找不到本地 Git 仓库或远程仓库。",
+          "guidance": "请检查仓库路径和远程地址。"
+        },
+        "network": {
+          "title": "Git 网络不可用",
+          "description": "无法连接远程主机。",
+          "guidance": "请检查网络与代理设置后重试。"
+        },
+        "locked": {
+          "title": "仓库正在被占用",
+          "description": "其他 Git 进程或残留锁阻止了操作。",
+          "guidance": "请等待其他 Git 操作结束；确认没有 Git 进程后再处理残留锁。"
+        },
+        "branchExists": {
+          "title": "分支已存在",
+          "description": "已经存在同名分支。",
+          "guidance": "请选择其他名称，或切换到已有分支。"
+        },
+        "branchMissing": {
+          "title": "找不到分支或提交",
+          "description": "Git 无法解析选中的分支或提交。",
+          "guidance": "请刷新仓库并选择仍然存在的引用。"
+        },
+        "nothingToCommit": {
+          "title": "没有可提交内容",
+          "description": "当前没有已暂存的更改。",
+          "guidance": "请先暂存需要提交的文件。"
+        },
+        "generic": {
+          "title": "Git 操作未完成",
+          "description": "当前仓库状态不允许完成这项操作。",
+          "guidance": "请检查仓库状态后重试。"
+        }
+      }
     },
     "openWorkspace": "開啟專案資料夾",
     "openWith": {

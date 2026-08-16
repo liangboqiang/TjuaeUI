@@ -1,4 +1,3 @@
-
 import { useAgentLogos } from '@/renderer/utils/model/agentLogo';
 import FlexFullContainer from '@/renderer/components/layout/FlexFullContainer';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
@@ -7,7 +6,18 @@ import { resolveConversationLeadingMark } from '@/renderer/pages/conversation/ut
 import { cleanupSiderTooltips, getSiderTooltipProps } from '@/renderer/utils/ui/siderTooltip';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { Checkbox, Dropdown, Menu, Spin, Tooltip } from '@arco-design/web-react';
-import { DeleteOne, EditOne, Export, MessageOne, MoreOne, Pushpin, Robot, Timer } from '@icon-park/react';
+import {
+  DeleteOne,
+  EditOne,
+  Export,
+  FolderOpen,
+  Inbox,
+  MessageOne,
+  MoreOne,
+  Pushpin,
+  Robot,
+  Timer,
+} from '@icon-park/react';
 import classNames from 'classnames';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +52,8 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
     onDelete,
     onExport,
     onTogglePin,
+    onOpenInExplorer,
+    onArchive,
     getJobStatus,
   } = props;
   const { t } = useTranslation();
@@ -223,6 +235,14 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
                       onCreateCronTask(conversation);
                       return;
                     }
+                    if (key === 'openInExplorer') {
+                      onOpenInExplorer(conversation);
+                      return;
+                    }
+                    if (key === 'archive') {
+                      onArchive(conversation);
+                      return;
+                    }
                     if (key === 'export') {
                       onExport?.(conversation);
                       return;
@@ -248,6 +268,18 @@ const ConversationRow: React.FC<ConversationRowProps> = (props) => {
                     <div className='flex items-center gap-8px'>
                       <Timer theme='outline' size='14' />
                       <span>{t('conversation.history.createCronTask')}</span>
+                    </div>
+                  </Menu.Item>
+                  <Menu.Item key='openInExplorer'>
+                    <div className='flex items-center gap-8px'>
+                      <FolderOpen theme='outline' size='14' />
+                      <span>{t('conversation.history.openInExplorer')}</span>
+                    </div>
+                  </Menu.Item>
+                  <Menu.Item key='archive'>
+                    <div className='flex items-center gap-8px'>
+                      <Inbox theme='outline' size='14' />
+                      <span>{t('conversation.history.archive')}</span>
                     </div>
                   </Menu.Item>
                   {onExport && (

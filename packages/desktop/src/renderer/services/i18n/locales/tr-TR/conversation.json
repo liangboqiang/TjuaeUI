@@ -73,7 +73,21 @@
     "removeProjectConfirm": "\"{{name}}\" projesi kaldırılsın mı? Projedeki {{count}} konuşma da kaldırılacak.",
     "newConversationInProject": "Bu projede yeni konuşma",
     "deleting": "Siliniyor...",
-    "reorderPinned": "Sabitlenmiş sohbetin sırasını değiştirmek için sürükleyin"
+    "reorderPinned": "Sabitlenmiş sohbetin sırasını değiştirmek için sürükleyin",
+    "openInExplorer": "Dosya Gezgini’nde aç",
+    "archive": "Arşivle",
+    "archiveConversationConfirm": "“{{name}}” arşivlensin mi?",
+    "archiveSuccess": "Arşivlendi",
+    "archiveFailed": "Arşivleme başarısız",
+    "archiveProject": "Projeyi arşivle",
+    "archiveProjectConfirm": "“{{name}}” ve {{count}} konuşma arşivlensin mi?",
+    "archiveProjectSuccess": "Proje arşivlendi",
+    "workspaceUnavailable": "Bu konuşmanın kullanılabilir çalışma alanı yok.",
+    "openInExplorerFailed": "Dosya Gezgini açılamadı.",
+    "pinProject": "Projeyi sabitle",
+    "unpinProject": "Proje sabitlemesini kaldır",
+    "editProject": "Projeyi düzenle",
+    "projectNamePlaceholder": "Proje görünen adı"
   },
   "historySearch": {
     "tooltip": "Mesajları ara",
@@ -395,6 +409,115 @@
       "reset": "Değişiklikleri Geri Al",
       "noUnstaged": "Hazırlanmamış değişiklik yok",
       "noStaged": "Hazırlanmış değişiklik yok"
+    },
+    "git": {
+      "resourceManagement": "Kaynak kod yönetimi",
+      "operationFailed": "Git işlemi başarısız oldu",
+      "timeline": "Zaman çizelgesi",
+      "toggleTimeline": "Zaman çizelgesini genişlet veya daralt",
+      "noHistory": "Geçmiş yok",
+      "selectFileForTimeline": "Zaman çizelgesini görmek için bir dosya seçin",
+      "noTextDiff": "Bu sürümde karşılaştırılabilir metin yok",
+      "compareWithCurrent": "Geçerli sürümle karşılaştır",
+      "conflicts": "Çakışmalar",
+      "workingChanges": "Çalışma ağacı değişiklikleri",
+      "stagedChanges": "Hazırlanan değişiklikler",
+      "cleanWorkspace": "Çalışma alanı temiz",
+      "workspaceChanges": "Çalışma alanı değişiklikleri",
+      "compare": "Karşılaştır",
+      "discardTitle": "Değişiklikleri at",
+      "discardUntrackedWarning": "{{path}} izlenmiyor. Atılması dosyayı kalıcı olarak siler.",
+      "discardWarning": "{{path}} üzerindeki yerel değişiklikler atılsın mı?",
+      "repositoryUnavailable": "Git deposu kullanılamıyor",
+      "commitPlaceholder": "Commit iletisi",
+      "commitSucceeded": "Commit oluşturuldu",
+      "commitStaged": "Hazırlanan değişiklikleri commit et",
+      "remoteSync": "Uzak eşitleme",
+      "fetch": "Getir",
+      "pull": "Çek",
+      "push": "Gönder",
+      "sync": "Eşitle",
+      "detached": "Ayrık HEAD",
+      "commitGraph": "Commit grafiği",
+      "createBranch": "Dal oluştur",
+      "branchName": "Dal adı",
+      "openChanges": "Değişiklikleri aç",
+      "checkoutCommit": "Commit’i kullanıma al",
+      "createBranchHere": "Buradan dal oluştur",
+      "checkoutCommitWarning": "{{hash}} commit’i ayrık HEAD kipinde kullanıma alınsın mı?",
+      "noChangedFiles": "Bu commit’te değişen dosya yok",
+      "followCurrentBranch": "Geçerli dalı izle",
+      "aiReview": "TjuaeUI Butler ile incele",
+      "aiReviewTitle": "TjuaeUI Butler incelemesi",
+      "generateCommitMessage": "Commit iletisi oluştur",
+      "butlerActionFailed": "TjuaeUI Butler işlemi tamamlayamadı.",
+      "errors": {
+        "localChanges": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "untrackedOverwrite": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "conflict": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "nonFastForward": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "noUpstream": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "authentication": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "repositoryNotFound": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "network": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "locked": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "branchExists": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "branchMissing": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "nothingToCommit": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        },
+        "generic": {
+          "title": "Git işlemi başarısız",
+          "description": "İstenen Git işlemi tamamlanamadı.",
+          "guidance": "Depoyu, dalı, değişiklikleri ve ağı denetleyip yeniden deneyin."
+        }
+      }
     },
     "openWorkspace": "Proje klasörünü aç",
     "openWith": {

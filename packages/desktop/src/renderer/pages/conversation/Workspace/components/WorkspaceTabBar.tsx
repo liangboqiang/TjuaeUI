@@ -1,69 +1,46 @@
-
-import { Dropdown, Tabs } from '@arco-design/web-react';
-import { BranchOne } from '@icon-park/react';
+import { Tabs } from '@arco-design/web-react';
+import { FolderOpen, SourceCode } from '@icon-park/react';
 import type { TFunction } from 'i18next';
 import React from 'react';
 import type { WorkspaceTab } from '../types';
 
-type WorkspaceTabBarProps = {
+type Props = {
   t: TFunction;
   activeTab: WorkspaceTab;
   onTabChange: (tab: WorkspaceTab) => void;
   changeCount: number;
-  branch: string | null;
 };
 
-const WorkspaceTabBar: React.FC<WorkspaceTabBarProps> = ({ t, activeTab, onTabChange, changeCount, branch }) => {
-  const changesTitle = (
-    <span className='flex items-center'>
-      {t('conversation.workspace.changes.tab')}
-      {changeCount > 0 && <span className='ml-2px text-t-tertiary'>({changeCount > 99 ? '99+' : changeCount})</span>}
-    </span>
-  );
-
-  const branchIcon = (
-    <span className='flex items-center text-t-tertiary mx-8px hover:text-t-secondary transition-colors cursor-pointer'>
-      <BranchOne size={16} className='shrink-0' />
-    </span>
-  );
-
-  // Branches are read-only (no checkout support yet) — clicking the icon
-  // surfaces just the current branch name instead of an unactionable list.
-  const branchDropdown = branch ? (
-    <Dropdown
-      trigger='click'
-      position='bl'
-      droplist={
-        <div
-          className='rounded-6px px-12px py-8px shadow-lg text-12px text-t-primary'
-          style={{
-            maxWidth: 320,
-            background: 'var(--color-bg-popup)',
-            border: '1px solid var(--color-border)',
-          }}
-        >
-          <div className='text-t-tertiary mb-2px'>{t('conversation.workspace.changes.currentBranchLabel')}</div>
-          <div className='font-medium break-all'>{branch}</div>
-        </div>
+const WorkspaceTabBar: React.FC<Props> = ({ t, activeTab, onTabChange, changeCount }) => (
+  <Tabs
+    activeTab={activeTab}
+    onChange={(key) => onTabChange(key as WorkspaceTab)}
+    type='line'
+    size='small'
+    className='shrink-0 border-b border-border-2 px-12px [&_.arco-tabs-header]:!h-38px [&_.arco-tabs-header-nav]:!h-38px [&_.arco-tabs-header-title]:!mr-18px [&_.arco-tabs-header-title]:!text-13px [&_.arco-tabs-nav]:!border-b-0'
+  >
+    <Tabs.TabPane
+      key='files'
+      title={
+        <span className='flex items-center gap-5px'>
+          <FolderOpen size={13} />
+          {t('conversation.workspace.changes.filesTab')}
+        </span>
       }
-    >
-      {branchIcon}
-    </Dropdown>
-  ) : null;
-
-  return (
-    <Tabs
-      activeTab={activeTab}
-      onChange={(key) => onTabChange(key as WorkspaceTab)}
-      type='line'
-      size='small'
-      className='px-12px [&_.arco-tabs-nav]:border-b-0 [&_.arco-tabs-header-title]:!mr-8px'
-      extra={branchDropdown}
-    >
-      <Tabs.TabPane key='files' title={t('conversation.workspace.changes.filesTab')} />
-      <Tabs.TabPane key='changes' title={changesTitle} />
-    </Tabs>
-  );
-};
+    />
+    <Tabs.TabPane
+      key='sourceControl'
+      title={
+        <span className='flex items-center gap-5px'>
+          <SourceCode size={13} />
+          {t('conversation.workspace.git.resourceManagement')}
+          {changeCount > 0 ? (
+            <span className='rounded-full bg-fill-3 px-4px text-9px'>{changeCount > 99 ? '99+' : changeCount}</span>
+          ) : null}
+        </span>
+      }
+    />
+  </Tabs>
+);
 
 export default WorkspaceTabBar;
