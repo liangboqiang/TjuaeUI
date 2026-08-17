@@ -1,4 +1,3 @@
-
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import {
   getFileIconName,

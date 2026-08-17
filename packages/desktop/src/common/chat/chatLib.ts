@@ -1,4 +1,3 @@
-
 import type { AcpPermissionRequest, PlanUpdate, ToolCallUpdate } from '@/common/types/platform/acpTypes';
 import type { AcpAvailableCommand } from '@/common/chat/slash/types';
 import type { IResponseMessage } from '../adapter/ipcBridge';

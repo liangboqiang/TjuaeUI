@@ -1,4 +1,3 @@
-
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import { getFileExtension } from '@/renderer/pages/conversation/Preview/fileUtils';
 

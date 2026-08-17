@@ -1,4 +1,3 @@
-
 /**
  * Alert and message display constants
  * Alert 和消息展示常量

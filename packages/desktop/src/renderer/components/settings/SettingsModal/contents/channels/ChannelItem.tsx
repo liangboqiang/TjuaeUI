@@ -1,4 +1,3 @@
-
 import { Collapse } from '@arco-design/web-react';
 import React from 'react';
 import ChannelHeader from './ChannelHeader';

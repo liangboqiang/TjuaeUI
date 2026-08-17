@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { AgentLogoIcon } from '@/renderer/components/agent/AgentBadge';
 import { usePresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';

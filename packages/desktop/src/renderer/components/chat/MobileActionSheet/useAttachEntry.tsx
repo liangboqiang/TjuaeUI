@@ -1,4 +1,3 @@
-
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';
 import { FileService, type FileMetadata } from '@/renderer/services/FileService';
 import { isElectronDesktop } from '@/renderer/utils/platform';

@@ -1,4 +1,3 @@
-
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { ADAPTER_BRIDGE_EVENT_KEY } from '../common/adapter/constant';
 

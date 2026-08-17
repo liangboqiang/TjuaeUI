@@ -1,4 +1,3 @@
-
 import type { IMessageThinking } from '@/common/chat/chatLib';
 import { Spin } from '@arco-design/web-react';
 import { Brain, Right } from '@icon-park/react';

@@ -1,4 +1,3 @@
-
 import type { TMessage } from '@/common/chat/chatLib';
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import type { TChatConversation } from '@/common/config/storage';

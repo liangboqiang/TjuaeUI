@@ -1,4 +1,3 @@
-
 import { getBaseUrl } from '@/common/adapter/httpBridge';
 import { trackUpload, type UploadSource } from '@/renderer/hooks/file/useUploadState';
 

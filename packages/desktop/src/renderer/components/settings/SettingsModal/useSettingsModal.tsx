@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import SettingsModal, { type SettingTab } from './index';
 

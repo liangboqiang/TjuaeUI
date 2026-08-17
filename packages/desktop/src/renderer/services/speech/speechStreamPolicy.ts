@@ -1,4 +1,3 @@
-
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
 import { DEEPGRAM_SPEECH_MODEL_PRESETS, OPENAI_SPEECH_MODEL_PRESETS } from './speechModels';
 

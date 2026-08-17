@@ -1,4 +1,3 @@
-
 /**
  * Central code editor configuration.
  * This is the single source of truth for font, size, and layout settings.

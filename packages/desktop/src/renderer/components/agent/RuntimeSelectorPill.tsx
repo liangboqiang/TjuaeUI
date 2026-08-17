@@ -1,4 +1,3 @@
-
 import { Button } from '@arco-design/web-react';
 import React from 'react';
 import MarqueePillLabel from './MarqueePillLabel';

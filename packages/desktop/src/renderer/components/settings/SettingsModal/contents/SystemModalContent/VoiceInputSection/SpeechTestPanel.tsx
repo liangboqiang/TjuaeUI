@@ -1,4 +1,3 @@
-
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
 import { getSpeechInputErrorMessageKey, useSpeechInput } from '@/renderer/hooks/system/useSpeechInput';
 import { setClientBusinessSetting } from '@/renderer/services/clientBusinessSettings';

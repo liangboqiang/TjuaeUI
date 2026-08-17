@@ -1,4 +1,3 @@
-
 export const uuid = (length = 8) => {
   try {
     // globalThis.crypto is available in all modern browsers and Node.js 19+

@@ -1,4 +1,3 @@
-
 export const removeStack = (...args: Array<() => void>) => {
   return () => {
     const list = args.slice();

@@ -1,4 +1,3 @@
-
 import type { AcpRawOutput, ToolCallUpdate } from '@/common/types/platform/acpTypes';
 
 const INLINE_IMAGE_RESULT_LIMIT = 64 * 1024;

@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import type { ContextMenuState, RenameModalState, DeleteModalState, PasteConfirmState } from '../types';
 

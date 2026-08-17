@@ -1,4 +1,3 @@
-
 import type { IMessageAcpToolCall } from '@/common/chat/chatLib';
 import { getAcpImageFileName, getAcpImagePath } from '@/common/chat/acpToolCallOutput';
 import FileChangesPanel from '@/renderer/components/base/FileChangesPanel';

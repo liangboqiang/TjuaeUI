@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type {
   AutoUpdateReadyResult,

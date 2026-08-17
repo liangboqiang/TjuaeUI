@@ -1,4 +1,3 @@
-
 import ChannelDingTalkLogo from '@/renderer/assets/channel-logos/dingtalk.svg';
 import ChannelDiscordLogo from '@/renderer/assets/channel-logos/discord.svg';
 import ChannelLarkLogo from '@/renderer/assets/channel-logos/lark.svg';

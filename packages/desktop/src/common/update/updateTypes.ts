@@ -1,4 +1,3 @@
-
 export interface GitHubReleaseAsset {
   name: string;
   /** Direct GitHub release download URL. */

@@ -1,4 +1,3 @@
-
 import type { IMessageAvailableCommands } from '@/common/chat/chatLib';
 import TjuaeCollapse from '@/renderer/components/base/TjuaeCollapse';
 import CollapsibleContent from '@/renderer/components/chat/CollapsibleContent';

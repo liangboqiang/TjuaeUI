@@ -1,4 +1,3 @@
-
 export const ADAPTER_BRIDGE_EVENT_KEY = 'tjuae-bridge-adapter';
 
 /**

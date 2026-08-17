@@ -1,4 +1,3 @@
-
 export type PermissionIntent = 'allow-once' | 'allow-always' | 'reject-once' | 'reject-always' | 'neutral';
 
 export type PermissionOperationKind = 'execute' | 'edit' | 'read' | 'fetch' | 'tool';

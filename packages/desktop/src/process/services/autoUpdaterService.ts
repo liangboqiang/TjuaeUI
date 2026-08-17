@@ -1,4 +1,3 @@
-
 import { autoUpdater } from 'electron-updater';
 import type { ProgressInfo, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import type { UpdateInfoAndProvider } from 'electron-updater/out/AppUpdater';

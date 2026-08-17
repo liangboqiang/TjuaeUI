@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import type { Assistant, AssistantAgent } from '@/common/types/agent/assistantTypes';
 import { resolveCronAgentConfig } from '@/renderer/pages/cron/ScheduledTasksPage/resolveCronAgentConfig';

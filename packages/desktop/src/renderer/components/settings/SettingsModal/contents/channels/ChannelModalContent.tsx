@@ -1,4 +1,3 @@
-
 import type { IChannelPluginStatus } from '@/common/types/channel/channel';
 import type { IProvider, TProviderWithModel } from '@/common/config/storage';
 import { channel, webui, type IWebUIStatus } from '@/common/adapter/ipcBridge';

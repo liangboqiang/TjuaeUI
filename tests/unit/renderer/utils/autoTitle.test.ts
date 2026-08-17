@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi } from 'vitest';
 import { buildAutoTitleFromContent, deriveAutoTitleFromMessages } from '@/renderer/utils/chat/autoTitle';
 import type { TMessage } from '@/common/chat/chatLib';

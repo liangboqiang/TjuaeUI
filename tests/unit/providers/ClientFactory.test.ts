@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ClientFactory, normalizeNewApiBaseUrl } from '@/common/api/ClientFactory';
 import { OpenAIRotatingClient } from '@/common/api/OpenAIRotatingClient';

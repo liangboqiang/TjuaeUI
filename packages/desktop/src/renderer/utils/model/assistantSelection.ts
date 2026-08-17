@@ -1,4 +1,3 @@
-
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 
 /**

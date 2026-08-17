@@ -1,4 +1,3 @@
-
 import Anthropic, { type ClientOptions as AnthropicClientOptions_ } from '@anthropic-ai/sdk';
 import { AuthType } from '@/common/types/provider/authType';
 import type { RotatingApiClientOptions } from './RotatingApiClient';

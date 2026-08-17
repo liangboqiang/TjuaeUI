@@ -1,4 +1,3 @@
-
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { Down, Up } from '@icon-park/react';
 import classNames from 'classnames';

@@ -1,4 +1,3 @@
-
 /**
  * New API 网关平台标识
  * New API gateway platform identifier

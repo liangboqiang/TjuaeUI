@@ -1,4 +1,3 @@
-
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 
 import rehypeKatex from 'rehype-katex';

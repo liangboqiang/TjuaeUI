@@ -1,4 +1,3 @@
-
 import { IconLeft, IconRight } from '@arco-design/web-react/icon';
 import React, { useRef, useState, useEffect } from 'react';
 

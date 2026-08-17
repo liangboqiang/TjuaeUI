@@ -1,4 +1,3 @@
-
 import { Input, Modal } from '@arco-design/web-react';
 import React from 'react';
 import type { TFunction } from 'i18next';

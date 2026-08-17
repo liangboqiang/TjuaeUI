@@ -1,4 +1,3 @@
-
 import { configService } from '@/common/config/configService';
 import { useConfig } from '@/renderer/hooks/config/useConfig';
 import { useCallback, useMemo } from 'react';

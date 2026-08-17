@@ -1,4 +1,3 @@
-
 /**
  * Streaming speech-to-text WebSocket client for `GET /api/stt/stream`.
  *

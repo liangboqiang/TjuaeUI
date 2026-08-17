@@ -1,4 +1,3 @@
-
 import type { ProtocolConverter, ConverterConfig } from './ProtocolConverter';
 
 export interface OpenAIChatCompletionParams {

@@ -1,4 +1,3 @@
-
 import type { PreviewContentType } from '@/common/types/office/preview';
 
 interface FileTypeInfo {

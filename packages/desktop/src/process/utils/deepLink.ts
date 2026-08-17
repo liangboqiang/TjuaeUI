@@ -1,4 +1,3 @@
-
 import type { BrowserWindow } from 'electron';
 import { ipcBridge } from '@/common';
 

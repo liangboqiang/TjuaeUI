@@ -1,4 +1,3 @@
-
 import type { NavigateFunction, NavigateOptions } from 'react-router-dom';
 
 /**

@@ -1,4 +1,3 @@
-
 /**
  * Redirect main-process console output to electron-log so that all
  * console.log / console.warn / console.error calls are persisted to

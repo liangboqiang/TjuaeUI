@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { base64ToBlob, BINARY_MIME_MAP } from './base64';
 

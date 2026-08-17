@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 
 export const removeWorkspaceEntry = (path: string, workspace?: string) => {

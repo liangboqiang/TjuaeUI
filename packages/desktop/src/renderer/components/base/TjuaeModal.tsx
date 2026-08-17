@@ -1,4 +1,3 @@
-
 import type { ModalProps } from '@arco-design/web-react';
 import { Modal, Button } from '@arco-design/web-react';
 import { Close } from '@icon-park/react';

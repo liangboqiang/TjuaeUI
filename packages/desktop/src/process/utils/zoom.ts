@@ -1,4 +1,3 @@
-
 import { BrowserWindow } from 'electron';
 import type { Input } from 'electron';
 import { trackPersistedWrite } from './persistOnQuit';

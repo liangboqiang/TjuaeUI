@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { useCallback, useEffect, useState } from 'react';
 

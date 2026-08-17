@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IMessageToolGroup } from '@/common/chat/chatLib';
 import { iconColors } from '@/renderer/styles/colors';

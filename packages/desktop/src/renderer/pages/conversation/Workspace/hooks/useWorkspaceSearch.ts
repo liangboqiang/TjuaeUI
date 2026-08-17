@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import useDebounce from '@/renderer/hooks/ui/useDebounce';

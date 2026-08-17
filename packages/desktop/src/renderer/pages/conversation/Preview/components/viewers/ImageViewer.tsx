@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { Image } from '@arco-design/web-react';
 import React, { useEffect, useState } from 'react';

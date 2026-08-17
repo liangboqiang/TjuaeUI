@@ -1,4 +1,3 @@
-
 /**
  * Type definitions for message tool results
  * 消息工具结果类型定义

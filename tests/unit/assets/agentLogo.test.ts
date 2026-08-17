@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { AgentLogoMap } from '@/renderer/utils/model/agentLogo';
 import {

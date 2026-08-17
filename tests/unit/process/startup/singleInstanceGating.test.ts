@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { shouldRegisterBackendStartup } from '@/process/startup/singleInstanceGating';
 

@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { getSidebarStreamGuardDecision } from '@/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync';
 

@@ -1,4 +1,3 @@
-
 // 集中管理 renderer 端的运行时补丁，使入口文件保持整洁
 // Centralize renderer runtime patches so the entry file stays tidy
 

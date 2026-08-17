@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { normalizeDbMessage } from '@/renderer/pages/conversation/Messages/hooks';
 import type { IMessageText, IMessageTips } from '@/common/chat/chatLib';

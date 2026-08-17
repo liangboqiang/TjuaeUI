@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import type { TChatConversation } from '@/common/config/storage';
 import { buildGroupedHistory } from '@/renderer/pages/conversation/GroupedHistory/utils/groupingHelpers';

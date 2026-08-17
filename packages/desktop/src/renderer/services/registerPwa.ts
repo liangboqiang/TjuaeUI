@@ -1,4 +1,3 @@
-
 import { isElectronDesktop } from '@renderer/utils/platform';
 
 const SERVICE_WORKER_URL = './sw.js';

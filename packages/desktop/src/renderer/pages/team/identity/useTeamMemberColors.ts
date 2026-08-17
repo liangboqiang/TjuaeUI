@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from 'react';
 import type { TeamAssistant } from '@/common/types/team/teamTypes';
 import { assignMemberColors, memberColorValue } from './teamMemberColors';

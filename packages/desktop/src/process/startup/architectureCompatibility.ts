@@ -1,4 +1,3 @@
-
 import { execFileSync as defaultExecFileSync } from 'node:child_process';
 
 type ExecFileSync = (command: string, args: string[], options?: { encoding: 'utf8'; timeout: number }) => string;

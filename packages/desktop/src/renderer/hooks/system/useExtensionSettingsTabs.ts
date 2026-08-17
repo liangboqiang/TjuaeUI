@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { extensions as extensionsIpc, type IExtensionSettingsTab } from '@/common/adapter/ipcBridge';
 

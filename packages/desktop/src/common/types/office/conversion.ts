@@ -1,4 +1,3 @@
-
 export interface ConversionResult<T> {
   success: boolean; // 是否成功 / Whether successful
   data?: T; // 转换结果数据 / Conversion result data

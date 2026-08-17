@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import {

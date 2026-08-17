@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useFloating, offset, flip, shift, autoUpdate } from '@floating-ui/react';
 import { usePreviewContext } from '../../context/PreviewContext';

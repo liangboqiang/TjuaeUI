@@ -1,4 +1,3 @@
-
 import type { IMessageAgentStatus } from '@/common/chat/chatLib';
 import { Badge, Typography } from '@arco-design/web-react';
 import React from 'react';

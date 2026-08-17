@@ -1,4 +1,3 @@
-
 // Canonical definitions live in common/types/agent/detectedAgent.ts
 import type { RemoteAgentProtocol, RemoteAgentAuthType } from '@/common/types/agent/detectedAgent';
 export type { RemoteAgentProtocol, RemoteAgentAuthType } from '@/common/types/agent/detectedAgent';

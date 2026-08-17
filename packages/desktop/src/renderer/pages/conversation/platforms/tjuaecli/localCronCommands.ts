@@ -1,4 +1,3 @@
-
 type LocalCronProcessingResult = {
   displayContent?: string;
   systemResponses: string[];

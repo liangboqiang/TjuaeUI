@@ -1,4 +1,3 @@
-
 import type { InstallerLastFailureMarker, UpdateReleaseInfo } from '@/common/update/updateTypes';
 
 type UpdateNotificationStatus =

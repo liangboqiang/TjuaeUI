@@ -1,4 +1,3 @@
-
 import { execFile } from 'node:child_process';
 import { migrateConfigStorage, migrateLegacyMcpConfigToDb, migrateProviders } from '@/common/config/configMigration';
 import { httpRequest } from '@/common/adapter/httpBridge';

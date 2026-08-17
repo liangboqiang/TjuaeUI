@@ -1,4 +1,3 @@
-
 import { WEBUI_DEFAULT_PORT } from '@/common/config/constants';
 import { shell, webui, type IWebUIStatus } from '@/common/adapter/ipcBridge';
 import { isBackendHttpError } from '@/common/adapter/httpBridge';

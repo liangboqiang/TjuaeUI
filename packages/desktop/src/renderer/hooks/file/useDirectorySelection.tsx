@@ -1,4 +1,3 @@
-
 import { bridge } from '@/common/platform/bridge';
 import React, { useCallback, useEffect, useState } from 'react';
 import { SHOW_OPEN_REQUEST_EVENT } from '@/common/adapter/constant';

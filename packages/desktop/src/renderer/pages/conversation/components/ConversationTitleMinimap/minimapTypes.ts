@@ -1,4 +1,3 @@
-
 // Type definitions and constants for the conversation minimap panel.
 
 export type TurnPreviewItem = {

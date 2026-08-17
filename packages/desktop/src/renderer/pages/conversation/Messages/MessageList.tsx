@@ -1,4 +1,3 @@
-
 import type { IConversationArtifact } from '@/common/adapter/ipcBridge';
 import type { IMessageAcpToolCall, IMessageToolCall, IMessageToolGroup, TMessage } from '@/common/chat/chatLib';
 import { useConversationContextSafe } from '@/renderer/hooks/context/ConversationContext';

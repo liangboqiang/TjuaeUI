@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { iconColors } from '@/renderer/styles/colors';
 import { useUpdateConversationArtifactStatus } from '@renderer/pages/conversation/Messages/artifacts';

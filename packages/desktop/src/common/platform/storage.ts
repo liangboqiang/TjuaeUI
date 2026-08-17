@@ -1,4 +1,3 @@
-
 import { bridge } from './bridge';
 
 type MaybePromise<T> = T | Promise<T>;

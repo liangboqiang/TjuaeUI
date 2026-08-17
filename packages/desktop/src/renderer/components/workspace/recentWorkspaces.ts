@@ -1,4 +1,3 @@
-
 export const DEFAULT_RECENT_WS_KEY = 'tjuaeui:recent-workspaces';
 const MAX_RECENT_WORKSPACES = 5;
 

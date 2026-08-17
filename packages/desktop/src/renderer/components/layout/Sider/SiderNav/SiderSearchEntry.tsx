@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tooltip } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,3 @@
-
 import type React from 'react';
 
 import { diffColors } from '@/renderer/styles/colors';

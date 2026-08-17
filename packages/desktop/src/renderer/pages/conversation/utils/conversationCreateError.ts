@@ -1,4 +1,3 @@
-
 import { isBackendHttpError } from '@/common/adapter/httpBridge';
 import { parseError } from '@/common/utils';
 import type { TFunction } from 'i18next';

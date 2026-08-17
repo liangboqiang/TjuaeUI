@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import AppearanceModalContent from '@/renderer/components/settings/SettingsModal/contents/AppearanceModalContent';

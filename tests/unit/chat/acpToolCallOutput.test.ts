@@ -1,4 +1,3 @@
-
 import { getAcpImageFileName, getAcpImagePath, sanitizeAcpToolCallContent } from '@/common/chat/acpToolCallOutput';
 import { composeMessage, mergeAcpToolCallContent } from '@/common/chat/chatLib';
 import type { IMessageAcpToolCall, TMessage } from '@/common/chat/chatLib';

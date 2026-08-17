@@ -1,4 +1,3 @@
-
 import { app } from 'electron';
 import http from 'http';
 import * as fs from 'fs';

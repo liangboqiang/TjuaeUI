@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { iconColors } from '@/renderer/styles/colors';
 import { Button, Form, Tooltip } from '@arco-design/web-react';

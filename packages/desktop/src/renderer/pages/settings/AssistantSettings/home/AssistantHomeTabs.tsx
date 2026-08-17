@@ -1,4 +1,3 @@
-
 import type { AssistantListItem } from '../types';
 import EnabledAssistantsList from './EnabledAssistantsList';
 import MyAssistantsList from './MyAssistantsList';

@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import type { FileOrFolderItem } from '@/renderer/utils/file/fileTypes';
 import { filterWorkspaceMentionItems } from '@/renderer/utils/file/workspaceMentions';

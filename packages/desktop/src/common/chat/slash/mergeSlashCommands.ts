@@ -1,4 +1,3 @@
-
 import type { SlashCommandItem } from './types';
 
 /**

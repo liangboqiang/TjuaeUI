@@ -1,4 +1,3 @@
-
 import { configService } from '@/common/config/configService';
 
 type BootstrapLogger = (message?: unknown, ...optionalParams: unknown[]) => void;

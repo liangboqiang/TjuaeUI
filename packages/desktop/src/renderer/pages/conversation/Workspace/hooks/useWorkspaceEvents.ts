@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { emitter, useAddEventListener } from '@/renderer/utils/emitter';
 import { useCallback, useEffect, useRef } from 'react';

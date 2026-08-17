@@ -1,4 +1,3 @@
-
 import type { TChatConversation } from '@/common/config/storage';
 import type { PresetAssistantInfo } from '@/renderer/hooks/agent/usePresetAssistantInfo';
 import { resolveConversationLeadingMark } from '@/renderer/pages/conversation/utils/conversationAssistantIdentity';

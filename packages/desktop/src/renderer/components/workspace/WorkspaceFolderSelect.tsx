@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { Check, Close, Down, FolderClose, FolderOpen } from '@icon-park/react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';

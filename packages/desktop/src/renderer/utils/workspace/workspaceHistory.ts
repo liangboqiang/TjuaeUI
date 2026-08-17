@@ -1,4 +1,3 @@
-
 const WORKSPACE_UPDATE_TIME_KEY = 'tjuaeui_workspace_update_time';
 
 /**

@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { assistantRuntimeKey, type AssistantDetail } from '@/common/types/agent/assistantTypes';
 

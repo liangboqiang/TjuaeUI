@@ -1,4 +1,3 @@
-
 /**
  * Copy text to clipboard with fallback for non-secure contexts (e.g. WebUI over HTTP).
  * Uses navigator.clipboard when available, otherwise falls back to document.execCommand('copy').

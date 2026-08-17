@@ -1,4 +1,3 @@
-
 import { useCallback, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import type { TFunction } from 'i18next';

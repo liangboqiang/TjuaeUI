@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IConversationArtifact, IConversationArtifactStatus } from '@/common/adapter/ipcBridge';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';

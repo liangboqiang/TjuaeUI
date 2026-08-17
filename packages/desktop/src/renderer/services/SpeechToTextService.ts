@@ -1,4 +1,3 @@
-
 import { getBaseUrl } from '@/common/adapter/httpBridge';
 import type { SpeechToTextResult } from '@/common/types/provider/speech';
 

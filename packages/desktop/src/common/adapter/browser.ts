@@ -1,4 +1,3 @@
-
 import { bridge } from '@/common/platform/bridge';
 import { WEBUI_DEFAULT_PORT } from '@/common/config/constants';
 import type { ElectronBridgeAPI } from '@/common/types/platform/electron';

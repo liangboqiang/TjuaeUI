@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { notifyManualRestartRequired } from '@/renderer/utils/appRestart';
 import { Alert, Button, Collapse, Message, Switch, Tooltip } from '@arco-design/web-react';

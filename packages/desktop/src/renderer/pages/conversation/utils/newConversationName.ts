@@ -1,4 +1,3 @@
-
 /**
  * Force new-session entry points to start from the localized default title.
  */

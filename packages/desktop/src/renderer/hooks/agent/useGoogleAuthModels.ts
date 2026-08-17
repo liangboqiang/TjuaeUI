@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { getClientBusinessSetting } from '@/renderer/services/clientBusinessSettings';
 import useSWR from 'swr';

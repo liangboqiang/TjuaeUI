@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AgentModalContent from '@/renderer/components/settings/SettingsModal/contents/AgentModalContent';
 import SettingsPageWrapper from '../components/SettingsPageWrapper';

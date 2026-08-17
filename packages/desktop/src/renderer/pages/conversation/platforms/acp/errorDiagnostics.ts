@@ -1,4 +1,3 @@
-
 import { isBackendHttpError } from '@/common/adapter/httpBridge';
 
 /** Redacted summary of an original error, safe to display in local diagnostics. */

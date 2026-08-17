@@ -1,4 +1,3 @@
-
 import type { AcpModelInfo, AcpSessionConfigOption } from '@/common/types/platform/acpTypes';
 import { mapAgentAvailableCommandsToSlashCommands } from '@/common/chat/slash/guidSlashCommands';
 import type { SlashCommandItem } from '@/common/chat/slash/types';

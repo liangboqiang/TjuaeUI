@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IMcpServer, IProvider, TProviderWithModel } from '@/common/config/storage';
 import AgentModeSelector from '@/renderer/components/agent/AgentModeSelector';

@@ -1,4 +1,3 @@
-
 import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import type { IChannelAssistantBindingRead, IChannelAssistantBindingWrite } from '@/common/types/channel/channel';
 

@@ -1,4 +1,3 @@
-
 /**
  * Decide whether to show the download button in the preview toolbar.
  *

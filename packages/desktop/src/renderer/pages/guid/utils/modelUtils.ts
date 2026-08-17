@@ -1,4 +1,3 @@
-
 import type { IProvider } from '@/common/config/storage';
 import { hasSpecificModelCapability } from '@/renderer/utils/model/modelCapabilities';
 

@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { isErrorTipMessage, normalizeTextMessageContent, transformMessage } from '@/common/chat/chatLib';
 import type { AvailableCommand, TMessage } from '@/common/chat/chatLib';

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi } from 'vitest';
 import { getLastAssistantText } from '@/renderer/utils/chat/getLastAssistantText';
 import type { TMessage, IMessageText } from '@/common/chat/chatLib';

@@ -1,4 +1,3 @@
-
 /**
  * PCM capture recorder for streaming speech-to-text.
  *

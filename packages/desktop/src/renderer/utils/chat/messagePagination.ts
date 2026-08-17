@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { MessageCursorPage } from '@/common/adapter/ipcBridge';
 import type { TMessage } from '@/common/chat/chatLib';

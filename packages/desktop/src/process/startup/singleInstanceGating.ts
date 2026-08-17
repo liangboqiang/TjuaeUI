@@ -1,4 +1,3 @@
-
 /**
  * Decide whether this process is allowed to register the backend startup flow
  * (whenReady -> handleAppReady -> startBackendOrExit).

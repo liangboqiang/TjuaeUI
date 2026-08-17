@@ -1,4 +1,3 @@
-
 /**
  * Platform-agnostic application bridge handlers.
  * Safe to use in both Electron and WebUI server mode.

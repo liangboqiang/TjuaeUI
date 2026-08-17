@@ -1,4 +1,3 @@
-
 import { HighlightStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 

@@ -1,4 +1,3 @@
-
 import type { TChatConversation } from '@/common/config/storage';
 
 type SideQuestionConversationType = TChatConversation['type'];

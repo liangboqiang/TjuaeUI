@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
 import brandAppIcon from '@/renderer/assets/logos/brand/app.svg';

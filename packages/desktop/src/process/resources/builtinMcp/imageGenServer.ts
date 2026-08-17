@@ -1,4 +1,3 @@
-
 /**
  * Built-in MCP server for image generation.
  * Runs as a standalone stdio process spawned by the MCP client.

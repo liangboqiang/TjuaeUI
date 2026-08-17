@@ -1,4 +1,3 @@
-
 import { AuthType } from '@/common/types/provider/authType';
 
 /**

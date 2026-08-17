@@ -1,4 +1,3 @@
-
 import type { TConversationRuntimeStateKind, TConversationRuntimeSummary } from '@/common/config/storage';
 
 export type ConversationRuntimeView = {

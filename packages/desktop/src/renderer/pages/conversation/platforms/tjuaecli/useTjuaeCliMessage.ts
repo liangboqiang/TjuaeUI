@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { isErrorTipMessage, transformMessage } from '@/common/chat/chatLib';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';

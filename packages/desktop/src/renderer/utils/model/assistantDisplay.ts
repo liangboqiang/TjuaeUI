@@ -1,4 +1,3 @@
-
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 
 type AssistantNameSource = Pick<Assistant, 'id' | 'name' | 'name_i18n'>;

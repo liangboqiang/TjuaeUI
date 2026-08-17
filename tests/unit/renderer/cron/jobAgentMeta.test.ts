@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import type { ICronJob } from '@/common/adapter/ipcBridge';

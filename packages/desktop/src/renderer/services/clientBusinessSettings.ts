@@ -1,4 +1,3 @@
-
 import { httpRequest } from '@/common/adapter/httpBridge';
 import type { ClientBusinessSettingKey, ClientBusinessSettingMap } from '@/common/config/clientSettings';
 

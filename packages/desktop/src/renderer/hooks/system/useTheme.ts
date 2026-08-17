@@ -1,4 +1,3 @@
-
 import { configService } from '@/common/config/configService';
 import { ipcBridge } from '@/common';
 import { resolveActiveTheme } from '@/common/theme/resolveTheme';

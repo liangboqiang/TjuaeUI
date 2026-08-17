@@ -1,4 +1,3 @@
-
 import { spawnSync } from 'node:child_process';
 
 type OpenBrowserCommand = {

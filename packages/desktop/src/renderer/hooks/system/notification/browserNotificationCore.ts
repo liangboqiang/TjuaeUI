@@ -1,4 +1,3 @@
-
 /**
  * Framework-free core for WebUI browser notifications: pure gating and a
  * controller that turns conversation events into notification payloads.

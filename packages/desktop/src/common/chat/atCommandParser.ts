@@ -1,4 +1,3 @@
-
 /**
  * Shared @ command parser for file references
  * 共享的 @ 命令解析器，用于文件引用

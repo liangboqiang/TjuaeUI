@@ -1,4 +1,3 @@
-
 type BackendStartupResult = { ok: true; port: number } | { ok: false };
 
 type StartBackendOrExitOptions = {

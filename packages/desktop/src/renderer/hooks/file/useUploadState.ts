@@ -1,4 +1,3 @@
-
 /**
  * Module-level upload state store with React hook via useSyncExternalStore.
  * No Context Provider needed — any component can subscribe by calling useUploadState().

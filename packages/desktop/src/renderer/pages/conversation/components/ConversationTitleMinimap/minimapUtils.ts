@@ -1,4 +1,3 @@
-
 // Pure utility functions for the conversation minimap panel.
 
 import type { IMessageText, TMessage } from '@/common/chat/chatLib';

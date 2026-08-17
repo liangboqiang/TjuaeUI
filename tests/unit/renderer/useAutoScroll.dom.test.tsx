@@ -1,4 +1,3 @@
-
 import type { UIEvent } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

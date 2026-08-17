@@ -1,4 +1,3 @@
-
 /**
  * Theme color configuration based on Figma design tokens
  * This file provides TypeScript types and helper functions for the color system

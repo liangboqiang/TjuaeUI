@@ -1,4 +1,3 @@
-
 import type { InstallerLastFailureMarker } from '@/common/update/updateTypes';
 import fs from 'node:fs/promises';
 import path from 'node:path';

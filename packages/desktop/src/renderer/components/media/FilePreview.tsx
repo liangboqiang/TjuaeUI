@@ -1,4 +1,3 @@
-
 import { Close } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { getFileExtension } from '@/renderer/services/FileService';

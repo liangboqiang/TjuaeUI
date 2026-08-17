@@ -1,4 +1,3 @@
-
 type BeforeQuitEvent = {
   preventDefault: () => void;
 };

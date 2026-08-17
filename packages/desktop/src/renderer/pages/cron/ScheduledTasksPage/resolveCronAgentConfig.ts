@@ -1,4 +1,3 @@
-
 import type { ICronAgentConfigWrite } from '@/common/adapter/ipcBridge';
 import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';
 import { resolveAssistantName } from '@renderer/utils/model/assistantDisplay';

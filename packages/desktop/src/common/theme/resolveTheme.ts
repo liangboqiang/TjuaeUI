@@ -1,4 +1,3 @@
-
 import type { Theme } from './types';
 import { LIGHT_THEME_ID } from './constants';
 

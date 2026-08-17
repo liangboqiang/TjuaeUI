@@ -1,4 +1,3 @@
-
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language';
 import { languages } from '@codemirror/language-data';
 import { LARGE_TEXT_VIEWER_THRESHOLD } from '../constants';

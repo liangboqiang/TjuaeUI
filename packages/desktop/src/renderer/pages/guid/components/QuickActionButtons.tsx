@@ -1,4 +1,3 @@
-
 import { webui } from '@/common/adapter/ipcBridge';
 import { Earth } from '@icon-park/react';
 import React, { useCallback, useEffect, useState } from 'react';

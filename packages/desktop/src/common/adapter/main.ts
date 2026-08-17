@@ -1,4 +1,3 @@
-
 import type { BrowserWindow } from 'electron';
 import { ipcMain } from 'electron';
 

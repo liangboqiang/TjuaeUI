@@ -1,4 +1,3 @@
-
 import { getPlatformServices } from '@/common/platform';
 
 /**

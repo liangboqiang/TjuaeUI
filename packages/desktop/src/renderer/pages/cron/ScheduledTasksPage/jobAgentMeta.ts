@@ -1,4 +1,3 @@
-
 import type { ICronJob } from '@/common/adapter/ipcBridge';
 import type { AgentLogoMap } from '@renderer/utils/model/agentLogo';
 import { resolveAgentLogo } from '@renderer/utils/model/agentLogo';

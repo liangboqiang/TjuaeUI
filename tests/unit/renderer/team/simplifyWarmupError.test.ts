@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { simplifyWarmupError } from '@/renderer/pages/team/components/TeamWarmupOverlay';
 

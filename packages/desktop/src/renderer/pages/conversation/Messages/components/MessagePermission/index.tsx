@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IMessagePermission } from '@/common/chat/chatLib';
 import React, { useCallback, useMemo } from 'react';

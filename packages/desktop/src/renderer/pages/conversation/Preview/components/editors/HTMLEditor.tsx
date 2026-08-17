@@ -1,4 +1,3 @@
-
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { html } from '@codemirror/lang-html';
 import { history, historyKeymap } from '@codemirror/commands';

@@ -1,4 +1,3 @@
-
 const BINARY_EXTENSIONS = new Set([
   '7z',
   'avif',

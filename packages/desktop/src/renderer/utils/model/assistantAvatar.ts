@@ -1,4 +1,3 @@
-
 import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
 
 export type AssistantAvatar =

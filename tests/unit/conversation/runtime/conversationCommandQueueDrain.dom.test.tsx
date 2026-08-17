@@ -1,4 +1,3 @@
-
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { Message } from '@arco-design/web-react';
 import { BackendHttpError } from '@/common/adapter/httpBridge';

@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { isBackendHttpError } from '@/common/adapter/httpBridge';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';

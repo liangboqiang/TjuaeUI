@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi } from 'vitest';
 import { AuthType } from '@/common/types/provider/authType';
 import { getAuthTypeFromPlatform, getProviderAuthType } from '@/common/utils/platformAuthType';

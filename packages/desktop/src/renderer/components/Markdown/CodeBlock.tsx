@@ -1,4 +1,3 @@
-
 import { Message } from '@arco-design/web-react';
 import { Copy, Down, Up } from '@icon-park/react';
 import katex from 'katex';

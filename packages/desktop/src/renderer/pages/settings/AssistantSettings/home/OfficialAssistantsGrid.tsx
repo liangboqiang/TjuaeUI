@@ -1,4 +1,3 @@
-
 import type { AssistantListItem } from '../types';
 import { type AssistantEnabledFilter, filterByEnabled } from '../assistantUtils';
 import AssistantAvatar from '../AssistantAvatar';

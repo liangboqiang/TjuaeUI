@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IGpuStatus, IStartOnBootStatus } from '@/common/adapter/ipcBridge';
 import { configService } from '@/common/config/configService';

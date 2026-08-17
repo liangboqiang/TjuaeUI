@@ -1,4 +1,3 @@
-
 import { initApplicationBridge } from './applicationBridge';
 import { initDialogBridge } from './dialogBridge';
 import { initUpdateBridge } from './updateBridge';

@@ -1,4 +1,3 @@
-
 import type { Theme } from '@/common/theme/types';
 import { configService } from '@/common/config/configService';
 import { ipcBridge } from '@/common';

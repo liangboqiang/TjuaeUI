@@ -1,4 +1,3 @@
-
 import type { BackendStartupFailureInfo } from '@/common/types/platform/electron';
 
 type ErrorWithDetails = Error & {

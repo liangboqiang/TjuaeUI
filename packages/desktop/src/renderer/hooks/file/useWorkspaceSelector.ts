@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { Message } from '@arco-design/web-react';
 import { emitter } from '@/renderer/utils/emitter';

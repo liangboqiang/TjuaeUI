@@ -1,4 +1,3 @@
-
 import type { BrowserWindow } from 'electron';
 import { setApplicationMainWindow } from '../bridge/applicationBridge';
 import { setNotificationMainWindow } from '../bridge/notificationBridge';

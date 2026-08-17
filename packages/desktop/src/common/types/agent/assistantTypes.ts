@@ -1,4 +1,3 @@
-
 // Mirror of tjuaeui-api-types/src/assistant.rs.
 // Any shape change on either side requires a same-PR update on the other.
 

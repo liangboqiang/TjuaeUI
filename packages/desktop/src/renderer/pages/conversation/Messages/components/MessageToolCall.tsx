@@ -1,4 +1,3 @@
-
 import type { IMessageToolCall } from '@/common/chat/chatLib';
 import { normalizeToolCall } from '@/common/chat/normalizeToolCall';
 import type { NormalizedToolStatus } from '@/common/chat/normalizeToolCall';

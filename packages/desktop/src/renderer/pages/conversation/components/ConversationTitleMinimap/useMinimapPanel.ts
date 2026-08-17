@@ -1,4 +1,3 @@
-
 import { dispatchChatMessageJump } from '@/renderer/utils/chat/chatMinimapEvents';
 import { loadAllConversationMessagesPaged } from '@/renderer/utils/chat/messagePagination';
 import { isPrimaryApplicationShortcut } from '@/renderer/utils/ui/keyboardShortcuts';

@@ -1,4 +1,3 @@
-
 export { default } from './MobileActionSheet';
 export type {
   MobileActionSheetEntry,

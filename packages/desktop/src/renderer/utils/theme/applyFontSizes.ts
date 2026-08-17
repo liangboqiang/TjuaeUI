@@ -1,4 +1,3 @@
-
 import { FONT_SIZE_KEYS, FONT_SIZE_SPECS, clampFontSize, type FontSizes } from '@/common/config/fontSizes';
 
 /**

@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { BackendHttpError } from '@/common/adapter/httpBridge';
 import { buildSendFailureError } from '@/renderer/pages/conversation/platforms/acp/buildSendFailureError';

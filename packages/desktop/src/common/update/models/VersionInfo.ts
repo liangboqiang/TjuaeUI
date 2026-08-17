@@ -1,4 +1,3 @@
-
 import semver from 'semver';
 
 export type VersionUpdateType = 'major' | 'minor' | 'patch' | 'none';

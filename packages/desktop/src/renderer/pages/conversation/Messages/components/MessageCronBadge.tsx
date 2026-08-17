@@ -1,4 +1,3 @@
-
 import type { CronMessageMeta } from '@/common/chat/chatLib';
 import { iconColors } from '@/renderer/styles/colors';
 import { AlarmClock } from '@icon-park/react';

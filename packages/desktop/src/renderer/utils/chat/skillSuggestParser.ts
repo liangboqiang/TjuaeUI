@@ -1,4 +1,3 @@
-
 export interface SkillSuggestion {
   name: string;
   description: string;

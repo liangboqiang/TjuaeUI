@@ -1,4 +1,3 @@
-
 import type { IMessageAcpToolCall } from '@/common/chat/chatLib';
 import { normalizeAcpToolCall } from '@/common/chat/normalizeToolCall';
 import { describe, expect, it } from 'vitest';

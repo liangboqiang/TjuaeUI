@@ -1,4 +1,3 @@
-
 /**
  * 预览面板相关常量定义
  * Preview panel related constants

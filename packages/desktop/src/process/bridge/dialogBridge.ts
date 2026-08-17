@@ -1,4 +1,3 @@
-
 import { BrowserWindow, dialog } from 'electron';
 import { ipcBridge } from '@/common';
 

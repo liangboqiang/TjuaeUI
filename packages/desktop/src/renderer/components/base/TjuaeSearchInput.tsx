@@ -1,4 +1,3 @@
-
 import { CloseSmall, Search } from '@icon-park/react';
 import classNames from 'classnames';
 import type { CSSProperties, InputHTMLAttributes, Ref } from 'react';

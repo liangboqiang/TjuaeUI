@@ -1,4 +1,3 @@
-
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { markdown } from '@codemirror/lang-markdown';
 import { syntaxHighlighting } from '@codemirror/language';

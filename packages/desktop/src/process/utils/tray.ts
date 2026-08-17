@@ -1,4 +1,3 @@
-
 import type { BrowserWindow, Tray as TrayInstance } from 'electron';
 import {
   electronApp as app,

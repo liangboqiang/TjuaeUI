@@ -1,4 +1,3 @@
-
 import type React from 'react';
 import { useCallback, useRef } from 'react';
 import { appendSpeechTranscript } from '@/renderer/hooks/system/useSpeechInput';

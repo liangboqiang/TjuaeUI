@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
 import { useLatestRef } from '@/renderer/hooks/ui/useLatestRef';

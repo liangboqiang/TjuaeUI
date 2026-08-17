@@ -1,4 +1,3 @@
-
 import type { FileChangeItem } from '@/renderer/components/base/FileChangesPanel';
 import { usePreviewLauncher } from '@/renderer/hooks/file/usePreviewLauncher';
 import { extractContentFromDiff } from '@/renderer/utils/file/diffUtils';

@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import { MANAGED_AGENTS_SWR_KEY, fetchManagedAgents } from '@/renderer/utils/model/agentTypes';

@@ -1,4 +1,3 @@
-
 import type { ProtocolDetectionResponse } from '@/common/utils/protocolDetector';
 import { ipcBridge } from '@/common';
 import { useCallback, useEffect, useRef, useState } from 'react';

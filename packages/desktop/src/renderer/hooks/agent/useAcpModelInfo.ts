@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IResponseMessage } from '@/common/adapter/ipcBridge';
 import type { AcpConfigOptionDto, AcpModelInfo } from '@/common/types/platform/acpTypes';

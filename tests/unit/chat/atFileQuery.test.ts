@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { buildAtFileInsertion } from '@/renderer/utils/chat/atFileQuery';
 import type { FileOrFolderItem } from '@/renderer/utils/file/fileTypes';

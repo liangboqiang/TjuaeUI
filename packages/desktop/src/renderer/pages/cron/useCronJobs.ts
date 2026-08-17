@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { ICronJob, ICronJobUpdateParams } from '@/common/adapter/ipcBridge';
 import type { TChatConversation } from '@/common/config/storage';

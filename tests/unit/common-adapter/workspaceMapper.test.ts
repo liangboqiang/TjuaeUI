@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { fromBackendWorkspaceFlatFiles, type RawWorkspaceFlatFile } from '@/common/adapter/workspaceMapper';
 

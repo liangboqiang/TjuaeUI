@@ -1,4 +1,3 @@
-
 export type SpeechToTextProvider = 'openai' | 'deepgram';
 
 export type OpenAISpeechToTextConfig = {

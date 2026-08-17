@@ -1,4 +1,3 @@
-
 import type { ICronTriggerArtifact } from '@/common/adapter/ipcBridge';
 import { iconColors } from '@/renderer/styles/colors';
 import { AlarmClock, Right } from '@icon-park/react';

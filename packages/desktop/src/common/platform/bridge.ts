@@ -1,4 +1,3 @@
-
 import EventEmitter from 'eventemitter3';
 
 type MaybePromise<T> = T | Promise<T>;

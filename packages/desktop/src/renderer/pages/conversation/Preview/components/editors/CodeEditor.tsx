@@ -1,4 +1,3 @@
-
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { highlightSelectionMatches, searchKeymap } from '@codemirror/search';
 import { EditorState, Prec } from '@codemirror/state';

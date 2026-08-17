@@ -1,4 +1,3 @@
-
 import type { IMessageAcpPermission } from '@/common/chat/chatLib';
 import { conversation } from '@/common/adapter/ipcBridge';
 import {

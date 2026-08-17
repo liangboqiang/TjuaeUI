@@ -1,4 +1,3 @@
-
 import type { ImageGenerationModelSetting } from './clientSettings';
 import type { IProvider } from './storage';
 

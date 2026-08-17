@@ -1,4 +1,3 @@
-
 import { iconColors } from '@/renderer/styles/colors';
 import { ipcBridge } from '@/common';
 import type { ICronJob } from '@/common/adapter/ipcBridge';

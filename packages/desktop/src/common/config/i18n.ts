@@ -1,4 +1,3 @@
-
 /**
  * Shared i18n utility functions used by both main process and renderer.
  */

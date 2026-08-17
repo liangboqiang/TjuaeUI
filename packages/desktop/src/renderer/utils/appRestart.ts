@@ -1,4 +1,3 @@
-
 import type { IAppRestartResult } from '@/common/adapter/ipcBridge';
 import { Message } from '@arco-design/web-react';
 import type { TFunction } from 'i18next';

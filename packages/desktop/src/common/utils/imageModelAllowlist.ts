@@ -1,4 +1,3 @@
-
 /**
  * Allowlist for built-in image generation tool.
  *

@@ -1,4 +1,3 @@
-
 import MarkdownView from '@/renderer/components/Markdown';
 import { Button, Modal, Progress } from '@arco-design/web-react';
 import { CheckOne, Close, Download, Minus } from '@icon-park/react';

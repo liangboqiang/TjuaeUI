@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 
 // 选中文本的位置信息 / Selection position information

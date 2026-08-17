@@ -1,4 +1,3 @@
-
 import { isBackendHttpError } from '@/common/adapter/httpBridge';
 
 export type ConversationBusyKind = 'active_turn' | 'runtime_unavailable';

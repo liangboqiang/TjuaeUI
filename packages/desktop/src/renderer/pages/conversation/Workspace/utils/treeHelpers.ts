@@ -1,4 +1,3 @@
-
 import type { IDirOrFile, IWorkspaceFlatFile } from '@/common/adapter/ipcBridge';
 import type { NodeInstance } from '@arco-design/web-react/es/Tree/interface';
 

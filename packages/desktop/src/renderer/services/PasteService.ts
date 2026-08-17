@@ -1,4 +1,3 @@
-
 import type { FileMetadata } from './FileService';
 import { getFileExtension, UPLOAD_ABORTED_ERROR, uploadFileViaHttp } from './FileService';
 import { trackUpload, type UploadSource } from '@/renderer/hooks/file/useUploadState';

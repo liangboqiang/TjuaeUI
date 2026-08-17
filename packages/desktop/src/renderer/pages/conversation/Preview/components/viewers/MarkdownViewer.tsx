@@ -1,4 +1,3 @@
-
 import { joinPath } from '@/common/chat/chatLib';
 import { ipcBridge } from '@/common';
 import LocalFileLink from '@/renderer/components/Markdown/LocalFileLink';

@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { normalizeLanguageCode, DEFAULT_LANGUAGE } from '@/common/config/i18n';
 

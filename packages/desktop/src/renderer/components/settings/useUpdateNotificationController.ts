@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { AutoUpdateStatus, UpdateDownloadProgressEvent } from '@/common/update/updateTypes';
 import { uuid } from '@/common/utils';

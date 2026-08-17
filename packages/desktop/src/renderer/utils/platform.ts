@@ -1,4 +1,3 @@
-
 /**
  * Platform detection utilities
  * 平台检测工具函数

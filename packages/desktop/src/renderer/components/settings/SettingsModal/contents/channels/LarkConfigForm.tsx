@@ -1,4 +1,3 @@
-
 import type { IChannelPairingRequest, IChannelPluginStatus, IChannelUser } from '@/common/types/channel/channel';
 import { assistants, channel } from '@/common/adapter/ipcBridge';
 import { isTjuaeCliAssistant, type Assistant } from '@/common/types/agent/assistantTypes';

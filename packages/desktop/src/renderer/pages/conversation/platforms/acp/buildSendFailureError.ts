@@ -1,4 +1,3 @@
-
 import { isBackendHttpError } from '@/common/adapter/httpBridge';
 import { getWorkspacePathFromErrorDetails, normalizeWorkspacePathErrorCode } from '../../utils/conversationCreateError';
 import { classifyConversationBusyError } from '../conversationBusyError';

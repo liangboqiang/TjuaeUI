@@ -1,4 +1,3 @@
-
 import { describe, expect, it, vi } from 'vitest';
 import { buildGitHubFeedOptions, GITHUB_UPDATE_REPOSITORY } from '@/process/services/githubUpdateFeed';
 

@@ -1,4 +1,3 @@
-
 import type { ProtocolConverter, ConverterConfig } from './ProtocolConverter';
 import type Anthropic from '@anthropic-ai/sdk';
 

@@ -1,4 +1,3 @@
-
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '@/common/types/office/preview';
 import React from 'react';
 import { useTranslation } from 'react-i18next';

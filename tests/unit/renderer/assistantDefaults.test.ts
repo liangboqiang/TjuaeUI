@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { resolveGuidAssistantDefaults } from '@/renderer/pages/guid/utils/assistantDefaults';
 import type { AssistantDetail } from '@/common/types/agent/assistantTypes';

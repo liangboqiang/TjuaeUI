@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef } from 'react';
 import { SCROLL_SYNC_DEBOUNCE } from '../constants';
 

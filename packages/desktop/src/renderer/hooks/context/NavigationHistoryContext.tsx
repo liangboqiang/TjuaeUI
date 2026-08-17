@@ -1,4 +1,3 @@
-
 /**
  * Navigation history stack for the in-app back/forward buttons.
  *

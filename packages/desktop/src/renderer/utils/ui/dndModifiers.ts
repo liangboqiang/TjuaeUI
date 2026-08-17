@@ -1,4 +1,3 @@
-
 import type { Modifier } from '@dnd-kit/core';
 
 /** Lock a sortable drag to vertical movement (e.g. sidebar lists). */

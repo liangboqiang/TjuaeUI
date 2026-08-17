@@ -1,4 +1,3 @@
-
 import type { IDirOrFile, IWorkspaceFlatFile } from '@/common/adapter/ipcBridge';
 import {
   applyFreshListings,

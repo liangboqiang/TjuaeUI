@@ -1,4 +1,3 @@
-
 /**
  * 主题桥接模块
  * Theme Bridge Module

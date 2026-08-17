@@ -1,4 +1,3 @@
-
 import type React from 'react';
 import { useEffect } from 'react';
 import usePwaMode from '@/renderer/hooks/system/usePwaMode';

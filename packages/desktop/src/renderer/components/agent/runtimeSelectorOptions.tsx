@@ -1,4 +1,3 @@
-
 import type { AcpConfigSetStatus, AcpDerivedOption } from '@/renderer/hooks/agent/useAcpConfigOptions';
 import TjuaeInlineSearchInput from '@/renderer/components/base/TjuaeInlineSearchInput';
 import { Menu, Tooltip } from '@arco-design/web-react';

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import WebviewHost from '@/renderer/components/media/WebviewHost';
 

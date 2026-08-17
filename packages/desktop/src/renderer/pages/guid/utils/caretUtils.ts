@@ -1,4 +1,3 @@
-
 /**
  * Measure the vertical coordinate of a given position in a textarea.
  * @param textarea - Target textarea element

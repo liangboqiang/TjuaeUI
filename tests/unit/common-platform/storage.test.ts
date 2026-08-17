@@ -1,4 +1,3 @@
-
 import type { StorageInterceptor } from '@/common/platform/storage';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

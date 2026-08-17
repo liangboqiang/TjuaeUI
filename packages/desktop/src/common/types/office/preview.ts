@@ -1,4 +1,3 @@
-
 export type PreviewContentType =
   | 'markdown'
   | 'diff'

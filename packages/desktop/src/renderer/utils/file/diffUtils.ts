@@ -1,4 +1,3 @@
-
 /**
  * 从 diff 内容中解析文件路径
  * Parse file path from diff content

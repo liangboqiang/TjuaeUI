@@ -1,4 +1,3 @@
-
 import type { TChatConversation } from '@/common/config/storage';
 
 const SORT_ORDER_GAP = 1000;

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RotatingApiClient } from '@/common/api/RotatingApiClient';
 import { AuthType } from '@/common/types/provider/authType';

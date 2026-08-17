@@ -1,4 +1,3 @@
-
 /**
  * Wire-contract types for `/api/providers/*`.
  *

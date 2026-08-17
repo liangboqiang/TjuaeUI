@@ -1,4 +1,3 @@
-
 /**
  * useAutoScroll - Auto-scroll hook for a plain scroll container
  *

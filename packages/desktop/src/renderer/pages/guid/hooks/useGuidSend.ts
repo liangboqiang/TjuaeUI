@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IMcpServer, TProviderWithModel } from '@/common/config/storage';
 import { toSessionMcpServer } from '@/renderer/hooks/mcp/catalog';

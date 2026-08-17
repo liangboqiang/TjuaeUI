@@ -1,4 +1,3 @@
-
 import type { ISkillSuggestArtifact } from '@/common/adapter/ipcBridge';
 import React from 'react';
 import SkillSuggestCard from './SkillSuggestCard';

@@ -1,4 +1,3 @@
-
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import { getPlatformServices } from '@/common/platform';
 import { getEnvAwareName } from '@/common/config/appEnv';

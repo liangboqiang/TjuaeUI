@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { TConversationRuntimeSummary } from '@/common/config/storage';
 import { getConversationOrNull } from '@/renderer/pages/conversation/utils/conversationCache';

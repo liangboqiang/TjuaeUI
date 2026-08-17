@@ -1,4 +1,3 @@
-
 /**
  * Defines how a slash command is executed.
  * - `template`: Expands into a prompt template text

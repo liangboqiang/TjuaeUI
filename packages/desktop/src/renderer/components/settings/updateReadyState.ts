@@ -1,4 +1,3 @@
-
 export const UPDATE_READY_STATE_EVENT = 'tjuaeui-update-ready-state-changed';
 
 export type UpdateReadyState = {

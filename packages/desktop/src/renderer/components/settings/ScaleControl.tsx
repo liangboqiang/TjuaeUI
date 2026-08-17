@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Button, Slider } from '@arco-design/web-react';
 import { useTranslation } from 'react-i18next';

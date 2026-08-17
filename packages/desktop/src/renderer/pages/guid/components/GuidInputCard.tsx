@@ -1,4 +1,3 @@
-
 import FilePreview from '@/renderer/components/media/FilePreview';
 import UploadProgressBar from '@/renderer/components/media/UploadProgressBar';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';

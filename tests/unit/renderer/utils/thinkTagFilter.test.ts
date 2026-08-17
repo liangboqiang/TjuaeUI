@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { stripThinkTags, hasThinkTags, filterMessageContent } from '@/renderer/utils/chat/thinkTagFilter';
 

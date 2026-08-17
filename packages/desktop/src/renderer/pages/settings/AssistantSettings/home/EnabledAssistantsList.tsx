@@ -1,4 +1,3 @@
-
 import type { AssistantListItem } from '../types';
 import { resolveAssistantSourceTag } from '../assistantUtils';
 import AssistantAvatar from '../AssistantAvatar';

@@ -1,4 +1,3 @@
-
 /**
  * Common approval key interface for permission memory
  * Used by Gemini, ACP, and Codex agents

@@ -1,4 +1,3 @@
-
 import type { ComponentProps } from 'react';
 import type { Streamdown } from 'streamdown';
 

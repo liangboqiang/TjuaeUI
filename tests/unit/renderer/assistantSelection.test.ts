@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import { assistantOrderAfterToggle, selectableAssistants } from '@/renderer/utils/model/assistantSelection';

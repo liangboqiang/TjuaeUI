@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { IconProvider, DEFAULT_ICON_CONFIGS } from '@icon-park/react/es/runtime';
 import { iconColors } from '@/renderer/styles/colors';

@@ -1,4 +1,3 @@
-
 import { mapAcpCommandsToSlashCommands } from './acpMapping';
 import { buildSkillSlashCommands, mergeSlashCommands } from './mergeSlashCommands';
 import type { AcpAvailableCommand, AcpSlashCommandApiItem, SlashCommandItem } from './types';

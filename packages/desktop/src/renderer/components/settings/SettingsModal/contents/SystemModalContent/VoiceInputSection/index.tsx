@@ -1,4 +1,3 @@
-
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
 import TjuaeSelect from '@/renderer/components/base/TjuaeSelect';
 import { SPEECH_TO_TEXT_CONFIG_CHANGED_EVENT } from '@/renderer/services/SpeechToTextService';

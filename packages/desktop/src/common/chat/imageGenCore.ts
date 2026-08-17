@@ -1,4 +1,3 @@
-
 /**
  * Shared image generation logic used by both:
  * - The built-in MCP server (imageGenServer.ts)

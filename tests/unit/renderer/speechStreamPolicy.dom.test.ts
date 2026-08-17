@@ -1,4 +1,3 @@
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SpeechToTextConfig } from '@/common/types/provider/speech';
 import {

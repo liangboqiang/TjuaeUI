@@ -1,4 +1,3 @@
-
 import type { TMessage } from '@/common/chat/chatLib';
 import { emitter } from '@/renderer/utils/emitter';
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';

@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IMessageSearchItem } from '@/common/types/team/database';
 import TjuaeModal from '@/renderer/components/base/TjuaeModal';

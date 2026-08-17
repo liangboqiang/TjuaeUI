@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { UpdateReleaseInfo } from '@/common/update/updateTypes';
 

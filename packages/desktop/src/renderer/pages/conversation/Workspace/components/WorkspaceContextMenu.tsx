@@ -1,4 +1,3 @@
-
 import type { IDirOrFile } from '@/common/adapter/ipcBridge';
 import React from 'react';
 import type { TFunction } from 'i18next';

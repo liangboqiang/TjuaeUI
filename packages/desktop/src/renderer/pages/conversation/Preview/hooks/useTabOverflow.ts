@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TAB_OVERFLOW_THRESHOLD } from '../constants';
 

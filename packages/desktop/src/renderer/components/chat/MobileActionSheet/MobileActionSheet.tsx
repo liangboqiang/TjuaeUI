@@ -1,4 +1,3 @@
-
 import { Left, Right } from '@icon-park/react';
 import React, { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

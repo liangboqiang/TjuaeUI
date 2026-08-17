@@ -1,4 +1,3 @@
-
 /**
  * Input parameters for determining slash command list availability.
  */

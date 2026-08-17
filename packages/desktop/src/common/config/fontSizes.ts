@@ -1,4 +1,3 @@
-
 /** Per-region configurable font sizes (px). Shared by main + renderer (no DOM). */
 export type FontSizeKey = 'chat' | 'markdown' | 'code';
 

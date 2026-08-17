@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { abortUploads, type UploadSource } from './useUploadState';
 

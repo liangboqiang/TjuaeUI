@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '@/common/types/office/preview';
 import { Message } from '@arco-design/web-react';

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import WebuiModalContent from '@/renderer/components/settings/SettingsModal/contents/WebuiModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';

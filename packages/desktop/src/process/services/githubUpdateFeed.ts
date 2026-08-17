@@ -1,4 +1,3 @@
-
 export const GITHUB_UPDATE_REPOSITORY = {
   owner: 'liangboqiang',
   repo: 'TjuaeUI',

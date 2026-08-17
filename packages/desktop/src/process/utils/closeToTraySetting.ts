@@ -1,4 +1,3 @@
-
 import { httpRequest } from '@/common/adapter/httpBridge';
 import { ProcessConfig } from './initStorage';
 

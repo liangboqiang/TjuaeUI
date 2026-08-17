@@ -1,4 +1,3 @@
-
 interface InspectMessages {
   copySuccess: string;
 }

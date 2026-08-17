@@ -1,4 +1,3 @@
-
 import type { AssistantListItem } from '../types';
 import AssistantAvatar from '../AssistantAvatar';
 import RuntimeBadge from './RuntimeBadge';

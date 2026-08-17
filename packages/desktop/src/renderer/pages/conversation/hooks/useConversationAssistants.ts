@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import useSWR, { mutate } from 'swr';
 import { ipcBridge } from '@/common';

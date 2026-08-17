@@ -1,4 +1,3 @@
-
 import classNames from 'classnames';
 import React, { useState } from 'react';
 import { Down, PreviewOpen } from '@icon-park/react';

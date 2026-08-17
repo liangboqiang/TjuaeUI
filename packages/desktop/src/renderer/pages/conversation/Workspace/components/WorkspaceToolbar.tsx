@@ -1,4 +1,3 @@
-
 import { iconColors } from '@/renderer/styles/colors';
 import { isElectronDesktop } from '@/renderer/utils/platform';
 import { Dropdown, Menu, Tooltip } from '@arco-design/web-react';

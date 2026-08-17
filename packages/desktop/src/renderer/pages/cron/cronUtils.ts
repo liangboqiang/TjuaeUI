@@ -1,4 +1,3 @@
-
 import type { ICronJob } from '@/common/adapter/ipcBridge';
 import type { TChatConversation } from '@/common/config/storage';
 import type { TFunction } from 'i18next';

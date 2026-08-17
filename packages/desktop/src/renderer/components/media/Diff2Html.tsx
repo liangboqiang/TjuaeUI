@@ -1,4 +1,3 @@
-
 import { useThemeContext } from '@/renderer/hooks/context/ThemeContext';
 import { iconColors } from '@/renderer/styles/colors';
 import { extractContentFromDiff, parseFilePathFromDiff } from '@/renderer/utils/file/diffUtils';

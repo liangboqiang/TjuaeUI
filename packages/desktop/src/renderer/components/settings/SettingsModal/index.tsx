@@ -1,4 +1,3 @@
-
 import TjuaeModal from '@/renderer/components/base/TjuaeModal';
 import TjuaeScrollArea from '@/renderer/components/base/TjuaeScrollArea';
 import { iconColors } from '@/renderer/styles/colors';

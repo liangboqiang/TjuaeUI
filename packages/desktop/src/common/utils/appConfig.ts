@@ -1,4 +1,3 @@
-
 // Configuration for app info - to be set by the caller in main process
 let appConfig: { name: string; version: string; protocolVersion: string } | null = null;
 

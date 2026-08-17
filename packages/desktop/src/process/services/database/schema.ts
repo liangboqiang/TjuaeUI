@@ -1,4 +1,3 @@
-
 import type { ISqliteDriver } from './drivers/ISqliteDriver';
 
 /**

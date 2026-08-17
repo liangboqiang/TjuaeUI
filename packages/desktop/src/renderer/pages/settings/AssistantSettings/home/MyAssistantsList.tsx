@@ -1,4 +1,3 @@
-
 import type { AssistantListItem } from '../types';
 import { type AssistantEnabledFilter, filterByEnabled, groupMyAssistants } from '../assistantUtils';
 import MyAssistantCard from './MyAssistantCard';

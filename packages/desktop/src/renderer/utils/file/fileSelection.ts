@@ -1,4 +1,3 @@
-
 import type { FileOrFolderItem } from '@/renderer/utils/file/fileTypes';
 
 export type FileSelectionItem = string | FileOrFolderItem;

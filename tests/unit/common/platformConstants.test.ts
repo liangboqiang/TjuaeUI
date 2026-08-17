@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { isNewApiPlatform, NEW_API_PLATFORM_ID } from '@/common/utils/platformConstants';
 

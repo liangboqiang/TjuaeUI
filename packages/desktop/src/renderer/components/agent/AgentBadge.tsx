@@ -1,4 +1,3 @@
-
 import { resolveAgentLogo, useAgentLogos } from '@/renderer/utils/model/agentLogo';
 import { iconColors } from '@/renderer/styles/colors';
 import { Robot } from '@icon-park/react';

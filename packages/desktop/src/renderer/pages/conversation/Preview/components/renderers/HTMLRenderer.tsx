@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { useTypingAnimation } from '@/renderer/hooks/chat/useTypingAnimation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';

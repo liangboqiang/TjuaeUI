@@ -1,4 +1,3 @@
-
 /**
  * Set of file extensions that support in-app preview
  */

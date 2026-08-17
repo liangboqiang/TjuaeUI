@@ -1,4 +1,3 @@
-
 import type { IAppRestartResult } from '@/common/adapter/ipcBridge';
 import type { App } from 'electron';
 

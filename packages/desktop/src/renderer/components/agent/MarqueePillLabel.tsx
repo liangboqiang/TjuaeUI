@@ -1,4 +1,3 @@
-
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 

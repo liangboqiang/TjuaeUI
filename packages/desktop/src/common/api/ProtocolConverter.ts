@@ -1,4 +1,3 @@
-
 /**
  * Generic protocol converter interface for transforming requests and responses
  * between different AI service protocols.

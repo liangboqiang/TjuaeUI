@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { buildPdfSrc } from '../../previewUrls';
 import { usePreviewToolbarExtras } from '../../context/PreviewToolbarExtrasContext';

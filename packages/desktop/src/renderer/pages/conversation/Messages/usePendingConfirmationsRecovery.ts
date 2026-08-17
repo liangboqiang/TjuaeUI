@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { IConfirmation, IMessagePermission, TMessage } from '@/common/chat/chatLib';
 import { useEffect } from 'react';

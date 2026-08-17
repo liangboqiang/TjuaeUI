@@ -1,4 +1,3 @@
-
 /**
  * Timeline utility functions for conversation history grouping
  * 会话历史分组的时间线工具函数

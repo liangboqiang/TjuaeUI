@@ -1,4 +1,3 @@
-
 /**
  * Frontend think tag filter
  * Filters think tags from message content before rendering

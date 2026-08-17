@@ -1,4 +1,3 @@
-
 /** MIME type map keyed by lowercase file extension, for binary file downloads. */
 export const BINARY_MIME_MAP: Record<string, string> = {
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
