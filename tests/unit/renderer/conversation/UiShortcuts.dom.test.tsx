@@ -152,6 +152,19 @@ describe('common desktop UI shortcuts', () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
+  it('can mount a required initial workspace in expanded state', () => {
+    const { result } = renderHook(() =>
+      useWorkspaceCollapse({
+        workspaceEnabled: true,
+        isMobile: false,
+        conversation_id: 'skill-conversation',
+        initiallyExpanded: true,
+      })
+    );
+
+    expect(result.current.rightSiderCollapsed).toBe(false);
+  });
+
   it('leaves Cmd/Ctrl+L untouched when the conversation has no enabled workspace', () => {
     const { result } = renderHook(() => {
       const workspace = useWorkspaceCollapse({

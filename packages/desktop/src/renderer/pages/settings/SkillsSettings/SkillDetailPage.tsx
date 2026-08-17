@@ -173,6 +173,7 @@ const SkillDetailPage: React.FC = () => {
       conversation={conversation}
       workspaceOverride={skill.path}
       initialOpenFiles={['.tjuae-skill.json', 'SKILL.md']}
+      initiallyExpandWorkspace
     />
   );
 };

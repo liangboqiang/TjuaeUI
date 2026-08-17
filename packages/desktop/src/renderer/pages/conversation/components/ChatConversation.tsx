@@ -124,10 +124,13 @@ const _AddNewConversation: React.FC<{ conversation: TChatConversation }> = ({ co
 
 type TjuaeCliConversation = Extract<TChatConversation, { type: 'tjuaecli' }>;
 
-const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; sliderTitle: React.ReactNode }> = ({
-  conversation,
-  sliderTitle,
-}) => {
+const TjuaeCliConversationPanel: React.FC<{
+  conversation: TjuaeCliConversation;
+  sliderTitle: React.ReactNode;
+  workspaceOverride?: string;
+  initialOpenFiles?: string[];
+  initiallyExpandWorkspace?: boolean;
+}> = ({ conversation, sliderTitle, workspaceOverride, initialOpenFiles, initiallyExpandWorkspace }) => {
   const runtimeView = useConversationRuntimeView(conversation.id);
   const onSelectModel = useCallback(
     async (_provider: IProvider, modelName: string) => {
@@ -150,7 +153,8 @@ const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; 
     initialModel: conversation.model,
     onSelectModel,
   });
-  const workspaceEnabled = Boolean(conversation.extra?.workspace);
+  const workspace = workspaceOverride ?? conversation.extra?.workspace;
+  const workspaceEnabled = Boolean(workspace);
   const cronJobId = resolveCronJobId(conversation.extra);
   const { info: presetAssistantInfo } = usePresetAssistantInfo(conversation);
   const tjuaecliAssistantId = presetAssistantInfo?.assistantId;
@@ -160,7 +164,13 @@ const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; 
   const chatLayoutProps = {
     title: conversation.name,
     siderTitle: sliderTitle,
-    sider: <ChatSlider conversation={conversation} />,
+    sider: (
+      <ChatSlider
+        conversation={conversation}
+        workspaceOverride={workspaceOverride}
+        initialOpenFiles={initialOpenFiles}
+      />
+    ),
     headerExtra: (
       <div className='flex items-center gap-8px'>
         {isMobile && <TraceDrawer conversationId={conversation.id} />}
@@ -168,7 +178,8 @@ const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; 
       </div>
     ),
     workspaceEnabled,
-    workspacePath: conversation.extra?.workspace,
+    initiallyExpandWorkspace,
+    workspacePath: workspace,
     isTemporaryWorkspace: (conversation.extra as { is_temporary_workspace?: boolean } | undefined)
       ?.is_temporary_workspace,
     backend: 'tjuaecli' as const,
@@ -179,7 +190,7 @@ const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; 
     <ChatLayout {...chatLayoutProps} conversation_id={conversation.id}>
       <TjuaeCliChat
         conversation_id={conversation.id}
-        workspace={conversation.extra.workspace}
+        workspace={workspace}
         modelSelection={modelSelection}
         session_mode={conversation.extra?.session_mode}
         cron_job_id={cronJobId}
@@ -200,7 +211,8 @@ const ChatConversation: React.FC<{
   hideSendBox?: boolean;
   workspaceOverride?: string;
   initialOpenFiles?: string[];
-}> = ({ conversation, hideSendBox, workspaceOverride, initialOpenFiles }) => {
+  initiallyExpandWorkspace?: boolean;
+}> = ({ conversation, hideSendBox, workspaceOverride, initialOpenFiles, initiallyExpandWorkspace }) => {
   const { t } = useTranslation();
   useActiveLease({ type: 'conversation', id: conversation?.id });
   const workspaceEnabled = Boolean(workspaceOverride ?? conversation?.extra?.workspace);
@@ -271,7 +283,16 @@ const ChatConversation: React.FC<{
   }, [t]);
 
   if (conversation && conversation.type === 'tjuaecli') {
-    return <TjuaeCliConversationPanel key={conversation.id} conversation={conversation} sliderTitle={sliderTitle} />;
+    return (
+      <TjuaeCliConversationPanel
+        key={conversation.id}
+        conversation={conversation}
+        sliderTitle={sliderTitle}
+        workspaceOverride={workspaceOverride}
+        initialOpenFiles={initialOpenFiles}
+        initiallyExpandWorkspace={initiallyExpandWorkspace}
+      />
+    );
   }
 
   // 如果有预设助手信息，使用预设助手的 logo 和名称；加载中时不进入 fallback；否则使用 backend 的 logo
@@ -312,6 +333,7 @@ const ChatConversation: React.FC<{
         />
       }
       workspaceEnabled={workspaceEnabled}
+      initiallyExpandWorkspace={initiallyExpandWorkspace}
       workspacePath={workspaceOverride ?? conversation?.extra?.workspace}
       isTemporaryWorkspace={
         (conversation?.extra as { is_temporary_workspace?: boolean } | undefined)?.is_temporary_workspace

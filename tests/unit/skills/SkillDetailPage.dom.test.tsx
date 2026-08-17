@@ -45,15 +45,18 @@ vi.mock('@/renderer/pages/conversation/components/ChatConversation', () => ({
     conversation,
     workspaceOverride,
     initialOpenFiles,
+    initiallyExpandWorkspace,
   }: {
     conversation: { id: string };
     workspaceOverride?: string;
     initialOpenFiles?: string[];
+    initiallyExpandWorkspace?: boolean;
   }) => (
     <div
       data-testid='shared-chat-workbench'
       data-workspace={workspaceOverride}
       data-open-files={initialOpenFiles?.join(',')}
+      data-workspace-expanded={String(Boolean(initiallyExpandWorkspace))}
     >
       {conversation.id}
     </div>
@@ -114,6 +117,7 @@ describe('SkillDetailPage', () => {
     const workbench = screen.getByTestId('shared-chat-workbench');
     expect(workbench).toHaveAttribute('data-workspace', skill.path);
     expect(workbench).toHaveAttribute('data-open-files', '.tjuae-skill.json,SKILL.md');
+    expect(workbench).toHaveAttribute('data-workspace-expanded', 'true');
   });
 
   it('keeps Windows verbatim workspace paths valid when opening the default documents', async () => {

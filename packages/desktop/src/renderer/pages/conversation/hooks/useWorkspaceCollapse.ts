@@ -10,6 +10,8 @@ import { useEffect, useRef, useState } from 'react';
 type UseWorkspaceCollapseParams = {
   workspaceEnabled: boolean;
   isMobile: boolean;
+  /** Expand the workspace on the first desktop render, before its tree can emit file state. */
+  initiallyExpanded?: boolean;
   /**
    * Identifier whose change forces a mobile collapse (typically the active
    * conversation id; in team mode, the active agent's conversation id).
@@ -55,13 +57,15 @@ type UseWorkspaceCollapseReturn = {
 export function useWorkspaceCollapse({
   workspaceEnabled,
   isMobile,
+  initiallyExpanded = false,
   conversation_id,
   preferenceKey,
   isTemporaryWorkspace,
 }: UseWorkspaceCollapseParams): UseWorkspaceCollapseReturn {
-  // Workspace panel always starts collapsed; preference and hasFiles events
-  // drive expand. See WORKSPACE_HAS_FILES_EVENT handler below.
-  const [rightSiderCollapsed, setRightSiderCollapsed] = useState(true);
+  // Most conversations start collapsed. Hosts with required initial documents
+  // (for example the skill Workbench) can mount the shared workspace once in
+  // expanded state so the tree and initial file controller are not starved.
+  const [rightSiderCollapsed, setRightSiderCollapsed] = useState(!initiallyExpanded);
 
   // Mirror ref for collapse state
   const rightCollapsedRef = useRef(rightSiderCollapsed);

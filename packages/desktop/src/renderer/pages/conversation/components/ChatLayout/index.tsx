@@ -55,6 +55,7 @@ const ChatLayout: React.FC<{
   agent_name?: string;
   headerExtra?: React.ReactNode;
   workspaceEnabled?: boolean;
+  initiallyExpandWorkspace?: boolean;
   /** Conversation ID for mode switching */
   conversation_id?: string;
   /** Custom tabs slot; when provided, replaces the default ConversationTabs */
@@ -76,7 +77,14 @@ const ChatLayout: React.FC<{
 }> = (props) => {
   const { t } = useTranslation();
   const { conversation_id, workspacePath, isTemporaryWorkspace } = props;
-  const { backend, presetAssistant, agent_name, workspaceEnabled = true, workspacePreferenceKey } = props;
+  const {
+    backend,
+    presetAssistant,
+    agent_name,
+    workspaceEnabled = true,
+    workspacePreferenceKey,
+    initiallyExpandWorkspace,
+  } = props;
   const layout = useLayoutContext();
   const isMacRuntime = isMacEnvironment();
   const isWindowsRuntime = isWindowsEnvironment();
@@ -93,6 +101,7 @@ const ChatLayout: React.FC<{
   const { rightSiderCollapsed, setRightSiderCollapsed } = useWorkspaceCollapse({
     workspaceEnabled,
     isMobile,
+    initiallyExpanded: initiallyExpandWorkspace,
     conversation_id,
     preferenceKey: workspacePreferenceKey ?? conversation_id,
     isTemporaryWorkspace,
