@@ -16,7 +16,13 @@ type FileChangeListProps = {
   unstaged: FileChangeInfo[];
   loading: boolean;
   onRefresh: () => Promise<void>;
-  onOpenDiff: (diffContent: string, fileName: string, filePath: string) => void;
+  onOpenDiff: (
+    diffContent: string,
+    fileName: string,
+    filePath: string,
+    originalContent?: string,
+    modifiedContent?: string
+  ) => void;
   onStageFile: (filePath: string) => Promise<void>;
   onStageAll: () => Promise<void>;
   onUnstageFile: (filePath: string) => Promise<void>;
@@ -110,7 +116,7 @@ const FileChangeList: React.FC<FileChangeListProps> = ({
         const before = kind === 'staged' ? baseline : (index ?? baseline);
         const after = kind === 'staged' ? index : current;
         const patch = createTwoFilesPatch(change.relativePath, change.relativePath, before ?? '', after ?? '');
-        onOpenDiff(patch, change.relativePath, change.file_path);
+        onOpenDiff(patch, change.relativePath, change.file_path, before ?? '', after ?? '');
       });
     },
     [onOpenDiff, run, workspace]

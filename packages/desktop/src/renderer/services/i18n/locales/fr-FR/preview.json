@@ -22,9 +22,9 @@
   "showConversationPane": "Afficher le panneau de conversation",
   "source": "Source",
   "code": "Code",
-  "preview": "Aperçu",
+  "preview": "Rendu",
   "editor": "Éditeur",
-  "previewEffect": "Aperçu",
+  "previewEffect": "Vue rendue",
   "snapshot": "Instantané",
   "downloadMarkdown": "Télécharger le fichier Markdown",
   "downloadCode": "Télécharger le fichier {{language}}",
@@ -55,14 +55,14 @@
   "closeRight": "Fermer à droite",
   "closeOthers": "Fermer les autres",
   "closeAll": "Tout fermer",
-  "readOnlyLabel": "Aperçu en lecture seule",
+  "readOnlyLabel": "Rendu en lecture seule",
   "pathLabel": "Chemin",
   "missingFile": {
     "title": "Fichier introuvable",
     "openInNewTab": "Essayez d'ouvrir dans un nouvel onglet"
   },
   "noTabs": "Aucun onglet ouvert",
-  "openInPanelTooltip": "Voir dans le panneau d'aperçu",
+  "openInPanelTooltip": "Ouvrir dans le panneau de rendu",
   "mermaidTitle": "Diagramme Mermaid",
   "largeTextTruncatedHint": "Mode aperçu grand fichier : affichage des {{count}} premiers caractères pour les performances.",
   "truncatedBanner": "Le contenu de l'aperçu a été tronqué. Cliquez sur télécharger pour voir le fichier complet.",
@@ -115,5 +115,49 @@
     "inspectElement": "Inspecter l'élément",
     "inspectElementEnable": "Activer l'inspecteur d'éléments",
     "inspectElementDisable": "Désactiver l'inspecteur d'éléments"
+  },
+  "tjuaeManifest": {
+    "invalidJson": "This Tjuae manifest is not valid JSON. Fix it in Source before using the structured renderer.",
+    "description": "Edit this manifest through a structured renderer and save it with the shared editor workflow.",
+    "readOnly": "Lecture seule",
+    "editable": "Modifiable",
+    "changes": "Modifications du manifeste",
+    "diffDescription": "Les modifications sont regroupées par champ plutôt qu’affichées comme un diff JSON brut.",
+    "noChanges": "Aucune modification",
+    "before": "Avant",
+    "after": "Après",
+    "kinds": {
+      "manifest": "Manifest",
+      "skill": "Skill",
+      "assistant": "Assistant",
+      "agent": "Agent",
+      "model": "Model",
+      "tool": "Tool",
+      "team": "Team",
+      "project": "Project"
+    },
+    "fields": {
+      "schema": "Schema",
+      "schemaVersion": "Schema version",
+      "id": "Identifier",
+      "version": "Version",
+      "categories": "Categories",
+      "enabled": "Enabled",
+      "autoInject": "Auto inject",
+      "source": "Source",
+      "sourceKind": "Source type",
+      "marketId": "Market",
+      "repository": "Repository",
+      "path": "Repository path",
+      "revision": "Remote revision",
+      "name": "Name",
+      "description": "Description",
+      "tags": "Tags",
+      "releaseNotes": "Release notes"
+    },
+    "sourceKinds": {
+      "local": "Local",
+      "market": "Marché"
+    }
   }
 }

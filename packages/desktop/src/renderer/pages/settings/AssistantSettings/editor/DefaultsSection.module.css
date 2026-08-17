@@ -104,18 +104,3 @@
   line-height: 30px;
   color: var(--color-text-1);
 }
-
-.hiddenAutoOption {
-  display: none !important;
-}
-
-.hiddenAutoOptionWrapper {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  padding-block: 0 !important;
-  padding-inline: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  overflow: hidden !important;
-}

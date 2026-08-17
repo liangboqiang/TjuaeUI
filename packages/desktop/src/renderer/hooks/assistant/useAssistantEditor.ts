@@ -2,14 +2,8 @@ import { ipcBridge } from '@/common';
 import type { IMcpServer } from '@/common/config/storage';
 import type { Assistant, CreateAssistantRequest, UpdateAssistantRequest } from '@/common/types/agent/assistantTypes';
 import type { Message } from '@arco-design/web-react';
-import type {
-  AssistantListItem,
-  BuiltinAutoSkill,
-  PendingSkill,
-  SkillInfo,
-} from '@/renderer/pages/settings/AssistantSettings/types';
+import type { AssistantListItem, AutoInjectSkill, SkillInfo } from '@/renderer/pages/settings/AssistantSettings/types';
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
-import { getSkillImportErrorMessage } from '@/renderer/pages/settings/SkillsSettings/skillImportMessages';
 import { emitter } from '@/renderer/utils/emitter';
 import { assistantOrderAfterToggle, selectableAssistants } from '@/renderer/utils/model/assistantSelection';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,7 +22,6 @@ type UseAssistantEditorParams = {
 };
 
 type AssistantScalarDefaultMode = 'auto' | 'fixed';
-type AssistantSkillsDefaultMode = 'auto' | 'fixed';
 type AssistantMcpDefaultMode = 'auto' | 'fixed';
 
 const isBuiltinAssistant = (assistant: Assistant | null | undefined): boolean => assistant?.source === 'builtin';
@@ -53,11 +46,11 @@ const resolveLocalizedProfileField = (
   fallbackValue = ''
 ): string => localizedValues?.[localeKey] ?? localizedValues?.['en-US'] ?? baseValue ?? fallbackValue;
 
-const isAutoInjectedBuiltinSkill = (skill: SkillInfo): boolean => skill.source === 'builtin' && skill.is_auto_inject;
+const isAutoInjectedSkill = (skill: SkillInfo): boolean => skill.preferences.enabled && skill.preferences.autoInject;
 
-const deriveBuiltinAutoSkills = (skills: SkillInfo[]): BuiltinAutoSkill[] =>
-  skills.filter(isAutoInjectedBuiltinSkill).map((skill) => ({
-    name: skill.name,
+const deriveAutoInjectSkills = (skills: SkillInfo[]): AutoInjectSkill[] =>
+  skills.filter(isAutoInjectedSkill).map((skill) => ({
+    name: skill.slug,
     description: skill.description,
   }));
 
@@ -92,7 +85,6 @@ export const useAssistantEditor = ({
   const [defaultPermissionValue, setDefaultPermissionValue] = useState('');
   const [defaultThoughtLevelMode, setDefaultThoughtLevelMode] = useState<AssistantScalarDefaultMode>('auto');
   const [defaultThoughtLevelValue, setDefaultThoughtLevelValue] = useState('');
-  const [defaultSkillsMode, setDefaultSkillsMode] = useState<AssistantSkillsDefaultMode>('fixed');
   const [defaultMcpMode, setDefaultMcpMode] = useState<AssistantMcpDefaultMode>('auto');
   const [availableMcpServers, setAvailableMcpServers] = useState<IMcpServer[]>([]);
   const [selectedMcpIds, setSelectedMcpIds] = useState<string[]>([]);
@@ -101,14 +93,10 @@ export const useAssistantEditor = ({
   const [promptViewMode, setPromptViewMode] = useState<'edit' | 'preview'>('preview');
 
   const [availableSkills, setAvailableSkills] = useState<SkillInfo[]>([]);
-  const [customSkills, setCustomSkills] = useState<string[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [pendingSkills, setPendingSkills] = useState<PendingSkill[]>([]);
-  const [deletePendingSkillName, setDeletePendingSkillName] = useState<string | null>(null);
-  const [deleteCustomSkillName, setDeleteCustomSkillName] = useState<string | null>(null);
 
-  const [builtinAutoSkills, setBuiltinAutoSkills] = useState<BuiltinAutoSkill[]>([]);
-  const [disabledBuiltinSkills, setDisabledBuiltinSkills] = useState<string[]>([]);
+  const [autoInjectSkills, setAutoInjectSkills] = useState<AutoInjectSkill[]>([]);
+  const [excludedAutoInjectSkills, setExcludedAutoInjectSkills] = useState<string[]>([]);
 
   const loadAssistantDetail = useCallback(
     async (assistantId: string) => ipcBridge.assistants.get.invoke({ id: assistantId, locale: localeKey }),
@@ -134,7 +122,7 @@ export const useAssistantEditor = ({
         ipcBridge.fs.listAvailableSkills.invoke(),
         ensureBackendMcpCatalog().then(({ allServers }) => allServers),
       ]);
-      return { detail, skillsList, autoSkills: deriveBuiltinAutoSkills(skillsList), mcpServers };
+      return { detail, skillsList, autoSkills: deriveAutoInjectSkills(skillsList), mcpServers };
     },
     [loadAssistantDetail]
   );
@@ -182,12 +170,8 @@ export const useAssistantEditor = ({
   }, [activeAssistant, editVisible, isCreating, loadAssistantDetail, localeKey]);
 
   const resetSkillEditorState = useCallback(() => {
-    setPendingSkills([]);
-    setDeletePendingSkillName(null);
-    setDeleteCustomSkillName(null);
     setSelectedSkills([]);
-    setCustomSkills([]);
-    setDisabledBuiltinSkills([]);
+    setExcludedAutoInjectSkills([]);
   }, []);
 
   const resetDefaultConfigState = useCallback(() => {
@@ -198,7 +182,6 @@ export const useAssistantEditor = ({
     setDefaultPermissionValue('');
     setDefaultThoughtLevelMode('auto');
     setDefaultThoughtLevelValue('');
-    setDefaultSkillsMode('fixed');
     setDefaultMcpMode('auto');
     setSelectedMcpIds([]);
   }, []);
@@ -261,21 +244,19 @@ export const useAssistantEditor = ({
       setDefaultPermissionValue(detail.defaults.permission.value || '');
       setDefaultThoughtLevelMode(detail.defaults.thought_level.mode === 'fixed' ? 'fixed' : 'auto');
       setDefaultThoughtLevelValue(detail.defaults.thought_level.value || '');
-      setDefaultSkillsMode(detail.defaults.skills.mode === 'auto' ? 'auto' : 'fixed');
       setDefaultMcpMode(detail.defaults.mcps.mode === 'fixed' ? 'fixed' : 'auto');
       setSelectedMcpIds(detail.defaults.mcps.value ?? []);
       setAvailableSkills(skillsList);
-      setBuiltinAutoSkills(autoSkills);
+      setAutoInjectSkills(autoSkills);
       setAvailableMcpServers(mcpServers);
       setSelectedSkills(detail.capabilities.default_skill_ids ?? []);
-      setCustomSkills(isBuiltinAssistant(assistant) ? [] : (detail.capabilities.custom_skill_names ?? []));
-      setDisabledBuiltinSkills(detail.capabilities.default_disabled_builtin_skill_ids ?? []);
+      setExcludedAutoInjectSkills(detail.capabilities.default_disabled_builtin_skill_ids ?? []);
     } catch (error) {
       console.error('Failed to load assistant detail:', error);
       setEditContext('');
       resetDefaultConfigState();
       setAvailableSkills([]);
-      setBuiltinAutoSkills([]);
+      setAutoInjectSkills([]);
       setAvailableMcpServers([]);
       resetSkillEditorState();
     }
@@ -301,12 +282,12 @@ export const useAssistantEditor = ({
         ensureBackendMcpCatalog().then(({ allServers }) => allServers),
       ]);
       setAvailableSkills(skillsList);
-      setBuiltinAutoSkills(deriveBuiltinAutoSkills(skillsList));
+      setAutoInjectSkills(deriveAutoInjectSkills(skillsList));
       setAvailableMcpServers(mcpServers);
     } catch (error) {
       console.error('Failed to load skills:', error);
       setAvailableSkills([]);
-      setBuiltinAutoSkills([]);
+      setAutoInjectSkills([]);
       setAvailableMcpServers([]);
     }
   };
@@ -334,21 +315,19 @@ export const useAssistantEditor = ({
       setDefaultPermissionValue(detail.defaults.permission.value || '');
       setDefaultThoughtLevelMode(detail.defaults.thought_level.mode === 'fixed' ? 'fixed' : 'auto');
       setDefaultThoughtLevelValue(detail.defaults.thought_level.value || '');
-      setDefaultSkillsMode(detail.defaults.skills.mode === 'auto' ? 'auto' : 'fixed');
       setDefaultMcpMode(detail.defaults.mcps.mode === 'fixed' ? 'fixed' : 'auto');
       setSelectedMcpIds(detail.defaults.mcps.value ?? []);
       setAvailableSkills(skillsList);
-      setBuiltinAutoSkills(autoSkills);
+      setAutoInjectSkills(autoSkills);
       setAvailableMcpServers(mcpServers);
       setSelectedSkills(detail.capabilities.default_skill_ids ?? []);
-      setCustomSkills(detail.capabilities.custom_skill_names ?? []);
-      setDisabledBuiltinSkills(detail.capabilities.default_disabled_builtin_skill_ids ?? []);
+      setExcludedAutoInjectSkills(detail.capabilities.default_disabled_builtin_skill_ids ?? []);
     } catch (error) {
       console.error('Failed to load assistant content for duplication:', error);
       setEditContext('');
       resetDefaultConfigState();
       setAvailableSkills([]);
-      setBuiltinAutoSkills([]);
+      setAutoInjectSkills([]);
       setAvailableMcpServers([]);
       resetSkillEditorState();
     }
@@ -405,29 +384,6 @@ export const useAssistantEditor = ({
         return;
       }
 
-      if (pendingSkills.length > 0) {
-        const skillsToImport = pendingSkills.filter(
-          (pending) => !availableSkills.some((available) => available.name === pending.name)
-        );
-
-        for (const pendingSkill of skillsToImport) {
-          try {
-            await ipcBridge.fs.importSkills.invoke({ skill_path: pendingSkill.path });
-          } catch (error) {
-            console.error(`Failed to import skill "${pendingSkill.name}":`, error);
-            message.error(getSkillImportErrorMessage(error, t));
-            return;
-          }
-        }
-
-        if (skillsToImport.length > 0) {
-          const skillsList = await ipcBridge.fs.listAvailableSkills.invoke();
-          setAvailableSkills(skillsList);
-        }
-      }
-
-      const pendingSkillNames = pendingSkills.map((skill) => skill.name);
-      const finalCustomSkills = Array.from(new Set([...customSkills, ...pendingSkillNames]));
       const recommendedPrompts = editRecommendedPromptsText
         .split('\n')
         .map((prompt) => prompt.trim())
@@ -445,7 +401,7 @@ export const useAssistantEditor = ({
           defaultThoughtLevelMode === 'fixed'
             ? { mode: 'fixed', value: defaultThoughtLevelValue.trim() }
             : { mode: defaultThoughtLevelMode },
-        skills: { mode: defaultSkillsMode, value: selectedSkills },
+        skills: { mode: 'fixed' as const, value: selectedSkills },
         mcps: { mode: defaultMcpMode, value: selectedMcpIds },
       };
 
@@ -456,8 +412,7 @@ export const useAssistantEditor = ({
           avatar: editAvatar || undefined,
           agent_id: editAgent || undefined,
           enabled_skills: selectedSkills,
-          custom_skill_names: finalCustomSkills,
-          disabled_builtin_skills: disabledBuiltinSkills.length > 0 ? disabledBuiltinSkills : undefined,
+          disabled_builtin_skills: excludedAutoInjectSkills.length > 0 ? excludedAutoInjectSkills : undefined,
           recommended_prompts: recommendedPrompts,
           defaults,
         };
@@ -495,8 +450,7 @@ export const useAssistantEditor = ({
             id: activeAssistant.id,
             description: editDescription || undefined,
             enabled_skills: selectedSkills,
-            custom_skill_names: finalCustomSkills,
-            disabled_builtin_skills: disabledBuiltinSkills.length > 0 ? disabledBuiltinSkills : undefined,
+            disabled_builtin_skills: excludedAutoInjectSkills.length > 0 ? excludedAutoInjectSkills : undefined,
             recommended_prompts: recommendedPrompts,
             defaults,
           };
@@ -508,8 +462,7 @@ export const useAssistantEditor = ({
             avatar: editAvatar || undefined,
             agent_id: editAgent || undefined,
             enabled_skills: selectedSkills,
-            custom_skill_names: finalCustomSkills,
-            disabled_builtin_skills: disabledBuiltinSkills.length > 0 ? disabledBuiltinSkills : undefined,
+            disabled_builtin_skills: excludedAutoInjectSkills.length > 0 ? excludedAutoInjectSkills : undefined,
             recommended_prompts: recommendedPrompts,
             defaults,
           };
@@ -527,7 +480,6 @@ export const useAssistantEditor = ({
       }
 
       setEditVisible(false);
-      setPendingSkills([]);
     } catch (error) {
       console.error('Failed to save assistant:', error);
       message.error(t('common.failed', { defaultValue: 'Failed' }));
@@ -633,8 +585,6 @@ export const useAssistantEditor = ({
     setDefaultThoughtLevelMode,
     defaultThoughtLevelValue,
     setDefaultThoughtLevelValue,
-    defaultSkillsMode,
-    setDefaultSkillsMode,
     defaultMcpMode,
     setDefaultMcpMode,
     availableMcpServers,
@@ -647,19 +597,11 @@ export const useAssistantEditor = ({
     setPromptViewMode,
     availableSkills,
     setAvailableSkills,
-    customSkills,
-    setCustomSkills,
     selectedSkills,
     setSelectedSkills,
-    pendingSkills,
-    setPendingSkills,
-    deletePendingSkillName,
-    setDeletePendingSkillName,
-    deleteCustomSkillName,
-    setDeleteCustomSkillName,
-    builtinAutoSkills,
-    disabledBuiltinSkills,
-    setDisabledBuiltinSkills,
+    autoInjectSkills,
+    excludedAutoInjectSkills,
+    setExcludedAutoInjectSkills,
     handleEdit,
     handleCreate,
     handleDuplicate,

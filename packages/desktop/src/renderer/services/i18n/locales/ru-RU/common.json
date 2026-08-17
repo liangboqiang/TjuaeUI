@@ -133,5 +133,6 @@
     "second_short": "с"
   },
   "selectedCount": "Выбрано {{count}}",
-  "selectedSkills": "Выбранные навыки"
+  "selectedSkills": "Выбранные навыки",
+  "enable": "Включить"
 }

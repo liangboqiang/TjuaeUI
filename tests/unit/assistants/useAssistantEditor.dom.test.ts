@@ -25,7 +25,6 @@ vi.mock('@/common', () => ({
       listAvailableSkills: { invoke: vi.fn() },
       writeAssistantRule: { invoke: vi.fn() },
       deleteAssistantRule: { invoke: vi.fn() },
-      importSkills: { invoke: vi.fn() },
     },
   },
 }));
@@ -131,7 +130,6 @@ describe('useAssistantEditor', () => {
     ]);
     (ipcBridge.fs.writeAssistantRule.invoke as any).mockResolvedValue(true);
     (ipcBridge.fs.deleteAssistantRule.invoke as any).mockResolvedValue(true);
-    (ipcBridge.fs.importSkills.invoke as any).mockResolvedValue(true);
   });
 
   it('initializes with default state (no active assistant)', () => {
@@ -178,7 +176,7 @@ describe('useAssistantEditor', () => {
     expect(result.current.defaultPermissionValue).toBe('acceptEdits');
     expect((result.current as any).defaultThoughtLevelMode).toBe('fixed');
     expect((result.current as any).defaultThoughtLevelValue).toBe('high');
-    expect(result.current.defaultSkillsMode).toBe('auto');
+    expect(result.current.selectedSkills).toEqual(['skill-one']);
     expect(result.current.defaultMcpMode).toBe('fixed');
     expect(result.current.selectedMcpIds).toEqual(['mcp-a']);
     expect(result.current.isCreating).toBe(false);
@@ -347,7 +345,6 @@ describe('useAssistantEditor', () => {
       result.current.setDefaultPermissionValue('plan');
       (result.current as any).setDefaultThoughtLevelMode('fixed');
       (result.current as any).setDefaultThoughtLevelValue('high');
-      result.current.setDefaultSkillsMode('auto');
       result.current.setSelectedSkills(['skill-one']);
       result.current.setDefaultMcpMode('fixed');
       result.current.setSelectedMcpIds(['mcp-a']);
@@ -365,7 +362,7 @@ describe('useAssistantEditor', () => {
           model: { mode: 'fixed', value: 'gpt-4.1' },
           permission: { mode: 'fixed', value: 'plan' },
           thought_level: { mode: 'fixed', value: 'high' },
-          skills: { mode: 'auto', value: ['skill-one'] },
+          skills: { mode: 'fixed', value: ['skill-one'] },
           mcps: { mode: 'fixed', value: ['mcp-a'] },
         },
       })
@@ -684,34 +681,6 @@ describe('useAssistantEditor', () => {
 
     await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalled());
     expect(mockMessage.error).toHaveBeenCalled();
-
-    consoleErrorSpy.mockRestore();
-  });
-
-  it('shows backend skill import failure detail while saving pending skills', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    (ipcBridge.fs.importSkills.invoke as any).mockRejectedValue(
-      Object.assign(new Error('wrapped import failure'), {
-        name: 'BackendHttpError',
-        status: 400,
-        code: 'SKILL_IMPORT_FILE_TOO_LARGE',
-      })
-    );
-
-    const { result } = renderHook(() => useAssistantEditor(defaultParams));
-
-    act(() => {
-      result.current.handleCreate();
-      result.current.setEditName('NewAssistant');
-      result.current.setPendingSkills([{ name: 'huge-skill', path: '/tmp/huge-skill' }]);
-    });
-
-    await act(async () => {
-      await result.current.handleSave();
-    });
-
-    expect(mockMessage.error).toHaveBeenCalledWith('settings.skillsHub.importErrors.SKILL_IMPORT_FILE_TOO_LARGE');
-    expect(ipcBridge.assistants.create.invoke).not.toHaveBeenCalled();
 
     consoleErrorSpy.mockRestore();
   });

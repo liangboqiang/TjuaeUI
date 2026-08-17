@@ -1,4 +1,3 @@
-
 import { mkdirSync as _mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
@@ -39,10 +38,6 @@ const STORAGE_PATH = {
   skills: 'skills',
   cronSkills: 'cron-skills',
 };
-
-/** Legacy builtin-skills cache directory, cleaned up at startup after the
- * backend took ownership of the corpus. */
-const LEGACY_BUILTIN_SKILLS_DIR = 'builtin-skills';
 
 const getHomePage = getConfigPath;
 
@@ -302,26 +297,8 @@ const getCronSkillsDir = () => {
 };
 
 /**
- * Best-effort cleanup of the legacy `{cacheDir}/builtin-skills/` directory
- * left behind by versions prior to the backend taking ownership of the skill
- * corpus. Failures are swallowed — at worst a stale copy lingers on disk.
- */
-const cleanupLegacyBuiltinSkillsDir = () => {
-  const legacyDir = path.join(cacheDir, LEGACY_BUILTIN_SKILLS_DIR);
-  if (!existsSync(legacyDir)) return;
-  fs.rm(legacyDir, { recursive: true, force: true })
-    .then(() => console.log('[TjuaeUI] Cleaned up legacy builtin-skills cache'))
-    .catch(() => {
-      /* swallow — cleanup is not critical */
-    });
-};
-
-/**
- * Ensure user-facing config directories exist. Built-in assistant rules and
- * skill files are now owned by the backend (see
- * `crates/tjuaeui-app/assets/builtin-assistants/` and
- * `crates/tjuaeui-app/assets/builtin-skills/`) — neither is synced from
- * renderer resources anymore.
+ * Ensure user-facing assistant and canonical skill directories exist.
+ * Official skills are provisioned by TjuaeCore from the TjuaeHub seed.
  */
 const ensureAssistantDirs = async (): Promise<void> => {
   const assistantsDir = getAssistantsDir();
@@ -390,11 +367,6 @@ const initStorage = async () => {
   } catch (error) {
     console.error('[TjuaeUI] Failed to ensure assistant dirs:', error);
   }
-
-  // 5b. Best-effort cleanup of the legacy builtin-skills cache left behind
-  //     before the backend took ownership of the corpus.
-  cleanupLegacyBuiltinSkillsDir();
-  mark('5b. legacyBuiltinSkillsCleanup');
 
   // 6. Backend only understands the v26-era schema baseline. Older desktop
   //    users may still have a pre-v26 Electron-managed catalog, so we upgrade

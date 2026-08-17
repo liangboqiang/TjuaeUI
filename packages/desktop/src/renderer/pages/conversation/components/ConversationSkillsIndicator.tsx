@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import type { TChatConversation } from '@/common/config/storage';
 import { iconColors } from '@/renderer/styles/colors';
@@ -30,10 +29,10 @@ const ConversationSkillsIndicator: React.FC<ConversationSkillsIndicatorProps> = 
 
   if (names.length === 0) return null;
 
-  const descriptionByName = new Map((skillIndex ?? []).map((s) => [s.name, s.description]));
+  const descriptionByName = new Map((skillIndex ?? []).map((skill) => [skill.slug, skill.description]));
 
   const handleSkillClick = (skillName: string) => {
-    navigate(`/settings/skills?highlight=${encodeURIComponent(skillName)}`);
+    navigate(`/settings/skills/detail/${encodeURIComponent(skillName)}`);
   };
 
   const content = (

@@ -18,6 +18,8 @@ export interface PreviewMetadata {
   language?: string;
   title?: string;
   diff?: string;
+  original_content?: string;
+  modified_content?: string;
   file_name?: string;
   file_path?: string; // 工作空间文件的绝对路径 / Absolute file path in workspace
   workspace?: string; // 工作空间根目录 / Workspace root directory
@@ -73,6 +75,7 @@ export interface PreviewContextValue {
   findPreviewTab: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => PreviewTab | null; // 查找匹配的 tab
   closePreviewByIdentity: (type: PreviewContentType, content?: string, metadata?: PreviewMetadata) => void; // 根据内容关闭指定 tab
   closePreviewIfWorkspaceChanged: (workspace: string | null) => void; // 跨 workspace 切换时关闭预览
+  reloadWorkspaceFiles: (workspace: string) => Promise<void>; // Git/外部修改后刷新工作区文件
 
   // 发送框集成 / Sendbox integration
   addToSendBox: (text: string) => void;
@@ -165,6 +168,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Mirror activeTabId in a ref so setTabs updaters can read the latest value
   // without adding activeTabId to their dependencies.
   const activeTabIdRef = useRef<string | null>(persistedState.activeTabId);
+  const pendingActiveTabIdRef = useRef<string | null>(null);
   // const [sendBoxHandler, setSendBoxHandlerState] = useState<((text: string) => void) | null>(null);
   const sendBoxHandler = useRef<((text: string) => void) | null>(null);
   const [domSnippets, setDomSnippets] = useState<DomSnippet[]>([]);
@@ -197,6 +201,20 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 忽略存储错误 / Ignore storage errors
     }
   }, [activeTabId]);
+
+  // Tabs and the active document form one state invariant. React may defer a
+  // functional setTabs updater, so openPreview cannot safely read a local ID
+  // immediately after scheduling it. Reconcile the pending selection after
+  // the tab list commits and also repair persisted states without an active ID.
+  useEffect(() => {
+    const pendingId = pendingActiveTabIdRef.current;
+    const pendingExists = pendingId ? tabs.some((tab) => tab.id === pendingId) : false;
+    const activeExists = activeTabId ? tabs.some((tab) => tab.id === activeTabId) : false;
+    const nextId = pendingExists ? pendingId : activeExists ? activeTabId : (tabs.at(-1)?.id ?? null);
+
+    pendingActiveTabIdRef.current = null;
+    if (nextId !== activeTabId) setActiveTabId(nextId);
+  }, [activeTabId, tabs]);
 
   // 追踪是否正在保存（避免与流式更新冲突）/ Track if currently saving (to avoid conflicts with streaming updates)
   const savingFilesRef = useRef<Set<string>>(new Set());
@@ -234,14 +252,12 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const openPreview = useCallback(
     (new_content: string, type: PreviewContentType, meta?: PreviewMetadata, options?: OpenPreviewOptions) => {
-      let nextActiveTabId: string | null = null;
-
       setTabs((prevTabs) => {
         // 如果同一个文件已经打开，则直接激活现有 tab，避免重复 / Focus existing tab when the same file is opened again
         const existingTab = findPreviewTabInList(prevTabs, type, new_content, meta);
 
         if (existingTab) {
-          nextActiveTabId = existingTab.id;
+          pendingActiveTabIdRef.current = existingTab.id;
           return prevTabs.map((tab) => {
             if (tab.id !== existingTab.id) return tab;
 
@@ -295,25 +311,22 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
             : -1;
           const activePreviewTab = activeIdx >= 0 ? prevTabs[activeIdx] : null;
           if (activePreviewTab && !activePreviewTab.isDirty) {
-            nextActiveTabId = activePreviewTab.id;
+            pendingActiveTabIdRef.current = activePreviewTab.id;
             const replacedTab: PreviewTab = { ...newTab, id: activePreviewTab.id };
             return prevTabs.map((tab, idx) => (idx === activeIdx ? replacedTab : tab));
           }
         }
 
-        nextActiveTabId = tabId;
+        pendingActiveTabIdRef.current = tabId;
         return [...prevTabs, newTab];
       });
-
-      if (nextActiveTabId) {
-        setActiveTabId(nextActiveTabId);
-      }
       setIsOpen(true);
     },
     [extractFileName, findPreviewTabInList]
   );
 
   const closePreview = useCallback(() => {
+    pendingActiveTabIdRef.current = null;
     setIsOpen(false);
     setTabs([]);
     setActiveTabId(null);
@@ -331,6 +344,39 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     },
     [closePreview]
+  );
+
+  const reloadWorkspaceFiles = useCallback(
+    async (workspace: string): Promise<void> => {
+      const candidates = tabs.filter(
+        (tab) =>
+          tab.metadata?.workspace === workspace &&
+          Boolean(tab.metadata.file_path) &&
+          !tab.isDirty &&
+          tab.content_type !== 'image' &&
+          tab.content_type !== 'pdf' &&
+          tab.content_type !== 'word' &&
+          tab.content_type !== 'excel' &&
+          tab.content_type !== 'ppt'
+      );
+      const updates = new Map<string, string>();
+      await Promise.all(
+        candidates.map(async (tab) => {
+          const filePath = tab.metadata?.file_path;
+          if (!filePath) return;
+          const content = await ipcBridge.fs.readFile.invoke({ path: filePath, workspace });
+          if (content != null) updates.set(tab.resource_key, content);
+        })
+      );
+      if (updates.size === 0) return;
+      setTabs((current) =>
+        current.map((tab) => {
+          const content = updates.get(tab.resource_key);
+          return content == null ? tab : { ...tab, content, originalContent: content, isDirty: false };
+        })
+      );
+    },
+    [tabs]
   );
 
   // Track last-known mtime per file path for external change detection
@@ -680,6 +726,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
       findPreviewTab,
       closePreviewByIdentity,
       closePreviewIfWorkspaceChanged,
+      reloadWorkspaceFiles,
       addToSendBox,
       setSendBoxHandler,
       domSnippets,
@@ -701,6 +748,7 @@ export const PreviewProvider: React.FC<{ children: React.ReactNode }> = ({ child
     findPreviewTab,
     closePreviewByIdentity,
     closePreviewIfWorkspaceChanged,
+    reloadWorkspaceFiles,
     addToSendBox,
     setSendBoxHandler,
     domSnippets,

@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import { buildGuidSlashCommands } from '@/common/chat/slash/guidSlashCommands';
 import type { SlashCommandItem } from '@/common/chat/slash/types';
@@ -80,9 +79,9 @@ const GuidPage: React.FC = () => {
       .then((availableSkills) => {
         setAllSkills(
           availableSkills.map((s) => ({
-            name: s.name,
+            name: s.slug,
             description: s.description,
-            isAuto: s.source === 'builtin' && s.is_auto_inject,
+            isAuto: s.preferences.enabled && s.preferences.autoInject,
           }))
         );
       })

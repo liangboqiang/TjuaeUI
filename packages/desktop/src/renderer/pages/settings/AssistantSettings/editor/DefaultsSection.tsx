@@ -1,4 +1,3 @@
-import type { BuiltinAutoSkill, SkillInfo } from '../types';
 import type { IMcpServer } from '@/common/config/storage';
 import { DROPDOWN_SEARCH_THRESHOLD } from '@/renderer/components/agent/runtimeSelectorOptions';
 import { Button, Select, Tooltip } from '@arco-design/web-react';
@@ -51,8 +50,6 @@ type DefaultsSectionProps = {
   setDefaultThoughtLevelMode: (value: 'auto' | 'fixed') => void;
   defaultThoughtLevelValue: string;
   setDefaultThoughtLevelValue: (value: string) => void;
-  defaultSkillsMode: 'auto' | 'fixed';
-  setDefaultSkillsMode: (value: 'auto' | 'fixed') => void;
   defaultMcpMode: 'auto' | 'fixed';
   setDefaultMcpMode: (value: 'auto' | 'fixed') => void;
   modelOptions: SelectOption[];
@@ -61,10 +58,13 @@ type DefaultsSectionProps = {
   thoughtLevelOptions: Array<{ value: string; label: string; description?: string }>;
   editableSkillOptions: EditableSkillOption[];
   selectedSkillValues: string[];
+  autoInjectSkillOptions: EditableSkillOption[];
+  selectedAutoInjectValues: string[];
   enabledMcpServers: IMcpServer[];
   selectedMcpIds: string[];
   setSelectedMcpIds: (value: string[]) => void;
   handleSkillSelectionChange: (values: string[]) => void;
+  handleAutoInjectSelectionChange: (values: string[]) => void;
   selectedItemsLabel: (count: number) => string;
   autoDefaultOptionLabel: string;
   readonlySelectionSummary: (items: string[], emptyLabel: string) => string;
@@ -88,8 +88,6 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
   setDefaultThoughtLevelMode,
   defaultThoughtLevelValue,
   setDefaultThoughtLevelValue,
-  defaultSkillsMode,
-  setDefaultSkillsMode,
   defaultMcpMode,
   setDefaultMcpMode,
   modelOptions,
@@ -98,10 +96,13 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
   thoughtLevelOptions,
   editableSkillOptions,
   selectedSkillValues,
+  autoInjectSkillOptions,
+  selectedAutoInjectValues,
   enabledMcpServers,
   selectedMcpIds,
   setSelectedMcpIds,
   handleSkillSelectionChange,
+  handleAutoInjectSelectionChange,
   selectedItemsLabel,
   autoDefaultOptionLabel,
   readonlySelectionSummary,
@@ -286,7 +287,7 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
                 data-testid='btn-open-skills-settings'
                 className='!h-auto !px-0 !text-primary-6'
               >
-                {t('settings.skillsHub.manageInHub', { defaultValue: 'Manage in Skills Hub' })}
+                {t('settings.skillsHub.title', { defaultValue: 'Manage skills' })}
               </Button>
             }
           >
@@ -295,77 +296,28 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
                 className={styles.summarySelect}
                 getPopupContainer={getEditorSelectPopupContainer}
                 mode='multiple'
-                value={defaultSkillsMode === 'fixed' ? selectedSkillValues : [AUTO_SELECT_VALUE]}
-                onChange={(value) => {
-                  const nextValues = ((value as string[]) ?? []).filter(Boolean);
-                  if (nextValues.length === 0) {
-                    setDefaultSkillsMode('fixed');
-                    handleSkillSelectionChange([]);
-                    return;
-                  }
-
-                  const filteredValues = nextValues.filter((item) => item !== AUTO_SELECT_VALUE);
-                  if (filteredValues.length === 0) {
-                    setDefaultSkillsMode('auto');
-                    handleSkillSelectionChange([]);
-                    return;
-                  }
-
-                  setDefaultSkillsMode('fixed');
-                  handleSkillSelectionChange(filteredValues);
-                }}
-                onClear={() => setDefaultSkillsMode('auto')}
+                value={selectedSkillValues}
+                onChange={(value) => handleSkillSelectionChange(((value as string[]) ?? []).filter(Boolean))}
+                onClear={() => handleSkillSelectionChange([])}
                 allowClear
                 showSearch={editableSkillOptions.length > DROPDOWN_SEARCH_THRESHOLD}
                 filterOption={filterSelectOption}
                 maxTagCount={{
                   count: 0,
-                  render: () =>
-                    defaultSkillsMode === 'auto'
-                      ? autoDefaultOptionLabel
-                      : selectedItemsLabel(selectedSkillValues.length),
+                  render: () => selectedItemsLabel(selectedSkillValues.length),
                 }}
-                placeholder={
-                  defaultSkillsMode === 'auto'
-                    ? autoDefaultOptionLabel
-                    : t('settings.assistantDefaultSkillsLabel', { defaultValue: 'Default Skills' })
-                }
+                placeholder={t('settings.assistantNoDefaultSkillsSelected', {
+                  defaultValue: 'No default skills selected',
+                })}
                 data-testid='select-assistant-default-skills'
-                dropdownRender={(menu) => (
-                  <div>
-                    <Button
-                      type='text'
-                      size='small'
-                      className='!mx-8px !mt-8px !justify-start !px-8px !text-primary-6'
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        setDefaultSkillsMode('auto');
-                        handleSkillSelectionChange([]);
-                      }}
-                    >
-                      {autoDefaultOptionLabel}
-                    </Button>
-                    {menu}
-                  </div>
-                )}
                 renderFormat={() =>
-                  defaultSkillsMode === 'auto'
-                    ? autoDefaultOptionLabel
-                    : readonlySelectionSummary(
-                        selectedSkillValues,
-                        t('settings.assistantNoDefaultSkillsSelected', { defaultValue: 'No default skills selected' })
-                      )
+                  readonlySelectionSummary(
+                    selectedSkillValues,
+                    t('settings.assistantNoDefaultSkillsSelected', { defaultValue: 'No default skills selected' })
+                  )
                 }
                 renderTag={renderSummaryTag}
               >
-                <Select.Option
-                  value={AUTO_SELECT_VALUE}
-                  className={styles.hiddenAutoOption}
-                  wrapperClassName={styles.hiddenAutoOptionWrapper}
-                >
-                  {autoDefaultOptionLabel}
-                </Select.Option>
                 {editableSkillOptions.map((option) => (
                   <Select.Option
                     key={option.value}
@@ -379,14 +331,63 @@ const DefaultsSection: React.FC<DefaultsSectionProps> = ({
               </Select>
             ) : (
               <ReadonlySelectionField
-                value={
-                  defaultSkillsMode === 'auto'
-                    ? autoDefaultOptionLabel
-                    : readonlySelectionSummary(
-                        selectedSkillValues,
-                        t('settings.assistantNoDefaultSkillsSelected', { defaultValue: 'No default skills selected' })
-                      )
+                value={readonlySelectionSummary(
+                  selectedSkillValues,
+                  t('settings.assistantNoDefaultSkillsSelected', { defaultValue: 'No default skills selected' })
+                )}
+              />
+            )}
+          </ConfigRow>
+        ) : null}
+
+        {showSkills ? (
+          <ConfigRow
+            icon={<Lightning theme='outline' size='14' />}
+            label={t('settings.autoInjectedSkills', { defaultValue: 'Auto-injected skills' })}
+            hint={t('settings.autoInjectedSkillsHint', {
+              defaultValue: 'Loaded automatically into each conversation; clear a skill here to exclude it.',
+            })}
+          >
+            {canEditDefaultSkillsAndMcps ? (
+              <Select
+                className={styles.summarySelect}
+                getPopupContainer={getEditorSelectPopupContainer}
+                mode='multiple'
+                value={selectedAutoInjectValues}
+                onChange={(value) => handleAutoInjectSelectionChange(((value as string[]) ?? []).filter(Boolean))}
+                onClear={() => handleAutoInjectSelectionChange([])}
+                allowClear
+                showSearch={autoInjectSkillOptions.length > DROPDOWN_SEARCH_THRESHOLD}
+                filterOption={filterSelectOption}
+                maxTagCount={{ count: 0, render: () => selectedItemsLabel(selectedAutoInjectValues.length) }}
+                placeholder={t('settings.assistantNoDefaultSkillsSelected', {
+                  defaultValue: 'No auto-injected skills selected',
+                })}
+                data-testid='select-assistant-auto-inject-skills'
+                renderFormat={() =>
+                  readonlySelectionSummary(
+                    selectedAutoInjectValues,
+                    t('settings.assistantNoDefaultSkillsSelected', {
+                      defaultValue: 'No auto-injected skills selected',
+                    })
+                  )
                 }
+                renderTag={renderSummaryTag}
+              >
+                {autoInjectSkillOptions.map((option) => (
+                  <Select.Option key={option.value} value={option.value} data-label={option.label}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            ) : (
+              <ReadonlySelectionField
+                value={readonlySelectionSummary(
+                  selectedAutoInjectValues,
+                  t('settings.assistantNoDefaultSkillsSelected', {
+                    defaultValue: 'No auto-injected skills selected',
+                  })
+                )}
               />
             )}
           </ConfigRow>

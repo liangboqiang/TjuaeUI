@@ -13,10 +13,7 @@
     "openFolder": "Abrir Pasta",
     "none": "Nenhum",
     "quickActionsTitle": "O que o TjuaeUI pode fazer?",
-    "quickActionRepository": "Repositório",
-    "skillsMarket": "Mercado de Habilidades TjuaeUI",
-    "skillsMarketDesc": "Pesquise e ative as Habilidades da comunidade sob demanda. Configure uma vez, disponível para todos os agentes.",
-    "skillsMarketDetails": "Ver Mais >>"
+    "quickActionRepository": "Repositório"
   },
   "history": {
     "recents": "Recentes",

@@ -13,10 +13,7 @@
     "openFolder": "開啟資料夾",
     "none": "無",
     "quickActionsTitle": "TjuaeUI 能做什麼？",
-    "quickActionRepository": "程式碼儲存庫",
-    "skillsMarket": "TjuaeUI 技能市集",
-    "skillsMarketDesc": "按需搜尋並啟用社區 Skills，一次設定，所有Agent通用。",
-    "skillsMarketDetails": "詳情 >>"
+    "quickActionRepository": "程式碼儲存庫"
   },
   "history": {
     "recents": "最近",

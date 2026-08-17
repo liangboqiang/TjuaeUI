@@ -22,9 +22,9 @@
   "showConversationPane": "Show conversation pane",
   "source": "Source",
   "code": "Code",
-  "preview": "Preview",
+  "preview": "Render",
   "editor": "Editor",
-  "previewEffect": "Preview",
+  "previewEffect": "Rendered view",
   "snapshot": "Snapshot",
   "downloadMarkdown": "Download Markdown file",
   "downloadCode": "Download {{language}} file",
@@ -55,14 +55,14 @@
   "closeRight": "Close Right",
   "closeOthers": "Close Others",
   "closeAll": "Close All",
-  "readOnlyLabel": "Read-only preview",
+  "readOnlyLabel": "Read-only render",
   "pathLabel": "Path",
   "missingFile": {
     "title": "File not found",
     "openInNewTab": "Try opening in a new tab"
   },
   "noTabs": "No tabs open",
-  "openInPanelTooltip": "View in preview panel",
+  "openInPanelTooltip": "Open in render panel",
   "mermaidTitle": "Mermaid Diagram",
   "largeTextTruncatedHint": "Large file preview mode: showing first {{count}} characters for performance.",
   "truncatedBanner": "Preview content was truncated. Click download to view the full file.",
@@ -115,5 +115,49 @@
     "inspectElement": "Inspect element",
     "inspectElementEnable": "Enable element inspector",
     "inspectElementDisable": "Disable element inspector"
+  },
+  "tjuaeManifest": {
+    "invalidJson": "This Tjuae manifest is not valid JSON. Fix it in Source before using the structured renderer.",
+    "description": "Edit this manifest through a structured renderer and save it with the shared editor workflow.",
+    "readOnly": "Read only",
+    "editable": "Editable",
+    "changes": "Manifest changes",
+    "diffDescription": "Changes are grouped by manifest field instead of shown as raw JSON.",
+    "noChanges": "No manifest changes",
+    "before": "Before",
+    "after": "After",
+    "kinds": {
+      "manifest": "Manifest",
+      "skill": "Skill",
+      "assistant": "Assistant",
+      "agent": "Agent",
+      "model": "Model",
+      "tool": "Tool",
+      "team": "Team",
+      "project": "Project"
+    },
+    "fields": {
+      "schema": "Schema",
+      "schemaVersion": "Schema version",
+      "id": "Identifier",
+      "version": "Version",
+      "categories": "Categories",
+      "enabled": "Enabled",
+      "autoInject": "Auto inject",
+      "source": "Source",
+      "sourceKind": "Source type",
+      "marketId": "Market",
+      "repository": "Repository",
+      "path": "Repository path",
+      "revision": "Remote revision",
+      "name": "Name",
+      "description": "Description",
+      "tags": "Tags",
+      "releaseNotes": "Release notes"
+    },
+    "sourceKinds": {
+      "local": "Local",
+      "market": "Market"
+    }
   }
 }

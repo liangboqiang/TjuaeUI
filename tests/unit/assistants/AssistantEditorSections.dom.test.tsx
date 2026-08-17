@@ -4,7 +4,7 @@ import { ConfigProvider } from '@arco-design/web-react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AssistantEditorSections from '@/renderer/pages/settings/AssistantSettings/AssistantEditorSections';
-import type { AssistantEditorViewModel } from '@/renderer/pages/settings/AssistantSettings/types';
+import type { AssistantEditorViewModel, SkillInfo } from '@/renderer/pages/settings/AssistantSettings/types';
 
 const mockUseModelProviderList = vi.fn(() => ({
   providers: [],
@@ -103,6 +103,24 @@ const renderWithProviders = (ui: React.ReactElement) =>
     </MemoryRouter>
   );
 
+const managedSkill = (slug = 'browse', autoInject = false): SkillInfo => ({
+  id: `local/${slug}`,
+  slug,
+  name: slug,
+  description: 'Browse the web',
+  version: '1.0.0',
+  path: `C:/skills/${slug}`,
+  origin: { type: 'personal' },
+  categories: [],
+  compatibility: '>=0.2.0',
+  dependencies: [],
+  preferences: {
+    enabled: true,
+    autoInject,
+    pinned: false,
+  },
+});
+
 const createEditor = (overrides: Partial<AssistantEditorViewModel> = {}): AssistantEditorViewModel => {
   const base: AssistantEditorViewModel = {
     isCreating: true,
@@ -129,7 +147,6 @@ const createEditor = (overrides: Partial<AssistantEditorViewModel> = {}): Assist
       model: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
       permission: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
       thoughtLevel: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
-      skills: { mode: 'fixed', setMode: vi.fn() },
       mcps: { mode: 'fixed', setMode: vi.fn(), availableServers: [], selectedIds: [], setSelectedIds: vi.fn() },
     },
     rules: {
@@ -142,12 +159,9 @@ const createEditor = (overrides: Partial<AssistantEditorViewModel> = {}): Assist
       availableSkills: [],
       selectedSkills: [],
       setSelectedSkills: vi.fn(),
-      pendingSkills: [],
-      setDeletePendingSkillName: vi.fn(),
-      setDeleteCustomSkillName: vi.fn(),
-      builtinAutoSkills: [],
-      disabledBuiltinSkills: [],
-      setDisabledBuiltinSkills: vi.fn(),
+      autoInjectSkills: [],
+      excludedAutoInjectSkills: [],
+      setExcludedAutoInjectSkills: vi.fn(),
     },
     actions: {
       save: vi.fn(),
@@ -226,17 +240,12 @@ describe('AssistantEditorSections', () => {
             },
           },
           skills: {
-            availableSkills: [
-              { name: 'browse', description: 'Browse the web', location: '', is_custom: false, source: 'builtin' },
-            ],
+            availableSkills: [managedSkill()],
             selectedSkills: ['browse'],
             setSelectedSkills: vi.fn(),
-            pendingSkills: [],
-            setDeletePendingSkillName: vi.fn(),
-            setDeleteCustomSkillName: vi.fn(),
-            builtinAutoSkills: [],
-            disabledBuiltinSkills: [],
-            setDisabledBuiltinSkills: vi.fn(),
+            autoInjectSkills: [],
+            excludedAutoInjectSkills: [],
+            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -278,17 +287,12 @@ describe('AssistantEditorSections', () => {
             },
           },
           skills: {
-            availableSkills: [
-              { name: 'browse', description: 'Browse the web', location: '', is_custom: false, source: 'builtin' },
-            ],
+            availableSkills: [managedSkill()],
             selectedSkills: [],
             setSelectedSkills: vi.fn(),
-            pendingSkills: [],
-            setDeletePendingSkillName: vi.fn(),
-            setDeleteCustomSkillName: vi.fn(),
-            builtinAutoSkills: [],
-            disabledBuiltinSkills: [],
-            setDisabledBuiltinSkills: vi.fn(),
+            autoInjectSkills: [],
+            excludedAutoInjectSkills: [],
+            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -299,7 +303,10 @@ describe('AssistantEditorSections', () => {
     expect(screen.getByTestId('select-assistant-default-permission')).toHaveTextContent(
       'Remember last used automatically'
     );
-    expect(screen.getByTestId('select-assistant-default-skills')).toHaveTextContent('Remember last used automatically');
+    expect(screen.getByTestId('select-assistant-default-skills')).toHaveTextContent('No default skills selected');
+    expect(screen.getByTestId('select-assistant-auto-inject-skills')).toHaveTextContent(
+      'No auto-injected skills selected'
+    );
     expect(screen.getByTestId('select-assistant-default-mcp')).toHaveTextContent('Remember last used automatically');
     expect(screen.getByTestId('select-assistant-default-skills').className).toMatch(/summarySelect/);
     expect(screen.getByTestId('select-assistant-default-mcp').className).toMatch(/summarySelect/);
@@ -818,17 +825,12 @@ describe('AssistantEditorSections', () => {
           },
           rules: { content: 'builtin rules', setContent: vi.fn(), viewMode: 'preview', setViewMode: vi.fn() },
           skills: {
-            availableSkills: [
-              { name: 'browse', description: 'Browse the web', location: '', is_custom: false, source: 'builtin' },
-            ],
+            availableSkills: [managedSkill()],
             selectedSkills: ['browse'],
             setSelectedSkills: vi.fn(),
-            pendingSkills: [],
-            setDeletePendingSkillName: vi.fn(),
-            setDeleteCustomSkillName: vi.fn(),
-            builtinAutoSkills: [],
-            disabledBuiltinSkills: [],
-            setDisabledBuiltinSkills: vi.fn(),
+            autoInjectSkills: [],
+            excludedAutoInjectSkills: [],
+            setExcludedAutoInjectSkills: vi.fn(),
           },
           agent: {
             value: 'agent-claude',
@@ -896,17 +898,12 @@ describe('AssistantEditorSections', () => {
           },
           rules: { content: 'bare rules', setContent: vi.fn(), viewMode: 'preview', setViewMode: vi.fn() },
           skills: {
-            availableSkills: [
-              { name: 'browse', description: 'Browse the web', location: '', is_custom: false, source: 'builtin' },
-            ],
+            availableSkills: [managedSkill()],
             selectedSkills: ['browse'],
             setSelectedSkills: vi.fn(),
-            pendingSkills: [],
-            setDeletePendingSkillName: vi.fn(),
-            setDeleteCustomSkillName: vi.fn(),
-            builtinAutoSkills: [],
-            disabledBuiltinSkills: [],
-            setDisabledBuiltinSkills: vi.fn(),
+            autoInjectSkills: [],
+            excludedAutoInjectSkills: [],
+            setExcludedAutoInjectSkills: vi.fn(),
           },
           agent: {
             value: 'agent-droid',
@@ -962,17 +959,12 @@ describe('AssistantEditorSections', () => {
             },
           },
           skills: {
-            availableSkills: [
-              { name: 'browse', description: 'Browse the web', location: '', is_custom: false, source: 'builtin' },
-            ],
+            availableSkills: [managedSkill()],
             selectedSkills: ['browse'],
             setSelectedSkills: vi.fn(),
-            pendingSkills: [],
-            setDeletePendingSkillName: vi.fn(),
-            setDeleteCustomSkillName: vi.fn(),
-            builtinAutoSkills: [],
-            disabledBuiltinSkills: [],
-            setDisabledBuiltinSkills: vi.fn(),
+            autoInjectSkills: [],
+            excludedAutoInjectSkills: [],
+            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -985,28 +977,19 @@ describe('AssistantEditorSections', () => {
     expect(screen.getByTestId('btn-open-mcp-settings')).toBeInTheDocument();
   });
 
-  it('switches default skills from auto to fixed when selecting a concrete skill', async () => {
-    const setDefaultSkillsMode = vi.fn();
+  it('selects an enabled skill without a second mode state', async () => {
     const setSelectedSkills = vi.fn();
 
     renderWithProviders(
       <AssistantEditorSections
         editor={createEditor({
-          defaults: {
-            skills: { mode: 'auto', setMode: setDefaultSkillsMode },
-          },
           skills: {
-            availableSkills: [
-              { name: 'browse', description: 'Browse the web', location: '', is_custom: false, source: 'builtin' },
-            ],
+            availableSkills: [managedSkill()],
             selectedSkills: [],
             setSelectedSkills,
-            pendingSkills: [],
-            setDeletePendingSkillName: vi.fn(),
-            setDeleteCustomSkillName: vi.fn(),
-            builtinAutoSkills: [],
-            disabledBuiltinSkills: [],
-            setDisabledBuiltinSkills: vi.fn(),
+            autoInjectSkills: [],
+            excludedAutoInjectSkills: [],
+            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -1016,7 +999,6 @@ describe('AssistantEditorSections', () => {
     fireEvent.click(screen.getByTestId('select-assistant-default-skills'));
     fireEvent.click(await screen.findByText('browse'));
 
-    expect(setDefaultSkillsMode).toHaveBeenCalledWith('fixed');
     expect(setSelectedSkills).toHaveBeenCalledWith(['browse']);
   });
 

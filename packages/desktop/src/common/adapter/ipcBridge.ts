@@ -35,6 +35,13 @@ import type {
   SetConfigOptionResponse,
 } from '../types/platform/acpTypes';
 import type {
+  MarketSkill,
+  MarketSkillComparison,
+  PublishMarketSkillResult,
+  SkillWorkspace,
+  UpdateSkillPreferences,
+} from '../types/platform/skill';
+import type {
   CreateProviderRequest,
   FetchModelsAnonymousRequest,
   FetchModelsResponse,
@@ -124,8 +131,10 @@ import {
 } from './gitWorkspaceMapper';
 import {
   absoluteToRelativePath,
+  fromBackendDirOrFiles,
   fromBackendWorkspaceFlatFiles,
   fromBackendWorkspaceList,
+  type RawDirOrFile,
   type RawWorkspaceFlatFile,
 } from './workspaceMapper';
 
@@ -553,7 +562,10 @@ export const dialog = {
 // ---------------------------------------------------------------------------
 
 export const fs = {
-  getFilesByDir: httpPost<Array<IDirOrFile>, { dir: string; root: string }>('/api/fs/dir'),
+  getFilesByDir: withResponseMap(
+    httpPost<RawDirOrFile[], { dir: string; root: string }>('/api/fs/dir'),
+    fromBackendDirOrFiles
+  ),
   listWorkspaceFiles: withResponseMap(
     httpPost<Array<RawWorkspaceFlatFile>, { root: string }>('/api/fs/list'),
     fromBackendWorkspaceFlatFiles
@@ -586,8 +598,6 @@ export const fs = {
   >('/api/fs/copy'),
   removeEntry: httpPost<void, { path: string; workspace?: string }>('/api/fs/remove'),
   renameEntry: httpPost<{ new_path: string }, { path: string; new_name: string; workspace?: string }>('/api/fs/rename'),
-  readBuiltinRule: httpPost<string, { file_name: string }>('/api/skills/builtin-rule'),
-  readBuiltinSkill: httpPost<string, { file_name: string }>('/api/skills/builtin-skill'),
   readAssistantRule: httpPost<string, { assistant_id: string; locale?: string }>('/api/skills/assistant-rule/read'),
   writeAssistantRule: httpPost<boolean, { assistant_id: string; content: string; locale?: string }>(
     '/api/skills/assistant-rule/write'
@@ -595,98 +605,42 @@ export const fs = {
   deleteAssistantRule: httpDelete<boolean, { assistant_id: string }>(
     (p) => `/api/skills/assistant-rule/${p.assistant_id}`
   ),
-  listAvailableSkills: httpGet<
-    Array<{
-      name: string;
-      description: string;
-      location: string;
-      relative_location?: string;
-      is_auto_inject: boolean;
-      is_custom: boolean;
-      source: 'builtin' | 'custom' | 'cron' | 'extension';
-    }>,
-    void
-  >('/api/skills'),
+  listAvailableSkills: httpGet<SkillWorkspace[], void>('/api/skills'),
+  listMarketSkills: httpGet<MarketSkill[], void>('/api/skills/market'),
+  installMarketSkill: httpPost<SkillWorkspace, { marketId: string; slug: string }>(
+    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/install`,
+    () => undefined
+  ),
+  updateMarketSkill: httpPost<SkillWorkspace, { marketId: string; slug: string }>(
+    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/update`,
+    () => undefined
+  ),
+  compareMarketSkill: httpGet<MarketSkillComparison, { marketId: string; slug: string }>(
+    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/compare`
+  ),
+  publishMarketSkill: httpPost<
+    PublishMarketSkillResult,
+    { marketId: string; slug: string; forkRepositoryUrl: string; message: string }
+  >(
+    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/publish`,
+    ({ forkRepositoryUrl, message }) => ({ forkRepositoryUrl, message })
+  ),
+  copySkill: httpPost<SkillWorkspace, { slug: string; targetSlug: string }>(
+    (p) => `/api/skills/${p.slug}/copy`,
+    (p) => ({ targetSlug: p.targetSlug })
+  ),
+  updateSkillPreferences: httpPut<SkillWorkspace, UpdateSkillPreferences & { slug: string }>(
+    (p) => `/api/skills/${p.slug}/preferences`,
+    ({ slug: _slug, ...preferences }) => preferences
+  ),
   materializeSkillsForAgent: httpPost<
     { skills: Array<{ name: string; source_path: string }> },
     { conversation_id: string; skills: string[] }
   >('/api/skills/materialize-for-agent'),
-  readSkillInfo: httpPost<{ name: string; description: string }, { skill_path: string }>('/api/skills/info'),
-  importSkill: httpPost<
-    {
-      skill_name: string;
-      skill_names?: string[];
-      failed?: Array<{
-        source_name: string;
-        code: string;
-        error_path?: string;
-        actual_bytes?: number;
-        limit_bytes?: number;
-        line?: number;
-        column?: number;
-      }>;
-    },
-    { skill_path: string }
-  >('/api/skills/import'),
-  scanForSkills: httpPost<Array<{ name: string; description: string; path: string }>, { folder_path: string }>(
-    '/api/skills/scan'
-  ),
-  detectCommonSkillPaths: httpGet<Array<{ name: string; path: string }>, void>('/api/skills/detect-paths'),
-  detectAndCountExternalSkills: httpGet<
-    Array<{
-      name: string;
-      path: string;
-      source: string;
-      skills: Array<{ name: string; description: string; path: string }>;
-    }>,
-    void
-  >('/api/skills/detect-external'),
-  importSkills: httpPost<
-    {
-      skill_name: string;
-      skill_names?: string[];
-      failed?: Array<{
-        source_name: string;
-        code: string;
-        error_path?: string;
-        actual_bytes?: number;
-        limit_bytes?: number;
-        line?: number;
-        column?: number;
-      }>;
-    },
-    { skill_path: string }
-  >('/api/skills/import'),
-  listSkillImportHistory: httpGet<
-    Array<{
-      id: string;
-      operation_id: string;
-      source_label: string;
-      source_path?: string;
-      source_name: string;
-      skill_id?: string;
-      skill_name?: string;
-      status: string;
-      error_code?: string;
-      error_path?: string;
-      actual_bytes?: number;
-      limit_bytes?: number;
-      line?: number;
-      column?: number;
-      created_at: number;
-    }>,
-    void
-  >('/api/skills/import-history'),
-  getSkillImportLimits: httpGet<{ max_file_bytes: number; max_total_bytes: number }, void>('/api/skills/import-limits'),
+  importSkill: httpPost<SkillWorkspace, { skill_path: string }>('/api/skills/import'),
+  createSkill: httpPost<SkillWorkspace, { slug: string; name: string; description: string }>('/api/skills/create'),
+  cloneSkill: httpPost<SkillWorkspace, { repositoryUrl: string }>('/api/skills/clone'),
   deleteSkill: httpDelete<void, { skill_name: string }>((p) => `/api/skills/${p.skill_name}`),
-  getSkillPaths: httpGet<{ user_skills_dir: string; builtin_skills_dir: string }, void>('/api/skills/paths'),
-  getCustomExternalPaths: httpGet<Array<{ name: string; path: string }>, void>('/api/skills/external-paths'),
-  addCustomExternalPath: httpPost<void, { name: string; path: string }>('/api/skills/external-paths'),
-  removeCustomExternalPath: httpDelete<void, { path: string }>(
-    (p) => `/api/skills/external-paths?path=${encodeURIComponent(p.path)}`
-  ),
-  enableSkillsMarket: httpPost<void, void>('/api/skills/market/enable'),
-  disableSkillsMarket: httpPost<void, void>('/api/skills/market/disable'),
 };
 
 // ---------------------------------------------------------------------------
@@ -1557,6 +1511,8 @@ export interface ICreateConversationParams {
   };
   extra: {
     workspace?: string;
+    /** 技能工作台展示的源码目录，不作为智能体运行目录。 */
+    skill_workspace?: string;
     custom_workspace?: boolean;
     default_files?: string[];
     cli_path?: string;
@@ -1812,7 +1768,6 @@ export const extensions = {
   getAgents: httpGet<Record<string, unknown>[], void>('/api/extensions/agents'),
   getAcpAdapters: httpGet<Record<string, unknown>[], void>('/api/extensions/acp-adapters'),
   getMcpServers: httpGet<Record<string, unknown>[], void>('/api/extensions/mcp-servers'),
-  getSkills: httpGet<Array<{ name: string; description: string; location: string }>, void>('/api/extensions/skills'),
   getSettingsTabs: httpGet<IExtensionSettingsTab[], void>('/api/extensions/settings-tabs'),
   getWebuiContributions: httpGet<IExtensionWebuiContribution[], void>('/api/extensions/webui'),
   getAgentActivitySnapshot: httpGet<IExtensionAgentActivitySnapshot, void>('/api/extensions/agent-activity'),

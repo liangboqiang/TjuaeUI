@@ -6,7 +6,7 @@ import { usePreviewContext } from '@/renderer/pages/conversation/Preview';
 import { getWorkspaceDisplayName as getDisplayName } from '@/renderer/utils/workspace/workspace';
 import { Empty, Message, Tree } from '@arco-design/web-react';
 import { Right } from '@icon-park/react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PasteConfirmModal from './components/PasteConfirmModal';
 import WorkspaceContextMenu from './components/WorkspaceContextMenu';
@@ -40,6 +40,7 @@ import { getContentTypeByExtension } from '@/renderer/pages/conversation/Preview
 import { createTwoFilesPatch } from 'diff';
 import { createDiffResourceKey, createRevisionResourceKey } from '@/renderer/utils/file/resourceKey';
 import type { GitCommitFileInfo, GitCommitInfo } from '@/common/types/platform/gitWorkspace';
+import { subscribeWorkspaceGitMutation } from './utils/gitMutationBus';
 import './workspace.css';
 
 const normalizeTextForDiff = (content: string): string => content.replace(/\r\n?/gu, '\n');
@@ -50,11 +51,12 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
   isTemporaryWorkspace: isTemporaryWorkspaceProp,
   eventPrefix = 'acp',
   messageApi: externalMessageApi,
+  initialOpenFiles,
 }) => {
   const { t } = useTranslation();
   const layout = useLayoutContext();
   const isMobile = layout?.isMobile ?? false;
-  const { openPreview } = usePreviewContext();
+  const { openPreview, reloadWorkspaceFiles } = usePreviewContext();
 
   // Message API setup
   const [internalMessageApi, messageContext] = Message.useMessage();
@@ -74,6 +76,14 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
   // Initialize all hooks
   const { isWorkspaceCollapsed, setIsWorkspaceCollapsed } = useWorkspaceCollapse();
   const treeHook = useWorkspaceTree({ workspace, conversation_id, eventPrefix });
+
+  useEffect(
+    () =>
+      subscribeWorkspaceGitMutation(workspace, async () => {
+        await Promise.all([treeHook.refreshWorkspace(), reloadWorkspaceFiles(workspace)]);
+      }),
+    [reloadWorkspaceFiles, treeHook.refreshWorkspace, workspace]
+  );
   const modalsHook = useWorkspaceModals();
   const pasteHook = useWorkspacePaste({
     conversation_id: conversation_id,
@@ -126,6 +136,35 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
     setDeleteModal: modalsHook.setDeleteModal,
     openPreview,
   });
+
+  const openedInitialFilesRef = useRef(new Set<string>());
+  useEffect(() => {
+    openedInitialFilesRef.current.clear();
+  }, [workspace]);
+
+  useEffect(() => {
+    if (!initialOpenFiles?.length || !treeHook.files.length) return;
+
+    const findFile = (nodes: IDirOrFile[], relativePath: string): IDirOrFile | undefined => {
+      for (const node of nodes) {
+        if (node.isFile && node.relativePath === relativePath) return node;
+        const match = node.children ? findFile(node.children, relativePath) : undefined;
+        if (match) return match;
+      }
+      return undefined;
+    };
+
+    void (async () => {
+      for (const relativePath of initialOpenFiles) {
+        const identity = `${workspace}:${relativePath}`;
+        if (openedInitialFilesRef.current.has(identity)) continue;
+        const node = findFile(treeHook.files, relativePath);
+        if (!node) continue;
+        openedInitialFilesRef.current.add(identity);
+        await fileOpsHook.handlePreviewFile(node);
+      }
+    })();
+  }, [fileOpsHook, initialOpenFiles, treeHook.files, workspace]);
 
   // Setup events
   useWorkspaceEvents({
@@ -185,12 +224,14 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
   );
 
   const handleOpenChangeDiff = useCallback(
-    (diffContent: string, file_name: string, file_path: string) => {
+    (diffContent: string, file_name: string, file_path: string, originalContent?: string, modifiedContent?: string) => {
       openPreview(diffContent, 'diff', {
         resource_key: createDiffResourceKey(workspace, file_path),
         file_name,
         file_path,
         workspace,
+        original_content: originalContent,
+        modified_content: modifiedContent,
       });
     },
     [openPreview, workspace]
@@ -233,7 +274,7 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
         normalizeTextForDiff(revision.modifiedContent),
         normalizeTextForDiff(current ?? '')
       );
-      handleOpenChangeDiff(patch, timelineFilePath, absolute);
+      handleOpenChangeDiff(patch, timelineFilePath, absolute, revision.modifiedContent, current ?? '');
     },
     [gitWorkspaceHook.revision, handleOpenChangeDiff, t, timelineFilePath, workspace]
   );
@@ -254,6 +295,8 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
         file_path: absolute,
         workspace,
         editable: false,
+        original_content: revision.originalContent ?? '',
+        modified_content: revision.modifiedContent ?? '',
       });
     },
     [gitWorkspaceHook.revision, openPreview, t, workspace]
@@ -555,10 +598,9 @@ const ChatWorkspace: React.FC<WorkspaceProps> = ({
                   loadMore={(treeNode) => {
                     const path = treeNode.props.dataRef.fullPath;
                     const targetRelPath = treeNode.props.dataRef.relativePath;
-                    return ipcBridge.conversation.getWorkspace
-                      .invoke({ conversation_id, workspace, path })
-                      .then((res) => {
-                        const newChildren = res[0]?.children;
+                    return ipcBridge.fs.getFilesByDir
+                      .invoke({ dir: path, root: workspace })
+                      .then((newChildren) => {
                         if (!newChildren?.length) return;
                         treeHook.setFiles((prev) => {
                           const assign = (nodes: IDirOrFile[]): IDirOrFile[] =>

@@ -133,5 +133,6 @@
     "second_short": "秒"
   },
   "selectedCount": "已選 {{count}}",
-  "selectedSkills": "已選技能"
+  "selectedSkills": "已選技能",
+  "enable": "啟用"
 }

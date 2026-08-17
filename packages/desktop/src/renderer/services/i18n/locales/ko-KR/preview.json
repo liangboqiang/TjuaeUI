@@ -22,9 +22,9 @@
   "showConversationPane": "대화 창 표시",
   "source": "소스",
   "code": "코드",
-  "preview": "미리보기",
+  "preview": "렌더링",
   "editor": "에디터",
-  "previewEffect": "미리보기 효과",
+  "previewEffect": "렌더링 보기",
   "snapshot": "스냅샷",
   "downloadMarkdown": "Markdown 파일 다운로드",
   "downloadCode": "{{language}} 파일 다운로드",
@@ -55,14 +55,14 @@
   "closeRight": "오른쪽 닫기",
   "closeOthers": "다른 탭 닫기",
   "closeAll": "모두 닫기",
-  "readOnlyLabel": "읽기 전용 미리보기",
+  "readOnlyLabel": "읽기 전용 렌더링",
   "pathLabel": "경로",
   "missingFile": {
     "title": "파일을 찾을 수 없음",
     "openInNewTab": "새 탭에서 열기 시도"
   },
   "noTabs": "열린 탭 없음",
-  "openInPanelTooltip": "미리보기 패널에서 보기",
+  "openInPanelTooltip": "렌더링 패널에서 열기",
   "mermaidTitle": "Mermaid 다이어그램",
   "largeTextTruncatedHint": "대용량 파일 미리보기 모드: 성능을 위해 앞의 {{count}}자만 표시합니다.",
   "truncatedBanner": "미리보기 내용이 잘렸습니다. 전체 파일은 다운로드해서 확인하세요.",
@@ -115,5 +115,49 @@
     "inspectElement": "요소 검사",
     "inspectElementEnable": "요소 검사기 활성화",
     "inspectElementDisable": "요소 검사기 비활성화"
+  },
+  "tjuaeManifest": {
+    "invalidJson": "This Tjuae manifest is not valid JSON. Fix it in Source before using the structured renderer.",
+    "description": "Edit this manifest through a structured renderer and save it with the shared editor workflow.",
+    "readOnly": "읽기 전용",
+    "editable": "편집 가능",
+    "changes": "매니페스트 변경",
+    "diffDescription": "원시 JSON 차이 대신 매니페스트 필드별로 변경 사항을 표시합니다.",
+    "noChanges": "변경 사항 없음",
+    "before": "변경 전",
+    "after": "변경 후",
+    "kinds": {
+      "manifest": "Manifest",
+      "skill": "Skill",
+      "assistant": "Assistant",
+      "agent": "Agent",
+      "model": "Model",
+      "tool": "Tool",
+      "team": "Team",
+      "project": "Project"
+    },
+    "fields": {
+      "schema": "Schema",
+      "schemaVersion": "Schema version",
+      "id": "Identifier",
+      "version": "Version",
+      "categories": "Categories",
+      "enabled": "Enabled",
+      "autoInject": "Auto inject",
+      "source": "Source",
+      "sourceKind": "Source type",
+      "marketId": "Market",
+      "repository": "Repository",
+      "path": "Repository path",
+      "revision": "Remote revision",
+      "name": "Name",
+      "description": "Description",
+      "tags": "Tags",
+      "releaseNotes": "Release notes"
+    },
+    "sourceKinds": {
+      "local": "로컬",
+      "market": "시장"
+    }
   }
 }

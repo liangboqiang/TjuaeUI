@@ -3,7 +3,8 @@
  *
  * Covers:
  * - single-entry default skills / default MCP controls
- * - hub jump links
+ * - canonical skill settings jump links
+ * - independent auto-injection selection
  * - no legacy collapse / modal structure
  * - builtin assistant read-only summaries for skills / MCP
  * - fixed default skill selection persistence for custom assistants
@@ -42,12 +43,13 @@ async function openSelect(page: import('@playwright/test').Page, testId: string)
 test.describe('Assistant Settings Skills / MCP', () => {
   test.setTimeout(90_000);
 
-  test('custom assistant renders single default-skills/default-mcp controls with hub links', async ({ page }) => {
+  test('custom assistant renders canonical skill, auto-injection, and MCP controls', async ({ page }) => {
     await goToAssistantSettings(page);
     await clickCreateAssistant(page);
     await fillAssistantName(page, `Skill Layout ${Date.now()}`);
 
     await expect(page.locator('[data-testid="select-assistant-default-skills"]')).toBeVisible();
+    await expect(page.locator('[data-testid="select-assistant-auto-inject-skills"]')).toBeVisible();
     await expect(page.locator('[data-testid="select-assistant-default-mcp"]')).toBeVisible();
     await expect(page.locator('[data-testid="btn-open-skills-settings"]')).toBeVisible();
     await expect(page.locator('[data-testid="btn-open-mcp-settings"]')).toBeVisible();

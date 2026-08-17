@@ -87,8 +87,6 @@ const renderDefaultsSection = (overrides: Partial<React.ComponentProps<typeof De
       setDefaultThoughtLevelMode={vi.fn()}
       defaultThoughtLevelValue=''
       setDefaultThoughtLevelValue={vi.fn()}
-      defaultSkillsMode='fixed'
-      setDefaultSkillsMode={vi.fn()}
       defaultMcpMode='fixed'
       setDefaultMcpMode={vi.fn()}
       modelOptions={makeModelOptions(8)}
@@ -97,10 +95,13 @@ const renderDefaultsSection = (overrides: Partial<React.ComponentProps<typeof De
       thoughtLevelOptions={[]}
       editableSkillOptions={makeSkillOptions(8)}
       selectedSkillValues={[]}
+      autoInjectSkillOptions={makeSkillOptions(8)}
+      selectedAutoInjectValues={[]}
       enabledMcpServers={makeMcpServers(8)}
       selectedMcpIds={[]}
       setSelectedMcpIds={vi.fn()}
       handleSkillSelectionChange={vi.fn()}
+      handleAutoInjectSelectionChange={vi.fn()}
       selectedItemsLabel={(count) => `${count} selected`}
       autoDefaultOptionLabel='Remember last used automatically'
       readonlySelectionSummary={(items, emptyLabel) => (items.length > 0 ? items.join(', ') : emptyLabel)}
@@ -114,6 +115,7 @@ describe('DefaultsSection dropdown search', () => {
 
     expect(screen.getByTestId('select-assistant-default-model')).toHaveAttribute('data-show-search', 'true');
     expect(screen.getByTestId('select-assistant-default-skills')).toHaveAttribute('data-show-search', 'true');
+    expect(screen.getByTestId('select-assistant-auto-inject-skills')).toHaveAttribute('data-show-search', 'true');
     expect(screen.getByTestId('select-assistant-default-mcp')).toHaveAttribute('data-show-search', 'true');
   });
 
@@ -121,19 +123,20 @@ describe('DefaultsSection dropdown search', () => {
     renderDefaultsSection({
       modelOptions: makeModelOptions(5),
       editableSkillOptions: makeSkillOptions(5),
+      autoInjectSkillOptions: makeSkillOptions(5),
       enabledMcpServers: makeMcpServers(5),
     });
 
     expect(screen.getByTestId('select-assistant-default-model')).toHaveAttribute('data-show-search', 'false');
     expect(screen.getByTestId('select-assistant-default-skills')).toHaveAttribute('data-show-search', 'false');
+    expect(screen.getByTestId('select-assistant-auto-inject-skills')).toHaveAttribute('data-show-search', 'false');
     expect(screen.getByTestId('select-assistant-default-mcp')).toHaveAttribute('data-show-search', 'false');
   });
 
-  it('filters options case-insensitively while always keeping the auto option visible', () => {
+  it('filters regular and auto-injected skills case-insensitively', () => {
     renderDefaultsSection();
 
-    // The mock runs filterOption with input 'SKILL-1' over every option:
-    // only skill-1 matches by label, plus the always-visible __AUTO__ option.
-    expect(screen.getByTestId('select-assistant-default-skills')).toHaveAttribute('data-filtered', '__AUTO__,skill-1');
+    expect(screen.getByTestId('select-assistant-default-skills')).toHaveAttribute('data-filtered', 'skill-1');
+    expect(screen.getByTestId('select-assistant-auto-inject-skills')).toHaveAttribute('data-filtered', 'skill-1');
   });
 });

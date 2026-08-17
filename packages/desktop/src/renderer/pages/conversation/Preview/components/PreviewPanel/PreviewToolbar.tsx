@@ -34,6 +34,9 @@ interface PreviewToolbarProps {
    */
   isHTML: boolean;
 
+  /** Whether this code document has a structured preview renderer. */
+  hasStructuredPreview?: boolean;
+
   /**
    * 当前视图模式
    * Current view mode
@@ -155,6 +158,7 @@ const PreviewToolbar: React.FC<PreviewToolbarProps> = ({
   content_type,
   isMarkdown,
   isHTML,
+  hasStructuredPreview = false,
   viewMode,
   isSplitScreenEnabled,
   showOpenInSystemButton,
@@ -188,7 +192,7 @@ const PreviewToolbar: React.FC<PreviewToolbarProps> = ({
       <div className='flex items-center justify-between gap-8px w-full' style={{ minWidth: 'max-content' }}>
         {/* 左侧：Tabs（Markdown/HTML）+ 文件名 / Left: Tabs (Markdown/HTML) + Filename */}
         <div className='flex items-center h-full gap-8px'>
-          {(isMarkdown || isHTML || isDiff) && (
+          {(isMarkdown || isHTML || isDiff || hasStructuredPreview) && (
             <>
               <div className='flex items-center h-full gap-0'>
                 <div
@@ -216,31 +220,33 @@ const PreviewToolbar: React.FC<PreviewToolbarProps> = ({
                   {t('preview.preview')}
                 </div>
               </div>
-              <div
-                role='button'
-                aria-label={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
-                className={`flex h-24px w-24px items-center justify-center rd-4px cursor-pointer transition-colors duration-150 ${isSplitScreenEnabled ? toolbarBtnActive : 'text-t-secondary hover:bg-bg-3'}`}
-                onClick={() => {
-                  try {
-                    onSplitScreenToggle();
-                  } catch {
-                    /* ignore */
-                  }
-                }}
-                title={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
-              >
-                <svg
-                  width={toolbarIconSize}
-                  height={toolbarIconSize}
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
+              {!hasStructuredPreview && (
+                <div
+                  role='button'
+                  aria-label={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
+                  className={`flex h-24px w-24px items-center justify-center rd-4px cursor-pointer transition-colors duration-150 ${isSplitScreenEnabled ? toolbarBtnActive : 'text-t-secondary hover:bg-bg-3'}`}
+                  onClick={() => {
+                    try {
+                      onSplitScreenToggle();
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  title={isSplitScreenEnabled ? t('preview.closeSplitScreen') : t('preview.openSplitScreen')}
                 >
-                  <rect x='3' y='3' width='18' height='18' rx='2' />
-                  <line x1='12' y1='3' x2='12' y2='21' />
-                </svg>
-              </div>
+                  <svg
+                    width={toolbarIconSize}
+                    height={toolbarIconSize}
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                  >
+                    <rect x='3' y='3' width='18' height='18' rx='2' />
+                    <line x1='12' y1='3' x2='12' y2='21' />
+                  </svg>
+                </div>
+              )}
             </>
           )}
 

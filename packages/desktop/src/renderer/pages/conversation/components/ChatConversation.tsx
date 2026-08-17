@@ -198,10 +198,12 @@ const TjuaeCliConversationPanel: React.FC<{ conversation: TjuaeCliConversation; 
 const ChatConversation: React.FC<{
   conversation?: TChatConversation;
   hideSendBox?: boolean;
-}> = ({ conversation, hideSendBox }) => {
+  workspaceOverride?: string;
+  initialOpenFiles?: string[];
+}> = ({ conversation, hideSendBox, workspaceOverride, initialOpenFiles }) => {
   const { t } = useTranslation();
   useActiveLease({ type: 'conversation', id: conversation?.id });
-  const workspaceEnabled = Boolean(conversation?.extra?.workspace);
+  const workspaceEnabled = Boolean(workspaceOverride ?? conversation?.extra?.workspace);
   const cronJobId = resolveCronJobId(conversation?.extra);
   const layout = useLayoutContext();
   const isMobile = Boolean(layout?.isMobile);
@@ -302,9 +304,15 @@ const ChatConversation: React.FC<{
       {...chatLayoutProps}
       headerExtra={headerExtraNode}
       siderTitle={sliderTitle}
-      sider={<ChatSlider conversation={conversation} />}
+      sider={
+        <ChatSlider
+          conversation={conversation}
+          workspaceOverride={workspaceOverride}
+          initialOpenFiles={initialOpenFiles}
+        />
+      }
       workspaceEnabled={workspaceEnabled}
-      workspacePath={conversation?.extra?.workspace}
+      workspacePath={workspaceOverride ?? conversation?.extra?.workspace}
       isTemporaryWorkspace={
         (conversation?.extra as { is_temporary_workspace?: boolean } | undefined)?.is_temporary_workspace
       }

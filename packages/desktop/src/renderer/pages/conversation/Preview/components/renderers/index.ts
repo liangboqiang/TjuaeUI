@@ -1,4 +1,3 @@
-
 /**
  * 渲染器组件导出
  * Renderer components exports
@@ -9,3 +8,5 @@
 
 export { default as HTMLRenderer } from './HTMLRenderer';
 export { default as SelectionToolbar } from './SelectionToolbar';
+export { default as TjuaeManifestRenderer } from './TjuaeManifestRenderer';
+export { isTjuaeManifestFileName, TjuaeManifestDiffRenderer } from './TjuaeManifestRenderer';

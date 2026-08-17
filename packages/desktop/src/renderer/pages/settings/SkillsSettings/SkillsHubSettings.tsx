@@ -1,998 +1,679 @@
 import { ipcBridge } from '@/common';
-import type { Assistant } from '@/common/types/agent/assistantTypes';
-import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
-import { Button, Checkbox, Message, Modal } from '@arco-design/web-react';
-import { Delete, Help, Lightning, Puzzle } from '@icon-park/react';
-import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import useSWR from 'swr';
-import SkillUsedByStack, { getAssistantsUsingSkill } from './SkillUsedByStack';
-import SettingsPageWrapper from '../components/SettingsPageWrapper';
-import SettingsPageHeader from '../components/SettingsPageHeader';
-import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
+import type { MarketSkill, SkillPreferences, SkillWorkspace } from '@/common/types/platform/skill';
 import { TjuaeSearchInput } from '@/renderer/components/base';
-import { buildSkillImportNotice, getSkillImportErrorMessage } from './skillImportMessages';
+import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
+import {
+  Button,
+  Dropdown,
+  Empty,
+  Input,
+  Menu,
+  Message,
+  Modal,
+  Select,
+  Spin,
+  Switch,
+  Tag,
+  Tooltip,
+} from '@arco-design/web-react';
+import { Copy, FolderOpen, More, Plus, Refresh, Upload } from '@icon-park/react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import useSWR from 'swr';
+import SettingsPageHeader from '../components/SettingsPageHeader';
+import SettingsPageWrapper from '../components/SettingsPageWrapper';
+import styles from './SkillsHubSettings.module.css';
 
-// Skill 信息类型 / Skill info type
-interface SkillInfo {
-  name: string;
-  description: string;
-  location: string;
-  /**
-   * Relative location under the builtin-skills corpus (e.g.
-   * `auto-inject/cron/SKILL.md`). Present only for built-in sources; the
-   * export-to-external-source flow still uses absolute `location` paths.
-   */
-  relative_location?: string;
-  is_auto_inject: boolean;
-  is_custom: boolean;
-  source?: 'builtin' | 'custom' | 'cron' | 'extension';
-}
+type SkillView = 'mine' | 'market';
+type BusyAction = { slug: string; action: string } | null;
 
-const isAutoInjectedBuiltinSkill = (skill: SkillInfo) => skill.source === 'builtin' && skill.is_auto_inject;
+const syncStateKey = {
+  notInstalled: 'settings.skillsHub.syncState.notInstalled',
+  synced: 'settings.skillsHub.syncState.synced',
+  localChanged: 'settings.skillsHub.syncState.localChanged',
+  updateAvailable: 'settings.skillsHub.syncState.updateAvailable',
+  diverged: 'settings.skillsHub.syncState.diverged',
+} as const;
 
-interface SkillImportRecord {
-  id: string;
-  operation_id: string;
-  source_label: string;
-  source_path?: string;
-  source_name: string;
-  skill_name?: string;
-  status: 'imported' | 'failed' | 'overwritten' | string;
-  error_code?: string;
-  error_path?: string;
-  actual_bytes?: number;
-  limit_bytes?: number;
-  line?: number;
-  column?: number;
-  created_at: number;
-}
+const gitStatusKey = {
+  clean: 'settings.skillsHub.gitStatus.clean',
+  modified: 'settings.skillsHub.gitStatus.modified',
+  conflicted: 'settings.skillsHub.gitStatus.conflicted',
+  unknown: 'settings.skillsHub.gitStatus.unknown',
+} as const;
 
-interface SkillImportLimits {
-  max_file_bytes: number;
-  max_total_bytes: number;
-}
-
-interface SkillImportHistoryGroup {
-  operationId: string;
-  sourceLabel: string;
-  createdAt: number;
-  importedCount: number;
-  failedCount: number;
-  records: SkillImportRecord[];
-}
-
-// Normalize skill name for data-testid usage
-const normalizeTestId = (name: string): string => {
-  return name.replace(/[:/\s<>"'|?*]/g, '-');
-};
-
-const getAvatarColorClass = (name: string) => {
-  if (!name) return 'bg-[#165DFF] text-white';
-  const colors = [
-    'bg-[#165DFF] text-white', // Blue
-    'bg-[#00B42A] text-white', // Green
-    'bg-[#722ED1] text-white', // Purple
-    'bg-[#F5319D] text-white', // Pink
-    'bg-[#F77234] text-white', // Orange
-    'bg-[#14C9C9] text-white', // Cyan
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
-
-const formatBytes = (bytes?: number): string | null => {
-  if (typeof bytes !== 'number' || !Number.isFinite(bytes)) return null;
-  if (bytes < 1024) return `${bytes} B`;
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1) return `${mb.toFixed(mb >= 10 ? 0 : 1)} MB`;
-  const kb = bytes / 1024;
-  return `${kb.toFixed(kb >= 10 ? 0 : 1)} KB`;
-};
-
-const buildImportHistoryGroups = (records: SkillImportRecord[]): SkillImportHistoryGroup[] => {
-  const byOperation = new Map<string, SkillImportHistoryGroup>();
-  for (const record of records) {
-    const existing = byOperation.get(record.operation_id);
-    const group =
-      existing ??
-      ({
-        operationId: record.operation_id,
-        sourceLabel: record.source_label,
-        createdAt: record.created_at,
-        importedCount: 0,
-        failedCount: 0,
-        records: [],
-      } satisfies SkillImportHistoryGroup);
-    group.records.push(record);
-    group.createdAt = Math.max(group.createdAt, record.created_at);
-    if (record.status === 'failed') {
-      group.failedCount += 1;
-    } else {
-      group.importedCount += 1;
-    }
-    byOperation.set(record.operation_id, group);
-  }
-  return Array.from(byOperation.values()).toSorted((a, b) => b.createdAt - a.createdAt);
-};
-
-const hasImportedRecords = (group: SkillImportHistoryGroup): boolean =>
-  group.records.some((r) => r.status !== 'failed');
-
-interface SkillsHubSettingsProps {
-  /** When false, renders without SettingsPageWrapper — useful for embedding in a tab */
+type SkillsHubSettingsProps = {
   withWrapper?: boolean;
-}
+};
+
+const matchesSearch = (name: string, description: string, query: string): boolean => {
+  const normalized = query.trim().toLocaleLowerCase();
+  return !normalized || `${name}\n${description}`.toLocaleLowerCase().includes(normalized);
+};
+
+const SkillIdentity: React.FC<{ name: string; version: string; categories: string[] }> = ({
+  name,
+  version,
+  categories,
+}) => (
+  <div className='min-w-0'>
+    <div className='flex min-w-0 items-center gap-8px'>
+      <span className='truncate text-15px font-600 text-t-primary'>{name}</span>
+      <span className='shrink-0 text-11px text-t-tertiary'>v{version}</span>
+    </div>
+    {categories.length > 0 ? (
+      <div className='mt-8px flex flex-wrap gap-6px'>
+        {categories.slice(0, 3).map((category) => (
+          <Tag key={category} size='small' bordered={false} color='gray'>
+            {category}
+          </Tag>
+        ))}
+      </div>
+    ) : null}
+  </div>
+);
+
+const SkillAvatar: React.FC<{ name: string }> = ({ name }) => (
+  <div className={styles.avatar} aria-hidden='true'>
+    {name.trim().charAt(0).toLocaleUpperCase() || 'S'}
+  </div>
+);
 
 const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = true }) => {
   const { t } = useTranslation();
-  const layout = useLayoutContext();
-  const isMobile = layout?.isMobile ?? false;
-  const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const highlightName = searchParams.get('highlight');
-  const isImportHistoryView =
-    location.pathname === '/settings/skills/import-history' || searchParams.get('view') === 'import-history';
-  const [highlightedSkill, setHighlightedSkill] = useState<string | null>(null);
-  const skillRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [loading, setLoading] = useState(false);
-  const [availableSkills, setAvailableSkills] = useState<SkillInfo[]>([]);
-  const [search_query, setSearchQuery] = useState('');
-  const [importHistory, setImportHistory] = useState<SkillImportRecord[]>([]);
-  const [importLimits, setImportLimits] = useState<SkillImportLimits | null>(null);
-  const [activeTab, setActiveTab] = useState<'custom' | 'official'>('custom');
-  // Batch management (Custom tab only): multi-select skills for bulk deletion.
-  const [batchMode, setBatchMode] = useState(false);
-  const [selectedSkillNames, setSelectedSkillNames] = useState<Set<string>>(new Set());
-  // Assistant catalog for the "used by" avatar stacks on skill cards.
-  const { data: assistantCatalog } = useSWR<Assistant[]>('assistants.list', () => ipcBridge.assistants.list.invoke());
+  const isMobile = useLayoutContext()?.isMobile ?? false;
+  const [activeView, setActiveView] = useState<SkillView>('mine');
+  const [activeMarket, setActiveMarket] = useState('tjuae-hub');
+  const [query, setQuery] = useState('');
+  const [busy, setBusy] = useState<BusyAction>(null);
+  const [copySource, setCopySource] = useState<SkillWorkspace | null>(null);
+  const [copySlug, setCopySlug] = useState('');
+  const [createMode, setCreateMode] = useState<'manual' | 'butler' | null>(null);
+  const [createSlug, setCreateSlug] = useState('');
+  const [createName, setCreateName] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+  const [cloneVisible, setCloneVisible] = useState(false);
+  const [cloneUrl, setCloneUrl] = useState('');
+  const [publishSource, setPublishSource] = useState<SkillWorkspace | null>(null);
+  const [forkRepositoryUrl, setForkRepositoryUrl] = useState('');
+  const [publishMessage, setPublishMessage] = useState('');
 
-  const openSkillDetail = useCallback(
-    (skillName: string) => {
-      void navigate(`/settings/skills/detail/${encodeURIComponent(skillName)}`);
+  const {
+    data: installed = [],
+    error: installedError,
+    isLoading: installedLoading,
+    mutate: refreshInstalled,
+  } = useSWR<SkillWorkspace[]>('skills.workspaces', () => ipcBridge.fs.listAvailableSkills.invoke());
+  const {
+    data: market = [],
+    error: marketError,
+    isLoading: marketLoading,
+    mutate: refreshMarket,
+  } = useSWR<MarketSkill[]>('skills.market', () => ipcBridge.fs.listMarketSkills.invoke());
+
+  const filteredInstalled = useMemo(
+    () => installed.filter((skill) => matchesSearch(skill.name, skill.description, query)),
+    [installed, query]
+  );
+  const markets = useMemo(
+    () => Array.from(new Map(market.map((skill) => [skill.market.id, skill.market])).values()),
+    [market]
+  );
+  const filteredMarket = useMemo(
+    () =>
+      market.filter((skill) => skill.market.id === activeMarket && matchesSearch(skill.name, skill.description, query)),
+    [activeMarket, market, query]
+  );
+
+  const refresh = useCallback(async () => {
+    await Promise.all([refreshInstalled(), refreshMarket()]);
+  }, [refreshInstalled, refreshMarket]);
+
+  const runAction = useCallback(
+    async (slug: string, action: string, operation: () => Promise<unknown>, successMessage: string) => {
+      setBusy({ slug, action });
+      try {
+        await operation();
+        Message.success(successMessage);
+        await refresh();
+      } catch (error) {
+        console.error(`[SkillsHub] ${action} failed`, error);
+        Message.error(t('settings.skillsHub.actionFailed'));
+      } finally {
+        setBusy(null);
+      }
+    },
+    [refresh, t]
+  );
+
+  const openSkill = useCallback(
+    (slug: string) => {
+      void navigate(`/settings/skills/detail/${encodeURIComponent(slug)}`);
     },
     [navigate]
   );
 
-  // "Custom" tab: only user-imported skills.
-  const mySkills = useMemo(() => availableSkills.filter((s) => s.source === 'custom'), [availableSkills]);
-  // "Official" tab: built-in non-auto-injected skills shown as the primary list,
-  // with extension skills and auto-injected skills kept as separate read-only sections.
-  const officialSkills = useMemo(
-    () => availableSkills.filter((s) => s.source === 'builtin' && !s.is_auto_inject),
-    [availableSkills]
+  const compareSkill = useCallback(
+    (marketId: string, slug: string) => {
+      void navigate(`/settings/skills/detail/${encodeURIComponent(slug)}`, {
+        state: { marketComparison: { marketId, slug } },
+      });
+    },
+    [navigate]
   );
-  const builtinAutoSkills = useMemo(() => availableSkills.filter(isAutoInjectedBuiltinSkill), [availableSkills]);
-  const extensionSkills = useMemo(() => availableSkills.filter((s) => s.source === 'extension'), [availableSkills]);
-  const importHistoryGroups = useMemo(() => buildImportHistoryGroups(importHistory), [importHistory]);
 
-  const matchesQuery = useCallback(
-    (list: SkillInfo[]) => {
-      if (!search_query.trim()) return list;
-      const lowerQuery = search_query.toLowerCase();
-      return list.filter(
-        (s) =>
-          s.name.toLowerCase().includes(lowerQuery) ||
-          (s.description && s.description.toLowerCase().includes(lowerQuery))
+  const importSkill = useCallback(async () => {
+    const paths = await ipcBridge.dialog.showOpen.invoke({ properties: ['openDirectory'] });
+    const source = paths?.[0];
+    if (!source) return;
+    await runAction(
+      source,
+      'import',
+      () => ipcBridge.fs.importSkill.invoke({ skill_path: source }),
+      t('settings.skillsHub.importSuccess')
+    );
+  }, [runAction, t]);
+
+  const confirmCreate = useCallback(async () => {
+    const slug = createSlug.trim().toLocaleLowerCase();
+    const name = createName.trim();
+    const description = createDescription.trim();
+    if (!slug || !name || !description) return;
+    setBusy({ slug, action: 'create' });
+    try {
+      const created = await ipcBridge.fs.createSkill.invoke({ slug, name, description });
+      Message.success(t('settings.skillsHub.createSuccess'));
+      setCreateMode(null);
+      setCreateSlug('');
+      setCreateName('');
+      setCreateDescription('');
+      await refresh();
+      openSkill(created.slug);
+    } catch (error) {
+      console.error('[SkillsHub] create failed', error);
+      Message.error(t('settings.skillsHub.actionFailed'));
+    } finally {
+      setBusy(null);
+    }
+  }, [createDescription, createName, createSlug, openSkill, refresh, t]);
+
+  const confirmClone = useCallback(async () => {
+    const repositoryUrl = cloneUrl.trim();
+    if (!repositoryUrl) return;
+    setBusy({ slug: repositoryUrl, action: 'clone' });
+    try {
+      const created = await ipcBridge.fs.cloneSkill.invoke({ repositoryUrl });
+      Message.success(t('settings.skillsHub.cloneSuccess'));
+      setCloneVisible(false);
+      setCloneUrl('');
+      await refresh();
+      openSkill(created.slug);
+    } catch (error) {
+      console.error('[SkillsHub] clone failed', error);
+      Message.error(t('settings.skillsHub.actionFailed'));
+    } finally {
+      setBusy(null);
+    }
+  }, [cloneUrl, openSkill, refresh, t]);
+
+  const updatePreferences = useCallback(
+    async (skill: SkillWorkspace, patch: Partial<SkillPreferences>) => {
+      const next = { ...skill.preferences, ...patch };
+      await runAction(
+        skill.slug,
+        'preferences',
+        () => ipcBridge.fs.updateSkillPreferences.invoke({ slug: skill.slug, ...next }),
+        t('settings.skillsHub.preferencesSaved')
       );
     },
-    [search_query]
+    [runAction, t]
   );
 
-  const filteredSkills = useMemo(() => matchesQuery(mySkills), [matchesQuery, mySkills]);
-  const filteredOfficialSkills = useMemo(() => matchesQuery(officialSkills), [matchesQuery, officialSkills]);
-  const filteredExtensionSkills = useMemo(() => matchesQuery(extensionSkills), [matchesQuery, extensionSkills]);
-  const filteredAutoSkills = useMemo(() => matchesQuery(builtinAutoSkills), [matchesQuery, builtinAutoSkills]);
+  const confirmDelete = useCallback(
+    (skill: SkillWorkspace) => {
+      Modal.confirm({
+        title: t('settings.skillsHub.deleteConfirmTitle'),
+        content: t('settings.skillsHub.deleteConfirmContent', { name: skill.name }),
+        okButtonProps: { status: 'danger' },
+        onOk: () =>
+          runAction(
+            skill.slug,
+            'delete',
+            () => ipcBridge.fs.deleteSkill.invoke({ skill_name: skill.slug }),
+            t('settings.skillsHub.deleteSuccess')
+          ),
+      });
+    },
+    [runAction, t]
+  );
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const showCopy = useCallback((skill: SkillWorkspace) => {
+    setCopySource(skill);
+    setCopySlug(`${skill.slug}-copy`);
+  }, []);
+
+  const confirmCopy = useCallback(async () => {
+    if (!copySource || !copySlug.trim()) return;
+    const source = copySource;
+    const targetSlug = copySlug.trim().toLocaleLowerCase();
+    await runAction(
+      source.slug,
+      'copy',
+      () => ipcBridge.fs.copySkill.invoke({ slug: source.slug, targetSlug }),
+      t('settings.skillsHub.copySuccess')
+    );
+    setCopySource(null);
+  }, [copySlug, copySource, runAction, t]);
+
+  const confirmPublish = useCallback(async () => {
+    if (
+      !publishSource ||
+      publishSource.source.kind !== 'market' ||
+      !forkRepositoryUrl.trim() ||
+      !publishMessage.trim()
+    ) {
+      return;
+    }
+    setBusy({ slug: publishSource.slug, action: 'publish' });
     try {
-      const skills = await ipcBridge.fs.listAvailableSkills.invoke();
-      setAvailableSkills(skills);
-
-      const history = await ipcBridge.fs.listSkillImportHistory.invoke();
-      setImportHistory(history as SkillImportRecord[]);
-
-      const limits = await ipcBridge.fs.getSkillImportLimits.invoke();
-      setImportLimits(limits);
+      const result = await ipcBridge.fs.publishMarketSkill.invoke({
+        marketId: publishSource.source.marketId,
+        slug: publishSource.slug,
+        forkRepositoryUrl: forkRepositoryUrl.trim(),
+        message: publishMessage.trim(),
+      });
+      Message.success(t('settings.skillsHub.publishSuccess'));
+      setPublishSource(null);
+      setForkRepositoryUrl('');
+      setPublishMessage('');
+      await ipcBridge.shell.openExternal.invoke(result.compareUrl);
+      await refresh();
     } catch (error) {
-      console.error('Failed to fetch skills:', error);
-      Message.error(t('settings.skillsHub.fetchError', { defaultValue: 'Failed to fetch skills' }));
+      console.error('[SkillsHub] publish failed', error);
+      Message.error(t('settings.skillsHub.actionFailed'));
     } finally {
-      setLoading(false);
+      setBusy(null);
     }
-  }, [t]);
+  }, [forkRepositoryUrl, publishMessage, publishSource, refresh, t]);
 
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
-
-  // When deep-linked to a specific skill, open the tab that actually contains it
-  // so the highlight/scroll below can find its rendered card.
-  useEffect(() => {
-    if (!highlightName || loading) return;
-    const target = availableSkills.find((s) => s.name === highlightName);
-    if (target) {
-      setActiveTab(target.source === 'custom' ? 'custom' : 'official');
-    }
-  }, [highlightName, loading, availableSkills]);
-
-  // Scroll to and highlight a skill when navigated with ?highlight=skillName
-  useEffect(() => {
-    if (!highlightName || loading) return;
-    const el = skillRefs.current[highlightName];
-    if (el) {
-      // Small delay to ensure layout is settled
-      requestAnimationFrame(() => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setHighlightedSkill(highlightName);
-        // Clear highlight after animation
-        const timer = setTimeout(() => setHighlightedSkill(null), 2000);
-        // Clean up the search param so refreshing won't re-highlight
-        setSearchParams({}, { replace: true });
-        return () => clearTimeout(timer);
-      });
-    }
-  }, [highlightName, loading, availableSkills, setSearchParams]);
-
-  const showSkillList = useCallback(() => {
-    void navigate('/settings/skills');
-  }, [navigate]);
-
-  const handleImport = async (skillPath: string) => {
-    try {
-      const result = await ipcBridge.fs.importSkills.invoke({ skill_path: skillPath });
-      const notice = buildSkillImportNotice(result, t);
-      if (notice.type === 'error') {
-        Message.error(notice.message);
-      } else if (notice.type === 'warning') {
-        Message.warning(notice.message);
-      } else {
-        Message.success(notice.message);
-      }
-      if (notice.importedNames.length > 0) {
-        setSearchQuery('');
-        void fetchData();
-      } else if (notice.type !== 'success') {
-        void fetchData();
-      }
-    } catch (error) {
-      console.error('Failed to import skill:', error);
-      Message.error(getSkillImportErrorMessage(error, t));
-    }
-  };
-
-  const handleDelete = async (skillName: string) => {
-    try {
-      await ipcBridge.fs.deleteSkill.invoke({ skill_name: skillName });
-      Message.success(t('settings.skillsHub.deleteSuccess', { defaultValue: 'Skill deleted' }));
-      void fetchData();
-    } catch (error) {
-      console.error('Failed to delete skill:', error);
-      Message.error(t('settings.skillsHub.deleteError', { defaultValue: 'Error deleting skill' }));
-    }
-  };
-
-  const exitBatchMode = useCallback(() => {
-    setBatchMode(false);
-    setSelectedSkillNames(new Set());
-  }, []);
-
-  const toggleSkillSelected = useCallback((skillName: string) => {
-    setSelectedSkillNames((prev) => {
-      const next = new Set(prev);
-      if (next.has(skillName)) {
-        next.delete(skillName);
-      } else {
-        next.add(skillName);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleBatchDelete = useCallback(() => {
-    if (selectedSkillNames.size === 0) return;
-    Modal.confirm({
-      title: t('settings.skillsHub.batchDeleteConfirmTitle', { defaultValue: 'Delete Skills' }),
-      content: t('settings.skillsHub.batchDeleteConfirmContent', {
-        count: selectedSkillNames.size,
-        defaultValue: `Are you sure you want to delete the ${selectedSkillNames.size} selected skill(s)?`,
-      }),
-      okButtonProps: { status: 'warning' },
-      okText: t('common.delete', { defaultValue: 'Delete' }),
-      wrapClassName: 'modal-delete-skill',
-      onOk: async () => {
-        const names = Array.from(selectedSkillNames);
-        const results = await Promise.allSettled(
-          names.map((name) => ipcBridge.fs.deleteSkill.invoke({ skill_name: name }))
-        );
-        const successCount = results.filter((r) => r.status === 'fulfilled').length;
-        const failedCount = results.length - successCount;
-        if (failedCount === 0) {
-          Message.success(
-            t('settings.skillsHub.batchDeleteSuccess', {
-              count: successCount,
-              defaultValue: `Deleted ${successCount} skill(s)`,
-            })
-          );
-        } else if (successCount > 0) {
-          Message.warning(
-            t('settings.skillsHub.batchDeletePartial', {
-              successCount,
-              failedCount,
-              defaultValue: `Deleted ${successCount} skill(s), ${failedCount} failed`,
-            })
-          );
-        } else {
-          Message.error(t('settings.skillsHub.deleteError', { defaultValue: 'Error deleting skill' }));
-        }
-        exitBatchMode();
-        void fetchData();
-      },
-    });
-  }, [selectedSkillNames, exitBatchMode, fetchData, t]);
-
-  const handleManualImport = async () => {
-    try {
-      const result = await ipcBridge.dialog.showOpen.invoke({
-        properties: ['openFile', 'openDirectory'],
-        filters: [{ name: 'Skill folders or zip archives', extensions: ['zip'] }],
-      });
-      if (result && result.length > 0) {
-        await handleImport(result[0]);
-      }
-    } catch (error) {
-      console.error('Failed to open directory dialog:', error);
-    }
-  };
-
-  const getImportHistoryStatusLabel = (group: SkillImportHistoryGroup) => {
-    if (group.failedCount > 0 && hasImportedRecords(group)) {
-      return t('settings.skillsHub.importHistoryStatusPartial', { defaultValue: 'Partial' });
-    }
-    if (group.failedCount > 0) {
-      return t('settings.skillsHub.importHistoryStatusFailed', { defaultValue: 'Failed' });
-    }
-    if (group.records.some((record) => record.status === 'overwritten')) {
-      return t('settings.skillsHub.importHistoryStatusOverwritten', { defaultValue: 'Overwritten' });
-    }
-    return t('settings.skillsHub.importHistoryStatusSuccess', { defaultValue: 'Success' });
-  };
-
-  const getImportHistoryStatusClass = (group: SkillImportHistoryGroup) => {
-    if (group.failedCount > 0) {
-      return 'bg-[rgba(var(--warning-6),0.10)] text-warning-6 border-[rgba(var(--warning-6),0.20)]';
-    }
-    if (group.records.some((record) => record.status === 'overwritten')) {
-      return 'bg-[rgba(var(--warning-6),0.10)] text-warning-6 border-[rgba(var(--warning-6),0.20)]';
-    }
-    return 'bg-[rgba(var(--success-6),0.10)] text-[rgb(var(--success-6))] border-[rgba(var(--success-6),0.20)]';
-  };
-
-  const getFailedImportRepairTitle = (record: SkillImportRecord) => {
-    switch (record.error_code) {
-      case 'SKILL_IMPORT_FILE_TOO_LARGE':
-        return t('settings.skillsHub.importHistoryRepairFileTooLarge', {
-          defaultValue: 'Repair: remove the oversized file and import again',
-        });
-      case 'SKILL_IMPORT_TOTAL_TOO_LARGE':
-        return t('settings.skillsHub.importHistoryRepairTotalTooLarge', {
-          defaultValue: 'Repair: remove unrelated large files and import again',
-        });
-      case 'SKILL_INVALID_FRONTMATTER':
-        return t('settings.skillsHub.importHistoryRepairFrontmatter', {
-          defaultValue: 'Repair: update the SKILL.md header and import again',
-        });
-      case 'SKILL_IMPORT_NO_SKILL_FOUND':
-        return t('settings.skillsHub.importHistoryRepairNoSkillFound', {
-          defaultValue: 'Repair: choose a folder or zip that contains SKILL.md',
-        });
-      case 'SKILL_IMPORT_INVALID_SOURCE':
-        return t('settings.skillsHub.importHistoryRepairInvalidSource', {
-          defaultValue: 'Repair: choose a skill folder, parent folder, or zip file',
-        });
-      case 'SKILL_IMPORT_INVALID_ZIP':
-        return t('settings.skillsHub.importHistoryRepairInvalidZip', {
-          defaultValue: 'Repair: create the zip again and import it',
-        });
-      case 'SKILL_IMPORT_SYMLINK_ENTRY':
-        return t('settings.skillsHub.importHistoryRepairSymlinkEntry', {
-          defaultValue: 'Repair: replace linked files with real files and import again',
-        });
-      case 'SKILL_IMPORT_INVALID_NAME':
-        return t('settings.skillsHub.importHistoryRepairInvalidName', {
-          defaultValue: 'Repair: rename the skill using lowercase letters, numbers, and hyphens',
-        });
-      default:
-        return t('settings.skillsHub.importHistoryRepairFailed', {
-          defaultValue: 'Repair: check this skill package and import again',
-        });
-    }
-  };
-
-  const getFailedImportDescription = (record: SkillImportRecord) => {
-    const actual = formatBytes(record.actual_bytes);
-    const limit = formatBytes(record.limit_bytes);
-    switch (record.error_code) {
-      case 'SKILL_IMPORT_FILE_TOO_LARGE':
-        if (record.error_path && actual && limit) {
-          return t('settings.skillsHub.importHistoryFileTooLargeDescription', {
-            path: record.error_path,
-            actual,
-            limit,
-            defaultValue: `${record.error_path} is ${actual}, over the ${limit} per-file limit. This file will not be copied into the skill directory.`,
-          });
-        }
-        break;
-      case 'SKILL_IMPORT_TOTAL_TOO_LARGE':
-        if (actual && limit) {
-          return t('settings.skillsHub.importHistoryTotalTooLargeDescription', {
-            actual,
-            limit,
-            defaultValue: `This skill is ${actual}, over the ${limit} total size limit.`,
-          });
-        }
-        break;
-      case 'SKILL_INVALID_FRONTMATTER':
-        return t('settings.skillsHub.importHistoryFrontmatterDescription', {
-          defaultValue: 'The SKILL.md header could not be parsed, so the skill description could not be read.',
-        });
-      case 'SKILL_IMPORT_NO_SKILL_FOUND':
-        return t('settings.skillsHub.importHistoryNoSkillFoundDescription', {
-          defaultValue: 'The selected location does not contain a valid SKILL.md file.',
-        });
-      case 'SKILL_IMPORT_INVALID_SOURCE':
-        return t('settings.skillsHub.importHistoryInvalidSourceDescription', {
-          defaultValue: 'The selected item is not a folder or zip file that can be imported as a skill.',
-        });
-      case 'SKILL_IMPORT_INVALID_ZIP':
-        return t('settings.skillsHub.importHistoryInvalidZipDescription', {
-          defaultValue: 'The zip file could not be opened or extracted.',
-        });
-      case 'SKILL_IMPORT_SYMLINK_ENTRY':
-        return t('settings.skillsHub.importHistorySymlinkEntryDescription', {
-          defaultValue: 'This package contains linked files, which are not copied during import.',
-        });
-      case 'SKILL_IMPORT_INVALID_NAME':
-        return t('settings.skillsHub.importHistoryInvalidNameDescription', {
-          defaultValue: 'The skill name cannot be used as a folder name.',
-        });
-      default:
-        break;
-    }
-    return t('settings.skillsHub.importHistoryFailedDescription', {
-      defaultValue: 'This skill package could not be imported.',
-    });
-  };
-
-  const renderFailedImportDetails = (record: SkillImportRecord) => {
-    const actual = formatBytes(record.actual_bytes);
-    const limit = formatBytes(record.limit_bytes);
-    const detailLines: string[] = [];
-    if (record.error_path) {
-      detailLines.push(
-        t('settings.skillsHub.importHistoryFileLine', {
-          path: record.error_path,
-          defaultValue: `File: ${record.error_path}`,
-        })
-      );
-    }
-    if (actual && limit) {
-      detailLines.push(
-        t('settings.skillsHub.importHistorySizeLine', {
-          actual,
-          limit,
-          defaultValue: `Size: ${actual}, limit: ${limit}`,
-        })
-      );
-    }
-    if (typeof record.line === 'number' && typeof record.column === 'number') {
-      detailLines.push(
-        t('settings.skillsHub.importHistoryLocationLine', {
-          line: record.line,
-          column: record.column,
-          defaultValue: `Location: line ${record.line}, column ${record.column}`,
-        })
-      );
-    }
-    const source = record.source_path || record.source_name;
-    if (source) {
-      detailLines.push(
-        t('settings.skillsHub.importHistorySourceLine', {
-          source,
-          defaultValue: `Source: ${source}`,
-        })
-      );
-    }
-
-    return (
-      <div className='mt-10px border border-[rgba(var(--warning-6),0.24)] bg-[rgba(var(--warning-6),0.08)] rd-10px px-12px py-10px'>
-        <div className='flex items-start gap-8px'>
-          <span className='shrink-0 mt-1px text-warning-6 text-13px'>!</span>
-          <div className='min-w-0 text-12px leading-relaxed text-warning-6'>
-            <div className='font-semibold text-warning-6'>{getFailedImportRepairTitle(record)}</div>
-            <div className='mt-2px'>{getFailedImportDescription(record)}</div>
-            {detailLines.length > 0 && (
-              <ul className='mt-6px m-0 p-0 list-none flex flex-col gap-2px'>
-                {detailLines.map((line) => (
-                  <li key={line} className='truncate' title={line}>
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const importHistoryContent = (
-    <div data-testid='skill-import-history-page' className='flex flex-col h-full w-full'>
-      <div className='space-y-16px pb-24px'>
-        <div className='px-[16px] md:px-[32px] py-20px bg-base rd-16px md:rd-24px shadow-sm border border-b-base'>
-          <div className='flex flex-col sm:flex-row sm:items-start justify-between gap-12px'>
-            <div>
-              <div className='flex items-center gap-10px'>
-                <span className='text-16px md:text-18px text-t-primary font-bold tracking-tight'>
-                  {t('settings.skillsHub.importHistoryTitle', { defaultValue: 'Import history' })}
-                </span>
-              </div>
-              <p className='mt-6px text-12px text-t-tertiary leading-relaxed'>
-                {t('settings.skillsHub.importHistoryDescription', {
-                  defaultValue: 'If an import fails, follow the note in the record and import again.',
-                })}
-              </p>
-            </div>
-            <Button
-              data-testid='btn-back-to-skills'
-              type='outline'
-              className='!rounded-8px shrink-0'
-              onClick={showSkillList}
-            >
-              {t('settings.skillsHub.backToSkills', { defaultValue: 'Back to skills' })}
-            </Button>
-          </div>
-        </div>
-
-        <div className='px-[16px] md:px-[32px] py-16px bg-base rd-16px md:rd-24px shadow-sm border border-b-base'>
-          {importHistoryGroups.length === 0 ? (
-            <div className='border border-dashed border-border-1 bg-fill-1 rd-10px px-12px py-14px text-12px text-t-tertiary'>
-              {t('settings.skillsHub.importHistoryEmpty', { defaultValue: 'No import records yet.' })}
-            </div>
-          ) : (
-            <div className='flex flex-col gap-8px'>
-              {importHistoryGroups.map((group) => {
-                const failedRecords = group.records.filter((record) => record.status === 'failed');
-                const importedNames = group.records
-                  .filter((record) => record.status !== 'failed')
-                  .map((record) => record.skill_name || record.source_name)
-                  .filter(Boolean)
-                  .join(', ');
-
-                return (
-                  <div
-                    key={group.operationId}
-                    data-testid={`skill-import-history-record-${normalizeTestId(group.sourceLabel)}`}
-                    className={`border rd-12px px-12px py-10px ${
-                      failedRecords.length > 0
-                        ? 'border-[rgba(var(--warning-6),0.28)] bg-[rgba(var(--warning-6),0.03)]'
-                        : 'border-border-1 bg-fill-1'
-                    }`}
-                  >
-                    <div className='flex flex-col sm:flex-row sm:items-start justify-between gap-8px'>
-                      <div className='min-w-0'>
-                        <div className='flex items-center gap-8px min-w-0'>
-                          <span className='text-13px font-semibold text-t-primary truncate' title={group.sourceLabel}>
-                            {group.sourceLabel}
-                          </span>
-                          <span
-                            className={`shrink-0 border text-11px px-6px py-1px rd-4px font-medium ${getImportHistoryStatusClass(group)}`}
-                          >
-                            {getImportHistoryStatusLabel(group)}
-                          </span>
-                        </div>
-                        <div className='mt-5px flex flex-wrap gap-x-8px gap-y-2px text-12px text-t-tertiary'>
-                          <span>{new Date(group.createdAt).toLocaleString()}</span>
-                          {importedNames && <span>{importedNames}</span>}
-                        </div>
-                      </div>
-                    </div>
-
-                    {failedRecords.map((record) => (
-                      <div key={record.id}>{renderFailedImportDetails(record)}</div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Read-only skill card used by the Official / Extension / Auto-injected sections.
-  const renderReadonlySkillCard = (skill: SkillInfo, variant: 'official' | 'extension' | 'auto', testId?: string) => {
-    const isAuto = variant === 'auto';
-    const isExtension = variant === 'extension';
-    const accent = isAuto ? 'success' : 'primary';
-    return (
-      <div
-        key={skill.name}
-        data-testid={testId}
-        ref={(el) => {
-          skillRefs.current[skill.name] = el;
-        }}
-        onClick={() => openSkillDetail(skill.name)}
-        className={`flex flex-col sm:flex-row gap-16px p-16px bg-base border hover:border-border-1 hover:bg-fill-1 rd-12px transition-all duration-200 cursor-pointer ${highlightedSkill === skill.name ? 'border-primary-5 bg-primary-1' : 'border-transparent'}`}
-      >
-        <div className='shrink-0 flex items-start sm:mt-2px'>
-          {isExtension || isAuto ? (
-            <div
-              className={`w-40px h-40px rd-10px bg-[rgba(var(--${accent}-6),0.08)] flex items-center justify-center shadow-sm`}
-            >
-              {isExtension ? (
-                <Puzzle theme='filled' size={20} fill='rgb(var(--primary-6))' />
-              ) : (
-                <Lightning theme='filled' size={20} fill='rgb(var(--success-6))' />
-              )}
-            </div>
-          ) : (
-            <div
-              className={`w-40px h-40px rd-10px flex items-center justify-center font-bold text-16px shadow-sm text-transform-uppercase ${getAvatarColorClass(skill.name)}`}
-            >
-              {skill.name.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </div>
-        <div className='flex-1 min-w-0 flex flex-col justify-center gap-4px'>
-          <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0'>{skill.name}</h3>
-          {skill.description && (
-            <p className='text-13px text-t-secondary leading-relaxed line-clamp-2 m-0' title={skill.description}>
-              {skill.description}
-            </p>
-          )}
-        </div>
-        <div className='shrink-0 sm:self-center flex items-center justify-end pl-4px'>
-          <SkillUsedByStack assistants={getAssistantsUsingSkill(skill.name, assistantCatalog ?? [])} />
-        </div>
-      </div>
-    );
-  };
-
-  const searchBox = (testId: string) => (
-    <TjuaeSearchInput
-      className='shrink-0 w-[200px] hidden md:flex'
-      data-testid={testId}
-      placeholder={t('settings.skillsHub.searchPlaceholder', { defaultValue: 'Search skills...' })}
-      value={search_query}
-      onChange={setSearchQuery}
-    />
-  );
-
-  // Read-only section wrapper (extension / auto-injected) using the shared list container.
-  const readonlySection = (
-    testId: string,
-    icon: React.ReactNode,
-    title: React.ReactNode,
-    count: number,
-    countClass: string,
-    skills: SkillInfo[],
-    variant: 'extension' | 'auto',
-    hint?: React.ReactNode
-  ) => (
-    <div data-testid={testId}>
-      <div className='flex items-center gap-10px mb-12px'>
-        {icon}
-        <span className='text-14px font-bold text-t-primary'>{title}</span>
-        {hint ? (
-          <span className='inline-flex shrink-0' title={typeof hint === 'string' ? hint : undefined}>
-            <Help theme='outline' size={14} className='text-t-tertiary hover:text-t-secondary cursor-help shrink-0' />
-          </span>
+  const installedCards = filteredInstalled.map((skill) => {
+    const pending = busy?.slug === skill.slug;
+    const source = skill.source;
+    const marketEntry =
+      source.kind === 'market'
+        ? market.find(
+            (entry) =>
+              entry.market.id === source.marketId &&
+              entry.market.repository === source.repository &&
+              entry.path === source.path
+          )
+        : undefined;
+    const menu = (
+      <Menu>
+        {source.kind === 'market' ? (
+          <Menu.Item key='compare' onClick={() => compareSkill(source.marketId, skill.slug)}>
+            {t('settings.skillsHub.compare')}
+          </Menu.Item>
         ) : null}
-        <span className={`text-12px px-10px py-2px rd-[100px] font-medium ${countClass}`}>{count}</span>
-      </div>
-      <div className='flex flex-col gap-8px rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>
-        {skills.length > 0 ? (
-          skills.map((skill) => renderReadonlySkillCard(skill, variant))
-        ) : (
-          <div className='text-center text-t-secondary text-13px py-32px bg-fill-1 rd-12px border border-border-2 border-dashed'>
-            {t('settings.skillsHub.noSearchResults', { defaultValue: 'No matching skills.' })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // Batch selection helpers scoped to the visible (filtered) custom skills.
-  const allVisibleSelected = filteredSkills.length > 0 && filteredSkills.every((s) => selectedSkillNames.has(s.name));
-  const toggleSelectAllVisible = () => {
-    setSelectedSkillNames((prev) => {
-      const next = new Set(prev);
-      if (allVisibleSelected) {
-        filteredSkills.forEach((s) => next.delete(s.name));
-      } else {
-        filteredSkills.forEach((s) => next.add(s.name));
-      }
-      return next;
-    });
-  };
-
-  // ======== Custom tab ========
-  const customPane = (
-    <div data-testid='my-skills-section' className='flex flex-col gap-12px'>
-      <div className='flex items-start justify-between gap-12px'>
-        <p className='m-0 flex-1 min-w-0 text-12px leading-relaxed text-t-tertiary'>
-          {t('settings.skillsHub.customHint', {
-            maxFileSize:
-              formatBytes(importLimits?.max_file_bytes) ??
-              t('settings.skillsHub.importHelpConfiguredLimit', { defaultValue: 'configured limit' }),
-            maxTotalSize:
-              formatBytes(importLimits?.max_total_bytes) ??
-              t('settings.skillsHub.importHelpConfiguredLimit', { defaultValue: 'configured limit' }),
-            defaultValue:
-              'Import a skill folder, parent folder, or zip; up to {{maxFileSize}} per file and {{maxTotalSize}} per skill; importing the same name overwrites the existing skill.',
-          })}
-        </p>
-        {mySkills.length > 0 && (
-          <div className='flex shrink-0 items-center gap-8px'>
-            {batchMode ? (
-              <>
-                <Button
-                  size='mini'
-                  type='text'
-                  className='!h-24px !px-8px !text-12px'
-                  data-testid='btn-batch-cancel'
-                  onClick={exitBatchMode}
-                >
-                  {t('common.cancel', { defaultValue: 'Cancel' })}
-                </Button>
-                <Button
-                  size='mini'
-                  status='warning'
-                  className='!h-24px !px-8px !text-12px'
-                  data-testid='btn-batch-delete'
-                  disabled={selectedSkillNames.size === 0}
-                  onClick={handleBatchDelete}
-                >
-                  {t('settings.skillsHub.batchDeleteAction', {
-                    count: selectedSkillNames.size,
-                    defaultValue: `Delete (${selectedSkillNames.size})`,
-                  })}
-                </Button>
-              </>
-            ) : (
-              <Button
-                size='mini'
-                type='text'
-                className='!h-24px !px-8px !text-12px !text-t-secondary hover:!text-t-primary'
-                data-testid='btn-batch-manage'
-                onClick={() => setBatchMode(true)}
-              >
-                {t('settings.skillsHub.batchManage', { defaultValue: 'Batch manage' })}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-      {batchMode && mySkills.length > 0 && (
-        <div className='flex items-center justify-between gap-12px text-12px text-t-secondary'>
-          <Checkbox
-            data-testid='checkbox-select-all-skills'
-            checked={allVisibleSelected}
-            onChange={toggleSelectAllVisible}
-          >
-            <span className='text-12px text-t-secondary'>
-              {t('conversation.history.selectAll', { defaultValue: 'Select All' })}
-            </span>
-          </Checkbox>
-          <span>
-            {t('settings.skillsHub.batchSelectedCount', {
-              count: selectedSkillNames.size,
-              defaultValue: `${selectedSkillNames.size} selected`,
-            })}
+        {source.kind === 'market' &&
+        marketEntry &&
+        (marketEntry.syncState === 'localChanged' || marketEntry.syncState === 'diverged') ? (
+          <Menu.Item key='publish' onClick={() => setPublishSource(skill)}>
+            {t('settings.skillsHub.publish')}
+          </Menu.Item>
+        ) : null}
+        <Menu.Item key='copy' onClick={() => showCopy(skill)}>
+          <span className='flex items-center gap-8px'>
+            <Copy size={15} /> {t('settings.skillsHub.copy')}
           </span>
-        </div>
-      )}
-      {mySkills.length > 0 ? (
-        <div className='flex flex-col gap-8px rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>
-          {filteredSkills.length === 0 && (
-            <div className='text-center text-t-secondary text-13px py-32px bg-fill-1 rd-12px border border-border-2 border-dashed'>
-              {t('settings.skillsHub.noSearchResults', { defaultValue: 'No matching skills.' })}
-            </div>
-          )}
-          {filteredSkills.map((skill) => (
-            <div
-              key={skill.name}
-              data-testid={`my-skill-card-${normalizeTestId(skill.name)}`}
-              ref={(el) => {
-                skillRefs.current[skill.name] = el;
-              }}
-              onClick={batchMode ? () => toggleSkillSelected(skill.name) : () => openSkillDetail(skill.name)}
-              className={`group flex flex-col sm:flex-row gap-16px p-14px border rd-12px transition-all duration-200 cursor-pointer ${highlightedSkill === skill.name ? 'border-primary-5 bg-primary-1' : selectedSkillNames.has(skill.name) && batchMode ? 'border-transparent bg-[rgba(var(--primary-6),0.06)]' : 'border-transparent bg-base hover:border-border-2'}`}
-            >
-              {batchMode && (
-                <div className='shrink-0 flex items-center sm:self-center'>
-                  <Checkbox
-                    data-testid={`checkbox-skill-${normalizeTestId(skill.name)}`}
-                    checked={selectedSkillNames.has(skill.name)}
-                    onChange={() => toggleSkillSelected(skill.name)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-              )}
-              <div className='shrink-0 flex items-start sm:mt-2px'>
-                <div
-                  className={`w-40px h-40px rd-10px flex items-center justify-center font-bold text-16px shadow-sm text-transform-uppercase ${getAvatarColorClass(skill.name)}`}
-                >
-                  {skill.name.charAt(0).toUpperCase()}
-                </div>
-              </div>
+        </Menu.Item>
+        <Menu.Item key='reveal' onClick={() => void ipcBridge.shell.showItemInFolder.invoke(skill.path)}>
+          <span className='flex items-center gap-8px'>
+            <FolderOpen size={15} /> {t('conversation.history.openInExplorer')}
+          </span>
+        </Menu.Item>
+        <Menu.Item key='delete' onClick={() => confirmDelete(skill)}>
+          <span className='text-danger'>{t('common.delete')}</span>
+        </Menu.Item>
+      </Menu>
+    );
 
-              <div className='flex-1 min-w-0 flex flex-col justify-center gap-4px'>
-                <h3 className='text-14px font-semibold text-t-primary/90 truncate m-0'>{skill.name}</h3>
-                {skill.description && (
-                  <p className='text-13px text-t-secondary leading-relaxed line-clamp-2 m-0' title={skill.description}>
-                    {skill.description}
-                  </p>
-                )}
-              </div>
-
-              {!batchMode && (
-                <div className='shrink-0 sm:self-center flex items-center justify-end gap-10px mt-12px sm:mt-0 pl-4px'>
-                  <SkillUsedByStack assistants={getAssistantsUsingSkill(skill.name, assistantCatalog ?? [])} />
-                  <Button
-                    data-testid={`btn-delete-${normalizeTestId(skill.name)}`}
-                    type='text'
-                    status='danger'
-                    size='small'
-                    icon={<Delete size={16} />}
-                    className='!rounded-8px opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      Modal.confirm({
-                        title: t('settings.skillsHub.deleteConfirmTitle', { defaultValue: 'Delete Skill' }),
-                        content: t('settings.skillsHub.deleteConfirmContent', {
-                          name: skill.name,
-                          defaultValue: `Are you sure you want to delete "${skill.name}"?`,
-                        }),
-                        okButtonProps: { status: 'danger' },
-                        okText: t('common.delete', { defaultValue: 'Delete' }),
-                        onOk: () => void handleDelete(skill.name),
-                        wrapClassName: 'modal-delete-skill',
-                      });
-                    }}
-                    title={t('common.delete', { defaultValue: 'Delete' })}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className='text-center text-t-secondary text-13px py-40px bg-fill-1 rd-12px border border-border-2 border-dashed'>
-          {loading
-            ? t('common.loading', { defaultValue: 'Please wait...' })
-            : t('settings.skillsHub.noSkills', {
-                defaultValue: 'No skills found. Import some to get started.',
-              })}
-        </div>
-      )}
-    </div>
-  );
-
-  // ======== Official tab (official builtin list + extension + auto-injected sections) ========
-  const officialPane = (
-    <div className='flex flex-col gap-24px'>
-      <div data-testid='official-skills-section'>
-        <p className='m-0 mb-12px text-12px leading-relaxed text-t-tertiary'>
-          {t('settings.skillsHub.officialHint', {
-            defaultValue: 'Built-in skills maintained by TjuaeUI — read-only and updated with each release.',
-          })}
-        </p>
-        {officialSkills.length > 0 ? (
-          <div className='flex flex-col gap-8px rounded-12px border border-border-2 bg-2 p-8px md:rounded-16px md:p-10px'>
-            {filteredOfficialSkills.length === 0 && (
-              <div className='text-center text-t-secondary text-13px py-32px bg-fill-1 rd-12px border border-border-2 border-dashed'>
-                {t('settings.skillsHub.noSearchResults', { defaultValue: 'No matching skills.' })}
-              </div>
-            )}
-            {filteredOfficialSkills.map((skill) =>
-              renderReadonlySkillCard(skill, 'official', `official-skill-card-${normalizeTestId(skill.name)}`)
-            )}
+    return (
+      <article
+        key={skill.id}
+        className={styles.card}
+        data-testid={`skill-card-${skill.slug}`}
+        onClick={() => openSkill(skill.slug)}
+      >
+        <div className='flex min-w-0 items-start gap-12px'>
+          <SkillAvatar name={skill.name} />
+          <div className='min-w-0 flex-1'>
+            <SkillIdentity name={skill.name} version={skill.version} categories={skill.categories} />
+            <p className={styles.description}>{skill.description}</p>
           </div>
-        ) : (
-          <div className='text-center text-t-secondary text-13px py-40px bg-fill-1 rd-12px border border-border-2 border-dashed'>
-            {loading
-              ? t('common.loading', { defaultValue: 'Please wait...' })
-              : t('settings.skillsHub.officialSkillsEmpty', { defaultValue: 'No official skills available.' })}
+          <Dropdown trigger='click' position='br' droplist={menu}>
+            <Button
+              type='text'
+              shape='circle'
+              size='mini'
+              icon={<More size={17} />}
+              aria-label={t('common.more')}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
+        <div className={styles.cardFooter} onClick={(event) => event.stopPropagation()}>
+          <span className='text-11px text-t-tertiary'>
+            {marketEntry
+              ? t(syncStateKey[marketEntry.syncState])
+              : source.kind === 'market'
+                ? t('settings.skillsHub.sourceMarket')
+                : t('settings.skillsHub.sourceLocal')}
+            {' · '}
+            {t(gitStatusKey[skill.gitStatus])}
+          </span>
+          <div className='flex items-center gap-14px'>
+            <Tooltip content={t('settings.skillsHub.autoInjectHint')}>
+              <span className='flex items-center gap-6px text-12px text-t-secondary'>
+                {t('settings.skillsHub.autoInject')}
+                <Switch
+                  size='small'
+                  checked={skill.preferences.autoInject}
+                  disabled={pending || !skill.preferences.enabled}
+                  onChange={(checked) => void updatePreferences(skill, { autoInject: checked })}
+                />
+              </span>
+            </Tooltip>
+            <span className='flex items-center gap-6px text-12px text-t-secondary'>
+              {t('common.enable')}
+              <Switch
+                size='small'
+                checked={skill.preferences.enabled}
+                loading={pending && busy?.action === 'preferences'}
+                disabled={pending}
+                onChange={(checked) =>
+                  void updatePreferences(skill, {
+                    enabled: checked,
+                    autoInject: checked ? skill.preferences.autoInject : false,
+                  })
+                }
+              />
+            </span>
           </div>
-        )}
+        </div>
+      </article>
+    );
+  });
+
+  const marketCards = filteredMarket.map((skill) => {
+    const pending = busy?.slug === skill.slug;
+    const local = installed.find((item) => item.id === skill.id);
+    const action = !skill.installed ? (
+      <Button
+        size='small'
+        type='primary'
+        loading={pending}
+        onClick={(event) => {
+          event.stopPropagation();
+          void runAction(
+            skill.slug,
+            'install',
+            () => ipcBridge.fs.installMarketSkill.invoke({ marketId: skill.market.id, slug: skill.slug }),
+            t('settings.skillsHub.installSuccess')
+          );
+        }}
+      >
+        {t('settings.skillsHub.install')}
+      </Button>
+    ) : skill.syncState === 'updateAvailable' ? (
+      <div className='flex items-center gap-8px'>
+        <Button
+          size='small'
+          type='text'
+          onClick={(event) => {
+            event.stopPropagation();
+            compareSkill(skill.market.id, skill.slug);
+          }}
+        >
+          {t('settings.skillsHub.compare')}
+        </Button>
+        <Button
+          size='small'
+          type='primary'
+          icon={<Upload size={14} />}
+          loading={pending}
+          onClick={(event) => {
+            event.stopPropagation();
+            void runAction(
+              skill.slug,
+              'update',
+              () => ipcBridge.fs.updateMarketSkill.invoke({ marketId: skill.market.id, slug: skill.slug }),
+              t('settings.skillsHub.updateSuccess')
+            );
+          }}
+        >
+          {t('settings.skillsHub.update')}
+        </Button>
       </div>
+    ) : skill.syncState === 'localChanged' || skill.syncState === 'diverged' ? (
+      <Button
+        size='small'
+        type='outline'
+        onClick={(event) => {
+          event.stopPropagation();
+          compareSkill(skill.market.id, skill.slug);
+        }}
+      >
+        {t('settings.skillsHub.compare')}
+      </Button>
+    ) : (
+      <Button
+        size='small'
+        type='outline'
+        onClick={(event) => {
+          event.stopPropagation();
+          openSkill(skill.slug);
+        }}
+      >
+        {t('settings.skillsHub.open')}
+      </Button>
+    );
 
-      {extensionSkills.length > 0 &&
-        readonlySection(
-          'extension-skills-section',
-          <Puzzle theme='filled' size={18} fill='var(--color-primary-6)' />,
-          t('settings.extensionSkills', { defaultValue: 'Extension Skills' }),
-          extensionSkills.length,
-          'bg-[rgba(var(--primary-6),0.08)] text-primary-6',
-          filteredExtensionSkills,
-          'extension'
-        )}
+    return (
+      <article
+        key={skill.id}
+        className={styles.card}
+        data-testid={`market-skill-card-${skill.slug}`}
+        onClick={() => local && openSkill(skill.slug)}
+      >
+        <div className='flex min-w-0 items-start gap-12px'>
+          <SkillAvatar name={skill.name} />
+          <div className='min-w-0 flex-1'>
+            <SkillIdentity name={skill.name} version={skill.version} categories={skill.categories} />
+            <p className={styles.description}>{skill.description}</p>
+          </div>
+        </div>
+        <div className={styles.cardFooter}>
+          <span className='text-11px text-t-tertiary'>
+            {skill.installed
+              ? `${t(syncStateKey[skill.syncState])} · ${t('settings.skillsHub.installedVersion', {
+                  version: skill.installedVersion,
+                })}`
+              : t('settings.skillsHub.remoteMarket')}
+          </span>
+          {action}
+        </div>
+      </article>
+    );
+  });
 
-      {builtinAutoSkills.length > 0 &&
-        readonlySection(
-          'auto-skills-section',
-          <Lightning theme='filled' size={18} fill='var(--color-success-6)' />,
-          t('settings.autoInjectedSkills'),
-          builtinAutoSkills.length,
-          'bg-[rgba(var(--success-6),0.08)] text-[rgb(var(--success-6))]',
-          filteredAutoSkills,
-          'auto',
-          t('settings.autoInjectedSkillsHint', {
-            defaultValue:
-              'Loaded automatically into every conversation — no need to enable them; the agent decides when to use them.',
-          })
-        )}
-    </div>
-  );
-
-  const mainContent = isImportHistoryView ? (
-    importHistoryContent
-  ) : (
-    <div className='flex flex-col gap-16px'>
+  const content = (
+    <div className='flex flex-col gap-18px' data-testid='skills-settings'>
       <SettingsPageHeader
-        data-testid='skills-header'
-        title={t('settings.skills', { defaultValue: 'Skills' })}
-        description={t('settings.skillsHub.description', {
-          defaultValue: 'Centrally manage AI skill packs — install once, use across all assistants.',
-        })}
+        title={t('settings.skillsHub.title')}
+        description={t('settings.skillsHub.description')}
+        activeTab={activeView}
+        onTabChange={(key) => setActiveView(key as SkillView)}
+        tabs={[
+          { key: 'mine', label: t('settings.skillsHub.mySkills'), count: installed.length },
+          { key: 'market', label: t('settings.skillsHub.market'), count: market.length },
+        ]}
         actions={
           <>
-            {/* Mobile: the actions row is too crowded — drop the search box entirely. */}
-            {!isMobile && searchBox('input-search-my-skills')}
-            <TalkToButlerButton
-              label={t('settings.skillsHub.addSkill', { defaultValue: 'Add Skill' })}
-              chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: 'Add via chat' })}
-              onManual={handleManualImport}
-              manualLabel={t('settings.skillsHub.manualImport', { defaultValue: 'Import Skills' })}
-              prompt={t('settings.talkToButler.prompt.addSkill', {
-                defaultValue: 'Help me import a skill and attach it to an assistant.',
-              })}
-              data-testid='btn-add-skill'
+            <TjuaeSearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder={t('settings.skillsHub.searchPlaceholder')}
+              className={isMobile ? 'w-160px' : 'w-260px'}
             />
+            {activeView === 'market' ? (
+              <Select
+                value={activeMarket}
+                onChange={setActiveMarket}
+                size='small'
+                className='w-130px'
+                aria-label={t('settings.skillsHub.marketSource')}
+              >
+                {markets.length > 0 ? (
+                  markets.map((marketInfo) => (
+                    <Select.Option key={marketInfo.id} value={marketInfo.id}>
+                      {marketInfo.name}
+                    </Select.Option>
+                  ))
+                ) : (
+                  <Select.Option value='tjuae-hub'>TjuaeHub</Select.Option>
+                )}
+              </Select>
+            ) : null}
+            <Tooltip content={t('common.refresh')}>
+              <Button type='text' shape='circle' icon={<Refresh size={16} />} onClick={() => void refresh()} />
+            </Tooltip>
+            {activeView === 'mine' ? (
+              <Dropdown
+                trigger='click'
+                position='br'
+                droplist={
+                  <Menu>
+                    <Menu.Item key='new' onClick={() => setCreateMode('manual')}>
+                      {t('settings.skillsHub.addNew')}
+                    </Menu.Item>
+                    <Menu.Item key='butler' onClick={() => setCreateMode('butler')}>
+                      {t('settings.skillsHub.addWithButler')}
+                    </Menu.Item>
+                    <Menu.Item key='import' onClick={() => void importSkill()}>
+                      {t('settings.skillsHub.importFolder')}
+                    </Menu.Item>
+                    <Menu.Item key='clone' onClick={() => setCloneVisible(true)}>
+                      {t('settings.skillsHub.cloneGit')}
+                    </Menu.Item>
+                  </Menu>
+                }
+              >
+                <Button type='primary' size='small' icon={<Plus size={15} />}>
+                  {t('settings.skillsHub.addSkill')}
+                </Button>
+              </Dropdown>
+            ) : null}
           </>
         }
-        tabs={[
-          {
-            key: 'custom',
-            label: t('settings.skillsHub.tabCustom', { defaultValue: 'Custom' }),
-            count: mySkills.length,
-          },
-          {
-            key: 'official',
-            label: t('settings.skillsHub.tabOfficial', { defaultValue: 'Official' }),
-            count: officialSkills.length + extensionSkills.length + builtinAutoSkills.length,
-          },
-        ]}
-        activeTab={activeTab}
-        onTabChange={(key) => {
-          setActiveTab(key as 'custom' | 'official');
-          exitBatchMode();
-        }}
       />
-      {activeTab === 'custom' ? customPane : officialPane}
+
+      {(activeView === 'mine' ? installedError : marketError) ? (
+        <div className='rounded-12px border border-danger-3 bg-danger-1 px-16px py-12px text-13px text-danger'>
+          {t('settings.skillsHub.fetchError')}
+        </div>
+      ) : (activeView === 'mine' ? installedLoading : marketLoading) ? (
+        <div className='flex min-h-240px items-center justify-center'>
+          <Spin />
+        </div>
+      ) : (activeView === 'mine' ? installedCards : marketCards).length > 0 ? (
+        <div className={styles.grid}>{activeView === 'mine' ? installedCards : marketCards}</div>
+      ) : (
+        <Empty
+          description={
+            activeView === 'mine' ? t('settings.skillsHub.noSkills') : t('settings.skillsHub.noSearchResults')
+          }
+        />
+      )}
+
+      <Modal
+        title={t('settings.skillsHub.copyTitle')}
+        visible={Boolean(copySource)}
+        onCancel={() => setCopySource(null)}
+        onOk={() => void confirmCopy()}
+        okButtonProps={{ disabled: !copySlug.trim(), loading: busy?.action === 'copy' }}
+      >
+        <p className='mt-0 text-13px text-t-secondary'>{t('settings.skillsHub.copyDescription')}</p>
+        <Input value={copySlug} onChange={setCopySlug} placeholder={t('settings.skillsHub.copyPlaceholder')} />
+      </Modal>
+
+      <Modal
+        title={t('settings.skillsHub.publishTitle')}
+        visible={Boolean(publishSource)}
+        onCancel={() => setPublishSource(null)}
+        onOk={() => void confirmPublish()}
+        okText={t('settings.skillsHub.publish')}
+        okButtonProps={{
+          disabled: !forkRepositoryUrl.trim() || !publishMessage.trim(),
+          loading: busy?.action === 'publish',
+        }}
+      >
+        <div className='flex flex-col gap-12px'>
+          <p className='m-0 text-13px text-t-secondary'>{t('settings.skillsHub.publishHint')}</p>
+          <Input
+            value={forkRepositoryUrl}
+            onChange={setForkRepositoryUrl}
+            placeholder={t('settings.skillsHub.forkUrlPlaceholder')}
+          />
+          <Input.TextArea
+            value={publishMessage}
+            onChange={setPublishMessage}
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            placeholder={t('settings.skillsHub.publishMessagePlaceholder')}
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        title={createMode === 'butler' ? t('settings.skillsHub.addWithButler') : t('settings.skillsHub.addNew')}
+        visible={createMode != null}
+        onCancel={() => setCreateMode(null)}
+        onOk={() => void confirmCreate()}
+        okButtonProps={{
+          disabled: !createSlug.trim() || !createName.trim() || !createDescription.trim(),
+          loading: busy?.action === 'create',
+        }}
+      >
+        <div className='flex flex-col gap-12px'>
+          {createMode === 'butler' ? (
+            <p className='m-0 text-13px text-t-secondary'>{t('settings.skillsHub.butlerCreateHint')}</p>
+          ) : null}
+          <Input value={createSlug} onChange={setCreateSlug} placeholder={t('settings.skillsHub.slugPlaceholder')} />
+          <Input value={createName} onChange={setCreateName} placeholder={t('settings.skillsHub.namePlaceholder')} />
+          <Input.TextArea
+            value={createDescription}
+            onChange={setCreateDescription}
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            placeholder={t('settings.skillsHub.descriptionPlaceholder')}
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        title={t('settings.skillsHub.cloneGit')}
+        visible={cloneVisible}
+        onCancel={() => setCloneVisible(false)}
+        onOk={() => void confirmClone()}
+        okButtonProps={{ disabled: !cloneUrl.trim(), loading: busy?.action === 'clone' }}
+      >
+        <Input value={cloneUrl} onChange={setCloneUrl} placeholder={t('settings.skillsHub.gitUrlPlaceholder')} />
+      </Modal>
     </div>
   );
 
-  return withWrapper ? <SettingsPageWrapper>{mainContent}</SettingsPageWrapper> : mainContent;
+  return withWrapper ? <SettingsPageWrapper>{content}</SettingsPageWrapper> : content;
 };
 
 export default SkillsHubSettings;

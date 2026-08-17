@@ -305,9 +305,8 @@ export function useWorkspaceFileOps(config: UseWorkspaceFileOpsOptions) {
           workspace: workspace,
           language: ext,
           truncated: isLargeTextTruncated,
-          // Markdown 和图片文件默认为只读模式
-          // Markdown and image files default to read-only mode
-          editable: contentType === 'markdown' || contentType === 'image' || isLargeTextTruncated ? false : undefined,
+          // 文本文件统一可编辑；图片与截断的大文件保持只读。
+          editable: contentType === 'image' || isLargeTextTruncated ? false : undefined,
         });
       } catch (error) {
         const kind = classifyPreviewError(error);

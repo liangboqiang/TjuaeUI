@@ -54,6 +54,26 @@ describe('PreviewContext', () => {
     expect(result.current.activeTabId).toBe(null);
   });
 
+  it('repairs a persisted tab set that has no active document', () => {
+    localStorage.setItem(
+      'tjuaeui_preview_tabs_v2',
+      JSON.stringify([
+        {
+          id: 'persisted-skill',
+          content: '# Skill',
+          content_type: 'markdown',
+          title: 'SKILL.md',
+          resource_key: 'file:c:/workspace/skill.md',
+        },
+      ])
+    );
+
+    const { result } = renderHook(() => usePreviewContext(), { wrapper: previewWrapper });
+
+    expect(result.current.activeTabId).toBe('persisted-skill');
+    expect(result.current.activeTab?.title).toBe('SKILL.md');
+  });
+
   it('opens preview and creates tab', () => {
     const { result } = renderHook(() => usePreviewContext(), { wrapper: previewWrapper });
     act(() => {

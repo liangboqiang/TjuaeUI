@@ -13,10 +13,7 @@
     "openFolder": "Open Folder",
     "none": "None",
     "quickActionsTitle": "TjuaeUI で何ができる？",
-    "quickActionRepository": "リポジトリ",
-    "skillsMarket": "TjuaeUI Skills Market",
-    "skillsMarketDesc": "コミュニティ Skills をオンデマンドで検索・有効化。一度設定すれば、すべてのAgentで利用可能。",
-    "skillsMarketDetails": "詳細 >>"
+    "quickActionRepository": "リポジトリ"
   },
   "history": {
     "recents": "最近",

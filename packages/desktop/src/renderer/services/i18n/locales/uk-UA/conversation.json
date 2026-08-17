@@ -13,10 +13,7 @@
     "openFolder": "Відкрити папку",
     "none": "Немає",
     "quickActionsTitle": "Що вміє TjuaeUI?",
-    "quickActionRepository": "Репозиторій",
-    "skillsMarket": "Маркет навичок TjuaeUI",
-    "skillsMarketDesc": "Шукайте та активуйте навички спільноти за запитом. Налаштуйте один раз — доступно для всіх агентів.",
-    "skillsMarketDetails": "Докладніше >>"
+    "quickActionRepository": "Репозиторій"
   },
   "history": {
     "recents": "Недавні",

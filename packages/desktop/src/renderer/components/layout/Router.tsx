@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppLoader from '@renderer/components/layout/AppLoader';
 import { useAuth } from '@renderer/hooks/context/AuthContext';
 import { TEAM_MODE_ENABLED } from '@/common/config/constants';
@@ -27,16 +27,6 @@ const withRouteFallback = (Component: React.LazyExoticComponent<React.ComponentT
     <Component />
   </Suspense>
 );
-
-/**
- * Legacy `/settings/capabilities?tab=tools` deep links now map to the standalone
- * Tools page; everything else (skills tab or no tab) lands on the Skills page.
- */
-const CapabilitiesRedirect: React.FC = () => {
-  const { search } = useLocation();
-  const tab = new URLSearchParams(search).get('tab');
-  return <Navigate to={tab === 'tools' ? '/settings/tools' : '/settings/skills'} replace />;
-};
 
 const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   const { status } = useAuth();
@@ -79,16 +69,8 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
           {/* Skills and Tools are top-level settings entries. */}
           <Route path='/settings/skills' element={withRouteFallback(SkillsSettings)} />
-          <Route path='/settings/skills/import-history' element={withRouteFallback(SkillsSettings)} />
           <Route path='/settings/skills/detail/:skillName' element={withRouteFallback(SkillDetailPage)} />
           <Route path='/settings/tools' element={withRouteFallback(ToolsSettings)} />
-          {/* Legacy routes — the previous combined "Capabilities" page is now two pages. */}
-          <Route path='/settings/capabilities' element={<CapabilitiesRedirect />} />
-          <Route
-            path='/settings/capabilities/skills/import-history'
-            element={<Navigate to='/settings/skills/import-history' replace />}
-          />
-          <Route path='/settings/skills-hub' element={<Navigate to='/settings/skills' replace />} />
           <Route path='/settings/appearance' element={withRouteFallback(AppearanceSettings)} />
           <Route path='/settings/display' element={<Navigate to='/settings/appearance' replace />} />
           <Route path='/settings/webui' element={withRouteFallback(WebuiSettings)} />

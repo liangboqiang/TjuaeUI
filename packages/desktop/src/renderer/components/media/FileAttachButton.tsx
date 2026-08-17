@@ -1,4 +1,3 @@
-
 import type { IConversationMcpStatus, IConversationMcpStatusKind } from '@/common/config/storage';
 import { ipcBridge } from '@/common';
 import { Button, Message, Trigger } from '@arco-design/web-react';
@@ -90,7 +89,7 @@ const FileAttachButton: React.FC<FileAttachButtonProps> = ({
   const { data: skillIndex } = useSWR(skillNames.length > 0 ? 'skills-index' : null, () =>
     ipcBridge.fs.listAvailableSkills.invoke()
   );
-  const descriptionByName = new Map((skillIndex ?? []).map((s) => [s.name, s.description]));
+  const descriptionByName = new Map((skillIndex ?? []).map((skill) => [skill.slug, skill.description]));
 
   const handleSkillClick = useCallback((name: string) => {
     setOpen(false);

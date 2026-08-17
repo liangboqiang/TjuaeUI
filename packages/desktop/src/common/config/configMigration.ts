@@ -70,7 +70,6 @@ const ALL_LEGACY_KEYS: LegacyConfigKey[] = [
   'tools.speechToText',
   'workspace.pasteConfirm',
   'upload.saveToWorkspace',
-  'skillsMarket.enabled',
   'system.closeToTray',
   'system.notificationEnabled',
   'system.cronNotificationEnabled',

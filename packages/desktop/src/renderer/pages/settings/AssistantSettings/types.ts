@@ -1,36 +1,10 @@
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import type { IMcpServer } from '@/common/config/storage';
+import type { SkillWorkspace } from '@/common/types/platform/skill';
 
-// Skill info type
-export type SkillSource = 'builtin' | 'custom' | 'cron' | 'extension';
+export type SkillInfo = SkillWorkspace;
 
-export type SkillInfo = {
-  name: string;
-  description: string;
-  location: string;
-  relative_location?: string;
-  is_auto_inject: boolean;
-  is_custom: boolean;
-  source: SkillSource;
-};
-
-// External source type
-export type ExternalSource = {
-  name: string;
-  path: string;
-  source: string;
-  skills: Array<{ name: string; description: string; path: string }>;
-};
-
-// Pending skill to import
-export type PendingSkill = {
-  path: string;
-  name: string;
-  description: string;
-};
-
-// Builtin auto-injected skill info
-export type BuiltinAutoSkill = {
+export type AutoInjectSkill = {
   name: string;
   description: string;
 };
@@ -102,10 +76,6 @@ export type AssistantEditorViewModel = {
       value: string;
       setValue: (value: string) => void;
     };
-    skills: {
-      mode: 'auto' | 'fixed';
-      setMode: (value: 'auto' | 'fixed') => void;
-    };
     mcps: {
       mode: 'auto' | 'fixed';
       setMode: (value: 'auto' | 'fixed') => void;
@@ -124,12 +94,9 @@ export type AssistantEditorViewModel = {
     availableSkills: SkillInfo[];
     selectedSkills: string[];
     setSelectedSkills: (value: string[]) => void;
-    pendingSkills: Array<{ name: string; description: string }>;
-    setDeletePendingSkillName: (value: string | null) => void;
-    setDeleteCustomSkillName: (value: string | null) => void;
-    builtinAutoSkills: BuiltinAutoSkill[];
-    disabledBuiltinSkills: string[];
-    setDisabledBuiltinSkills: (value: string[]) => void;
+    autoInjectSkills: AutoInjectSkill[];
+    excludedAutoInjectSkills: string[];
+    setExcludedAutoInjectSkills: (value: string[]) => void;
   };
   actions: {
     save: () => void;

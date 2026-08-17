@@ -1,4 +1,3 @@
-
 import { ipcBridge } from '@/common';
 import AtFileMenu from '@/renderer/components/chat/AtFileMenu';
 import BtwOverlay from '@/renderer/components/chat/BtwOverlay';
@@ -467,7 +466,7 @@ const SendBox: React.FC<{
     ipcBridge.fs.listAvailableSkills.invoke()
   );
   const skillSlashCommands = useMemo<SlashCommandItem[]>(() => {
-    const descriptionByName = new Map((skillIndex ?? []).map((s) => [s.name, s.description]));
+    const descriptionByName = new Map((skillIndex ?? []).map((skill) => [skill.slug, skill.description]));
     return buildSkillSlashCommands(
       loadedSkills,
       descriptionByName,

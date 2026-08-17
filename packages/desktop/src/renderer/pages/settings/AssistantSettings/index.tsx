@@ -24,7 +24,6 @@ import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistant
 import AssistantEditorPage from './AssistantEditorPage';
 import AssistantHomeTabs from './home/AssistantHomeTabs';
 import DeleteAssistantModal from './DeleteAssistantModal';
-import SkillConfirmModals from './SkillConfirmModals';
 import type { AssistantEditorViewModel, AssistantListItem } from './types';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -146,10 +145,6 @@ const AssistantSettings: React.FC = () => {
         value: editor.defaultThoughtLevelValue,
         setValue: editor.setDefaultThoughtLevelValue,
       },
-      skills: {
-        mode: editor.defaultSkillsMode,
-        setMode: editor.setDefaultSkillsMode,
-      },
       mcps: {
         mode: editor.defaultMcpMode,
         setMode: editor.setDefaultMcpMode,
@@ -168,12 +163,9 @@ const AssistantSettings: React.FC = () => {
       availableSkills: editor.availableSkills,
       selectedSkills: editor.selectedSkills,
       setSelectedSkills: editor.setSelectedSkills,
-      pendingSkills: editor.pendingSkills,
-      setDeletePendingSkillName: editor.setDeletePendingSkillName,
-      setDeleteCustomSkillName: editor.setDeleteCustomSkillName,
-      builtinAutoSkills: editor.builtinAutoSkills,
-      disabledBuiltinSkills: editor.disabledBuiltinSkills,
-      setDisabledBuiltinSkills: editor.setDisabledBuiltinSkills,
+      autoInjectSkills: editor.autoInjectSkills,
+      excludedAutoInjectSkills: editor.excludedAutoInjectSkills,
+      setExcludedAutoInjectSkills: editor.setExcludedAutoInjectSkills,
     },
     actions: {
       save: editor.handleSave,
@@ -270,20 +262,6 @@ const AssistantSettings: React.FC = () => {
             onCancel={() => editor.setDeleteConfirmVisible(false)}
             onConfirm={editor.handleDeleteConfirm}
             activeAssistant={activeAssistant}
-          />
-
-          <SkillConfirmModals
-            deletePendingSkillName={editor.deletePendingSkillName}
-            setDeletePendingSkillName={editor.setDeletePendingSkillName}
-            pendingSkills={editor.pendingSkills}
-            setPendingSkills={editor.setPendingSkills}
-            deleteCustomSkillName={editor.deleteCustomSkillName}
-            setDeleteCustomSkillName={editor.setDeleteCustomSkillName}
-            customSkills={editor.customSkills}
-            setCustomSkills={editor.setCustomSkills}
-            selectedSkills={editor.selectedSkills}
-            setSelectedSkills={editor.setSelectedSkills}
-            message={message}
           />
         </div>
       </div>

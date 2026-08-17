@@ -6,6 +6,7 @@ import type {
   GitRevision,
 } from '@/common/types/platform/gitWorkspace';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { notifyWorkspaceGitMutation, subscribeWorkspaceGitMutation } from '../utils/gitMutationBus';
 
 export function useGitWorkspace(workspace: string, filePath?: string) {
   const [repository, setRepository] = useState<GitRepositoryInfo | null>(null);
@@ -83,6 +84,14 @@ export function useGitWorkspace(workspace: string, filePath?: string) {
     });
   }, [refreshTimeline]);
 
+  useEffect(
+    () =>
+      subscribeWorkspaceGitMutation(workspace, async () => {
+        await Promise.all([refreshRepository(), refreshTimeline(), refreshGraph()]);
+      }),
+    [refreshGraph, refreshRepository, refreshTimeline, workspace]
+  );
+
   const revision = useCallback(
     (revisionHash: string, targetFilePath = filePath): Promise<GitRevision> => {
       if (!targetFilePath) return Promise.reject(new Error('请先选择一个文件'));
@@ -94,9 +103,9 @@ export function useGitWorkspace(workspace: string, filePath?: string) {
   const mutate = useCallback(
     async (operation: () => Promise<unknown>) => {
       await operation();
-      await Promise.all([refreshRepository(), refreshTimeline(), refreshGraph()]);
+      await notifyWorkspaceGitMutation(workspace);
     },
-    [refreshGraph, refreshRepository, refreshTimeline]
+    [workspace]
   );
 
   return {

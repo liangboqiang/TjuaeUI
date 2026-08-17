@@ -13,10 +13,7 @@
     "openFolder": "Ordner öffnen",
     "none": "Keiner",
     "quickActionsTitle": "Was kann TjuaeUI?",
-    "quickActionRepository": "Repository",
-    "skillsMarket": "TjuaeUI Skills-Markt",
-    "skillsMarketDesc": "Community-Skills auf Abruf suchen und aktivieren. Einmal konfigurieren, für alle Agenten verfügbar.",
-    "skillsMarketDetails": "Mehr anzeigen >>"
+    "quickActionRepository": "Repository"
   },
   "history": {
     "recents": "Zuletzt",

@@ -133,5 +133,6 @@
     "second_short": "초"
   },
   "selectedCount": "선택됨 {{count}}",
-  "selectedSkills": "선택된 스킬"
+  "selectedSkills": "선택된 스킬",
+  "enable": "사용"
 }

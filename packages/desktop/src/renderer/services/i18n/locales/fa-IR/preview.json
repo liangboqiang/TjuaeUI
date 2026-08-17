@@ -22,9 +22,9 @@
   "showConversationPane": "نمایش پنجره گفتگو",
   "source": "منبع",
   "code": "کد",
-  "preview": "پیش‌نمایش",
+  "preview": "رندر",
   "editor": "ویرایشگر",
-  "previewEffect": "پیش‌نمایش",
+  "previewEffect": "نمای رندرشده",
   "snapshot": "اسنپ‌شات",
   "downloadMarkdown": "دانلود فایل Markdown",
   "downloadCode": "دانلود فایل {{language}}",
@@ -55,14 +55,14 @@
   "closeRight": "بستن سمت راست",
   "closeOthers": "بستن بقیه",
   "closeAll": "بستن همه",
-  "readOnlyLabel": "پیش‌نمایش فقط‌خواندنی",
+  "readOnlyLabel": "رندر فقط‌خواندنی",
   "pathLabel": "مسیر",
   "missingFile": {
     "title": "فایل یافت نشد",
     "openInNewTab": "در تب جدید باز کنید"
   },
   "noTabs": "تبی باز نیست",
-  "openInPanelTooltip": "مشاهده در پنل پیش‌نمایش",
+  "openInPanelTooltip": "باز کردن در پنل رندر",
   "mermaidTitle": "نمودار Mermaid",
   "largeTextTruncatedHint": "حالت پیش‌نمایش فایل بزرگ: نمایش {{count}} کاراکتر اول برای عملکرد بهتر.",
   "truncatedBanner": "محتوای پیش‌نمایش کوتاه شده است. برای مشاهده فایل کامل روی دانلود کلیک کنید.",
@@ -115,5 +115,49 @@
     "inspectElement": "بازرسی عنصر",
     "inspectElementEnable": "فعال‌سازی بازرس عنصر",
     "inspectElementDisable": "غیرفعال‌سازی بازرس عنصر"
+  },
+  "tjuaeManifest": {
+    "invalidJson": "This Tjuae manifest is not valid JSON. Fix it in Source before using the structured renderer.",
+    "description": "Edit this manifest through a structured renderer and save it with the shared editor workflow.",
+    "readOnly": "فقط‌خواندنی",
+    "editable": "قابل ویرایش",
+    "changes": "تغییرات مانیفست",
+    "diffDescription": "تغییرات به‌جای تفاوت خام JSON بر اساس فیلدهای مانیفست نمایش داده می‌شوند.",
+    "noChanges": "تغییری وجود ندارد",
+    "before": "پیش از تغییر",
+    "after": "پس از تغییر",
+    "kinds": {
+      "manifest": "Manifest",
+      "skill": "Skill",
+      "assistant": "Assistant",
+      "agent": "Agent",
+      "model": "Model",
+      "tool": "Tool",
+      "team": "Team",
+      "project": "Project"
+    },
+    "fields": {
+      "schema": "Schema",
+      "schemaVersion": "Schema version",
+      "id": "Identifier",
+      "version": "Version",
+      "categories": "Categories",
+      "enabled": "Enabled",
+      "autoInject": "Auto inject",
+      "source": "Source",
+      "sourceKind": "Source type",
+      "marketId": "Market",
+      "repository": "Repository",
+      "path": "Repository path",
+      "revision": "Remote revision",
+      "name": "Name",
+      "description": "Description",
+      "tags": "Tags",
+      "releaseNotes": "Release notes"
+    },
+    "sourceKinds": {
+      "local": "محلی",
+      "market": "بازار"
+    }
   }
 }

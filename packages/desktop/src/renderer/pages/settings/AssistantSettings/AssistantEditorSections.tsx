@@ -90,8 +90,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const setDefaultThoughtLevelMode = defaults.thoughtLevel.setMode;
   const defaultThoughtLevelValue = defaults.thoughtLevel.value;
   const setDefaultThoughtLevelValue = defaults.thoughtLevel.setValue;
-  const defaultSkillsMode = defaults.skills.mode;
-  const setDefaultSkillsMode = defaults.skills.setMode;
   const defaultMcpMode = defaults.mcps.mode;
   const setDefaultMcpMode = defaults.mcps.setMode;
   const availableMcpServers = defaults.mcps.availableServers;
@@ -104,10 +102,9 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const availableSkills = skills.availableSkills;
   const selectedSkills = skills.selectedSkills;
   const setSelectedSkills = skills.setSelectedSkills;
-  const pendingSkills = skills.pendingSkills;
-  const builtinAutoSkills = skills.builtinAutoSkills;
-  const disabledBuiltinSkills = skills.disabledBuiltinSkills;
-  const setDisabledBuiltinSkills = skills.setDisabledBuiltinSkills;
+  const autoInjectSkills = skills.autoInjectSkills;
+  const excludedAutoInjectSkills = skills.excludedAutoInjectSkills;
+  const setExcludedAutoInjectSkills = skills.setExcludedAutoInjectSkills;
   const handleDuplicate = actions.duplicate;
   const getEditorSelectPopupContainer = (node: HTMLElement) =>
     node.closest('[data-editor-popup-root]') ?? node.parentElement ?? document.body;
@@ -186,7 +183,7 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   );
   const readOnlyLabel = t('common.readOnly', { defaultValue: 'Read only' });
   const rulesContainerHeight = rulesExpanded ? '440px' : promptViewMode === 'edit' ? '280px' : '240px';
-  const autoSkillNames = builtinAutoSkills.map((skill) => skill.name);
+  const autoSkillNames = autoInjectSkills.map((skill) => skill.name);
   const autoDefaultOptionLabel = t('settings.assistantSelectAutoRememberLastUsed', {
     defaultValue: 'Remember last used automatically',
   });
@@ -217,40 +214,27 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
     }
   };
   const editableSkillOptions = useMemo(() => {
-    const optionMap = new Map<string, { value: string; label: string; isAuto?: boolean; disabled?: boolean }>();
+    const optionMap = new Map<string, { value: string; label: string; disabled?: boolean }>();
 
-    pendingSkills.forEach((skill) => {
-      optionMap.set(skill.name, { value: skill.name, label: skill.name });
-    });
-
-    availableSkills.forEach((skill) => {
-      optionMap.set(skill.name, {
-        value: skill.name,
-        label: skill.name,
+    availableSkills
+      .filter((skill) => skill.preferences.enabled && !skill.preferences.autoInject)
+      .forEach((skill) => {
+        optionMap.set(skill.slug, {
+          value: skill.slug,
+          label: skill.name,
+        });
       });
-    });
-
-    builtinAutoSkills.forEach((skill) => {
-      optionMap.set(skill.name, {
-        value: skill.name,
-        label: skill.name,
-        isAuto: true,
-      });
-    });
 
     return Array.from(optionMap.values());
-  }, [availableSkills, builtinAutoSkills, pendingSkills, t]);
-  const selectedSkillValues = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          ...selectedSkills,
-          ...builtinAutoSkills
-            .filter((skill) => !disabledBuiltinSkills.includes(skill.name))
-            .map((skill) => skill.name),
-        ])
-      ),
-    [builtinAutoSkills, disabledBuiltinSkills, selectedSkills]
+  }, [availableSkills]);
+  const selectedSkillValues = useMemo(() => Array.from(new Set(selectedSkills)), [selectedSkills]);
+  const autoInjectSkillOptions = useMemo(
+    () => autoInjectSkills.map((skill) => ({ value: skill.name, label: skill.name })),
+    [autoInjectSkills]
+  );
+  const selectedAutoInjectValues = useMemo(
+    () => autoSkillNames.filter((skillName) => !excludedAutoInjectSkills.includes(skillName)),
+    [autoSkillNames, excludedAutoInjectSkills]
   );
 
   const applyPromptItems = (items: string[]) => {
@@ -292,12 +276,9 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
     setNewPromptDraft('');
   };
 
-  const handleSkillSelectionChange = (values: string[]) => {
-    const nextSelected = values.filter((value) => !autoSkillNames.includes(value));
-    const nextDisabledAuto = autoSkillNames.filter((skillName) => !values.includes(skillName));
-    setSelectedSkills(nextSelected);
-    setDisabledBuiltinSkills(nextDisabledAuto);
-  };
+  const handleSkillSelectionChange = (values: string[]) => setSelectedSkills(values);
+  const handleAutoInjectSelectionChange = (values: string[]) =>
+    setExcludedAutoInjectSkills(autoSkillNames.filter((skillName) => !values.includes(skillName)));
 
   const renderAvatarPreview = () => {
     if (editAvatarImage) {
@@ -427,8 +408,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
         setDefaultThoughtLevelMode={setDefaultThoughtLevelMode}
         defaultThoughtLevelValue={defaultThoughtLevelValue}
         setDefaultThoughtLevelValue={setDefaultThoughtLevelValue}
-        defaultSkillsMode={defaultSkillsMode}
-        setDefaultSkillsMode={setDefaultSkillsMode}
         defaultMcpMode={defaultMcpMode}
         setDefaultMcpMode={setDefaultMcpMode}
         modelOptions={modelOptions}
@@ -437,10 +416,13 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
         thoughtLevelOptions={thoughtLevelOptions}
         editableSkillOptions={editableSkillOptions}
         selectedSkillValues={selectedSkillValues}
+        autoInjectSkillOptions={autoInjectSkillOptions}
+        selectedAutoInjectValues={selectedAutoInjectValues}
         enabledMcpServers={availableMcpServers}
         selectedMcpIds={selectedMcpIds}
         setSelectedMcpIds={setSelectedMcpIds}
         handleSkillSelectionChange={handleSkillSelectionChange}
+        handleAutoInjectSelectionChange={handleAutoInjectSelectionChange}
         selectedItemsLabel={selectedItemsLabel}
         autoDefaultOptionLabel={autoDefaultOptionLabel}
         readonlySelectionSummary={readonlySelectionSummary}

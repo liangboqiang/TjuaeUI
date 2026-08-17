@@ -1,7 +1,14 @@
-
 import type { IDirOrFile, IWorkspaceFlatFile } from './ipcBridge';
 
 type RawFsEntry = { name: string; type: string };
+export type RawDirOrFile = {
+  name: string;
+  full_path: string;
+  relative_path: string;
+  is_dir: boolean;
+  is_file: boolean;
+  children?: RawDirOrFile[];
+};
 export type RawWorkspaceFlatFile = { name: string; full_path: string; relative_path: string };
 
 // ── Path helpers ───────────────────────────────────────────────────────
@@ -80,5 +87,21 @@ export function fromBackendWorkspaceFlatFiles(raw: RawWorkspaceFlatFile[]): IWor
     name: item.name,
     fullPath: item.full_path,
     relativePath: item.relative_path,
+  }));
+}
+
+/**
+ * 将 Core 返回的权威文件身份转换为渲染层字段。
+ *
+ * 文件路径只能由 Core 规范化；渲染层不得再用工作区路径和文件名自行拼接。
+ */
+export function fromBackendDirOrFiles(raw: RawDirOrFile[]): IDirOrFile[] {
+  return raw.map((item) => ({
+    name: item.name,
+    fullPath: item.full_path,
+    relativePath: item.relative_path,
+    isDir: item.is_dir,
+    isFile: item.is_file,
+    children: item.children ? fromBackendDirOrFiles(item.children) : undefined,
   }));
 }

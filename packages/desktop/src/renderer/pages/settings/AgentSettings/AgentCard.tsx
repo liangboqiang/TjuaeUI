@@ -40,7 +40,13 @@ type AgentCardProps =
 // unreachable agent. We surface that as its own `needs_auth` chip so users
 // see "one step away (log in)" vs "broken" vs "not installed".
 type DisplayStatus =
-  'online' | 'needs_auth' | 'connection_failed' | 'protocol_error' | 'not_detected' | 'disabled' | 'unknown';
+  | 'online'
+  | 'needs_auth'
+  | 'connection_failed'
+  | 'protocol_error'
+  | 'not_detected'
+  | 'disabled'
+  | 'unknown';
 
 const stopRowNavigation = (event: React.MouseEvent) => event.stopPropagation();
 

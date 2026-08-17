@@ -23,6 +23,22 @@ const hideWorkspaceInternalEntries = (entries: IDirOrFile[]): IDirOrFile[] => {
   return visible;
 };
 
+const getWorkspaceRootName = (workspace: string): string => {
+  const normalized = workspace.replace(/[\\/]+$/u, '');
+  return normalized.split(/[\\/]/u).pop() || normalized;
+};
+
+const wrapWorkspaceRoot = (workspace: string, children: IDirOrFile[]): IDirOrFile[] => [
+  {
+    name: getWorkspaceRootName(workspace),
+    fullPath: workspace,
+    relativePath: '',
+    isDir: true,
+    isFile: false,
+    children,
+  },
+];
+
 /**
  * useWorkspaceTree - 合并树状态管理和选择逻辑
  * Merge tree state management and selection logic
@@ -135,9 +151,10 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
       const seq = ++loadSeqRef.current;
       setLoadingHandler(true);
 
-      const rootPromise = ipcBridge.conversation.getWorkspace
-        .invoke({ path, workspace, conversation_id, search: '' })
-        .then(hideWorkspaceInternalEntries);
+      const rootPromise = ipcBridge.fs.getFilesByDir
+        .invoke({ dir: path, root: workspace })
+        .then(hideWorkspaceInternalEntries)
+        .then((children) => wrapWorkspaceRoot(workspace, children));
 
       // Also re-fetch every expanded directory so their latest contents (incl.
       // newly created files) splice in without collapsing anything.
@@ -145,9 +162,9 @@ export function useWorkspaceTree({ workspace, conversation_id, eventPrefix }: Us
         (d) => d.relativePath !== ''
       );
       const childPromises = expandedDirs.map((dir) =>
-        ipcBridge.conversation.getWorkspace
-          .invoke({ path: dir.fullPath, workspace, conversation_id })
-          .then((res) => ({ dir, children: hideWorkspaceInternalEntries(res[0]?.children ?? []) }))
+        ipcBridge.fs.getFilesByDir
+          .invoke({ dir: dir.fullPath, root: workspace })
+          .then((children) => ({ dir, children: hideWorkspaceInternalEntries(children) }))
           .catch(() => ({ dir, children: [] as IDirOrFile[] }))
       );
 

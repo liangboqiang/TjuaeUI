@@ -134,5 +134,6 @@
     "second_short": "с"
   },
   "selectedCount": "Вибрано {{count}}",
-  "selectedSkills": "Вибрані навички"
+  "selectedSkills": "Вибрані навички",
+  "enable": "Увімкнути"
 }

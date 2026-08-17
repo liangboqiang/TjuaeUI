@@ -13,10 +13,7 @@
     "openFolder": "Klasör Aç",
     "none": "Hiçbiri",
     "quickActionsTitle": "TjuaeUI neler yapabilir?",
-    "quickActionRepository": "Depo",
-    "skillsMarket": "TjuaeUI Skills Market",
-    "skillsMarketDesc": "Topluluk Skills'lerini ihtiyaç duyduğunuzda arayın ve etkinleştirin. Bir kez yapılandırın, tüm Agent'larda kullanılabilir.",
-    "skillsMarketDetails": "Ayrıntılar >>"
+    "quickActionRepository": "Depo"
   },
   "history": {
     "recents": "Son",

@@ -1,31 +1,24 @@
 import React from 'react';
-/**
- *
- * Unit tests for SkillsHubSettings component (SK3 in N4a).
- * Shallow verification: module import + basic structure.
- */
-
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { SWRConfig } from 'swr';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   listAvailableSkills: vi.fn(),
-  getSkillPaths: vi.fn(),
-  getSkillImportLimits: vi.fn(),
-  listSkillImportHistory: vi.fn(),
-  importSkills: vi.fn(),
+  listMarketSkills: vi.fn(),
+  installMarketSkill: vi.fn(),
+  updateMarketSkill: vi.fn(),
+  compareMarketSkill: vi.fn(),
+  publishMarketSkill: vi.fn(),
+  updateSkillPreferences: vi.fn(),
+  copySkill: vi.fn(),
+  createSkill: vi.fn(),
+  cloneSkill: vi.fn(),
+  importSkill: vi.fn(),
   deleteSkill: vi.fn(),
   showOpen: vi.fn(),
-  messageError: vi.fn(),
-  messageSuccess: vi.fn(),
-  messageWarning: vi.fn(),
-  modalConfirm: vi.fn(),
-}));
-
-const searchParamsMock = vi.hoisted(() => ({
-  current: new URLSearchParams(),
-  setSearchParams: vi.fn(),
-  pathname: '/settings/capabilities',
+  showItemInFolder: vi.fn(),
+  openExternal: vi.fn(),
   navigate: vi.fn(),
 }));
 
@@ -33,516 +26,142 @@ vi.mock('@/common', () => ({
   ipcBridge: {
     fs: {
       listAvailableSkills: { invoke: mocks.listAvailableSkills },
-      getSkillPaths: { invoke: mocks.getSkillPaths },
-      getSkillImportLimits: { invoke: mocks.getSkillImportLimits },
-      listSkillImportHistory: { invoke: mocks.listSkillImportHistory },
-      importSkills: { invoke: mocks.importSkills },
+      listMarketSkills: { invoke: mocks.listMarketSkills },
+      installMarketSkill: { invoke: mocks.installMarketSkill },
+      updateMarketSkill: { invoke: mocks.updateMarketSkill },
+      compareMarketSkill: { invoke: mocks.compareMarketSkill },
+      publishMarketSkill: { invoke: mocks.publishMarketSkill },
+      updateSkillPreferences: { invoke: mocks.updateSkillPreferences },
+      copySkill: { invoke: mocks.copySkill },
+      createSkill: { invoke: mocks.createSkill },
+      cloneSkill: { invoke: mocks.cloneSkill },
+      importSkill: { invoke: mocks.importSkill },
       deleteSkill: { invoke: mocks.deleteSkill },
     },
-    dialog: {
-      showOpen: { invoke: mocks.showOpen },
+    dialog: { showOpen: { invoke: mocks.showOpen } },
+    shell: {
+      showItemInFolder: { invoke: mocks.showItemInFolder },
+      openExternal: { invoke: mocks.openExternal },
     },
   },
 }));
 
+vi.mock('react-router-dom', () => ({ useNavigate: () => mocks.navigate }));
+vi.mock('@/renderer/hooks/context/LayoutContext', () => ({ useLayoutContext: () => ({ isMobile: false }) }));
+vi.mock('@/renderer/pages/settings/components/SettingsPageWrapper', () => ({
+  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 vi.mock('@arco-design/web-react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@arco-design/web-react')>();
   return {
     ...actual,
-    Message: {
-      ...actual.Message,
-      error: mocks.messageError,
-      success: mocks.messageSuccess,
-      warning: mocks.messageWarning,
-    },
-    Modal: {
-      ...actual.Modal,
-      confirm: mocks.modalConfirm,
-    },
+    Message: { ...actual.Message, success: vi.fn(), error: vi.fn() },
   };
 });
-
-vi.mock('react-router-dom', () => ({
-  useLocation: () => ({ pathname: searchParamsMock.pathname }),
-  useNavigate: () => searchParamsMock.navigate,
-  useSearchParams: () => [searchParamsMock.current, searchParamsMock.setSearchParams],
-}));
-
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (k: string, options?: Record<string, unknown>) => {
-      const translations: Record<string, string> = {
-        'settings.skillsHub.importError': 'Error importing skill',
-        'settings.skillsHub.importPartialSuccess':
-          'Imported {{successCount}} skill(s), {{failureCount}} failed: {{failures}}',
-        'settings.skillsHub.importErrors.SKILL_IMPORT_FILE_TOO_LARGE':
-          'A file in this skill is over the size limit. Remove the large file and try again.',
+    t: (key: string, options?: Record<string, unknown>) => {
+      const labels: Record<string, string> = {
+        'settings.skillsHub.mySkills': '我的技能',
+        'settings.skillsHub.market': '市场',
+        'settings.skillsHub.install': '安装',
+        'settings.skillsHub.open': '打开',
+        'settings.skillsHub.addSkill': '添加技能',
+        'settings.skillsHub.importFolder': '导入文件夹',
+        'settings.skillsHub.sourceLocal': '本地',
+        'settings.skillsHub.remoteMarket': '远程市场',
+        'settings.skillsHub.gitStatus.clean': '干净',
       };
-      const template = translations[k] ?? (typeof options?.defaultValue === 'string' ? options.defaultValue : k);
-      return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(options?.[key] ?? ''));
+      const value = labels[key] ?? (typeof options?.defaultValue === 'string' ? options.defaultValue : key);
+      return value.replace(/\{\{(\w+)\}\}/gu, (_, name: string) => String(options?.[name] ?? ''));
     },
-    i18n: { language: 'en' },
   }),
 }));
 
 import SkillsHubSettings from '@/renderer/pages/settings/SkillsSettings/SkillsHubSettings';
 
-describe('SkillsHubSettings', () => {
-  // The import action is now a TalkToButlerButton: open the menu, then click
-  // "Import Skills" (the manual item) to run the manual import.
-  const triggerManualImport = async () => {
-    fireEvent.click(screen.getByTestId('btn-add-skill'));
-    const marker = await screen.findByTestId('btn-add-skill-manual');
-    fireEvent.click((marker.closest('[role="menuitem"]') ?? marker) as HTMLElement);
-  };
+const localSkill = {
+  id: 'cron-copy',
+  slug: 'cron-copy',
+  name: 'cron 副本',
+  description: '个人定时任务技能',
+  version: '1.0.0',
+  path: 'C:/skills/cron-copy',
+  source: { kind: 'local' as const },
+  categories: ['自动化'],
+  preferences: { enabled: true, autoInject: false },
+  gitStatus: 'clean' as const,
+};
 
+const marketSkill = {
+  id: 'cron',
+  slug: 'cron',
+  name: 'cron',
+  description: '官方定时任务技能',
+  version: '1.1.0',
+  path: 'skills/cron',
+  digest: 'b'.repeat(64),
+  categories: ['自动化'],
+  market: {
+    id: 'tjuae-hub',
+    name: 'TjuaeHub',
+    repository: 'https://github.com/liangboqiang/TjuaeHub.git',
+    revision: 'a'.repeat(40),
+  },
+  installed: false,
+  installedVersion: undefined,
+  syncState: 'notInstalled',
+};
+
+const renderPage = () =>
+  render(
+    <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+      <SkillsHubSettings withWrapper={false} />
+    </SWRConfig>
+  );
+
+describe('SkillsHubSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    searchParamsMock.current = new URLSearchParams();
-    searchParamsMock.pathname = '/settings/capabilities';
-    mocks.listAvailableSkills.mockResolvedValue([]);
-    mocks.getSkillPaths.mockResolvedValue({
-      user_skills_dir: '/tmp/user-skills',
-      builtin_skills_dir: '/tmp/builtin-skills',
-    });
-    mocks.getSkillImportLimits.mockResolvedValue({
-      max_file_bytes: 12 * 1024 * 1024,
-      max_total_bytes: 64 * 1024 * 1024,
-    });
-    mocks.listSkillImportHistory.mockResolvedValue([]);
+    mocks.listAvailableSkills.mockResolvedValue([localSkill]);
+    mocks.listMarketSkills.mockResolvedValue([marketSkill]);
+    mocks.installMarketSkill.mockResolvedValue(undefined);
   });
 
-  it('exports a component (smoke)', () => {
-    expect(SkillsHubSettings).toBeDefined();
-    expect(typeof SkillsHubSettings).toBe('function');
+  it('renders installed skills as versioned cards and opens the shared workbench', async () => {
+    renderPage();
+
+    const card = await screen.findByTestId('skill-card-cron-copy');
+    expect(card).toHaveTextContent('cron 副本');
+    expect(card).toHaveTextContent('v1.0.0');
+    expect(card).toHaveTextContent('本地');
+    expect(card).toHaveTextContent('干净');
+
+    fireEvent.click(card);
+    expect(mocks.navigate).toHaveBeenCalledWith('/settings/skills/detail/cron-copy');
   });
 
-  it('has display name or name property (structure check)', () => {
-    expect(SkillsHubSettings.displayName || SkillsHubSettings.name).toBeTruthy();
+  it('shows TjuaeHub through the market index and installs a remote skill', async () => {
+    renderPage();
+    await screen.findByTestId('skill-card-cron-copy');
+
+    fireEvent.click(screen.getByText('市场'));
+    const remoteCard = await screen.findByTestId('market-skill-card-cron');
+    expect(remoteCard).toHaveTextContent('v1.1.0');
+    expect(remoteCard).toHaveTextContent('远程市场');
+
+    fireEvent.click(screen.getByRole('button', { name: '安装' }));
+    await waitFor(() => expect(mocks.installMarketSkill).toHaveBeenCalledWith({ marketId: 'tjuae-hub', slug: 'cron' }));
   });
 
-  it('can be instantiated as JSX element (shallow)', () => {
-    const element = <SkillsHubSettings />;
-    expect(element.type).toBe(SkillsHubSettings);
-  });
-
-  it('shows backend import failure detail for manual imports', async () => {
-    mocks.showOpen.mockResolvedValue(['/tmp/huge-skill']);
-    mocks.importSkills.mockRejectedValue(
-      Object.assign(new Error('wrapped import failure'), {
-        name: 'BackendHttpError',
-        status: 400,
-        code: 'SKILL_IMPORT_FILE_TOO_LARGE',
-      })
-    );
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(mocks.listAvailableSkills).toHaveBeenCalled());
-    await triggerManualImport();
-
-    await waitFor(() =>
-      expect(mocks.messageError).toHaveBeenCalledWith(
-        'A file in this skill is over the size limit. Remove the large file and try again.'
-      )
-    );
-  });
-
-  it('shows partial import warning and refreshes after batch import partial success', async () => {
-    mocks.showOpen.mockResolvedValue(['/tmp/parent-pack']);
-    mocks.importSkills.mockResolvedValue({
-      skill_name: 'sample-alpha',
-      skill_names: ['sample-alpha'],
-      failed: [{ source_name: 'beta-skill', code: 'SKILL_IMPORT_FILE_TOO_LARGE' }],
-    });
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(mocks.listAvailableSkills).toHaveBeenCalled());
-    const initialFetchCount = mocks.listAvailableSkills.mock.calls.length;
-    await triggerManualImport();
-
-    await waitFor(() =>
-      expect(mocks.messageWarning).toHaveBeenCalledWith(
-        'Imported 1 skill(s), 1 failed: beta-skill: A file in this skill is over the size limit. Remove the large file and try again.'
-      )
-    );
-    await waitFor(() => expect(mocks.listAvailableSkills.mock.calls.length).toBeGreaterThan(initialFetchCount));
-  });
-
-  it('renders import history failure detail in the secondary view', async () => {
-    searchParamsMock.pathname = '/settings/skills/import-history';
-    mocks.listSkillImportHistory.mockResolvedValue([
-      {
-        id: 'record-1',
-        operation_id: 'operation-1',
-        source_label: 'parent-pack',
-        source_name: 'beta-skill',
-        status: 'failed',
-        error_code: 'SKILL_IMPORT_FILE_TOO_LARGE',
-        error_path: 'movie.bin',
-        actual_bytes: 11 * 1024 * 1024,
-        limit_bytes: 10 * 1024 * 1024,
-        created_at: 1_700_000_000_000,
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(screen.getByTestId('skill-import-history-page')).toBeInTheDocument());
-    expect(screen.getByText('parent-pack')).toBeInTheDocument();
-    expect(screen.getByText(/beta-skill/)).toBeInTheDocument();
-    expect(screen.getAllByText(/movie\.bin/).length).toBeGreaterThan(0);
-  });
-
-  it('does not render the removed recent-import entry point', async () => {
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(screen.queryByTestId('btn-open-import-history')).not.toBeInTheDocument());
-    expect(screen.queryByText('No import records yet.')).not.toBeInTheDocument();
-  });
-
-  it('renders import history as a secondary view without search or category filters', async () => {
-    searchParamsMock.pathname = '/settings/skills/import-history';
-    mocks.listSkillImportHistory.mockResolvedValue([
-      {
-        id: 'record-1',
-        operation_id: 'operation-1',
-        source_label: 'parent-pack',
-        source_name: 'beta-skill',
-        status: 'failed',
-        error_code: 'SKILL_IMPORT_FILE_TOO_LARGE',
-        error_path: 'movie.bin',
-        actual_bytes: 11 * 1024 * 1024,
-        limit_bytes: 10 * 1024 * 1024,
-        created_at: 1_700_000_000_000,
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(screen.getByTestId('skill-import-history-page')).toBeInTheDocument());
-    expect(screen.queryByTestId('my-skills-section')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('input-search-my-skills')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'All' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Failed' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Success' })).not.toBeInTheDocument();
-  });
-
-  it('shows concise repair instructions for failed import history records', async () => {
-    searchParamsMock.pathname = '/settings/skills/import-history';
-    mocks.listSkillImportHistory.mockResolvedValue([
-      {
-        id: 'record-1',
-        operation_id: 'operation-1',
-        source_label: 'parent-pack',
-        source_name: 'beta-skill',
-        status: 'failed',
-        error_code: 'SKILL_IMPORT_FILE_TOO_LARGE',
-        error_path: 'movie.bin',
-        actual_bytes: 11 * 1024 * 1024,
-        limit_bytes: 10 * 1024 * 1024,
-        created_at: 1_700_000_000_000,
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(screen.getByTestId('skill-import-history-page')).toBeInTheDocument());
-    expect(screen.getByText('Repair: remove the oversized file and import again')).toBeInTheDocument();
-    expect(screen.getAllByText(/movie\.bin/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/11 MB/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/10 MB/).length).toBeGreaterThan(0);
-    expect(screen.queryByText('Latest 5')).not.toBeInTheDocument();
-  });
-
-  it('does not expose technical error details in import history', async () => {
-    searchParamsMock.pathname = '/settings/skills/import-history';
-    mocks.listSkillImportHistory.mockResolvedValue([
-      {
-        id: 'record-1',
-        operation_id: 'operation-1',
-        source_label: 'parent-pack',
-        source_name: 'beta-skill',
-        status: 'failed',
-        error_code: 'SKILL_IMPORT_FILE_TOO_LARGE',
-        error_path: 'movie.bin',
-        actual_bytes: 11 * 1024 * 1024,
-        limit_bytes: 10 * 1024 * 1024,
-        created_at: 1_700_000_000_000,
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(screen.getByTestId('skill-import-history-page')).toBeInTheDocument());
-    expect(screen.queryByText('Technical info')).not.toBeInTheDocument();
-    expect(screen.queryByText('SKILL_IMPORT_FILE_TOO_LARGE')).not.toBeInTheDocument();
-  });
-
-  it('shows specific repair instructions for known non-size import errors', async () => {
-    searchParamsMock.pathname = '/settings/skills/import-history';
-    mocks.listSkillImportHistory.mockResolvedValue([
-      {
-        id: 'record-zip',
-        operation_id: 'operation-zip',
-        source_label: 'broken.zip',
-        source_name: 'broken.zip',
-        status: 'failed',
-        error_code: 'SKILL_IMPORT_INVALID_ZIP',
-        created_at: 1_700_000_000_000,
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(screen.getByTestId('skill-import-history-page')).toBeInTheDocument());
-    expect(screen.getByText('Repair: create the zip again and import it')).toBeInTheDocument();
-    expect(screen.queryByText('Repair: update the skill files and import again')).not.toBeInTheDocument();
-  });
-
-  it('does not render an available status tag for imported skills', async () => {
-    mocks.listAvailableSkills.mockResolvedValue([
-      {
-        name: 'sample-single',
-        description: 'Single folder import fixture.',
-        location: '/tmp/user-skills/sample-single',
-        is_custom: true,
-        source: 'custom',
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    const card = await screen.findByTestId('my-skill-card-sample-single');
-    // Per-card source badges were removed (the tab/section already conveys origin);
-    // the card shows only the name + description, no "Custom" / "Available" tag.
-    expect(card.textContent).not.toContain('Custom');
-    expect(screen.queryByText('Available')).not.toBeInTheDocument();
-  });
-
-  it('splits custom and official skills into two tabs, with auto-injected under Official', async () => {
-    mocks.listAvailableSkills.mockResolvedValue([
-      {
-        name: 'cron',
-        description: 'Auto injected cron skill.',
-        location: '/tmp/builtin-skills/auto-inject/cron/SKILL.md',
-        is_auto_inject: true,
-        is_custom: false,
-        source: 'builtin',
-      },
-      {
-        name: 'document-tools',
-        description: 'Official builtin skill.',
-        location: '/tmp/builtin-skills/document-tools/SKILL.md',
-        is_auto_inject: false,
-        is_custom: false,
-        source: 'builtin',
-      },
-      {
-        name: 'sample-single',
-        description: 'Single folder import fixture.',
-        location: '/tmp/user-skills/sample-single',
-        is_custom: true,
-        source: 'custom',
-      },
-      {
-        name: 'job-generated',
-        description: 'Generated for a scheduled task.',
-        location: '/tmp/cron/skills/job-generated',
-        is_custom: false,
-        source: 'cron',
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    // Custom tab is active by default: shows the imported skill, not the builtin/auto ones.
-    await waitFor(() => expect(screen.getByTestId('my-skill-card-sample-single')).toBeInTheDocument());
-    expect(screen.queryByTestId('auto-skills-section')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('official-skill-card-document-tools')).not.toBeInTheDocument();
-
-    // Switch to the Official tab: official builtin list + auto-injected section appear.
-    fireEvent.click(screen.getByTestId('settings-tab-official'));
-    expect(screen.getByTestId('official-skill-card-document-tools')).toBeInTheDocument();
-    expect(screen.getByTestId('auto-skills-section')).toBeInTheDocument();
-    expect(screen.getByText('cron')).toBeInTheDocument();
-    // cron-source skills are never listed.
-    expect(screen.queryByText('job-generated')).not.toBeInTheDocument();
-    // The custom skill is not in the Official tab.
-    expect(screen.queryByTestId('my-skill-card-sample-single')).not.toBeInTheDocument();
-  });
-
-  it('renders the auto-injected skills hint without an Arco popup trigger', async () => {
-    mocks.listAvailableSkills.mockResolvedValue([
-      {
-        name: 'document-tools',
-        description: 'Create, analyze, proofread, and modify documents.',
-        location: '/tmp/builtin-skills/auto-inject/document-tools/SKILL.md',
-        is_auto_inject: true,
-        is_custom: false,
-        source: 'builtin',
-      },
-    ]);
-
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    fireEvent.click(await screen.findByTestId('settings-tab-official'));
-
-    const autoSection = screen.getByTestId('auto-skills-section');
-    const nativeHint = Array.from(autoSection.querySelectorAll('[title]')).some(
-      (el) =>
-        el.getAttribute('title') ===
-        'Loaded automatically into every conversation — no need to enable them; the agent decides when to use them.'
-    );
-
-    expect(nativeHint).toBe(true);
-    expect(autoSection.querySelector('.arco-trigger')).not.toBeInTheDocument();
-  });
-
-  it('does not expose the local skills directory path on the skills page', async () => {
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(mocks.listAvailableSkills).toHaveBeenCalled());
-    expect(screen.queryByText('/tmp/user-skills')).not.toBeInTheDocument();
-  });
-
-  it('surfaces server-provided size limits in the page description', async () => {
-    render(<SkillsHubSettings withWrapper={false} />);
-
-    await waitFor(() => expect(mocks.getSkillImportLimits).toHaveBeenCalled());
-    expect(screen.getByText(/12 MB per file and 64 MB per skill/)).toBeInTheDocument();
-  });
-
-  describe('batch delete (Custom tab)', () => {
-    const customSkills = [
-      {
-        name: 'skill-alpha',
-        description: 'First custom skill.',
-        location: '/tmp/user-skills/skill-alpha',
-        is_auto_inject: false,
-        is_custom: true,
-        source: 'custom',
-      },
-      {
-        name: 'skill-beta',
-        description: 'Second custom skill.',
-        location: '/tmp/user-skills/skill-beta',
-        is_auto_inject: false,
-        is_custom: true,
-        source: 'custom',
-      },
-      {
-        name: 'skill-gamma',
-        description: 'Third custom skill.',
-        location: '/tmp/user-skills/skill-gamma',
-        is_auto_inject: false,
-        is_custom: true,
-        source: 'custom',
-      },
-    ];
-
-    const confirmBatchDelete = async () => {
-      // Modal.confirm is mocked; invoke the onOk callback the component passed in.
-      await waitFor(() => expect(mocks.modalConfirm).toHaveBeenCalled());
-      const config = mocks.modalConfirm.mock.calls.at(-1)?.[0] as { onOk?: () => Promise<void> };
-      await config.onOk?.();
-    };
-
-    beforeEach(() => {
-      mocks.listAvailableSkills.mockResolvedValue(customSkills);
-      mocks.deleteSkill.mockResolvedValue(undefined);
-    });
-
-    it('hides batch manage entry when there are no custom skills', async () => {
-      mocks.listAvailableSkills.mockResolvedValue([]);
-      render(<SkillsHubSettings withWrapper={false} />);
-
-      await waitFor(() => expect(mocks.listAvailableSkills).toHaveBeenCalled());
-      expect(screen.queryByTestId('btn-batch-manage')).not.toBeInTheDocument();
-    });
-
-    it('enters batch mode: shows checkboxes, hides per-card delete buttons', async () => {
-      render(<SkillsHubSettings withWrapper={false} />);
-
-      await screen.findByTestId('my-skill-card-skill-alpha');
-      expect(screen.getByTestId('btn-delete-skill-alpha')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByTestId('btn-batch-manage'));
-
-      expect(screen.getByTestId('checkbox-skill-skill-alpha')).toBeInTheDocument();
-      expect(screen.getByTestId('checkbox-skill-skill-beta')).toBeInTheDocument();
-      expect(screen.queryByTestId('btn-delete-skill-alpha')).not.toBeInTheDocument();
-      expect(screen.getByTestId('btn-batch-delete')).toBeDisabled();
-    });
-
-    it('selects skills and deletes them after confirmation', async () => {
-      render(<SkillsHubSettings withWrapper={false} />);
-
-      await screen.findByTestId('my-skill-card-skill-alpha');
-      fireEvent.click(screen.getByTestId('btn-batch-manage'));
-
-      fireEvent.click(screen.getByTestId('my-skill-card-skill-alpha'));
-      fireEvent.click(screen.getByTestId('my-skill-card-skill-beta'));
-      expect(screen.getByText('2 selected')).toBeInTheDocument();
-
-      fireEvent.click(screen.getByTestId('btn-batch-delete'));
-      await confirmBatchDelete();
-
-      await waitFor(() => expect(mocks.deleteSkill).toHaveBeenCalledTimes(2));
-      expect(mocks.deleteSkill).toHaveBeenCalledWith({ skill_name: 'skill-alpha' });
-      expect(mocks.deleteSkill).toHaveBeenCalledWith({ skill_name: 'skill-beta' });
-      await waitFor(() => expect(mocks.messageSuccess).toHaveBeenCalledWith('Deleted 2 skill(s)'));
-      // Batch mode exits after deletion.
-      await waitFor(() => expect(screen.queryByTestId('btn-batch-delete')).not.toBeInTheDocument());
-    });
-
-    it('select all toggles every visible skill', async () => {
-      render(<SkillsHubSettings withWrapper={false} />);
-
-      await screen.findByTestId('my-skill-card-skill-alpha');
-      fireEvent.click(screen.getByTestId('btn-batch-manage'));
-
-      const selectAll = screen.getByTestId('checkbox-select-all-skills');
-      fireEvent.click(selectAll.querySelector('input') ?? selectAll);
-      expect(screen.getByText('3 selected')).toBeInTheDocument();
-
-      fireEvent.click(selectAll.querySelector('input') ?? selectAll);
-      expect(screen.getByText('0 selected')).toBeInTheDocument();
-    });
-
-    it('shows partial warning when some deletions fail', async () => {
-      mocks.deleteSkill.mockImplementation(({ skill_name }: { skill_name: string }) =>
-        skill_name === 'skill-beta' ? Promise.reject(new Error('boom')) : Promise.resolve(undefined)
-      );
-
-      render(<SkillsHubSettings withWrapper={false} />);
-
-      await screen.findByTestId('my-skill-card-skill-alpha');
-      fireEvent.click(screen.getByTestId('btn-batch-manage'));
-      fireEvent.click(screen.getByTestId('my-skill-card-skill-alpha'));
-      fireEvent.click(screen.getByTestId('my-skill-card-skill-beta'));
-      fireEvent.click(screen.getByTestId('btn-batch-delete'));
-      await confirmBatchDelete();
-
-      await waitFor(() => expect(mocks.messageWarning).toHaveBeenCalledWith('Deleted 1 skill(s), 1 failed'));
-    });
-
-    it('cancel exits batch mode and clears selection', async () => {
-      render(<SkillsHubSettings withWrapper={false} />);
-
-      await screen.findByTestId('my-skill-card-skill-alpha');
-      fireEvent.click(screen.getByTestId('btn-batch-manage'));
-      fireEvent.click(screen.getByTestId('my-skill-card-skill-alpha'));
-      fireEvent.click(screen.getByTestId('btn-batch-cancel'));
-
-      expect(screen.queryByTestId('checkbox-skill-skill-alpha')).not.toBeInTheDocument();
-      expect(screen.getByTestId('btn-delete-skill-alpha')).toBeInTheDocument();
-      expect(mocks.deleteSkill).not.toHaveBeenCalled();
-
-      // Re-entering batch mode starts with a clean selection.
-      fireEvent.click(screen.getByTestId('btn-batch-manage'));
-      expect(screen.getByText('0 selected')).toBeInTheDocument();
-    });
+  it('imports one canonical skill directory through the single import API', async () => {
+    mocks.showOpen.mockResolvedValue(['C:/incoming/my-skill']);
+    mocks.importSkill.mockResolvedValue(undefined);
+    renderPage();
+    await screen.findByTestId('skill-card-cron-copy');
+
+    fireEvent.click(screen.getByRole('button', { name: '添加技能' }));
+    fireEvent.click(await screen.findByText('导入文件夹'));
+    await waitFor(() => expect(mocks.importSkill).toHaveBeenCalledWith({ skill_path: 'C:/incoming/my-skill' }));
   });
 });

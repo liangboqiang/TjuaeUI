@@ -20,6 +20,8 @@ export interface WorkspaceProps {
   isTemporaryWorkspace?: boolean;
   eventPrefix?: 'acp' | 'codex' | 'tjuaecli';
   messageApi?: MessageApi;
+  /** 首次进入工作台时按相对路径打开的文件。 */
+  initialOpenFiles?: string[];
 }
 
 /**

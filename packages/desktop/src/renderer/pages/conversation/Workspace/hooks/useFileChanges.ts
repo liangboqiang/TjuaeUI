@@ -1,6 +1,7 @@
 import { ipcBridge } from '@/common';
 import type { FileChangeInfo, GitRepositoryInfo, GitStatus } from '@/common/types/platform/gitWorkspace';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { notifyWorkspaceGitMutation, subscribeWorkspaceGitMutation } from '../utils/gitMutationBus';
 
 type UseFileChangesParams = { workspace: string };
 
@@ -63,12 +64,14 @@ export function useFileChanges({ workspace }: UseFileChangesParams) {
     };
   }, [workspace]);
 
+  useEffect(() => subscribeWorkspaceGitMutation(workspace, refreshChanges), [refreshChanges, workspace]);
+
   const mutate = useCallback(
     async (operation: () => Promise<unknown>) => {
       await operation();
-      await refreshChanges();
+      await notifyWorkspaceGitMutation(workspace);
     },
-    [refreshChanges]
+    [workspace]
   );
 
   const stageFile = useCallback(

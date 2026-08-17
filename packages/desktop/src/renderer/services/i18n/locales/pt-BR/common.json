@@ -133,5 +133,6 @@
     "second_short": "s"
   },
   "selectedCount": "{{count}} selecionado(s)",
-  "selectedSkills": "Habilidades selecionadas"
+  "selectedSkills": "Habilidades selecionadas",
+  "enable": "Ativar"
 }

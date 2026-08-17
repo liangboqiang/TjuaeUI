@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -40,7 +39,6 @@ describe('AssistantEditorPage', () => {
     defaults: {
       model: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
       permission: { mode: 'auto', setMode: vi.fn(), value: '', setValue: vi.fn() },
-      skills: { mode: 'auto', setMode: vi.fn() },
       mcps: { mode: 'auto', setMode: vi.fn(), availableServers: [], selectedIds: [], setSelectedIds: vi.fn() },
     },
     rules: {
@@ -53,12 +51,9 @@ describe('AssistantEditorPage', () => {
       availableSkills: [],
       selectedSkills: [],
       setSelectedSkills: vi.fn(),
-      pendingSkills: [],
-      setDeletePendingSkillName: vi.fn(),
-      setDeleteCustomSkillName: vi.fn(),
-      builtinAutoSkills: [],
-      disabledBuiltinSkills: [],
-      setDisabledBuiltinSkills: vi.fn(),
+      autoInjectSkills: [],
+      excludedAutoInjectSkills: [],
+      setExcludedAutoInjectSkills: vi.fn(),
     },
     actions: {
       save: vi.fn(),

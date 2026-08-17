@@ -13,10 +13,7 @@
     "openFolder": "打开文件夹",
     "none": "无",
     "quickActionsTitle": "TjuaeUI 能做什么？",
-    "quickActionRepository": "代码仓库",
-    "skillsMarket": "TjuaeUI 技能市场",
-    "skillsMarketDesc": "按需搜索并调用社区 Skills，一次配置，所有Agent通用。",
-    "skillsMarketDetails": "详情 >>"
+    "quickActionRepository": "代码仓库"
   },
   "history": {
     "recents": "最近",

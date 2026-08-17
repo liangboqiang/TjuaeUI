@@ -42,7 +42,6 @@ export const BUILTIN_TAB_IDS = [
  * This keeps older extensions working without requiring them to update.
  */
 export const LEGACY_ANCHOR_REMAP: Record<string, string> = {
-  'skills-hub': 'skills',
   capabilities: 'skills',
   display: 'appearance',
 };

@@ -1,7 +1,13 @@
 import type { ManagedAgent } from '@/renderer/utils/model/agentTypes';
 
 export type AgentAvailabilityFilter =
-  'all' | 'online' | 'needs_auth' | 'connection_failed' | 'protocol_error' | 'not_detected' | 'disabled';
+  | 'all'
+  | 'online'
+  | 'needs_auth'
+  | 'connection_failed'
+  | 'protocol_error'
+  | 'not_detected'
+  | 'disabled';
 
 const isProtocolError = (agent: ManagedAgent): boolean =>
   agent.last_check_error_code === 'acp_init_failed' ||

@@ -8,6 +8,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { vs, vs2015 } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import SelectionToolbar from '../renderers/SelectionToolbar';
 import { useTranslation } from 'react-i18next';
+import { isTjuaeManifestFileName, TjuaeManifestDiffRenderer } from '../renderers/TjuaeManifestRenderer';
 
 interface DiffPreviewProps {
   content: string; // Diff content
@@ -24,6 +25,7 @@ interface DiffPreviewProps {
  */
 const DiffPreview: React.FC<DiffPreviewProps> = ({
   content,
+  metadata,
   hideToolbar = false,
   viewMode: externalViewMode,
   onViewModeChange,
@@ -38,6 +40,10 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
   const [internalViewMode, setInternalViewMode] = useState<'source' | 'preview'>('preview');
 
   const viewMode = externalViewMode !== undefined ? externalViewMode : internalViewMode;
+  const isStructuredManifestDiff =
+    isTjuaeManifestFileName(metadata?.file_name) &&
+    typeof metadata?.original_content === 'string' &&
+    typeof metadata?.modified_content === 'string';
 
   useEffect(() => {
     const updateTheme = () => {
@@ -145,6 +151,12 @@ const DiffPreview: React.FC<DiffPreviewProps> = ({
           >
             {content}
           </SyntaxHighlighter>
+        ) : isStructuredManifestDiff ? (
+          <TjuaeManifestDiffRenderer
+            originalContent={metadata.original_content!}
+            modifiedContent={metadata.modified_content!}
+            sideBySide={sideBySide}
+          />
         ) : (
           <div
             ref={diffContainerRef}

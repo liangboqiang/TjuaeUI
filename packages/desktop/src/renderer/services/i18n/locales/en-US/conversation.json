@@ -13,10 +13,7 @@
     "openFolder": "Open Folder",
     "none": "None",
     "quickActionsTitle": "What can TjuaeUI do?",
-    "quickActionRepository": "Repository",
-    "skillsMarket": "TjuaeUI Skills Market",
-    "skillsMarketDesc": "Search and activate community Skills on demand. Configure once, available for all agents.",
-    "skillsMarketDetails": "View More >>"
+    "quickActionRepository": "Repository"
   },
   "history": {
     "recents": "Recents",

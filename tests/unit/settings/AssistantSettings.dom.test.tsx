@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -53,10 +52,6 @@ vi.mock('@/renderer/utils/model/agentLogo', async () => {
 });
 
 vi.mock('@/renderer/pages/settings/AssistantSettings/DeleteAssistantModal', () => ({
-  default: () => null,
-}));
-
-vi.mock('@/renderer/pages/settings/AssistantSettings/SkillConfirmModals', () => ({
   default: () => null,
 }));
 
@@ -120,12 +115,9 @@ describe('AssistantSettings', () => {
       availableSkills: [],
       selectedSkills: [],
       setSelectedSkills: vi.fn(),
-      pendingSkills: [],
-      setDeletePendingSkillName: vi.fn(),
-      setDeleteCustomSkillName: vi.fn(),
-      builtinAutoSkills: [],
-      disabledBuiltinSkills: [],
-      setDisabledBuiltinSkills: vi.fn(),
+      autoInjectSkills: [],
+      excludedAutoInjectSkills: [],
+      setExcludedAutoInjectSkills: vi.fn(),
       handleSave: vi.fn(),
       handleDeleteClick: vi.fn(),
       handleDuplicate: vi.fn(),
@@ -135,11 +127,6 @@ describe('AssistantSettings', () => {
       handleCreate: vi.fn(),
       deleteConfirmVisible: false,
       setDeleteConfirmVisible: vi.fn(),
-      deletePendingSkillName: null,
-      deleteCustomSkillName: null,
-      customSkills: [],
-      setCustomSkills: vi.fn(),
-      setPendingSkills: vi.fn(),
       handleDeleteConfirm: vi.fn(),
       setEditVisible: vi.fn(),
     });

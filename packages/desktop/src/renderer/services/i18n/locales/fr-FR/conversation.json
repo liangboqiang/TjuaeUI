@@ -13,10 +13,7 @@
     "openFolder": "Ouvrir un dossier",
     "none": "Aucun",
     "quickActionsTitle": "Que peut faire TjuaeUI ?",
-    "quickActionRepository": "Dépôt",
-    "skillsMarket": "Marché de compétences TjuaeUI",
-    "skillsMarketDesc": "Recherchez et activez des compétences communautaires à la demande. Configurez une fois, disponible pour tous les agents.",
-    "skillsMarketDetails": "Voir plus >>"
+    "quickActionRepository": "Dépôt"
   },
   "history": {
     "recents": "Récents",

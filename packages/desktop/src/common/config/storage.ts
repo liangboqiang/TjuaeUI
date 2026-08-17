@@ -39,8 +39,6 @@ export interface IConfigStorageRefer {
   'system.keepAwake'?: boolean;
   // Automatically preview newly created Office files in the current workspace
   'system.autoPreviewOfficeFiles'?: boolean;
-  // Skills Market: whether the external skills market source is enabled
-  'skillsMarket.enabled'?: boolean;
   /**
    * One-shot completion flag for the legacy `model.config` → backend providers
    * migration in {@link migrateProviders}. Once `true`, the migration is
@@ -150,6 +148,8 @@ export type TChatConversation =
         'acp',
         {
           workspace?: string;
+          /** 技能工作台展示的源码目录；智能体运行仍使用独立临时工作区。 */
+          skill_workspace?: string;
           backend: string;
           cli_path?: string;
           custom_workspace?: boolean;
@@ -524,7 +524,10 @@ export interface IMcpServerTransportStreamableHTTP {
 }
 
 export type IMcpServerTransport =
-  IMcpServerTransportStdio | IMcpServerTransportSSE | IMcpServerTransportHTTP | IMcpServerTransportStreamableHTTP;
+  | IMcpServerTransportStdio
+  | IMcpServerTransportSSE
+  | IMcpServerTransportHTTP
+  | IMcpServerTransportStreamableHTTP;
 
 export interface IMcpServer {
   id: string;

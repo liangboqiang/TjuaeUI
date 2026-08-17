@@ -3,13 +3,14 @@ import { downloadFileFromPath, downloadTextContent } from '@/renderer/utils/file
 import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
 import { toLocalFileHref } from '@/renderer/components/Markdown/markdownUtils';
 import { PreviewToolbarExtrasProvider, type PreviewToolbarExtras } from '../../context/PreviewToolbarExtrasContext';
-import { usePreviewContext } from '../../context/PreviewContext';
+import { usePreviewContext, type PreviewTab as PreviewDocumentTab } from '../../context/PreviewContext';
 import { useResizableSplit } from '@/renderer/hooks/ui/useResizableSplit';
 import { Link } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DiffPreview from '../viewers/DiffViewer';
 import HTMLEditor from '../editors/HTMLEditor';
 import HTMLRenderer from '../renderers/HTMLRenderer';
+import TjuaeManifestRenderer, { isTjuaeManifestFileName } from '../renderers/TjuaeManifestRenderer';
 import ImagePreview from '../viewers/ImageViewer';
 import MarkdownEditor from '../editors/MarkdownEditor';
 import MarkdownPreview from '../viewers/MarkdownViewer';
@@ -37,6 +38,14 @@ import {
 } from '../../hooks';
 import { useTranslation } from 'react-i18next';
 import './preview.css';
+
+const EMPTY_PREVIEW_TAB: PreviewDocumentTab = {
+  id: '',
+  content: '',
+  content_type: 'code',
+  title: '',
+  resource_key: 'virtual:empty-preview',
+};
 
 /**
  * 预览面板主组件
@@ -260,12 +269,14 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
     setContextMenu({ show: false, x: 0, y: 0, tabId: null });
   }, [tabs, closeTab]);
 
-  // 如果预览面板未打开，不渲染 / Don't render if preview panel is not open
-  if (!isOpen || !activeTab) return null;
-
-  const { content, content_type, metadata } = activeTab;
+  // Hooks below must also run before the first tab is opened. A stable empty tab
+  // keeps their inputs valid without introducing a conditional Hook path.
+  const renderedActiveTab = activeTab ?? EMPTY_PREVIEW_TAB;
+  const { content, content_type, metadata } = renderedActiveTab;
   const isMarkdown = content_type === 'markdown';
   const isHTML = content_type === 'html';
+  const isTjuaeManifest =
+    content_type === 'code' && isTjuaeManifestFileName(metadata?.file_name || renderedActiveTab.title);
   const isEditable = metadata?.editable !== false; // 默认可编辑 / Default editable
 
   // 对所有有 file_path 的文件显示"在系统中打开"按钮（统一在工具栏显示）
@@ -370,6 +381,11 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
       }
     }
   }, [metadata?.file_path, messageApi, t]);
+
+  // 如果预览面板未打开，不渲染 / Don't render if preview panel is not open.
+  // Keep this return after every Hook so an asynchronously opened first tab
+  // cannot change the component's Hook order.
+  if (!isOpen || !activeTab) return null;
 
   // 渲染历史下拉菜单 / Render history dropdown
   const renderHistoryDropdown = () => {
@@ -588,7 +604,16 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
         />
       );
     } else if (content_type === 'code') {
-      // 统一：始终可编辑的 CodeEditor（看=改）/ Unified: always-editable CodeEditor (view = edit)
+      if (isTjuaeManifest && viewMode === 'preview') {
+        return (
+          <TjuaeManifestRenderer
+            content={content}
+            fileName={metadata?.file_name || activeTab.title}
+            readOnly={isEditable === false}
+            onContentChange={handleContentChange}
+          />
+        );
+      }
       return (
         <div className='flex-1 overflow-hidden'>
           <CodeEditor
@@ -669,6 +694,7 @@ const PreviewPanel: React.FC<{ panelActions?: React.ReactNode }> = ({ panelActio
             content_type={content_type}
             isMarkdown={isMarkdown}
             isHTML={isHTML}
+            hasStructuredPreview={isTjuaeManifest}
             viewMode={viewMode}
             isSplitScreenEnabled={isSplitScreenEnabled}
             file_name={metadata?.file_name || activeTab.title}

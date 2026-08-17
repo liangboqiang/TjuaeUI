@@ -13,10 +13,7 @@
     "openFolder": "باز کردن پوشه",
     "none": "هیچ",
     "quickActionsTitle": "TjuaeUI چه کارهایی می‌تواند انجام دهد؟",
-    "quickActionRepository": "مخزن",
-    "skillsMarket": "بازار مهارت‌های TjuaeUI",
-    "skillsMarketDesc": "مهارت‌های جامعه را جستجو و فعال کنید. یک‌بار پیکربندی کنید، برای همه ایجنت‌ها در دسترس باشد.",
-    "skillsMarketDetails": "مشاهده بیشتر >>"
+    "quickActionRepository": "مخزن"
   },
   "history": {
     "recents": "اخیر",

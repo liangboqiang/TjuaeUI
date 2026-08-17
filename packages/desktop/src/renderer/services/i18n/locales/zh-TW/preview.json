@@ -22,9 +22,9 @@
   "showConversationPane": "顯示對話視窗",
   "source": "原文",
   "code": "程式碼",
-  "preview": "預覽",
+  "preview": "渲染",
   "editor": "編輯器",
-  "previewEffect": "預覽效果",
+  "previewEffect": "渲染效果",
   "snapshot": "快照",
   "downloadMarkdown": "下載 Markdown 檔案",
   "downloadCode": "下載 {{language}} 檔案",
@@ -55,14 +55,14 @@
   "closeRight": "關閉右側",
   "closeOthers": "關閉其他",
   "closeAll": "全部關閉",
-  "readOnlyLabel": "唯讀預覽",
+  "readOnlyLabel": "唯讀渲染",
   "pathLabel": "路徑",
   "missingFile": {
     "title": "檔案不存在",
     "openInNewTab": "嘗試在新分頁開啟"
   },
   "noTabs": "尚無標籤",
-  "openInPanelTooltip": "在預覽面板中查看",
+  "openInPanelTooltip": "在渲染面板中檢視",
   "mermaidTitle": "Mermaid 圖表",
   "largeTextTruncatedHint": "大型檔案預覽模式：為了保持流暢度，僅顯示前 {{count}} 個字元。",
   "truncatedBanner": "預覽內容已截斷，點擊下載即可查看完整檔案。",
@@ -115,5 +115,49 @@
     "inspectElement": "檢查元素",
     "inspectElementEnable": "啟用元素檢查",
     "inspectElementDisable": "停用元素檢查"
+  },
+  "tjuaeManifest": {
+    "invalidJson": "此 Tjuae 清單不是有效的 JSON。請先在「原文」中修復，再使用結構化渲染。",
+    "description": "結構化渲染可直接修改目前清單，儲存使用統一編輯器流程。",
+    "readOnly": "唯讀",
+    "editable": "可編輯",
+    "changes": "清單修訂",
+    "diffDescription": "依清單欄位顯示修訂，而不是顯示原始 JSON 差異。",
+    "noChanges": "清單沒有變更",
+    "before": "修改前",
+    "after": "修改後",
+    "kinds": {
+      "manifest": "清單",
+      "skill": "技能",
+      "assistant": "助理",
+      "agent": "智慧體",
+      "model": "模型",
+      "tool": "工具",
+      "team": "團隊",
+      "project": "專案"
+    },
+    "fields": {
+      "schema": "Schema",
+      "schemaVersion": "Schema 版本",
+      "id": "識別碼",
+      "version": "版本",
+      "categories": "分類",
+      "enabled": "啟用",
+      "autoInject": "自動注入",
+      "source": "來源",
+      "sourceKind": "來源類型",
+      "marketId": "市場",
+      "repository": "儲存庫",
+      "path": "儲存庫路徑",
+      "revision": "遠端修訂",
+      "name": "名稱",
+      "description": "說明",
+      "tags": "標籤",
+      "releaseNotes": "發佈說明"
+    },
+    "sourceKinds": {
+      "local": "本機",
+      "market": "市場"
+    }
   }
 }
