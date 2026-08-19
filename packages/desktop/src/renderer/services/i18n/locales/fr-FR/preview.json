@@ -138,6 +138,8 @@
     },
     "fields": {
       "schema": "Schema",
+      "format": "Format",
+      "formatVersion": "Version du format",
       "schemaVersion": "Schema version",
       "id": "Identifier",
       "version": "Version",
@@ -153,6 +155,10 @@
       "name": "Name",
       "description": "Description",
       "tags": "Tags",
+      "compatibility": "Compatibilité",
+      "requirements": "Conditions d’exécution",
+      "contentHash": "Empreinte du contenu",
+      "extensions": "Champs d’extension",
       "releaseNotes": "Release notes"
     },
     "sourceKinds": {

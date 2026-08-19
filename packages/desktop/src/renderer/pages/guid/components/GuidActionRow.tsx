@@ -83,10 +83,9 @@ type GuidActionRowProps = {
   onModeSelect: (mode: string) => void;
 
   // Skills management
-  allSkills: Array<{ name: string; description: string; isAuto: boolean }>;
-  disabledBuiltinSkills: string[];
+  allSkills: Array<{ id: string; name: string; description: string }>;
   enabledSkills: string[];
-  onToggleSkill: (name: string, isAuto: boolean) => void;
+  onToggleSkill: (id: string) => void;
   mcpServers: IMcpServer[];
   selectedMcpServerIds: string[];
   onToggleMcpServer: (serverId: string) => void;
@@ -116,7 +115,6 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
   dynamicModes = [],
   onModeSelect,
   allSkills,
-  disabledBuiltinSkills,
   enabledSkills,
   onToggleSkill,
   mcpServers,
@@ -176,8 +174,7 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
 
   const isWebUI = !isElectronDesktop();
 
-  const isSkillChecked = (skill: { name: string; isAuto: boolean }) =>
-    skill.isAuto ? !disabledBuiltinSkills.includes(skill.name) : enabledSkills.includes(skill.name);
+  const isSkillChecked = (skill: { id: string }) => enabledSkills.includes(skill.id);
 
   const activeSkillCount = allSkills.filter(isSkillChecked).length;
   const activeMcpCount = selectedMcpServerIds.length;
@@ -321,14 +318,14 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
           title: t('settings.capabilitiesTab.skills'),
           multiSelect: true,
           options: allSkills.map((skill) => ({
-            key: skill.name,
+            key: skill.id,
             label: skill.name,
             description: skill.description || undefined,
             active: isSkillChecked(skill),
           })),
-          onSelect: (name) => {
-            const skill = allSkills.find((s) => s.name === name);
-            if (skill) onToggleSkill(skill.name, skill.isAuto);
+          onSelect: (id) => {
+            const skill = allSkills.find((item) => item.id === id);
+            if (skill) onToggleSkill(skill.id);
           },
         },
       });
@@ -375,7 +372,6 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
     selectedMode,
     onModeSelect,
     allSkills,
-    disabledBuiltinSkills,
     enabledSkills,
     onToggleSkill,
     mcpServers,
@@ -455,16 +451,16 @@ const GuidActionRow: React.FC<GuidActionRowProps> = ({
           >
             {filteredSkills.map((skill) => (
               <Menu.Item
-                key={`skill-${skill.name}`}
+                key={`skill-${skill.id}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleSkill(skill.name, skill.isAuto);
+                  onToggleSkill(skill.id);
                 }}
               >
                 <Checkbox
                   checked={isSkillChecked(skill)}
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  onChange={() => onToggleSkill(skill.name, skill.isAuto)}
+                  onChange={() => onToggleSkill(skill.id)}
                 >
                   <span className='text-13px'>{skill.name}</span>
                 </Checkbox>

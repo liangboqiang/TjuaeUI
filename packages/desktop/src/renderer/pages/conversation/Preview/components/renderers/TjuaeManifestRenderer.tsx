@@ -19,10 +19,22 @@ type TjuaeManifestDiffRendererProps = {
   sideBySide?: boolean;
 };
 
-const MANIFEST_FILE_PATTERN = /^\.tjuae-([a-z0-9-]+)\.json$/iu;
-const ROOT_FIELD_ORDER = ['$schema', 'schemaVersion', 'id', 'version', 'categories', 'enabled', 'autoInject', 'source'];
-const SKILL_HIDDEN_ROOT_FIELDS = new Set(['$schema', 'schemaVersion', 'id']);
-const SKILL_READ_ONLY_ROOT_FIELDS = new Set(['source']);
+const MANIFEST_FILE_PATTERN = /^(?:_meta|\.tjuae-[a-z0-9-]+)\.json$/iu;
+const ROOT_FIELD_ORDER = [
+  '$schema',
+  'format',
+  'formatVersion',
+  'id',
+  'version',
+  'categories',
+  'tags',
+  'compatibility',
+  'requirements',
+  'contentHash',
+  'extensions',
+];
+const SKILL_HIDDEN_ROOT_FIELDS = new Set(['$schema']);
+const SKILL_READ_ONLY_ROOT_FIELDS = new Set(['format', 'formatVersion', 'id', 'contentHash']);
 const SOURCE_KIND_TRANSLATION_KEYS = {
   local: 'preview.tjuaeManifest.sourceKinds.local',
   market: 'preview.tjuaeManifest.sourceKinds.market',
@@ -30,6 +42,8 @@ const SOURCE_KIND_TRANSLATION_KEYS = {
 
 const FIELD_TRANSLATION_KEYS = {
   $schema: 'preview.tjuaeManifest.fields.schema',
+  format: 'preview.tjuaeManifest.fields.format',
+  formatVersion: 'preview.tjuaeManifest.fields.formatVersion',
   schemaVersion: 'preview.tjuaeManifest.fields.schemaVersion',
   id: 'preview.tjuaeManifest.fields.id',
   version: 'preview.tjuaeManifest.fields.version',
@@ -45,6 +59,10 @@ const FIELD_TRANSLATION_KEYS = {
   name: 'preview.tjuaeManifest.fields.name',
   description: 'preview.tjuaeManifest.fields.description',
   tags: 'preview.tjuaeManifest.fields.tags',
+  compatibility: 'preview.tjuaeManifest.fields.compatibility',
+  requirements: 'preview.tjuaeManifest.fields.requirements',
+  contentHash: 'preview.tjuaeManifest.fields.contentHash',
+  extensions: 'preview.tjuaeManifest.fields.extensions',
   releaseNotes: 'preview.tjuaeManifest.fields.releaseNotes',
 } as const;
 
@@ -60,7 +78,7 @@ const translatedLabel = (label: string, t: Translator): string => {
 };
 
 export const isTjuaeManifestFileName = (fileName?: string): boolean =>
-  Boolean(fileName && MANIFEST_FILE_PATTERN.test(fileName));
+  Boolean(fileName && fileName !== '.tjuae-skill.json' && MANIFEST_FILE_PATTERN.test(fileName));
 
 const isJsonObject = (value: unknown): value is JsonObject =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -91,7 +109,10 @@ const updateJsonValue = (source: JsonObject, path: JsonPath, nextValue: unknown)
   return clone;
 };
 
-const manifestKind = (fileName?: string): string => fileName?.match(MANIFEST_FILE_PATTERN)?.[1] ?? 'manifest';
+const manifestKind = (fileName?: string): string => {
+  if (fileName === '_meta.json') return 'skill';
+  return fileName?.match(/^\.tjuae-([a-z0-9-]+)\.json$/iu)?.[1] ?? 'manifest';
+};
 
 const translatedKind = (kind: string, t: Translator): string => {
   if (kind === 'skill') return t('preview.tjuaeManifest.kinds.skill');
@@ -228,11 +249,7 @@ const TjuaeManifestRenderer: React.FC<TjuaeManifestRendererProps> = ({
   const handleChange = useCallback(
     (path: JsonPath, value: unknown) => {
       if (!parsed || readOnly || !onContentChange) return;
-      let next = updateJsonValue(parsed, path, value);
-      if (fileName === '.tjuae-skill.json' && path.length === 1) {
-        if (path[0] === 'enabled' && value === false) next = updateJsonValue(next, ['autoInject'], false);
-        if (path[0] === 'autoInject' && value === true) next = updateJsonValue(next, ['enabled'], true);
-      }
+      const next = updateJsonValue(parsed, path, value);
       onContentChange(`${JSON.stringify(next, null, 2)}\n`);
     },
     [fileName, onContentChange, parsed, readOnly]

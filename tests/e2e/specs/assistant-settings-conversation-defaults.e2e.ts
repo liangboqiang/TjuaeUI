@@ -44,6 +44,11 @@ type SkillRecord = {
   name: string;
 };
 
+const listEnabledSkills = async (page: Page): Promise<SkillRecord[]> => {
+  const catalog = await httpGet<{ items: SkillRecord[] }>(page, '/api/skills/catalog?enabled=true');
+  return catalog.items;
+};
+
 type McpRecord = {
   id: string;
   name: string;
@@ -505,7 +510,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     const assistantName = `Fixed Snapshot ${Date.now()}`;
 
     await goToAssistantSettings(page);
-    const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
+    const skills = await listEnabledSkills(page);
     const mcps = await httpGet<McpRecord[]>(page, '/api/mcp/servers');
     const firstSkill = skills[0];
     const firstMcp = mcps.find((item) => item.enabled !== false) ?? mcps[0];
@@ -564,7 +569,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     const assistantName = `Auto Snapshot ${Date.now()}`;
 
     await goToAssistantSettings(page);
-    const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
+    const skills = await listEnabledSkills(page);
     const mcps = await httpGet<McpRecord[]>(page, '/api/mcp/servers');
     const firstSkill = skills[0];
     const firstMcp = mcps.find((item) => item.enabled !== false) ?? mcps[0];
@@ -639,7 +644,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     const assistantName = `Fixed Reopen ${Date.now()}`;
 
     await goToAssistantSettings(page);
-    const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
+    const skills = await listEnabledSkills(page);
     const mcps = await httpGet<McpRecord[]>(page, '/api/mcp/servers');
     const firstSkill = skills[0];
     const firstMcp = mcps.find((item) => item.enabled !== false) ?? mcps[0];
@@ -699,7 +704,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     const assistantName = `Auto Reopen ${Date.now()}`;
 
     await goToAssistantSettings(page);
-    const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
+    const skills = await listEnabledSkills(page);
     const mcps = await httpGet<McpRecord[]>(page, '/api/mcp/servers');
     const firstSkill = skills[0];
     const firstMcp = mcps.find((item) => item.enabled !== false) ?? mcps[0];
@@ -783,7 +788,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     const tjuaecliModels = await ensureTjuaeCliTestModels(page);
 
     await goToAssistantSettings(page);
-    const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
+    const skills = await listEnabledSkills(page);
     const mcps = await httpGet<McpRecord[]>(page, '/api/mcp/servers');
     const firstSkill = skills[0];
     const firstMcp = mcps.find((item) => item.enabled !== false) ?? mcps[0];
@@ -867,7 +872,7 @@ test.describe('Assistant Settings Conversation Defaults', () => {
     const tjuaecliModels = await ensureTjuaeCliTestModels(page);
 
     await goToAssistantSettings(page);
-    const skills = await httpGet<SkillRecord[]>(page, '/api/skills');
+    const skills = await listEnabledSkills(page);
     const mcps = await httpGet<McpRecord[]>(page, '/api/mcp/servers');
     const firstSkill = skills[0];
     const firstMcp = mcps.find((item) => item.enabled !== false) ?? mcps[0];

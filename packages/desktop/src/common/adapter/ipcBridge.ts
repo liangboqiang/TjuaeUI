@@ -35,12 +35,17 @@ import type {
   SetConfigOptionResponse,
 } from '../types/platform/acpTypes';
 import type {
-  MarketSkill,
-  MarketSkillComparison,
-  PublishMarketSkillResult,
+  SkillCatalogDetail,
+  SkillCatalogFileContent,
+  SkillCatalogPage,
+  SkillIdentity,
+  SkillOperation,
+  SkillSource,
+  SkillVersionComparison,
   SkillWorkspace,
   UpdateSkillPreferences,
 } from '../types/platform/skill';
+import { toAvailableSkill } from '../types/platform/skill';
 import type {
   CreateProviderRequest,
   FetchModelsAnonymousRequest,
@@ -561,6 +566,9 @@ export const dialog = {
 // File System — routed to /api/fs/* and /api/skills/*
 // ---------------------------------------------------------------------------
 
+const skillCatalogUrl = (identity: SkillIdentity): string =>
+  `/api/skills/catalog/${encodeURIComponent(identity.source)}/${encodeURIComponent(identity.namespace || '~')}/${encodeURIComponent(identity.slug)}`;
+
 export const fs = {
   getFilesByDir: withResponseMap(
     httpPost<RawDirOrFile[], { dir: string; root: string }>('/api/fs/dir'),
@@ -605,42 +613,73 @@ export const fs = {
   deleteAssistantRule: httpDelete<boolean, { assistant_id: string }>(
     (p) => `/api/skills/assistant-rule/${p.assistant_id}`
   ),
-  listAvailableSkills: httpGet<SkillWorkspace[], void>('/api/skills'),
-  listMarketSkills: httpGet<MarketSkill[], void>('/api/skills/market'),
-  installMarketSkill: httpPost<SkillWorkspace, { marketId: string; slug: string }>(
-    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/install`,
-    () => undefined
+  listAvailableSkills: withResponseMap(
+    httpGet<SkillCatalogPage, void>('/api/skills/catalog?enabled=true'),
+    (page): SkillWorkspace[] => page.items.map(toAvailableSkill)
   ),
-  updateMarketSkill: httpPost<SkillWorkspace, { marketId: string; slug: string }>(
-    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/update`,
-    () => undefined
+  listSkillCatalog: httpGet<
+    SkillCatalogPage,
+    {
+      sources?: SkillSource[];
+      q?: string;
+      categories?: string[];
+      tags?: string[];
+      enabled?: boolean;
+      autoInject?: boolean;
+      cursor?: string;
+      limit?: number;
+    }
+  >((p) => {
+    const query = new URLSearchParams();
+    if (p.sources?.length) query.set('sources', p.sources.join(','));
+    if (p.q) query.set('q', p.q);
+    if (p.categories?.length) query.set('categories', p.categories.join(','));
+    if (p.tags?.length) query.set('tags', p.tags.join(','));
+    if (p.enabled != null) query.set('enabled', String(p.enabled));
+    if (p.autoInject != null) query.set('autoInject', String(p.autoInject));
+    if (p.cursor) query.set('cursor', p.cursor);
+    if (p.limit) query.set('limit', String(p.limit));
+    const suffix = query.toString();
+    return `/api/skills/catalog${suffix ? `?${suffix}` : ''}`;
+  }),
+  getSkillCatalogDetail: httpGet<SkillCatalogDetail, SkillIdentity & { version?: string }>((p) => {
+    const query = new URLSearchParams();
+    if (p.version) query.set('version', p.version);
+    const suffix = query.toString();
+    return `${skillCatalogUrl(p)}${suffix ? `?${suffix}` : ''}`;
+  }),
+  getSkillCatalogFile: httpGet<SkillCatalogFileContent, SkillIdentity & { path: string; version?: string }>((p) => {
+    const query = new URLSearchParams({ path: p.path });
+    if (p.version) query.set('version', p.version);
+    return `${skillCatalogUrl(p)}/file?${query}`;
+  }),
+  saveSkillCatalogFile: httpPut<SkillCatalogFileContent, SkillIdentity & { path: string; content: string }>(
+    (p) => `${skillCatalogUrl(p)}/file`,
+    ({ path, content }) => ({ path, content })
   ),
-  compareMarketSkill: httpGet<MarketSkillComparison, { marketId: string; slug: string }>(
-    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/compare`
+  compareSkillVersions: httpGet<SkillVersionComparison, SkillIdentity & { base: string; target: string }>((p) => {
+    const query = new URLSearchParams({ base: p.base, target: p.target });
+    return `${skillCatalogUrl(p)}/compare?${query}`;
+  }),
+  updateSkillPreferences: httpPut<UpdateSkillPreferences, SkillIdentity & UpdateSkillPreferences>(
+    (p) => `${skillCatalogUrl(p)}/preferences`,
+    ({ source: _source, namespace: _namespace, slug: _slug, ...preferences }) => preferences
   ),
-  publishMarketSkill: httpPost<
-    PublishMarketSkillResult,
-    { marketId: string; slug: string; forkRepositoryUrl: string; message: string }
-  >(
-    (p) => `/api/skills/market/${encodeURIComponent(p.marketId)}/${encodeURIComponent(p.slug)}/publish`,
-    ({ forkRepositoryUrl, message }) => ({ forkRepositoryUrl, message })
+  copySkillToMine: httpPost<SkillOperation, SkillIdentity & { version: string; targetSlug: string }>(
+    (p) => `${skillCatalogUrl(p)}/copy-to-mine`,
+    ({ version, targetSlug }) => ({ version, targetSlug })
   ),
-  copySkill: httpPost<SkillWorkspace, { slug: string; targetSlug: string }>(
-    (p) => `/api/skills/${p.slug}/copy`,
-    (p) => ({ targetSlug: p.targetSlug })
+  publishSkillToTjuaeHub: httpPost<SkillOperation, SkillIdentity & { version: string; targetSlug: string }>(
+    (p) => `${skillCatalogUrl(p)}/publish-to-tjuae-hub`,
+    ({ version, targetSlug }) => ({ version, targetSlug })
   ),
-  updateSkillPreferences: httpPut<SkillWorkspace, UpdateSkillPreferences & { slug: string }>(
-    (p) => `/api/skills/${p.slug}/preferences`,
-    ({ slug: _slug, ...preferences }) => preferences
+  exportSkill: httpPost<boolean, SkillIdentity & { version: string; outputPath: string }>(
+    (p) => `${skillCatalogUrl(p)}/export`,
+    ({ version, outputPath }) => ({ version, outputPath })
   ),
-  materializeSkillsForAgent: httpPost<
-    { skills: Array<{ name: string; source_path: string }> },
-    { conversation_id: string; skills: string[] }
-  >('/api/skills/materialize-for-agent'),
-  importSkill: httpPost<SkillWorkspace, { skill_path: string }>('/api/skills/import'),
-  createSkill: httpPost<SkillWorkspace, { slug: string; name: string; description: string }>('/api/skills/create'),
-  cloneSkill: httpPost<SkillWorkspace, { repositoryUrl: string }>('/api/skills/clone'),
-  deleteSkill: httpDelete<void, { skill_name: string }>((p) => `/api/skills/${p.skill_name}`),
+  importSkill: httpPost<SkillOperation, { archivePath: string }>('/api/skills/import'),
+  createSkill: httpPost<SkillOperation, { slug: string; name: string; description: string }>('/api/skills/create'),
+  deleteSkill: httpDelete<boolean, SkillIdentity>((p) => skillCatalogUrl(p)),
 };
 
 // ---------------------------------------------------------------------------
@@ -1530,9 +1569,6 @@ export interface ICreateConversationParams {
     /** Transient: preset opt-in skills. Consumed by backend create handler
      *  and stripped before persistence. */
     preset_enabled_skills?: string[];
-    /** Transient: auto-inject skills the user opted out of on the Guid page.
-     *  Consumed by backend create handler and stripped before persistence. */
-    exclude_auto_inject_skills?: string[];
     selected_mcp_server_ids?: string[];
     selected_session_mcp_servers?: ISessionMcpServer[];
     codex_model?: string;

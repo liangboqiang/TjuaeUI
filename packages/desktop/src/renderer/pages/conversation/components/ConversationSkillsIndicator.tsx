@@ -15,7 +15,7 @@ type ConversationSkillsIndicatorProps = {
 /**
  * Shows the skills mounted on this conversation, read directly from
  * `conversation.extra.skills` (snapshot written at creation time by the
- * backend). Joins with the global `/api/skills` index for descriptions.
+ * backend). Joins with `/api/skills/catalog?enabled=true` for descriptions.
  */
 const ConversationSkillsIndicator: React.FC<ConversationSkillsIndicatorProps> = ({ conversation }) => {
   const { t } = useTranslation();
@@ -32,7 +32,7 @@ const ConversationSkillsIndicator: React.FC<ConversationSkillsIndicatorProps> = 
   const descriptionByName = new Map((skillIndex ?? []).map((skill) => [skill.slug, skill.description]));
 
   const handleSkillClick = (skillName: string) => {
-    navigate(`/settings/skills/detail/${encodeURIComponent(skillName)}`);
+    navigate(`/settings/skills/mine/local/${encodeURIComponent(skillName)}`);
   };
 
   const content = (

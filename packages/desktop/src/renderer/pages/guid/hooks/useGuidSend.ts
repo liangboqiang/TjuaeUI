@@ -31,10 +31,8 @@ export type GuidSendDeps = {
   currentAcpCachedModelInfo: AcpModelInfo | null;
   current_model: TProviderWithModel | undefined;
 
-  guidDisabledBuiltinSkills: string[] | undefined;
   guidEnabledSkills: string[] | undefined;
   assistantDefaultSkillIds?: string[];
-  assistantDefaultDisabledBuiltinSkillIds?: string[];
   availableMcpServers: IMcpServer[];
   selectedMcpServerIds: string[] | undefined;
   assistantDefaultMcpIds?: string[];
@@ -78,10 +76,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     selectedThoughtLevelValue,
     currentAcpCachedModelInfo,
     current_model,
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
     assistantDefaultSkillIds,
-    assistantDefaultDisabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds,
     assistantDefaultMcpIds,
@@ -106,7 +102,6 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     const assistantConversationId = selectedAssistantId;
     const assistantBackend = selectedAssistantBackend;
     const enabled_skills_to_send = guidEnabledSkills ?? assistantDefaultSkillIds;
-    const excludeBuiltinSkills = guidDisabledBuiltinSkills ?? assistantDefaultDisabledBuiltinSkillIds;
     const selectedAllMcpServerIds = selectedMcpServerIds ?? [];
     const selectedMcpServerIdSet = new Set(selectedAllMcpServerIds);
     const selectedUserMcpServerIds = availableMcpServers
@@ -140,7 +135,6 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       permission: selectedMode || undefined,
       thought_level: selectedThoughtLevelValue || undefined,
       skill_ids: enabled_skills_to_send,
-      disabled_builtin_skill_ids: excludeBuiltinSkills,
       mcp_ids: assistantOverrideMcpIds,
     };
 
@@ -256,10 +250,8 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
     selectedThoughtLevelValue,
     currentAcpCachedModelInfo,
     current_model,
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
     assistantDefaultSkillIds,
-    assistantDefaultDisabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds,
     assistantDefaultMcpIds,

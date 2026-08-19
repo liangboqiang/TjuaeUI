@@ -163,9 +163,6 @@ const AssistantSettings: React.FC = () => {
       availableSkills: editor.availableSkills,
       selectedSkills: editor.selectedSkills,
       setSelectedSkills: editor.setSelectedSkills,
-      autoInjectSkills: editor.autoInjectSkills,
-      excludedAutoInjectSkills: editor.excludedAutoInjectSkills,
-      setExcludedAutoInjectSkills: editor.setExcludedAutoInjectSkills,
     },
     actions: {
       save: editor.handleSave,

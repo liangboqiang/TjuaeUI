@@ -2,7 +2,7 @@ import { ipcBridge } from '@/common';
 import type { IMcpServer } from '@/common/config/storage';
 import type { Assistant, CreateAssistantRequest, UpdateAssistantRequest } from '@/common/types/agent/assistantTypes';
 import type { Message } from '@arco-design/web-react';
-import type { AssistantListItem, AutoInjectSkill, SkillInfo } from '@/renderer/pages/settings/AssistantSettings/types';
+import type { AssistantListItem, SkillInfo } from '@/renderer/pages/settings/AssistantSettings/types';
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
 import { emitter } from '@/renderer/utils/emitter';
 import { assistantOrderAfterToggle, selectableAssistants } from '@/renderer/utils/model/assistantSelection';
@@ -46,14 +46,6 @@ const resolveLocalizedProfileField = (
   fallbackValue = ''
 ): string => localizedValues?.[localeKey] ?? localizedValues?.['en-US'] ?? baseValue ?? fallbackValue;
 
-const isAutoInjectedSkill = (skill: SkillInfo): boolean => skill.preferences.enabled && skill.preferences.autoInject;
-
-const deriveAutoInjectSkills = (skills: SkillInfo[]): AutoInjectSkill[] =>
-  skills.filter(isAutoInjectedSkill).map((skill) => ({
-    name: skill.slug,
-    description: skill.description,
-  }));
-
 /**
  * Manages all assistant editing state and handlers:
  * create, edit, duplicate, save, delete, and toggle enabled.
@@ -95,9 +87,6 @@ export const useAssistantEditor = ({
   const [availableSkills, setAvailableSkills] = useState<SkillInfo[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
-  const [autoInjectSkills, setAutoInjectSkills] = useState<AutoInjectSkill[]>([]);
-  const [excludedAutoInjectSkills, setExcludedAutoInjectSkills] = useState<string[]>([]);
-
   const loadAssistantDetail = useCallback(
     async (assistantId: string) => ipcBridge.assistants.get.invoke({ id: assistantId, locale: localeKey }),
     [localeKey]
@@ -119,10 +108,10 @@ export const useAssistantEditor = ({
     async (assistantId: string) => {
       const [detail, skillsList, mcpServers] = await Promise.all([
         loadAssistantDetail(assistantId),
-        ipcBridge.fs.listAvailableSkills.invoke(),
+        ipcBridge.fs.listSkillCatalog.invoke({ enabled: true, limit: 100 }),
         ensureBackendMcpCatalog().then(({ allServers }) => allServers),
       ]);
-      return { detail, skillsList, autoSkills: deriveAutoInjectSkills(skillsList), mcpServers };
+      return { detail, skillsList: skillsList.items, mcpServers };
     },
     [loadAssistantDetail]
   );
@@ -171,7 +160,6 @@ export const useAssistantEditor = ({
 
   const resetSkillEditorState = useCallback(() => {
     setSelectedSkills([]);
-    setExcludedAutoInjectSkills([]);
   }, []);
 
   const resetDefaultConfigState = useCallback(() => {
@@ -221,7 +209,7 @@ export const useAssistantEditor = ({
     resetSkillEditorState();
 
     try {
-      const { detail, skillsList, autoSkills, mcpServers } = await loadEditorResources(assistant.id);
+      const { detail, skillsList, mcpServers } = await loadEditorResources(assistant.id);
       setEditName(
         resolveLocalizedProfileField(detail.profile.name, detail.profile.name_i18n, localeKey, assistant.name || '')
       );
@@ -247,16 +235,13 @@ export const useAssistantEditor = ({
       setDefaultMcpMode(detail.defaults.mcps.mode === 'fixed' ? 'fixed' : 'auto');
       setSelectedMcpIds(detail.defaults.mcps.value ?? []);
       setAvailableSkills(skillsList);
-      setAutoInjectSkills(autoSkills);
       setAvailableMcpServers(mcpServers);
       setSelectedSkills(detail.capabilities.default_skill_ids ?? []);
-      setExcludedAutoInjectSkills(detail.capabilities.default_disabled_builtin_skill_ids ?? []);
     } catch (error) {
       console.error('Failed to load assistant detail:', error);
       setEditContext('');
       resetDefaultConfigState();
       setAvailableSkills([]);
-      setAutoInjectSkills([]);
       setAvailableMcpServers([]);
       resetSkillEditorState();
     }
@@ -278,16 +263,14 @@ export const useAssistantEditor = ({
 
     try {
       const [skillsList, mcpServers] = await Promise.all([
-        ipcBridge.fs.listAvailableSkills.invoke(),
+        ipcBridge.fs.listSkillCatalog.invoke({ enabled: true, limit: 100 }),
         ensureBackendMcpCatalog().then(({ allServers }) => allServers),
       ]);
-      setAvailableSkills(skillsList);
-      setAutoInjectSkills(deriveAutoInjectSkills(skillsList));
+      setAvailableSkills(skillsList.items);
       setAvailableMcpServers(mcpServers);
     } catch (error) {
       console.error('Failed to load skills:', error);
       setAvailableSkills([]);
-      setAutoInjectSkills([]);
       setAvailableMcpServers([]);
     }
   };
@@ -306,7 +289,7 @@ export const useAssistantEditor = ({
     resetSkillEditorState();
 
     try {
-      const { detail, skillsList, autoSkills, mcpServers } = await loadEditorResources(assistant.id);
+      const { detail, skillsList, mcpServers } = await loadEditorResources(assistant.id);
       setEditContext(detail.rules.content || '');
       setEditRecommendedPromptsText(resolveLocalizedRecommendedPrompts(detail, localeKey).join('\n'));
       setDefaultModelMode(detail.defaults.model.mode === 'fixed' ? 'fixed' : 'auto');
@@ -318,16 +301,13 @@ export const useAssistantEditor = ({
       setDefaultMcpMode(detail.defaults.mcps.mode === 'fixed' ? 'fixed' : 'auto');
       setSelectedMcpIds(detail.defaults.mcps.value ?? []);
       setAvailableSkills(skillsList);
-      setAutoInjectSkills(autoSkills);
       setAvailableMcpServers(mcpServers);
       setSelectedSkills(detail.capabilities.default_skill_ids ?? []);
-      setExcludedAutoInjectSkills(detail.capabilities.default_disabled_builtin_skill_ids ?? []);
     } catch (error) {
       console.error('Failed to load assistant content for duplication:', error);
       setEditContext('');
       resetDefaultConfigState();
       setAvailableSkills([]);
-      setAutoInjectSkills([]);
       setAvailableMcpServers([]);
       resetSkillEditorState();
     }
@@ -412,7 +392,6 @@ export const useAssistantEditor = ({
           avatar: editAvatar || undefined,
           agent_id: editAgent || undefined,
           enabled_skills: selectedSkills,
-          disabled_builtin_skills: excludedAutoInjectSkills.length > 0 ? excludedAutoInjectSkills : undefined,
           recommended_prompts: recommendedPrompts,
           defaults,
         };
@@ -443,6 +422,7 @@ export const useAssistantEditor = ({
                 defaultThoughtLevelMode === 'fixed'
                   ? { mode: 'fixed', value: defaultThoughtLevelValue.trim() }
                   : { mode: defaultThoughtLevelMode },
+              skills: { mode: 'fixed', value: selectedSkills },
             },
           };
         } else if (isGeneratedAssistant(activeAssistant)) {
@@ -450,7 +430,6 @@ export const useAssistantEditor = ({
             id: activeAssistant.id,
             description: editDescription || undefined,
             enabled_skills: selectedSkills,
-            disabled_builtin_skills: excludedAutoInjectSkills.length > 0 ? excludedAutoInjectSkills : undefined,
             recommended_prompts: recommendedPrompts,
             defaults,
           };
@@ -462,7 +441,6 @@ export const useAssistantEditor = ({
             avatar: editAvatar || undefined,
             agent_id: editAgent || undefined,
             enabled_skills: selectedSkills,
-            disabled_builtin_skills: excludedAutoInjectSkills.length > 0 ? excludedAutoInjectSkills : undefined,
             recommended_prompts: recommendedPrompts,
             defaults,
           };
@@ -599,9 +577,6 @@ export const useAssistantEditor = ({
     setAvailableSkills,
     selectedSkills,
     setSelectedSkills,
-    autoInjectSkills,
-    excludedAutoInjectSkills,
-    setExcludedAutoInjectSkills,
     handleEdit,
     handleCreate,
     handleDuplicate,

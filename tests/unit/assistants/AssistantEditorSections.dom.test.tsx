@@ -103,22 +103,27 @@ const renderWithProviders = (ui: React.ReactElement) =>
     </MemoryRouter>
   );
 
-const managedSkill = (slug = 'browse', autoInject = false): SkillInfo => ({
-  id: `local/${slug}`,
-  slug,
+const managedSkill = (
+  slug = 'browse',
+  autoInject = false,
+  source: SkillInfo['identity']['source'] = 'mine',
+  namespace = source === 'mine' ? 'local' : 'official'
+): SkillInfo => ({
+  identity: { source, namespace, slug },
   name: slug,
   description: 'Browse the web',
-  version: '1.0.0',
-  path: `C:/skills/${slug}`,
-  origin: { type: 'personal' },
+  latestVersion: '1.0.0',
   categories: [],
-  compatibility: '>=0.2.0',
-  dependencies: [],
+  tags: [],
   preferences: {
+    selectedVersion: '1.0.0',
+    followLatest: true,
     enabled: true,
     autoInject,
-    pinned: false,
   },
+  editable: true,
+  canCopyToMine: false,
+  canPublishToTjuaeHub: false,
 });
 
 const createEditor = (overrides: Partial<AssistantEditorViewModel> = {}): AssistantEditorViewModel => {
@@ -159,9 +164,6 @@ const createEditor = (overrides: Partial<AssistantEditorViewModel> = {}): Assist
       availableSkills: [],
       selectedSkills: [],
       setSelectedSkills: vi.fn(),
-      autoInjectSkills: [],
-      excludedAutoInjectSkills: [],
-      setExcludedAutoInjectSkills: vi.fn(),
     },
     actions: {
       save: vi.fn(),
@@ -241,11 +243,8 @@ describe('AssistantEditorSections', () => {
           },
           skills: {
             availableSkills: [managedSkill()],
-            selectedSkills: ['browse'],
+            selectedSkills: ['mine:local:browse'],
             setSelectedSkills: vi.fn(),
-            autoInjectSkills: [],
-            excludedAutoInjectSkills: [],
-            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -290,9 +289,6 @@ describe('AssistantEditorSections', () => {
             availableSkills: [managedSkill()],
             selectedSkills: [],
             setSelectedSkills: vi.fn(),
-            autoInjectSkills: [],
-            excludedAutoInjectSkills: [],
-            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -304,9 +300,7 @@ describe('AssistantEditorSections', () => {
       'Remember last used automatically'
     );
     expect(screen.getByTestId('select-assistant-default-skills')).toHaveTextContent('No default skills selected');
-    expect(screen.getByTestId('select-assistant-auto-inject-skills')).toHaveTextContent(
-      'No auto-injected skills selected'
-    );
+    expect(screen.queryByTestId('select-assistant-auto-inject-skills')).not.toBeInTheDocument();
     expect(screen.getByTestId('select-assistant-default-mcp')).toHaveTextContent('Remember last used automatically');
     expect(screen.getByTestId('select-assistant-default-skills').className).toMatch(/summarySelect/);
     expect(screen.getByTestId('select-assistant-default-mcp').className).toMatch(/summarySelect/);
@@ -826,11 +820,8 @@ describe('AssistantEditorSections', () => {
           rules: { content: 'builtin rules', setContent: vi.fn(), viewMode: 'preview', setViewMode: vi.fn() },
           skills: {
             availableSkills: [managedSkill()],
-            selectedSkills: ['browse'],
+            selectedSkills: ['mine:local:browse'],
             setSelectedSkills: vi.fn(),
-            autoInjectSkills: [],
-            excludedAutoInjectSkills: [],
-            setExcludedAutoInjectSkills: vi.fn(),
           },
           agent: {
             value: 'agent-claude',
@@ -858,9 +849,8 @@ describe('AssistantEditorSections', () => {
     const permissionSelect = container.querySelector('[data-testid="select-assistant-default-permission"]');
     expect(modelSelect?.className).not.toContain('arco-select-disabled');
     expect(permissionSelect?.className).not.toContain('arco-select-disabled');
-    expect(screen.queryByTestId('select-assistant-default-skills')).not.toBeInTheDocument();
+    expect(screen.getByTestId('select-assistant-default-skills')).toBeInTheDocument();
     expect(screen.queryByTestId('select-assistant-default-mcp')).not.toBeInTheDocument();
-    expect(screen.getByText('browse')).toBeInTheDocument();
     expect(screen.getByText('Server A')).toBeInTheDocument();
 
     const promptCard = screen.getByTestId('assistant-card-prompts');
@@ -899,11 +889,8 @@ describe('AssistantEditorSections', () => {
           rules: { content: 'bare rules', setContent: vi.fn(), viewMode: 'preview', setViewMode: vi.fn() },
           skills: {
             availableSkills: [managedSkill()],
-            selectedSkills: ['browse'],
+            selectedSkills: ['mine:local:browse'],
             setSelectedSkills: vi.fn(),
-            autoInjectSkills: [],
-            excludedAutoInjectSkills: [],
-            setExcludedAutoInjectSkills: vi.fn(),
           },
           agent: {
             value: 'agent-droid',
@@ -960,11 +947,8 @@ describe('AssistantEditorSections', () => {
           },
           skills: {
             availableSkills: [managedSkill()],
-            selectedSkills: ['browse'],
+            selectedSkills: ['mine:local:browse'],
             setSelectedSkills: vi.fn(),
-            autoInjectSkills: [],
-            excludedAutoInjectSkills: [],
-            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -987,9 +971,6 @@ describe('AssistantEditorSections', () => {
             availableSkills: [managedSkill()],
             selectedSkills: [],
             setSelectedSkills,
-            autoInjectSkills: [],
-            excludedAutoInjectSkills: [],
-            setExcludedAutoInjectSkills: vi.fn(),
           },
         })}
         activeAssistant={null}
@@ -997,9 +978,33 @@ describe('AssistantEditorSections', () => {
     );
 
     fireEvent.click(screen.getByTestId('select-assistant-default-skills'));
-    fireEvent.click(await screen.findByText('browse'));
+    fireEvent.click(await screen.findByText(/browse/));
 
-    expect(setSelectedSkills).toHaveBeenCalledWith(['browse']);
+    expect(setSelectedSkills).toHaveBeenCalledWith(['mine:local:browse']);
+  });
+
+  it('keeps enabled skills with the same slug independently selectable by source identity', async () => {
+    const setSelectedSkills = vi.fn();
+
+    renderWithProviders(
+      <AssistantEditorSections
+        editor={createEditor({
+          skills: {
+            availableSkills: [managedSkill(), managedSkill('browse', false, 'tjuae-hub')],
+            selectedSkills: [],
+            setSelectedSkills,
+          },
+        })}
+        activeAssistant={null}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('select-assistant-default-skills'));
+    expect(await screen.findByText('browse · settings.skillsHub.spaces.mine')).toBeInTheDocument();
+    const hubSkill = screen.getByText('browse · settings.skillsHub.spaces.tjuaeHub');
+    fireEvent.click(hubSkill);
+
+    expect(setSelectedSkills).toHaveBeenCalledWith(['tjuae-hub:official:browse']);
   });
 
   it('uses stronger contrast classes for applies-immediately badges', () => {

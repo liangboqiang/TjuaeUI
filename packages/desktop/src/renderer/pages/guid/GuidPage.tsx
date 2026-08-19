@@ -64,11 +64,9 @@ const GuidPage: React.FC = () => {
   }, []);
 
   // --- Skills state ---
-  // Skill metadata comes from the database-backed catalog. Built-in auto-inject
-  // skills default checked; the rest are opt-in per conversation or pre-checked
-  // by assistant defaults.
-  const [allSkills, setAllSkills] = useState<Array<{ name: string; description: string; isAuto: boolean }>>([]);
-  const [guidDisabledBuiltinSkills, setGuidDisabledBuiltinSkills] = useState<string[] | undefined>(undefined);
+  // Auto-inject is applied once when an assistant is created. Conversations
+  // only edit that assistant's captured default skill identities.
+  const [allSkills, setAllSkills] = useState<Array<{ id: string; name: string; description: string }>>([]);
   const [guidEnabledSkills, setGuidEnabledSkills] = useState<string[] | undefined>(undefined);
   const [availableMcpServers, setAvailableMcpServers] = useState<IMcpServer[]>([]);
   const [guidSelectedMcpServerIds, setGuidSelectedMcpServerIds] = useState<string[] | undefined>(undefined);
@@ -79,9 +77,9 @@ const GuidPage: React.FC = () => {
       .then((availableSkills) => {
         setAllSkills(
           availableSkills.map((s) => ({
+            id: s.id,
             name: s.slug,
             description: s.description,
-            isAuto: s.preferences.enabled && s.preferences.autoInject,
           }))
         );
       })
@@ -97,20 +95,6 @@ const GuidPage: React.FC = () => {
         console.error('[GuidPage] Failed to load MCP catalog:', error);
         setAvailableMcpServers([]);
       });
-  }, []);
-
-  const handleToggleSkill = useCallback((skillName: string, isAuto: boolean) => {
-    if (isAuto) {
-      setGuidDisabledBuiltinSkills((prev) => {
-        const list = prev ?? [];
-        return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
-      });
-    } else {
-      setGuidEnabledSkills((prev) => {
-        const list = prev ?? [];
-        return list.includes(skillName) ? list.filter((s) => s !== skillName) : [...list, skillName];
-      });
-    }
   }, []);
 
   const handleToggleMcpServer = useCallback((serverId: string) => {
@@ -164,24 +148,26 @@ const GuidPage: React.FC = () => {
     () => resolveGuidAssistantDefaults(selectedAssistantDetail),
     [selectedAssistantDetail]
   );
+  const handleToggleSkill = useCallback(
+    (skillId: string) => {
+      setGuidEnabledSkills((previous) => {
+        const current = previous ?? resolvedAssistantDefaults.skillIds;
+        return current.includes(skillId) ? current.filter((id) => id !== skillId) : [...current, skillId];
+      });
+    },
+    [resolvedAssistantDefaults.skillIds]
+  );
   const selectedSkillNames = useMemo(() => {
-    const disabledBuiltinSkillSet = new Set(
-      guidDisabledBuiltinSkills ?? resolvedAssistantDefaults.disabledBuiltinSkillIds
-    );
     const enabledSkillSet = new Set(guidEnabledSkills ?? resolvedAssistantDefaults.skillIds);
 
-    return allSkills
-      .filter((skill) => (skill.isAuto ? !disabledBuiltinSkillSet.has(skill.name) : enabledSkillSet.has(skill.name)))
-      .map((skill) => skill.name);
+    return allSkills.filter((skill) => enabledSkillSet.has(skill.id)).map((skill) => skill.id);
   }, [
     allSkills,
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
-    resolvedAssistantDefaults.disabledBuiltinSkillIds,
     resolvedAssistantDefaults.skillIds,
   ]);
   const skillDescriptionByName = useMemo(
-    () => new Map(allSkills.map((skill) => [skill.name, skill.description])),
+    () => new Map(allSkills.map((skill) => [skill.id, skill.description])),
     [allSkills]
   );
   const guidBuiltinSlashCommands = useMemo<SlashCommandItem[]>(
@@ -257,10 +243,8 @@ const GuidPage: React.FC = () => {
     currentAcpCachedModelInfo: agentSelection.currentAcpCachedModelInfo,
     current_model: modelSelection.current_model,
 
-    guidDisabledBuiltinSkills,
     guidEnabledSkills,
     assistantDefaultSkillIds: resolvedAssistantDefaults.skillIds,
-    assistantDefaultDisabledBuiltinSkillIds: resolvedAssistantDefaults.disabledBuiltinSkillIds,
     availableMcpServers,
     selectedMcpServerIds: guidSelectedMcpServerIds,
     assistantDefaultMcpIds: resolvedAssistantDefaults.mcpIds,
@@ -335,16 +319,14 @@ const GuidPage: React.FC = () => {
     return [t('guid.defaultPrompts.understand'), t('guid.defaultPrompts.cleanup'), t('guid.defaultPrompts.create')];
   }, [localeKey, selectedAssistantDetail, selectedAssistantRecord, selectedAssistantId, t]);
 
-  // Sync disabledBuiltinSkills + enabledSkills from assistant detail defaults.
+  // Reset the conversation override whenever the active assistant changes.
   useEffect(() => {
     if (!selectedAssistantId || !selectedAssistantDetail) {
-      setGuidDisabledBuiltinSkills(undefined);
       setGuidEnabledSkills(undefined);
       return;
     }
 
     const resolvedDefaults = resolveGuidAssistantDefaults(selectedAssistantDetail);
-    setGuidDisabledBuiltinSkills(resolvedDefaults.disabledBuiltinSkillIds);
     setGuidEnabledSkills(resolvedDefaults.skillIds);
   }, [selectedAssistantDetail, selectedAssistantId]);
 
@@ -619,8 +601,7 @@ const GuidPage: React.FC = () => {
       dynamicModes={agentSelection.currentAgentModeOptions}
       onModeSelect={setGuidSelectedMode}
       allSkills={allSkills}
-      disabledBuiltinSkills={guidDisabledBuiltinSkills ?? []}
-      enabledSkills={guidEnabledSkills ?? []}
+      enabledSkills={guidEnabledSkills ?? resolvedAssistantDefaults.skillIds}
       onToggleSkill={handleToggleSkill}
       mcpServers={availableMcpServers}
       selectedMcpServerIds={guidSelectedMcpServerIds ?? []}

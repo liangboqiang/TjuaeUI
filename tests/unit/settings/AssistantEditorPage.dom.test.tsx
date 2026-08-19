@@ -51,9 +51,6 @@ describe('AssistantEditorPage', () => {
       availableSkills: [],
       selectedSkills: [],
       setSelectedSkills: vi.fn(),
-      autoInjectSkills: [],
-      excludedAutoInjectSkills: [],
-      setExcludedAutoInjectSkills: vi.fn(),
     },
     actions: {
       save: vi.fn(),

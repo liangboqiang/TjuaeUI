@@ -6,7 +6,7 @@
  * - canonical skill settings jump links
  * - independent auto-injection selection
  * - no legacy collapse / modal structure
- * - builtin assistant read-only summaries for skills / MCP
+ * - builtin assistant uses the same skill selector while MCP remains read-only
  * - fixed default skill selection persistence for custom assistants
  */
 import { test, expect } from '../fixtures';
@@ -43,13 +43,12 @@ async function openSelect(page: import('@playwright/test').Page, testId: string)
 test.describe('Assistant Settings Skills / MCP', () => {
   test.setTimeout(90_000);
 
-  test('custom assistant renders canonical skill, auto-injection, and MCP controls', async ({ page }) => {
+  test('custom assistant renders canonical skill and MCP controls', async ({ page }) => {
     await goToAssistantSettings(page);
     await clickCreateAssistant(page);
     await fillAssistantName(page, `Skill Layout ${Date.now()}`);
 
     await expect(page.locator('[data-testid="select-assistant-default-skills"]')).toBeVisible();
-    await expect(page.locator('[data-testid="select-assistant-auto-inject-skills"]')).toBeVisible();
     await expect(page.locator('[data-testid="select-assistant-default-mcp"]')).toBeVisible();
     await expect(page.locator('[data-testid="btn-open-skills-settings"]')).toBeVisible();
     await expect(page.locator('[data-testid="btn-open-mcp-settings"]')).toBeVisible();
@@ -73,7 +72,7 @@ test.describe('Assistant Settings Skills / MCP', () => {
     await closeAssistantEditor(page);
   });
 
-  test('builtin assistant shows read-only skills and MCP summaries', async ({ page }) => {
+  test('builtin assistant uses the shared skill selector and keeps MCP read-only', async ({ page }) => {
     await goToAssistantSettings(page);
 
     let builtinId: string | null = null;
@@ -92,7 +91,7 @@ test.describe('Assistant Settings Skills / MCP', () => {
 
     await openAssistantEditor(page, builtinId);
 
-    await expect(page.locator('[data-testid="select-assistant-default-skills"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="select-assistant-default-skills"]')).toBeVisible();
     await expect(page.locator('[data-testid="select-assistant-default-mcp"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="assistant-card-defaults"]')).toContainText(/Default Skills|默认技能/);
     await expect(page.locator('[data-testid="assistant-card-defaults"]')).toContainText(/Default MCP|默认 MCP/);

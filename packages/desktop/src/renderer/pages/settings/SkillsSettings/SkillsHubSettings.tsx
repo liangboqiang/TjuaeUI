@@ -1,679 +1,504 @@
 import { ipcBridge } from '@/common';
-import type { MarketSkill, SkillPreferences, SkillWorkspace } from '@/common/types/platform/skill';
-import { TjuaeSearchInput } from '@/renderer/components/base';
-import { useLayoutContext } from '@/renderer/hooks/context/LayoutContext';
-import {
-  Button,
-  Dropdown,
-  Empty,
-  Input,
-  Menu,
-  Message,
-  Modal,
-  Select,
-  Spin,
-  Switch,
-  Tag,
-  Tooltip,
-} from '@arco-design/web-react';
-import { Copy, FolderOpen, More, Plus, Refresh, Upload } from '@icon-park/react';
-import React, { useCallback, useMemo, useState } from 'react';
+import type {
+  SkillCatalogDetail,
+  SkillCatalogFileContent,
+  SkillCatalogItem,
+  SkillCatalogPage,
+  SkillIdentity,
+  SkillSource,
+  SkillVersionComparison,
+} from '@/common/types/platform/skill';
+import { Button, Dropdown, Empty, Input, Menu, Message, Modal, Radio, Select, Spin } from '@arco-design/web-react';
+import { Plus, Search } from '@icon-park/react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import useSWR from 'swr';
-import SettingsPageHeader from '../components/SettingsPageHeader';
+import { useTalkToButler } from '@/renderer/hooks/assistant/useTalkToButler';
 import SettingsPageWrapper from '../components/SettingsPageWrapper';
+import SkillCatalogDetailView, { type BusyAction, type DetailTab } from './SkillCatalogDetailView';
+import SkillCatalogDirectory from './SkillCatalogDirectory';
 import styles from './SkillsHubSettings.module.css';
+import { SKILL_SOURCES, skillRoute, sourceTranslationKey } from './skillCatalogPresentation';
 
-type SkillView = 'mine' | 'market';
-type BusyAction = { slug: string; action: string } | null;
+type SourceFilter = 'all' | SkillSource;
+type StatusFilter = 'all' | 'enabled' | 'autoInject';
 
-const syncStateKey = {
-  notInstalled: 'settings.skillsHub.syncState.notInstalled',
-  synced: 'settings.skillsHub.syncState.synced',
-  localChanged: 'settings.skillsHub.syncState.localChanged',
-  updateAvailable: 'settings.skillsHub.syncState.updateAvailable',
-  diverged: 'settings.skillsHub.syncState.diverged',
-} as const;
+const parseRouteSource = (value?: string): SkillSource | undefined =>
+  SKILL_SOURCES.includes(value as SkillSource) ? (value as SkillSource) : undefined;
 
-const gitStatusKey = {
-  clean: 'settings.skillsHub.gitStatus.clean',
-  modified: 'settings.skillsHub.gitStatus.modified',
-  conflicted: 'settings.skillsHub.gitStatus.conflicted',
-  unknown: 'settings.skillsHub.gitStatus.unknown',
-} as const;
-
-type SkillsHubSettingsProps = {
-  withWrapper?: boolean;
-};
-
-const matchesSearch = (name: string, description: string, query: string): boolean => {
-  const normalized = query.trim().toLocaleLowerCase();
-  return !normalized || `${name}\n${description}`.toLocaleLowerCase().includes(normalized);
-};
-
-const SkillIdentity: React.FC<{ name: string; version: string; categories: string[] }> = ({
-  name,
-  version,
-  categories,
-}) => (
-  <div className='min-w-0'>
-    <div className='flex min-w-0 items-center gap-8px'>
-      <span className='truncate text-15px font-600 text-t-primary'>{name}</span>
-      <span className='shrink-0 text-11px text-t-tertiary'>v{version}</span>
-    </div>
-    {categories.length > 0 ? (
-      <div className='mt-8px flex flex-wrap gap-6px'>
-        {categories.slice(0, 3).map((category) => (
-          <Tag key={category} size='small' bordered={false} color='gray'>
-            {category}
-          </Tag>
-        ))}
-      </div>
-    ) : null}
-  </div>
-);
-
-const SkillAvatar: React.FC<{ name: string }> = ({ name }) => (
-  <div className={styles.avatar} aria-hidden='true'>
-    {name.trim().charAt(0).toLocaleUpperCase() || 'S'}
-  </div>
-);
-
-const SkillsHubSettings: React.FC<SkillsHubSettingsProps> = ({ withWrapper = true }) => {
+const SkillsHubSettings: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isMobile = useLayoutContext()?.isMobile ?? false;
-  const [activeView, setActiveView] = useState<SkillView>('mine');
-  const [activeMarket, setActiveMarket] = useState('tjuae-hub');
+  const talkToButler = useTalkToButler();
+  const route = useParams<{ source?: string; namespace?: string; skillName?: string }>();
+  const routeSource = parseRouteSource(route.source);
+  const routeIdentity: SkillIdentity | undefined =
+    routeSource && route.skillName
+      ? {
+          source: routeSource,
+          namespace: decodeURIComponent(route.namespace === '~' ? '' : (route.namespace ?? '')),
+          slug: decodeURIComponent(route.skillName),
+        }
+      : undefined;
+  const [source, setSource] = useState<SourceFilter>(routeSource ?? 'all');
+  const [status, setStatus] = useState<StatusFilter>('all');
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [detailTab, setDetailTab] = useState<DetailTab>('overview');
+  const [selectedVersion, setSelectedVersion] = useState<string>();
+  const [selectedFilePath, setSelectedFilePath] = useState<string>();
+  const [baseVersion, setBaseVersion] = useState<string>();
+  const [targetVersion, setTargetVersion] = useState<string>();
   const [busy, setBusy] = useState<BusyAction>(null);
-  const [copySource, setCopySource] = useState<SkillWorkspace | null>(null);
-  const [copySlug, setCopySlug] = useState('');
-  const [createMode, setCreateMode] = useState<'manual' | 'butler' | null>(null);
+  const [busyIdentity, setBusyIdentity] = useState<string>();
+  const [createOpen, setCreateOpen] = useState(false);
   const [createSlug, setCreateSlug] = useState('');
   const [createName, setCreateName] = useState('');
   const [createDescription, setCreateDescription] = useState('');
-  const [cloneVisible, setCloneVisible] = useState(false);
-  const [cloneUrl, setCloneUrl] = useState('');
-  const [publishSource, setPublishSource] = useState<SkillWorkspace | null>(null);
-  const [forkRepositoryUrl, setForkRepositoryUrl] = useState('');
-  const [publishMessage, setPublishMessage] = useState('');
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [copySlug, setCopySlug] = useState('');
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishSlug, setPublishSlug] = useState('');
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    setSelectedVersion(undefined);
+    setSelectedFilePath(undefined);
+    setBaseVersion(undefined);
+    setTargetVersion(undefined);
+    setDetailTab('overview');
+  }, [routeIdentity?.source, routeIdentity?.namespace, routeIdentity?.slug]);
+
+  const catalogRequest = useMemo(
+    () => ({
+      sources: source === 'all' ? undefined : [source],
+      q: debouncedQuery.trim() || undefined,
+      enabled: status === 'enabled' ? true : undefined,
+      autoInject: status === 'autoInject' ? true : undefined,
+      limit: 80,
+    }),
+    [debouncedQuery, source, status]
+  );
+  const catalogKey = ['skill-catalog', catalogRequest] as const;
   const {
-    data: installed = [],
-    error: installedError,
-    isLoading: installedLoading,
-    mutate: refreshInstalled,
-  } = useSWR<SkillWorkspace[]>('skills.workspaces', () => ipcBridge.fs.listAvailableSkills.invoke());
+    data: page,
+    error,
+    isLoading,
+    mutate: refreshCatalog,
+  } = useSWR<SkillCatalogPage>(catalogKey, () => ipcBridge.fs.listSkillCatalog.invoke(catalogRequest));
+
+  const detailKey = routeIdentity ? (['skill-detail', routeIdentity, selectedVersion] as const) : null;
   const {
-    data: market = [],
-    error: marketError,
-    isLoading: marketLoading,
-    mutate: refreshMarket,
-  } = useSWR<MarketSkill[]>('skills.market', () => ipcBridge.fs.listMarketSkills.invoke());
-
-  const filteredInstalled = useMemo(
-    () => installed.filter((skill) => matchesSearch(skill.name, skill.description, query)),
-    [installed, query]
-  );
-  const markets = useMemo(
-    () => Array.from(new Map(market.map((skill) => [skill.market.id, skill.market])).values()),
-    [market]
-  );
-  const filteredMarket = useMemo(
-    () =>
-      market.filter((skill) => skill.market.id === activeMarket && matchesSearch(skill.name, skill.description, query)),
-    [activeMarket, market, query]
+    data: detail,
+    error: detailError,
+    isLoading: detailLoading,
+    mutate: refreshDetail,
+  } = useSWR<SkillCatalogDetail>(detailKey, () =>
+    ipcBridge.fs.getSkillCatalogDetail.invoke({ ...routeIdentity!, version: selectedVersion })
   );
 
-  const refresh = useCallback(async () => {
-    await Promise.all([refreshInstalled(), refreshMarket()]);
-  }, [refreshInstalled, refreshMarket]);
+  useEffect(() => {
+    if (!detail) return;
+    if (routeIdentity && skillRoute(routeIdentity) !== skillRoute(detail.skill.identity)) {
+      void navigate(skillRoute(detail.skill.identity), { replace: true });
+      return;
+    }
+    setSelectedFilePath((value) => value ?? detail.files[0]?.path);
+    const versions = detail.versions.map((item) => item.version);
+    setTargetVersion((value) => (value && versions.includes(value) ? value : detail.selectedVersion));
+    setBaseVersion((value) => {
+      if (value && versions.includes(value) && value !== detail.selectedVersion) return value;
+      return versions.find((version) => version !== detail.selectedVersion);
+    });
+  }, [detail, navigate, routeIdentity]);
 
-  const runAction = useCallback(
-    async (slug: string, action: string, operation: () => Promise<unknown>, successMessage: string) => {
-      setBusy({ slug, action });
+  const fileKey =
+    routeIdentity && selectedFilePath && detail
+      ? (['skill-file', routeIdentity, detail.selectedVersion, selectedFilePath] as const)
+      : null;
+  const {
+    data: selectedFile,
+    isLoading: selectedFileLoading,
+    mutate: refreshFile,
+  } = useSWR<SkillCatalogFileContent>(fileKey, () =>
+    ipcBridge.fs.getSkillCatalogFile.invoke({
+      ...routeIdentity!,
+      version: detail!.selectedVersion,
+      path: selectedFilePath!,
+    })
+  );
+
+  const compareKey =
+    routeIdentity && baseVersion && targetVersion && baseVersion !== targetVersion
+      ? (['skill-compare', routeIdentity, baseVersion, targetVersion] as const)
+      : null;
+  const { data: comparison, isLoading: comparisonLoading } = useSWR<SkillVersionComparison>(compareKey, () =>
+    ipcBridge.fs.compareSkillVersions.invoke({ ...routeIdentity!, base: baseVersion!, target: targetVersion! })
+  );
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshCatalog(), routeIdentity ? refreshDetail() : Promise.resolve()]);
+  }, [refreshCatalog, refreshDetail, routeIdentity]);
+
+  const run = useCallback(
+    async <T,>(action: BusyAction, operation: () => Promise<T>, success: string): Promise<T | undefined> => {
+      setBusy(action);
       try {
-        await operation();
-        Message.success(successMessage);
-        await refresh();
-      } catch (error) {
-        console.error(`[SkillsHub] ${action} failed`, error);
+        const result = await operation();
+        Message.success(success);
+        await refreshAll();
+        return result;
+      } catch (operationError) {
+        console.error(`[SkillCatalog] ${action ?? 'operation'} failed`, operationError);
         Message.error(t('settings.skillsHub.actionFailed'));
+        return undefined;
       } finally {
         setBusy(null);
       }
     },
-    [refresh, t]
+    [refreshAll, t]
   );
 
-  const openSkill = useCallback(
-    (slug: string) => {
-      void navigate(`/settings/skills/detail/${encodeURIComponent(slug)}`);
+  const savePreferences = useCallback(
+    async (
+      skill: SkillCatalogItem,
+      field: 'enabled' | 'autoInject',
+      value: boolean,
+      versionOverride?: { selectedVersion: string; followLatest: boolean }
+    ) => {
+      const key = `${skill.identity.source}:${skill.identity.namespace}:${skill.identity.slug}`;
+      setBusyIdentity(key);
+      const enabled = field === 'enabled' ? value : skill.preferences.enabled;
+      const autoInject = enabled && (field === 'autoInject' ? value : skill.preferences.autoInject);
+      const nextPreferences = {
+        ...skill.preferences,
+        selectedVersion: versionOverride?.selectedVersion ?? skill.preferences.selectedVersion ?? skill.latestVersion,
+        followLatest: versionOverride?.followLatest ?? skill.preferences.followLatest,
+        enabled,
+        autoInject,
+      };
+      const previousPage = page;
+      const previousDetail = detail;
+      if (page) {
+        await refreshCatalog(
+          {
+            ...page,
+            items: page.items.map((item) =>
+              skillRoute(item.identity) === skillRoute(skill.identity)
+                ? { ...item, preferences: nextPreferences }
+                : item
+            ),
+          },
+          { revalidate: false }
+        );
+      }
+      if (detail && skillRoute(detail.skill.identity) === skillRoute(skill.identity)) {
+        await refreshDetail(
+          { ...detail, skill: { ...detail.skill, preferences: nextPreferences } },
+          { revalidate: false }
+        );
+      }
+      try {
+        await ipcBridge.fs.updateSkillPreferences.invoke({
+          ...skill.identity,
+          selectedVersion: nextPreferences.selectedVersion,
+          followLatest: nextPreferences.followLatest,
+          enabled,
+          autoInject,
+        });
+        void Promise.all([refreshCatalog(), routeIdentity ? refreshDetail() : Promise.resolve()]);
+        Message.success(t('settings.skillsHub.preferencesSaved'));
+      } catch (preferenceError) {
+        if (previousPage) await refreshCatalog(previousPage, { revalidate: false });
+        if (previousDetail) await refreshDetail(previousDetail, { revalidate: false });
+        console.error('[SkillCatalog] preference update failed', preferenceError);
+        Message.error(t('settings.skillsHub.actionFailed'));
+      } finally {
+        setBusyIdentity(undefined);
+      }
     },
-    [navigate]
+    [detail, page, refreshCatalog, refreshDetail, routeIdentity, t]
   );
 
-  const compareSkill = useCallback(
-    (marketId: string, slug: string) => {
-      void navigate(`/settings/skills/detail/${encodeURIComponent(slug)}`, {
-        state: { marketComparison: { marketId, slug } },
-      });
+  const saveDetailPreference = useCallback(
+    (field: 'enabled' | 'autoInject', value: boolean) => {
+      if (!detail) return;
+      const preferenceVersion = detail.skill.preferences.selectedVersion ?? detail.skill.latestVersion;
+      setBusy('preferences');
+      void savePreferences(detail.skill, field, value, {
+        selectedVersion: detail.selectedVersion,
+        followLatest: preferenceVersion === detail.selectedVersion && detail.skill.preferences.followLatest,
+      }).finally(() => setBusy(null));
     },
-    [navigate]
+    [detail, savePreferences]
   );
 
-  const importSkill = useCallback(async () => {
-    const paths = await ipcBridge.dialog.showOpen.invoke({ properties: ['openDirectory'] });
-    const source = paths?.[0];
-    if (!source) return;
-    await runAction(
-      source,
-      'import',
-      () => ipcBridge.fs.importSkill.invoke({ skill_path: source }),
+  const confirmCreate = useCallback(() => {
+    void run(
+      'save',
+      () =>
+        ipcBridge.fs.createSkill.invoke({
+          slug: createSlug.trim(),
+          name: createName.trim(),
+          description: createDescription.trim(),
+        }),
+      t('settings.skillsHub.createSuccess')
+    ).then((result) => {
+      if (!result) return;
+      setCreateOpen(false);
+      void navigate(skillRoute(result.identity));
+    });
+  }, [createDescription, createName, createSlug, navigate, run, t]);
+
+  const importZip = useCallback(async () => {
+    const files = await ipcBridge.dialog.showOpen.invoke({
+      properties: ['openFile'],
+      filters: [{ name: 'Skill ZIP', extensions: ['zip'] }],
+    });
+    if (!files?.[0]) return;
+    const result = await run(
+      'save',
+      () => ipcBridge.fs.importSkill.invoke({ archivePath: files[0] }),
       t('settings.skillsHub.importSuccess')
     );
-  }, [runAction, t]);
+    if (result) void navigate(skillRoute(result.identity));
+  }, [navigate, run, t]);
 
-  const confirmCreate = useCallback(async () => {
-    const slug = createSlug.trim().toLocaleLowerCase();
-    const name = createName.trim();
-    const description = createDescription.trim();
-    if (!slug || !name || !description) return;
-    setBusy({ slug, action: 'create' });
-    try {
-      const created = await ipcBridge.fs.createSkill.invoke({ slug, name, description });
-      Message.success(t('settings.skillsHub.createSuccess'));
-      setCreateMode(null);
-      setCreateSlug('');
-      setCreateName('');
-      setCreateDescription('');
-      await refresh();
-      openSkill(created.slug);
-    } catch (error) {
-      console.error('[SkillsHub] create failed', error);
-      Message.error(t('settings.skillsHub.actionFailed'));
-    } finally {
-      setBusy(null);
-    }
-  }, [createDescription, createName, createSlug, openSkill, refresh, t]);
-
-  const confirmClone = useCallback(async () => {
-    const repositoryUrl = cloneUrl.trim();
-    if (!repositoryUrl) return;
-    setBusy({ slug: repositoryUrl, action: 'clone' });
-    try {
-      const created = await ipcBridge.fs.cloneSkill.invoke({ repositoryUrl });
-      Message.success(t('settings.skillsHub.cloneSuccess'));
-      setCloneVisible(false);
-      setCloneUrl('');
-      await refresh();
-      openSkill(created.slug);
-    } catch (error) {
-      console.error('[SkillsHub] clone failed', error);
-      Message.error(t('settings.skillsHub.actionFailed'));
-    } finally {
-      setBusy(null);
-    }
-  }, [cloneUrl, openSkill, refresh, t]);
-
-  const updatePreferences = useCallback(
-    async (skill: SkillWorkspace, patch: Partial<SkillPreferences>) => {
-      const next = { ...skill.preferences, ...patch };
-      await runAction(
-        skill.slug,
-        'preferences',
-        () => ipcBridge.fs.updateSkillPreferences.invoke({ slug: skill.slug, ...next }),
-        t('settings.skillsHub.preferencesSaved')
-      );
+  const handleAddAction = useCallback(
+    (key: string) => {
+      if (key === 'import') {
+        void importZip();
+      } else if (key === 'manual') {
+        setCreateOpen(true);
+      } else if (key === 'chat') {
+        void talkToButler({ prompt: t('settings.talkToButler.prompt.addSkill') });
+      }
     },
-    [runAction, t]
+    [importZip, t, talkToButler]
   );
 
-  const confirmDelete = useCallback(
-    (skill: SkillWorkspace) => {
-      Modal.confirm({
-        title: t('settings.skillsHub.deleteConfirmTitle'),
-        content: t('settings.skillsHub.deleteConfirmContent', { name: skill.name }),
-        okButtonProps: { status: 'danger' },
-        onOk: () =>
-          runAction(
-            skill.slug,
-            'delete',
-            () => ipcBridge.fs.deleteSkill.invoke({ skill_name: skill.slug }),
-            t('settings.skillsHub.deleteSuccess')
-          ),
-      });
-    },
-    [runAction, t]
-  );
-
-  const showCopy = useCallback((skill: SkillWorkspace) => {
-    setCopySource(skill);
-    setCopySlug(`${skill.slug}-copy`);
-  }, []);
-
-  const confirmCopy = useCallback(async () => {
-    if (!copySource || !copySlug.trim()) return;
-    const source = copySource;
-    const targetSlug = copySlug.trim().toLocaleLowerCase();
-    await runAction(
-      source.slug,
-      'copy',
-      () => ipcBridge.fs.copySkill.invoke({ slug: source.slug, targetSlug }),
-      t('settings.skillsHub.copySuccess')
+  const exportCurrent = useCallback(async () => {
+    if (!detail || !routeIdentity) return;
+    const directories = await ipcBridge.dialog.showOpen.invoke({ properties: ['openDirectory', 'createDirectory'] });
+    if (!directories?.[0]) return;
+    const root = directories[0].replace(/[\\/]+$/u, '');
+    await run(
+      'export',
+      () =>
+        ipcBridge.fs.exportSkill.invoke({
+          ...routeIdentity,
+          version: detail.selectedVersion,
+          outputPath: `${root}/${detail.skill.identity.slug}-${detail.selectedVersion}.zip`,
+        }),
+      t('settings.skillsHub.exportSuccess')
     );
-    setCopySource(null);
-  }, [copySlug, copySource, runAction, t]);
+  }, [detail, routeIdentity, run, t]);
 
-  const confirmPublish = useCallback(async () => {
-    if (
-      !publishSource ||
-      publishSource.source.kind !== 'market' ||
-      !forkRepositoryUrl.trim() ||
-      !publishMessage.trim()
-    ) {
-      return;
-    }
-    setBusy({ slug: publishSource.slug, action: 'publish' });
-    try {
-      const result = await ipcBridge.fs.publishMarketSkill.invoke({
-        marketId: publishSource.source.marketId,
-        slug: publishSource.slug,
-        forkRepositoryUrl: forkRepositoryUrl.trim(),
-        message: publishMessage.trim(),
-      });
-      Message.success(t('settings.skillsHub.publishSuccess'));
-      setPublishSource(null);
-      setForkRepositoryUrl('');
-      setPublishMessage('');
-      await ipcBridge.shell.openExternal.invoke(result.compareUrl);
-      await refresh();
-    } catch (error) {
-      console.error('[SkillsHub] publish failed', error);
-      Message.error(t('settings.skillsHub.actionFailed'));
-    } finally {
-      setBusy(null);
-    }
-  }, [forkRepositoryUrl, publishMessage, publishSource, refresh, t]);
-
-  const installedCards = filteredInstalled.map((skill) => {
-    const pending = busy?.slug === skill.slug;
-    const source = skill.source;
-    const marketEntry =
-      source.kind === 'market'
-        ? market.find(
-            (entry) =>
-              entry.market.id === source.marketId &&
-              entry.market.repository === source.repository &&
-              entry.path === source.path
-          )
-        : undefined;
-    const menu = (
-      <Menu>
-        {source.kind === 'market' ? (
-          <Menu.Item key='compare' onClick={() => compareSkill(source.marketId, skill.slug)}>
-            {t('settings.skillsHub.compare')}
-          </Menu.Item>
-        ) : null}
-        {source.kind === 'market' &&
-        marketEntry &&
-        (marketEntry.syncState === 'localChanged' || marketEntry.syncState === 'diverged') ? (
-          <Menu.Item key='publish' onClick={() => setPublishSource(skill)}>
-            {t('settings.skillsHub.publish')}
-          </Menu.Item>
-        ) : null}
-        <Menu.Item key='copy' onClick={() => showCopy(skill)}>
-          <span className='flex items-center gap-8px'>
-            <Copy size={15} /> {t('settings.skillsHub.copy')}
-          </span>
-        </Menu.Item>
-        <Menu.Item key='reveal' onClick={() => void ipcBridge.shell.showItemInFolder.invoke(skill.path)}>
-          <span className='flex items-center gap-8px'>
-            <FolderOpen size={15} /> {t('conversation.history.openInExplorer')}
-          </span>
-        </Menu.Item>
-        <Menu.Item key='delete' onClick={() => confirmDelete(skill)}>
-          <span className='text-danger'>{t('common.delete')}</span>
-        </Menu.Item>
-      </Menu>
-    );
-
+  if (routeIdentity) {
     return (
-      <article
-        key={skill.id}
-        className={styles.card}
-        data-testid={`skill-card-${skill.slug}`}
-        onClick={() => openSkill(skill.slug)}
-      >
-        <div className='flex min-w-0 items-start gap-12px'>
-          <SkillAvatar name={skill.name} />
-          <div className='min-w-0 flex-1'>
-            <SkillIdentity name={skill.name} version={skill.version} categories={skill.categories} />
-            <p className={styles.description}>{skill.description}</p>
-          </div>
-          <Dropdown trigger='click' position='br' droplist={menu}>
-            <Button
-              type='text'
-              shape='circle'
-              size='mini'
-              icon={<More size={17} />}
-              aria-label={t('common.more')}
-              onClick={(event) => event.stopPropagation()}
-            />
+      <SettingsPageWrapper className={styles.page} contentClassName={styles.detailPageContent}>
+        <SkillCatalogDetailView
+          detail={detail}
+          loading={detailLoading}
+          failed={detailError != null}
+          busy={busy}
+          activeTab={detailTab}
+          selectedFilePath={selectedFilePath}
+          selectedFile={selectedFile}
+          selectedFileLoading={selectedFileLoading}
+          comparison={comparison}
+          comparisonLoading={comparisonLoading}
+          baseVersion={baseVersion}
+          targetVersion={targetVersion}
+          onBack={() => void navigate('/settings/skills')}
+          onTabChange={setDetailTab}
+          onVersionChange={(version) => {
+            setSelectedVersion(version);
+            setSelectedFilePath(undefined);
+          }}
+          onPreferenceChange={saveDetailPreference}
+          onCopy={() => {
+            setCopySlug(`${routeIdentity.slug}-copy`);
+            setCopyOpen(true);
+          }}
+          onPublish={() => {
+            setPublishSlug(routeIdentity.slug);
+            setPublishOpen(true);
+          }}
+          onExport={() => void exportCurrent()}
+          onDelete={() =>
+            Modal.confirm({
+              title: t('settings.skillsHub.deleteConfirmTitle'),
+              content: t('settings.skillsHub.deleteConfirmContent', { name: detail?.skill.name }),
+              okButtonProps: { status: 'danger' },
+              onOk: async () => {
+                const deleted = await run(
+                  'delete',
+                  () => ipcBridge.fs.deleteSkill.invoke(routeIdentity),
+                  t('settings.skillsHub.deleteSuccess')
+                );
+                if (deleted) void navigate('/settings/skills');
+              },
+            })
+          }
+          onOpenFile={setSelectedFilePath}
+          onSaveFile={(content) => {
+            if (!selectedFilePath) return;
+            void run(
+              'save',
+              () => ipcBridge.fs.saveSkillCatalogFile.invoke({ ...routeIdentity, path: selectedFilePath, content }),
+              t('settings.skillsHub.saveSuccess')
+            ).then(() => refreshFile());
+          }}
+          onCompareVersions={(base, target) => {
+            setBaseVersion(base);
+            setTargetVersion(target);
+          }}
+        />
+        <Modal
+          title={t('settings.skillsHub.copyTitle')}
+          visible={copyOpen}
+          onCancel={() => setCopyOpen(false)}
+          onOk={() => {
+            if (!detail) return;
+            void run(
+              'copy',
+              () =>
+                ipcBridge.fs.copySkillToMine.invoke({
+                  ...routeIdentity,
+                  version: detail.selectedVersion,
+                  targetSlug: copySlug.trim(),
+                }),
+              t('settings.skillsHub.copySuccess')
+            ).then((result) => {
+              if (!result) return;
+              setCopyOpen(false);
+              void navigate(skillRoute(result.identity));
+            });
+          }}
+        >
+          <p>{t('settings.skillsHub.copyDescription')}</p>
+          <Input value={copySlug} onChange={setCopySlug} placeholder={t('settings.skillsHub.copyPlaceholder')} />
+        </Modal>
+        <Modal
+          title={t('settings.skillsHub.publishTitle')}
+          visible={publishOpen}
+          onCancel={() => setPublishOpen(false)}
+          onOk={() => {
+            if (!detail) return;
+            void run(
+              'copy',
+              () =>
+                ipcBridge.fs.publishSkillToTjuaeHub.invoke({
+                  ...routeIdentity,
+                  version: detail.selectedVersion,
+                  targetSlug: publishSlug.trim(),
+                }),
+              t('settings.skillsHub.publishSuccess')
+            ).then((result) => {
+              if (!result) return;
+              setPublishOpen(false);
+            });
+          }}
+        >
+          <p>{t('settings.skillsHub.publishHint')}</p>
+          <Input value={publishSlug} onChange={setPublishSlug} placeholder={t('settings.skillsHub.slugPlaceholder')} />
+        </Modal>
+      </SettingsPageWrapper>
+    );
+  }
+
+  return (
+    <SettingsPageWrapper className={styles.page} contentClassName={styles.directoryPageContent}>
+      <section className={styles.catalogHeader}>
+        <div>
+          <h1>{t('settings.skillsHub.title')}</h1>
+          <p>{t('settings.skillsHub.catalogDescription')}</p>
+        </div>
+        <div className={styles.topActions}>
+          <Dropdown
+            trigger='click'
+            droplist={
+              <Menu onClickMenuItem={handleAddAction}>
+                <Menu.Item key='import'>{t('settings.skillsHub.importSkill')}</Menu.Item>
+                <Menu.Item key='manual'>{t('settings.skillsHub.addManually')}</Menu.Item>
+                <Menu.Item key='chat'>{t('settings.talkToButler.addViaChat')}</Menu.Item>
+              </Menu>
+            }
+          >
+            <Button type='primary' icon={<Plus />}>
+              {t('settings.skillsHub.addSkill')}
+            </Button>
           </Dropdown>
         </div>
-        <div className={styles.cardFooter} onClick={(event) => event.stopPropagation()}>
-          <span className='text-11px text-t-tertiary'>
-            {marketEntry
-              ? t(syncStateKey[marketEntry.syncState])
-              : source.kind === 'market'
-                ? t('settings.skillsHub.sourceMarket')
-                : t('settings.skillsHub.sourceLocal')}
-            {' · '}
-            {t(gitStatusKey[skill.gitStatus])}
-          </span>
-          <div className='flex items-center gap-14px'>
-            <Tooltip content={t('settings.skillsHub.autoInjectHint')}>
-              <span className='flex items-center gap-6px text-12px text-t-secondary'>
-                {t('settings.skillsHub.autoInject')}
-                <Switch
-                  size='small'
-                  checked={skill.preferences.autoInject}
-                  disabled={pending || !skill.preferences.enabled}
-                  onChange={(checked) => void updatePreferences(skill, { autoInject: checked })}
-                />
-              </span>
-            </Tooltip>
-            <span className='flex items-center gap-6px text-12px text-t-secondary'>
-              {t('common.enable')}
-              <Switch
-                size='small'
-                checked={skill.preferences.enabled}
-                loading={pending && busy?.action === 'preferences'}
-                disabled={pending}
-                onChange={(checked) =>
-                  void updatePreferences(skill, {
-                    enabled: checked,
-                    autoInject: checked ? skill.preferences.autoInject : false,
-                  })
-                }
-              />
-            </span>
-          </div>
-        </div>
-      </article>
-    );
-  });
-
-  const marketCards = filteredMarket.map((skill) => {
-    const pending = busy?.slug === skill.slug;
-    const local = installed.find((item) => item.id === skill.id);
-    const action = !skill.installed ? (
-      <Button
-        size='small'
-        type='primary'
-        loading={pending}
-        onClick={(event) => {
-          event.stopPropagation();
-          void runAction(
-            skill.slug,
-            'install',
-            () => ipcBridge.fs.installMarketSkill.invoke({ marketId: skill.market.id, slug: skill.slug }),
-            t('settings.skillsHub.installSuccess')
-          );
-        }}
-      >
-        {t('settings.skillsHub.install')}
-      </Button>
-    ) : skill.syncState === 'updateAvailable' ? (
-      <div className='flex items-center gap-8px'>
-        <Button
-          size='small'
-          type='text'
-          onClick={(event) => {
-            event.stopPropagation();
-            compareSkill(skill.market.id, skill.slug);
-          }}
-        >
-          {t('settings.skillsHub.compare')}
-        </Button>
-        <Button
-          size='small'
-          type='primary'
-          icon={<Upload size={14} />}
-          loading={pending}
-          onClick={(event) => {
-            event.stopPropagation();
-            void runAction(
-              skill.slug,
-              'update',
-              () => ipcBridge.fs.updateMarketSkill.invoke({ marketId: skill.market.id, slug: skill.slug }),
-              t('settings.skillsHub.updateSuccess')
-            );
-          }}
-        >
-          {t('settings.skillsHub.update')}
-        </Button>
+      </section>
+      <section className={styles.catalogToolbar}>
+        <Input
+          prefix={<Search />}
+          value={query}
+          onChange={setQuery}
+          allowClear
+          placeholder={t('settings.skillsHub.searchPlaceholder')}
+        />
+        <Select
+          value={source}
+          onChange={(value) => setSource(value as SourceFilter)}
+          options={[
+            { label: t('settings.skillsHub.allSources'), value: 'all' },
+            ...SKILL_SOURCES.map((item) => ({ label: t(sourceTranslationKey[item]), value: item })),
+          ]}
+        />
+        <Radio.Group
+          type='button'
+          value={status}
+          onChange={(value) => setStatus(value as StatusFilter)}
+          options={[
+            { label: t('settings.skillsHub.allStatuses'), value: 'all' },
+            { label: t('settings.skillsHub.enabledOnly'), value: 'enabled' },
+            { label: t('settings.skillsHub.autoInjectOnly'), value: 'autoInject' },
+          ]}
+        />
+      </section>
+      <div className={styles.directoryHeading}>
+        <strong>{isLoading ? <Spin dot /> : t('settings.skillsHub.skillCount', { count: page?.total ?? 0 })}</strong>
+        <span>{t('settings.skillsHub.autoInjectHint')}</span>
       </div>
-    ) : skill.syncState === 'localChanged' || skill.syncState === 'diverged' ? (
-      <Button
-        size='small'
-        type='outline'
-        onClick={(event) => {
-          event.stopPropagation();
-          compareSkill(skill.market.id, skill.slug);
-        }}
-      >
-        {t('settings.skillsHub.compare')}
-      </Button>
-    ) : (
-      <Button
-        size='small'
-        type='outline'
-        onClick={(event) => {
-          event.stopPropagation();
-          openSkill(skill.slug);
-        }}
-      >
-        {t('settings.skillsHub.open')}
-      </Button>
-    );
-
-    return (
-      <article
-        key={skill.id}
-        className={styles.card}
-        data-testid={`market-skill-card-${skill.slug}`}
-        onClick={() => local && openSkill(skill.slug)}
-      >
-        <div className='flex min-w-0 items-start gap-12px'>
-          <SkillAvatar name={skill.name} />
-          <div className='min-w-0 flex-1'>
-            <SkillIdentity name={skill.name} version={skill.version} categories={skill.categories} />
-            <p className={styles.description}>{skill.description}</p>
-          </div>
+      {error ? (
+        <div className={styles.centerState}>
+          <Empty description={t('settings.skillsHub.fetchError')} />
         </div>
-        <div className={styles.cardFooter}>
-          <span className='text-11px text-t-tertiary'>
-            {skill.installed
-              ? `${t(syncStateKey[skill.syncState])} · ${t('settings.skillsHub.installedVersion', {
-                  version: skill.installedVersion,
-                })}`
-              : t('settings.skillsHub.remoteMarket')}
-          </span>
-          {action}
-        </div>
-      </article>
-    );
-  });
-
-  const content = (
-    <div className='flex flex-col gap-18px' data-testid='skills-settings'>
-      <SettingsPageHeader
-        title={t('settings.skillsHub.title')}
-        description={t('settings.skillsHub.description')}
-        activeTab={activeView}
-        onTabChange={(key) => setActiveView(key as SkillView)}
-        tabs={[
-          { key: 'mine', label: t('settings.skillsHub.mySkills'), count: installed.length },
-          { key: 'market', label: t('settings.skillsHub.market'), count: market.length },
-        ]}
-        actions={
-          <>
-            <TjuaeSearchInput
-              value={query}
-              onChange={setQuery}
-              placeholder={t('settings.skillsHub.searchPlaceholder')}
-              className={isMobile ? 'w-160px' : 'w-260px'}
-            />
-            {activeView === 'market' ? (
-              <Select
-                value={activeMarket}
-                onChange={setActiveMarket}
-                size='small'
-                className='w-130px'
-                aria-label={t('settings.skillsHub.marketSource')}
-              >
-                {markets.length > 0 ? (
-                  markets.map((marketInfo) => (
-                    <Select.Option key={marketInfo.id} value={marketInfo.id}>
-                      {marketInfo.name}
-                    </Select.Option>
-                  ))
-                ) : (
-                  <Select.Option value='tjuae-hub'>TjuaeHub</Select.Option>
-                )}
-              </Select>
-            ) : null}
-            <Tooltip content={t('common.refresh')}>
-              <Button type='text' shape='circle' icon={<Refresh size={16} />} onClick={() => void refresh()} />
-            </Tooltip>
-            {activeView === 'mine' ? (
-              <Dropdown
-                trigger='click'
-                position='br'
-                droplist={
-                  <Menu>
-                    <Menu.Item key='new' onClick={() => setCreateMode('manual')}>
-                      {t('settings.skillsHub.addNew')}
-                    </Menu.Item>
-                    <Menu.Item key='butler' onClick={() => setCreateMode('butler')}>
-                      {t('settings.skillsHub.addWithButler')}
-                    </Menu.Item>
-                    <Menu.Item key='import' onClick={() => void importSkill()}>
-                      {t('settings.skillsHub.importFolder')}
-                    </Menu.Item>
-                    <Menu.Item key='clone' onClick={() => setCloneVisible(true)}>
-                      {t('settings.skillsHub.cloneGit')}
-                    </Menu.Item>
-                  </Menu>
-                }
-              >
-                <Button type='primary' size='small' icon={<Plus size={15} />}>
-                  {t('settings.skillsHub.addSkill')}
-                </Button>
-              </Dropdown>
-            ) : null}
-          </>
-        }
-      />
-
-      {(activeView === 'mine' ? installedError : marketError) ? (
-        <div className='rounded-12px border border-danger-3 bg-danger-1 px-16px py-12px text-13px text-danger'>
-          {t('settings.skillsHub.fetchError')}
-        </div>
-      ) : (activeView === 'mine' ? installedLoading : marketLoading) ? (
-        <div className='flex min-h-240px items-center justify-center'>
-          <Spin />
-        </div>
-      ) : (activeView === 'mine' ? installedCards : marketCards).length > 0 ? (
-        <div className={styles.grid}>{activeView === 'mine' ? installedCards : marketCards}</div>
       ) : (
-        <Empty
-          description={
-            activeView === 'mine' ? t('settings.skillsHub.noSkills') : t('settings.skillsHub.noSearchResults')
-          }
+        <SkillCatalogDirectory
+          page={page}
+          loading={isLoading}
+          busyIdentity={busyIdentity}
+          onOpen={(skill) => void navigate(skillRoute(skill.identity))}
+          onPreferenceChange={(skill, field, value) => void savePreferences(skill, field, value)}
         />
       )}
-
       <Modal
-        title={t('settings.skillsHub.copyTitle')}
-        visible={Boolean(copySource)}
-        onCancel={() => setCopySource(null)}
-        onOk={() => void confirmCopy()}
-        okButtonProps={{ disabled: !copySlug.trim(), loading: busy?.action === 'copy' }}
+        title={t('settings.skillsHub.addNew')}
+        visible={createOpen}
+        onCancel={() => setCreateOpen(false)}
+        onOk={confirmCreate}
       >
-        <p className='mt-0 text-13px text-t-secondary'>{t('settings.skillsHub.copyDescription')}</p>
-        <Input value={copySlug} onChange={setCopySlug} placeholder={t('settings.skillsHub.copyPlaceholder')} />
-      </Modal>
-
-      <Modal
-        title={t('settings.skillsHub.publishTitle')}
-        visible={Boolean(publishSource)}
-        onCancel={() => setPublishSource(null)}
-        onOk={() => void confirmPublish()}
-        okText={t('settings.skillsHub.publish')}
-        okButtonProps={{
-          disabled: !forkRepositoryUrl.trim() || !publishMessage.trim(),
-          loading: busy?.action === 'publish',
-        }}
-      >
-        <div className='flex flex-col gap-12px'>
-          <p className='m-0 text-13px text-t-secondary'>{t('settings.skillsHub.publishHint')}</p>
-          <Input
-            value={forkRepositoryUrl}
-            onChange={setForkRepositoryUrl}
-            placeholder={t('settings.skillsHub.forkUrlPlaceholder')}
-          />
-          <Input.TextArea
-            value={publishMessage}
-            onChange={setPublishMessage}
-            autoSize={{ minRows: 3, maxRows: 6 }}
-            placeholder={t('settings.skillsHub.publishMessagePlaceholder')}
-          />
-        </div>
-      </Modal>
-
-      <Modal
-        title={createMode === 'butler' ? t('settings.skillsHub.addWithButler') : t('settings.skillsHub.addNew')}
-        visible={createMode != null}
-        onCancel={() => setCreateMode(null)}
-        onOk={() => void confirmCreate()}
-        okButtonProps={{
-          disabled: !createSlug.trim() || !createName.trim() || !createDescription.trim(),
-          loading: busy?.action === 'create',
-        }}
-      >
-        <div className='flex flex-col gap-12px'>
-          {createMode === 'butler' ? (
-            <p className='m-0 text-13px text-t-secondary'>{t('settings.skillsHub.butlerCreateHint')}</p>
-          ) : null}
+        <div className={styles.modalFields}>
           <Input value={createSlug} onChange={setCreateSlug} placeholder={t('settings.skillsHub.slugPlaceholder')} />
           <Input value={createName} onChange={setCreateName} placeholder={t('settings.skillsHub.namePlaceholder')} />
           <Input.TextArea
             value={createDescription}
             onChange={setCreateDescription}
-            autoSize={{ minRows: 3, maxRows: 6 }}
             placeholder={t('settings.skillsHub.descriptionPlaceholder')}
           />
         </div>
       </Modal>
-
-      <Modal
-        title={t('settings.skillsHub.cloneGit')}
-        visible={cloneVisible}
-        onCancel={() => setCloneVisible(false)}
-        onOk={() => void confirmClone()}
-        okButtonProps={{ disabled: !cloneUrl.trim(), loading: busy?.action === 'clone' }}
-      >
-        <Input value={cloneUrl} onChange={setCloneUrl} placeholder={t('settings.skillsHub.gitUrlPlaceholder')} />
-      </Modal>
-    </div>
+    </SettingsPageWrapper>
   );
-
-  return withWrapper ? <SettingsPageWrapper>{content}</SettingsPageWrapper> : content;
 };
 
 export default SkillsHubSettings;

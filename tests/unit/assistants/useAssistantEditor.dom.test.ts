@@ -22,7 +22,7 @@ vi.mock('@/common', () => ({
     },
     fs: {
       readAssistantRule: { invoke: vi.fn() },
-      listAvailableSkills: { invoke: vi.fn() },
+      listSkillCatalog: { invoke: vi.fn() },
       writeAssistantRule: { invoke: vi.fn() },
       deleteAssistantRule: { invoke: vi.fn() },
     },
@@ -124,7 +124,7 @@ describe('useAssistantEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (ipcBridge.assistants.get.invoke as any).mockResolvedValue(mockAssistantDetail);
-    (ipcBridge.fs.listAvailableSkills.invoke as any).mockResolvedValue([]);
+    (ipcBridge.fs.listSkillCatalog.invoke as any).mockResolvedValue({ items: [], total: 0 });
     (ipcBridge.mcpService.listServers.invoke as any).mockResolvedValue([
       { id: 'mcp-a', name: 'Server A', enabled: true },
     ]);
@@ -519,6 +519,7 @@ describe('useAssistantEditor', () => {
         model: { mode: 'fixed', value: 'gemini-2.5-pro' },
         permission: { mode: 'fixed', value: 'default' },
         thought_level: { mode: 'fixed', value: 'high' },
+        skills: { mode: 'fixed', value: ['skill-two'] },
       },
     });
   });

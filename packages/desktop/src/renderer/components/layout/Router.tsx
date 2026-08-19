@@ -9,7 +9,6 @@ const AgentSettings = React.lazy(() => import('@renderer/pages/settings/AgentSet
 const AgentRepairPage = React.lazy(() => import('@renderer/pages/settings/AgentSettings/AgentRepairPage'));
 const AssistantSettings = React.lazy(() => import('@renderer/pages/settings/AssistantSettings'));
 const SkillsSettings = React.lazy(() => import('@renderer/pages/settings/SkillsSettings/SkillsHubSettings'));
-const SkillDetailPage = React.lazy(() => import('@renderer/pages/settings/SkillsSettings/SkillDetailPage'));
 const ToolsSettings = React.lazy(() => import('@renderer/pages/settings/ToolsSettings'));
 const AppearanceSettings = React.lazy(() => import('@renderer/pages/settings/AppearanceSettings'));
 const ModeSettings = React.lazy(() => import('@renderer/pages/settings/ModeSettings'));
@@ -69,7 +68,8 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
           {/* Skills and Tools are top-level settings entries. */}
           <Route path='/settings/skills' element={withRouteFallback(SkillsSettings)} />
-          <Route path='/settings/skills/detail/:skillName' element={withRouteFallback(SkillDetailPage)} />
+          <Route path='/settings/skills/:source' element={withRouteFallback(SkillsSettings)} />
+          <Route path='/settings/skills/:source/:namespace/:skillName' element={withRouteFallback(SkillsSettings)} />
           <Route path='/settings/tools' element={withRouteFallback(ToolsSettings)} />
           <Route path='/settings/appearance' element={withRouteFallback(AppearanceSettings)} />
           <Route path='/settings/display' element={<Navigate to='/settings/appearance' replace />} />

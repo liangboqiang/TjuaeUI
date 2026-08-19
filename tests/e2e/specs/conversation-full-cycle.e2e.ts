@@ -375,16 +375,17 @@ async function findCronJobByName(
 
 async function listAutoInjectBuiltinSkills(
   page: import('@playwright/test').Page
-): Promise<Array<{ name: string; relative_location?: string; is_auto_inject: boolean; source?: string }>> {
-  const skills = await httpGet<
-    Array<{ name: string; relative_location?: string; is_auto_inject: boolean; source?: string }>
-  >(page, '/api/skills');
-  return (skills ?? []).filter((skill) => skill.source === 'builtin' && skill.is_auto_inject);
+): Promise<Array<{ identity: { source: string; slug: string } }>> {
+  const catalog = await httpGet<{ items: Array<{ identity: { source: string; slug: string } }> }>(
+    page,
+    '/api/skills/catalog?enabled=true&autoInject=true'
+  );
+  return catalog.items;
 }
 
 async function expectCronBuiltinAutoSkill(page: import('@playwright/test').Page): Promise<void> {
   const skills = await listAutoInjectBuiltinSkills(page);
-  const hasCron = skills.some((skill) => skill.name === 'cron');
+  const hasCron = skills.some((skill) => skill.identity.slug === 'cron');
   expect(hasCron).toBeTruthy();
 }
 

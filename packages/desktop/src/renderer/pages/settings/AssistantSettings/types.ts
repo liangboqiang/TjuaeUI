@@ -1,13 +1,8 @@
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import type { IMcpServer } from '@/common/config/storage';
-import type { SkillWorkspace } from '@/common/types/platform/skill';
+import type { SkillCatalogItem } from '@/common/types/platform/skill';
 
-export type SkillInfo = SkillWorkspace;
-
-export type AutoInjectSkill = {
-  name: string;
-  description: string;
-};
+export type SkillInfo = SkillCatalogItem;
 
 export type AssistantListItem = Assistant;
 
@@ -94,9 +89,6 @@ export type AssistantEditorViewModel = {
     availableSkills: SkillInfo[];
     selectedSkills: string[];
     setSelectedSkills: (value: string[]) => void;
-    autoInjectSkills: AutoInjectSkill[];
-    excludedAutoInjectSkills: string[];
-    setExcludedAutoInjectSkills: (value: string[]) => void;
   };
   actions: {
     save: () => void;

@@ -18,11 +18,19 @@ import IdentitySection from './editor/IdentitySection';
 import PromptsSection from './editor/PromptsSection';
 import DefaultsSection from './editor/DefaultsSection';
 import RulesSection from './editor/RulesSection';
+import { skillIdentityKey } from '@/common/types/platform/skill';
+import { sourceTranslationKey } from '../SkillsSettings/skillCatalogPresentation';
 
 export type AssistantEditorSectionsProps = {
   editor: AssistantEditorViewModel;
   activeAssistant: AssistantListItem | null;
 };
+
+const getEditorSelectPopupContainer = (node: HTMLElement) =>
+  node.closest('[data-editor-popup-root]') ?? node.parentElement ?? document.body;
+
+const readonlySelectionSummary = (items: string[], emptyLabel: string) =>
+  items.length > 0 ? items.join('、') : emptyLabel;
 
 const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ editor, activeAssistant }) => {
   const { t, i18n } = useTranslation();
@@ -35,8 +43,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const [newPromptDraft, setNewPromptDraft] = useState('');
   const [editingPromptIndex, setEditingPromptIndex] = useState<number | null>(null);
   const [editingPromptDraft, setEditingPromptDraft] = useState('');
-  const [skillsPopupVisible, setSkillsPopupVisible] = useState(false);
-  const [mcpPopupVisible, setMcpPopupVisible] = useState(false);
 
   const { isCreating, profile, agent, prompts, defaults, rules, skills, actions } = editor;
   const editName = profile.name;
@@ -102,12 +108,7 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const availableSkills = skills.availableSkills;
   const selectedSkills = skills.selectedSkills;
   const setSelectedSkills = skills.setSelectedSkills;
-  const autoInjectSkills = skills.autoInjectSkills;
-  const excludedAutoInjectSkills = skills.excludedAutoInjectSkills;
-  const setExcludedAutoInjectSkills = skills.setExcludedAutoInjectSkills;
   const handleDuplicate = actions.duplicate;
-  const getEditorSelectPopupContainer = (node: HTMLElement) =>
-    node.closest('[data-editor-popup-root]') ?? node.parentElement ?? document.body;
 
   const isBuiltin = activeAssistant?.source === 'builtin';
   const isGenerated = activeAssistant?.source === 'generated';
@@ -163,8 +164,9 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const permissionOptions = useMemo<AgentModeOption[]>(
     () =>
       buildAgentRuntimeModeState(currentAgentRuntimeCatalog).options.map((option) => ({
-        ...option,
+        value: option.value,
         label: t(`agentMode.${option.value}`, { defaultValue: option.label }),
+        description: option.description,
       })),
     [currentAgentRuntimeCatalog, localeKey, t]
   );
@@ -183,7 +185,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   );
   const readOnlyLabel = t('common.readOnly', { defaultValue: 'Read only' });
   const rulesContainerHeight = rulesExpanded ? '440px' : promptViewMode === 'edit' ? '280px' : '240px';
-  const autoSkillNames = autoInjectSkills.map((skill) => skill.name);
   const autoDefaultOptionLabel = t('settings.assistantSelectAutoRememberLastUsed', {
     defaultValue: 'Remember last used automatically',
   });
@@ -216,33 +217,21 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   const editableSkillOptions = useMemo(() => {
     const optionMap = new Map<string, { value: string; label: string; disabled?: boolean }>();
 
-    availableSkills
-      .filter((skill) => skill.preferences.enabled && !skill.preferences.autoInject)
-      .forEach((skill) => {
-        optionMap.set(skill.slug, {
-          value: skill.slug,
-          label: skill.name,
-        });
+    availableSkills.forEach((skill) => {
+      const value = skillIdentityKey(skill.identity);
+      optionMap.set(value, {
+        value,
+        label: `${skill.name} · ${t(sourceTranslationKey[skill.identity.source])}`,
       });
+    });
 
     return Array.from(optionMap.values());
-  }, [availableSkills]);
+  }, [availableSkills, t]);
   const selectedSkillValues = useMemo(() => Array.from(new Set(selectedSkills)), [selectedSkills]);
-  const autoInjectSkillOptions = useMemo(
-    () => autoInjectSkills.map((skill) => ({ value: skill.name, label: skill.name })),
-    [autoInjectSkills]
-  );
-  const selectedAutoInjectValues = useMemo(
-    () => autoSkillNames.filter((skillName) => !excludedAutoInjectSkills.includes(skillName)),
-    [autoSkillNames, excludedAutoInjectSkills]
-  );
 
   const applyPromptItems = (items: string[]) => {
     setEditRecommendedPromptsText(items.join('\n'));
   };
-
-  const readonlySelectionSummary = (items: string[], emptyLabel: string) =>
-    items.length > 0 ? items.join('、') : emptyLabel;
 
   const handleBeginPromptEdit = (index: number) => {
     setEditingPromptIndex(index);
@@ -277,8 +266,6 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
   };
 
   const handleSkillSelectionChange = (values: string[]) => setSelectedSkills(values);
-  const handleAutoInjectSelectionChange = (values: string[]) =>
-    setExcludedAutoInjectSkills(autoSkillNames.filter((skillName) => !values.includes(skillName)));
 
   const renderAvatarPreview = () => {
     if (editAvatarImage) {
@@ -312,7 +299,7 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
               <span>
                 {t('settings.assistantBuiltinReadonlyTip', {
                   defaultValue:
-                    'This is a builtin assistant. You can change Main Agent, Default Model, and Default Permission. To customize other fields, ',
+                    'This is an official assistant. You can change its Agent, model, permission, and default skills. To customize its identity or instructions, ',
                 })}
               </span>
               <span
@@ -416,13 +403,10 @@ const AssistantEditorSections: React.FC<AssistantEditorSectionsProps> = ({ edito
         thoughtLevelOptions={thoughtLevelOptions}
         editableSkillOptions={editableSkillOptions}
         selectedSkillValues={selectedSkillValues}
-        autoInjectSkillOptions={autoInjectSkillOptions}
-        selectedAutoInjectValues={selectedAutoInjectValues}
         enabledMcpServers={availableMcpServers}
         selectedMcpIds={selectedMcpIds}
         setSelectedMcpIds={setSelectedMcpIds}
         handleSkillSelectionChange={handleSkillSelectionChange}
-        handleAutoInjectSelectionChange={handleAutoInjectSelectionChange}
         selectedItemsLabel={selectedItemsLabel}
         autoDefaultOptionLabel={autoDefaultOptionLabel}
         readonlySelectionSummary={readonlySelectionSummary}

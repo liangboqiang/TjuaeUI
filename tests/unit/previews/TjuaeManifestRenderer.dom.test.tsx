@@ -12,8 +12,9 @@ import TjuaeManifestRenderer, {
 } from '@/renderer/pages/conversation/Preview/components/renderers/TjuaeManifestRenderer';
 
 describe('TjuaeManifestRenderer', () => {
-  it('recognizes every .tjuae-xx.json manifest independent of its workspace', () => {
-    expect(isTjuaeManifestFileName('.tjuae-skill.json')).toBe(true);
+  it('recognizes the public skill manifest and every other Tjuae manifest independent of its workspace', () => {
+    expect(isTjuaeManifestFileName('_meta.json')).toBe(true);
+    expect(isTjuaeManifestFileName('.tjuae-skill.json')).toBe(false);
     expect(isTjuaeManifestFileName('.tjuae-assistant.json')).toBe(true);
     expect(isTjuaeManifestFileName('.tjuae-project.json')).toBe(true);
     expect(isTjuaeManifestFileName('skill.json')).toBe(false);
@@ -23,16 +24,19 @@ describe('TjuaeManifestRenderer', () => {
     const onContentChange = vi.fn();
     render(
       <TjuaeManifestRenderer
-        fileName='.tjuae-skill.json'
+        fileName='_meta.json'
         content={JSON.stringify({
           $schema: 'https://raw.githubusercontent.com/liangboqiang/TjuaeHub/main/schemas/tjuae-skill.v1.schema.json',
-          schemaVersion: 1,
+          format: 'agent-skill',
+          formatVersion: 1,
           id: 'demo',
           version: '1.0.0',
           categories: ['development'],
-          enabled: true,
-          autoInject: false,
-          source: { kind: 'local' },
+          tags: [],
+          compatibility: {},
+          requirements: [],
+          contentHash: 'sha256:demo',
+          extensions: {},
         })}
         onContentChange={onContentChange}
       />
@@ -40,7 +44,7 @@ describe('TjuaeManifestRenderer', () => {
 
     expect(screen.getByTestId('tjuae-manifest-preview')).toHaveTextContent('demo');
     expect(screen.queryByText('preview.tjuaeManifest.fields.schema')).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue('preview.tjuaeManifest.sourceKinds.local')).toHaveAttribute('readonly');
+    expect(screen.getByDisplayValue('agent-skill')).toHaveAttribute('readonly');
     const versionInput = screen.getByDisplayValue('1.0.0');
     fireEvent.change(versionInput, { target: { value: '1.1.0' } });
     expect(onContentChange).toHaveBeenCalledWith(expect.stringContaining('"version": "1.1.0"'));

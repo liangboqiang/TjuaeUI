@@ -157,7 +157,7 @@ export type TChatConversation =
           custom_agent_id?: string; // UUID for identifying specific custom agent
           preset_context?: string; // 智能助手的预设规则/提示词 / Preset context from smart assistant
           /** Skills snapshot for this conversation — authoritative list, written
-           * once at creation. Join with `GET /api/skills` for descriptions. */
+           * once at creation. Join with `GET /api/skills/catalog?enabled=true` for descriptions. */
           skills?: string[];
           /** MCP server id snapshot chosen when the conversation was created. */
           mcp_server_ids?: string[];
@@ -209,7 +209,7 @@ export type TChatConversation =
           sandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access'; // Codex sandbox permission mode
           preset_context?: string; // 智能助手的预设规则/提示词 / Preset context from smart assistant
           /** Skills snapshot for this conversation — authoritative list, written
-           * once at creation. Join with `GET /api/skills` for descriptions. */
+           * once at creation. Join with `GET /api/skills/catalog?enabled=true` for descriptions. */
           skills?: string[];
           /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
           preset_assistant_id?: string;
@@ -259,7 +259,7 @@ export type TChatConversation =
             switchedAt?: number;
           };
           /** Skills snapshot for this conversation — authoritative list, written
-           * once at creation. Join with `GET /api/skills` for descriptions. */
+           * once at creation. Join with `GET /api/skills/catalog?enabled=true` for descriptions. */
           skills?: string[];
           /** 预设助手 ID / Preset assistant ID */
           preset_assistant_id?: string;
@@ -308,7 +308,7 @@ export type TChatConversation =
           workspace?: string;
           custom_workspace?: boolean;
           /** Skills snapshot for this conversation — authoritative list, written
-           * once at creation. Join with `GET /api/skills` for descriptions. */
+           * once at creation. Join with `GET /api/skills/catalog?enabled=true` for descriptions. */
           skills?: string[];
           /** 预设助手 ID / Preset assistant ID */
           preset_assistant_id?: string;
@@ -335,7 +335,7 @@ export type TChatConversation =
           /** Remote session key for resume */
           sessionKey?: string;
           /** Skills snapshot for this conversation — authoritative list, written
-           * once at creation. Join with `GET /api/skills` for descriptions. */
+           * once at creation. Join with `GET /api/skills/catalog?enabled=true` for descriptions. */
           skills?: string[];
           /** Preset assistant ID */
           preset_assistant_id?: string;
@@ -360,7 +360,7 @@ export type TChatConversation =
         /** System rules injected at initialization */
         preset_rules?: string;
         /** Skills snapshot for this conversation — authoritative list, written
-         * once at creation. Join with `GET /api/skills` for descriptions. */
+         * once at creation. Join with `GET /api/skills/catalog?enabled=true` for descriptions. */
         skills?: string[];
         /** MCP server id snapshot chosen when the conversation was created. */
         mcp_server_ids?: string[];
