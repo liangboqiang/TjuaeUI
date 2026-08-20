@@ -1,4 +1,4 @@
-import { TjuaeSearchInput } from '@/renderer/components/base';
+import TjuaeSearchInput from '@/renderer/components/base/TjuaeSearchInput';
 import classNames from 'classnames';
 import React from 'react';
 
