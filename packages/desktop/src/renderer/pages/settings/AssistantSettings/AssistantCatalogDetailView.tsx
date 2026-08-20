@@ -63,9 +63,7 @@ type Props = {
   onCompareVersions: (base: string, target: string) => void;
   onCopyToMine: () => void;
   onExport: () => void;
-  onSaveSettings: (
-    settings: Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>
-  ) => void;
+  onSaveSettings: (settings: Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>) => void;
   onDelete: () => void;
   onPublish: () => void;
 };
@@ -219,12 +217,12 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
           </section>
           <section className={styles.preferenceBar}>
             <label>
-               <Switch
-                 checked={detail.item.preferences.enabled}
-                 loading={props.busy}
-                 disabled={!detail.item.canDisable}
-                 onChange={props.onEnabledChange}
-               />
+              <Switch
+                checked={detail.item.preferences.enabled}
+                loading={props.busy}
+                disabled={!detail.item.canDisable}
+                onChange={props.onEnabledChange}
+              />
               <span>
                 <strong>{t('settings.assistantCatalog.enabled')}</strong>
                 <small>{t('settings.assistantCatalog.enabledHint')}</small>

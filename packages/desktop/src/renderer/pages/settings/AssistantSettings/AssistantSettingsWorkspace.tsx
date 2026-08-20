@@ -17,10 +17,7 @@ import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
 import styles from './AssistantSettingsWorkspace.module.css';
 
-type SettingsDraft = Omit<
-  UpdateAssistantCatalogSettingsRequest,
-  'source' | 'namespace' | 'slug'
->;
+type SettingsDraft = Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>;
 
 type Props = {
   detail: AssistantCatalogDetail;
@@ -30,8 +27,7 @@ type Props = {
 
 type Section = 'identity' | 'prompts' | 'defaults' | 'rules';
 
-const skillValue = (identity: AssistantDefaultRef) =>
-  `${identity.source}:${identity.namespace}:${identity.slug}`;
+const skillValue = (identity: AssistantDefaultRef) => `${identity.source}:${identity.namespace}:${identity.slug}`;
 
 const parseSkillValue = (value: string): AssistantDefaultRef => {
   const [source = 'mine', namespace = '', ...slugParts] = value.split(':');
@@ -115,7 +111,9 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   const pickAvatar = async () => {
     const files = await ipcBridge.dialog.showOpen.invoke({
       properties: ['openFile'],
-      filters: [{ name: t('settings.assistantAvatarImageFiles'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'] }],
+      filters: [
+        { name: t('settings.assistantAvatarImageFiles'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'] },
+      ],
     });
     if (!files?.[0]) return;
     const dataUrl = await ipcBridge.fs.getImageBase64.invoke({ path: files[0] });
@@ -216,7 +214,12 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
             </label>
             <label className={styles.field}>
               <span>{t('settings.assistantDescription')}</span>
-              <Input.TextArea value={description} disabled={!editable} autoSize={{ minRows: 3, maxRows: 8 }} onChange={setDescription} />
+              <Input.TextArea
+                value={description}
+                disabled={!editable}
+                autoSize={{ minRows: 3, maxRows: 8 }}
+                onChange={setDescription}
+              />
             </label>
             <div className={styles.field}>
               <span>{t('settings.assistantNameAvatar')}</span>
@@ -244,18 +247,65 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
           <div className={styles.fields}>
             <label className={styles.field}>
               <span>{t('settings.assistantMainAgent')}</span>
-              <Select value={agent} options={agentOptions} allowCreate showSearch disabled={!editable} onChange={setAgent} />
+              <Select
+                value={agent}
+                options={agentOptions}
+                allowCreate
+                showSearch
+                disabled={!editable}
+                onChange={setAgent}
+              />
             </label>
-            {scalarField(t('settings.assistantDefaultModelLabel'), modelMode, setModelMode, model, setModel, modelOptions, t('settings.assistantSelectDefaultModel'))}
-            {scalarField(t('settings.assistantDefaultPermissionLabel'), permissionMode, setPermissionMode, permission, setPermission, [], t('settings.assistantSelectDefaultPermission'))}
-            {scalarField(t('settings.assistantDefaultThoughtLevelLabel'), thoughtMode, setThoughtMode, thought, setThought, [], t('settings.assistantSelectDefaultThoughtLevel'))}
+            {scalarField(
+              t('settings.assistantDefaultModelLabel'),
+              modelMode,
+              setModelMode,
+              model,
+              setModel,
+              modelOptions,
+              t('settings.assistantSelectDefaultModel')
+            )}
+            {scalarField(
+              t('settings.assistantDefaultPermissionLabel'),
+              permissionMode,
+              setPermissionMode,
+              permission,
+              setPermission,
+              [],
+              t('settings.assistantSelectDefaultPermission')
+            )}
+            {scalarField(
+              t('settings.assistantDefaultThoughtLevelLabel'),
+              thoughtMode,
+              setThoughtMode,
+              thought,
+              setThought,
+              [],
+              t('settings.assistantSelectDefaultThoughtLevel')
+            )}
             <label className={styles.field}>
               <span>{t('settings.assistantDefaultSkillsLabel')}</span>
-              <Select mode='multiple' value={skills} options={skillOptions} allowClear showSearch disabled={!editable} onChange={setSkills} />
+              <Select
+                mode='multiple'
+                value={skills}
+                options={skillOptions}
+                allowClear
+                showSearch
+                disabled={!editable}
+                onChange={setSkills}
+              />
             </label>
             <label className={styles.field}>
               <span>{t('settings.assistantDefaultMcpLabel')}</span>
-              <Select mode='multiple' value={mcps} options={mcpOptions} allowClear showSearch disabled={!editable} onChange={setMcps} />
+              <Select
+                mode='multiple'
+                value={mcps}
+                options={mcpOptions}
+                allowClear
+                showSearch
+                disabled={!editable}
+                onChange={setMcps}
+              />
             </label>
           </div>
         ) : null}
@@ -275,7 +325,9 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
             {rulesMode === 'edit' ? (
               <Input.TextArea className={styles.rulesEditor} value={rules} disabled={!editable} onChange={setRules} />
             ) : (
-              <article className={styles.rulesPreview}><MarkdownPreview content={rules} /></article>
+              <article className={styles.rulesPreview}>
+                <MarkdownPreview content={rules} />
+              </article>
             )}
           </>
         ) : null}

@@ -63,14 +63,14 @@ const AssistantActivationModal: React.FC<{
   const reviewing = Boolean(plan) && step >= actionableGroups.length;
   const groupValid = Boolean(
     currentGroup &&
-      unresolvedItems(currentGroup).every((item) => {
-        const choice = choices[item.requirementKey];
-        return (
-          choice?.action &&
-          item.allowedActions.includes(choice.action) &&
-          (!needsResource(choice.action) || Boolean(choice.resourceId))
-        );
-      })
+    unresolvedItems(currentGroup).every((item) => {
+      const choice = choices[item.requirementKey];
+      return (
+        choice?.action &&
+        item.allowedActions.includes(choice.action) &&
+        (!needsResource(choice.action) || Boolean(choice.resourceId))
+      );
+    })
   );
   const readyToCommit = Boolean(plan) && reviewing && confirmed.length === actionableGroups.length;
 
@@ -106,7 +106,7 @@ const AssistantActivationModal: React.FC<{
     <>
       <span className={styles.footerHint}>{t('settings.assistantCatalog.activation.footerHint')}</span>
       <Button disabled={submitting} onClick={() => setStep(Math.max(0, actionableGroups.length - 1))}>
-                {t('settings.assistantCatalog.activation.previous')}
+        {t('settings.assistantCatalog.activation.previous')}
       </Button>
       <Button
         data-testid='assistant-activation-commit'
@@ -123,7 +123,7 @@ const AssistantActivationModal: React.FC<{
       <span className={styles.footerHint}>{t('settings.assistantCatalog.activation.typeConfirmationHint')}</span>
       {step > 0 ? (
         <Button disabled={submitting} onClick={() => setStep((current) => current - 1)}>
-                {t('settings.assistantCatalog.activation.previous')}
+          {t('settings.assistantCatalog.activation.previous')}
         </Button>
       ) : (
         <Button disabled={submitting} onClick={onCancel}>
@@ -177,10 +177,7 @@ const AssistantActivationModal: React.FC<{
           {actionableGroups.length > 0 ? (
             <Steps className={styles.steps} size='small' current={Math.min(step, actionableGroups.length)}>
               {actionableGroups.map((group) => (
-                <Steps.Step
-                  key={group.kind}
-                  title={t(`settings.assistantCatalog.activation.groups.${group.kind}`)}
-                />
+                <Steps.Step key={group.kind} title={t(`settings.assistantCatalog.activation.groups.${group.kind}`)} />
               ))}
               <Steps.Step title={t('settings.assistantCatalog.activation.review')} />
             </Steps>

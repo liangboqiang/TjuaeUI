@@ -21,7 +21,7 @@ describe('EmojiPicker', () => {
             {
               id: 'dashboard-creator',
               label: 'Dashboard Creator',
-      src: '/api/assistant-assets/tjuae-hub/dashboard-creator/avatar',
+              src: '/api/assistant-assets/tjuae-hub/dashboard-creator/avatar',
             },
           ]}
           onChange={onChange}
@@ -40,7 +40,7 @@ describe('EmojiPicker', () => {
     fireEvent.click(screen.getByAltText('Dashboard Creator'));
 
     await waitFor(() => {
-    expect(onChange).toHaveBeenCalledWith('/api/assistant-assets/tjuae-hub/dashboard-creator/avatar');
+      expect(onChange).toHaveBeenCalledWith('/api/assistant-assets/tjuae-hub/dashboard-creator/avatar');
     });
   });
 });
