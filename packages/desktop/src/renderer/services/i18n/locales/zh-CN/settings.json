@@ -320,7 +320,7 @@
   "assistantModels": "可用模型",
   "assistantModelsHint": "选择此助手可以使用的模型。",
   "assistantSkills": "技能",
-  "assistantSkillsHint": "列出助手优先使用的工具或技能。",
+  "assistantSkillsHint": "拖拽调整技能顺序；该顺序就是技能进入助手上下文的先后顺序。",
   "assistantSkillsPlaceholder": "请输入 Markdown 格式的技能...",
   "promptEdit": "编辑",
   "promptPreview": "预览",

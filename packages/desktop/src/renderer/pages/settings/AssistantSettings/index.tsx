@@ -54,8 +54,8 @@ const AssistantSettings: React.FC = () => {
     routeSource && route.assistantName
       ? {
           source: routeSource,
-          namespace: decodeURIComponent(route.namespace === '~' ? '' : (route.namespace ?? '')),
-          slug: decodeURIComponent(route.assistantName),
+          namespace: route.namespace === '~' ? '' : (route.namespace ?? ''),
+          slug: route.assistantName,
         }
       : undefined;
 
@@ -82,6 +82,7 @@ const AssistantSettings: React.FC = () => {
   const [copySlug, setCopySlug] = useState('');
   const [publishVisible, setPublishVisible] = useState(false);
   const [publishMessage, setPublishMessage] = useState('');
+  const [catalogWarning, setCatalogWarning] = useState<string>();
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 250);
@@ -102,24 +103,36 @@ const AssistantSettings: React.FC = () => {
     error,
     isLoading,
     mutate: refreshCatalog,
-  } = useSWR<AssistantCatalogPage>(catalogKey, async () => {
-    const pages = await Promise.all(
-      listSources.map((catalogSource) =>
-        ipcBridge.assistants.listCatalog.invoke({
-          source: catalogSource,
-          query: debouncedQuery || undefined,
-          limit: 100,
-        })
-      )
-    );
-    const items = pages
-      .flatMap((item) => item.items)
-      .filter((item) =>
-        status === 'all' ? true : status === 'enabled' ? item.preferences.enabled : !item.preferences.enabled
-      )
-      .sort((left, right) => left.name.localeCompare(right.name));
-    return { items, total: items.length };
-  });
+  } = useSWR<AssistantCatalogPage>(
+    catalogKey,
+    async () => {
+      const results = await Promise.allSettled(
+        listSources.map((catalogSource) =>
+          ipcBridge.assistants.listCatalog.invoke({
+            source: catalogSource,
+            query: debouncedQuery || undefined,
+            limit: 100,
+          })
+        )
+      );
+      const pages = results
+        .filter((result): result is PromiseFulfilledResult<AssistantCatalogPage> => result.status === 'fulfilled')
+        .map((result) => result.value);
+      const failures = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
+      if (!pages.length && failures.length) throw failures[0].reason;
+      setCatalogWarning(
+        failures.length ? failures.map((failure) => describeError(failure.reason)).join('; ') : undefined
+      );
+      const items = pages
+        .flatMap((item) => item.items)
+        .filter((item) =>
+          status === 'all' ? true : status === 'enabled' ? item.preferences.enabled : !item.preferences.enabled
+        )
+        .sort((left, right) => left.name.localeCompare(right.name));
+      return { items, total: items.length };
+    },
+    { revalidateOnFocus: false, dedupingInterval: 30_000, shouldRetryOnError: false }
+  );
 
   const detailKey = routeIdentity ? ['assistant-catalog-detail', routeIdentity, selectedVersion] : null;
   const {
@@ -127,8 +140,10 @@ const AssistantSettings: React.FC = () => {
     error: detailError,
     isLoading: detailLoading,
     mutate: refreshDetail,
-  } = useSWR<AssistantCatalogDetail>(detailKey, () =>
-    ipcBridge.assistants.getCatalogDetail.invoke({ ...routeIdentity!, version: selectedVersion })
+  } = useSWR<AssistantCatalogDetail>(
+    detailKey,
+    () => ipcBridge.assistants.getCatalogDetail.invoke({ ...routeIdentity!, version: selectedVersion }),
+    { revalidateOnFocus: false, dedupingInterval: 30_000, shouldRetryOnError: false }
   );
 
   useEffect(() => {
@@ -319,7 +334,7 @@ const AssistantSettings: React.FC = () => {
       Message.success(t('settings.assistantCatalog.settingsSaved'));
     } catch (saveError) {
       console.error('[AssistantCatalog] save settings failed', saveError);
-      Message.error(t('settings.assistantCatalog.actionFailed'));
+      Message.error(describeError(saveError));
     } finally {
       setBusyIdentity(undefined);
     }
@@ -368,6 +383,7 @@ const AssistantSettings: React.FC = () => {
           detail={detail}
           loading={detailLoading}
           failed={Boolean(detailError)}
+          errorMessage={detailError ? describeError(detailError) : undefined}
           busy={Boolean(currentAssistant && busyIdentity === identityKey(currentAssistant.identity))}
           activeTab={detailTab}
           comparison={comparison}
@@ -375,6 +391,7 @@ const AssistantSettings: React.FC = () => {
           baseVersion={baseVersion}
           targetVersion={targetVersion}
           onBack={() => void navigate('/settings/assistants')}
+          onRetry={() => void refreshDetail()}
           onTabChange={setDetailTab}
           onVersionChange={setSelectedVersion}
           onEnabledChange={(enabled) => {
@@ -492,7 +509,9 @@ const AssistantSettings: React.FC = () => {
       </div>
       <div className={styles.directoryHeading}>
         <strong>{t('settings.assistantCatalog.loadedCount', { count: page?.total ?? 0 })}</strong>
-        {error ? <span>{t('settings.assistantCatalog.fetchFailed')}</span> : null}
+        {error || catalogWarning ? (
+          <span title={catalogWarning ?? describeError(error)}>{t('settings.assistantCatalog.fetchFailed')}</span>
+        ) : null}
       </div>
       <AssistantCatalogDirectory
         page={page}

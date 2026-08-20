@@ -50,6 +50,7 @@ type Props = {
   detail?: AssistantCatalogDetail;
   loading: boolean;
   failed: boolean;
+  errorMessage?: string;
   busy: boolean;
   activeTab: AssistantDetailTab;
   comparison?: AssistantVersionComparison;
@@ -57,6 +58,7 @@ type Props = {
   baseVersion?: string;
   targetVersion?: string;
   onBack: () => void;
+  onRetry: () => void;
   onTabChange: (tab: AssistantDetailTab) => void;
   onVersionChange: (version: string) => void;
   onEnabledChange: (enabled: boolean) => void;
@@ -186,7 +188,15 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
       ) : null}
       {props.failed ? (
         <div className={styles.centerState}>
-          <Empty description={t('settings.assistantCatalog.notFound')} />
+          <Empty
+            description={
+              <div className={styles.errorState}>
+                <strong>{t('settings.assistantCatalog.fetchFailed')}</strong>
+                {props.errorMessage ? <small>{props.errorMessage}</small> : null}
+                <Button onClick={props.onRetry}>{t('common.retry')}</Button>
+              </div>
+            }
+          />
         </div>
       ) : null}
       {detail ? (

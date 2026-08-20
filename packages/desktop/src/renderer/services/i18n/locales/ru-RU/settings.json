@@ -330,7 +330,7 @@
   "assistantModels": "Доступные модели",
   "assistantModelsHint": "Выберите модели, которые может использовать этот ассистент.",
   "assistantSkills": "Навыки",
-  "assistantSkillsHint": "Список предпочтительных инструментов/навыков для ассистента.",
+  "assistantSkillsHint": "Перетаскивайте навыки, чтобы задать порядок их добавления в контекст ассистента.",
   "assistantSkillsPlaceholder": "Введите навыки в формате Markdown...",
   "promptEdit": "Редактировать",
   "promptPreview": "Предпросмотр",

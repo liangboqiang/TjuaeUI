@@ -1,5 +1,6 @@
 import { resolveAgentLogo, useAgentLogos } from '@/renderer/utils/model/agentLogo';
 import { iconColors } from '@/renderer/styles/colors';
+import { assistantSettingsPath } from '@/renderer/pages/settings/AssistantSettings/assistantUtils';
 import { Robot } from '@icon-park/react';
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -65,7 +66,7 @@ const AgentBadge: React.FC<AgentBadgeProps> = ({
   const navigate = useNavigate();
   const handleClick = useCallback(() => {
     if (!assistantId) return;
-    navigate(`/settings/assistants?highlight=${encodeURIComponent(assistantId)}`);
+    navigate(assistantSettingsPath(assistantId));
   }, [assistantId, navigate]);
 
   return (

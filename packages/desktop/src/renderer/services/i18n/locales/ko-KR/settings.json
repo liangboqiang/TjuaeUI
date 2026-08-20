@@ -330,7 +330,7 @@
   "assistantModels": "사용 가능한 모델",
   "assistantModelsHint": "이 어시스턴트가 사용할 수 있는 모델을 선택하세요.",
   "assistantSkills": "스킬",
-  "assistantSkillsHint": "List preferred tools/skills for the assistant.",
+  "assistantSkillsHint": "스킬을 드래그하여 어시스턴트 컨텍스트에 들어가는 순서를 정하세요.",
   "assistantSkillsPlaceholder": "Markdown 형식으로 스킬 입력...",
   "promptEdit": "편집",
   "promptPreview": "미리보기",

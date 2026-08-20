@@ -2,6 +2,17 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
 import { isBackendRelativeAssetPath, isLikelyLocalFilePath } from '@/renderer/utils/model/assistantAvatar';
 import { resolveExtensionAssetUrl } from '@/renderer/utils/platform';
 
+export const assistantSettingsPath = (runtimeId: string): string => {
+  const [source, namespace, ...slugParts] = runtimeId.split(':');
+  const slug = slugParts.join(':');
+  if ((source === 'mine' || source === 'tjuae-hub') && slug) {
+    return `/settings/assistants/${encodeURIComponent(source)}/${encodeURIComponent(
+      namespace || '~'
+    )}/${encodeURIComponent(slug)}`;
+  }
+  return '/settings/assistants';
+};
+
 export const isEmoji = (value: string): boolean => {
   if (!value) return false;
   return /^(?:\p{Emoji_Presentation}|\p{Emoji}️)(?:‍(?:\p{Emoji_Presentation}|\p{Emoji}️))*$/u.test(value);

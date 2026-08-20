@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { Assistant } from '@/common/types/agent/assistantTypes';
 import {
+  assistantSettingsPath,
   isEmoji,
   reorderAssistantList,
   resolveAvatarImageSrc,
@@ -38,6 +39,12 @@ function assistant(id: string): Assistant {
 }
 
 describe('assistantUtils', () => {
+  it('maps stable assistant runtime identities to their canonical settings detail route', () => {
+    expect(assistantSettingsPath('mine::tjuaeui-assistant')).toBe('/settings/assistants/mine/~/tjuaeui-assistant');
+    expect(assistantSettingsPath('tjuae-hub:official:cowork')).toBe('/settings/assistants/tjuae-hub/official/cowork');
+    expect(assistantSettingsPath('legacy-assistant-id')).toBe('/settings/assistants');
+  });
+
   it('distinguishes emoji avatars from ordinary strings', () => {
     expect(isEmoji('😀')).toBe(true);
     expect(isEmoji('👨‍👩‍👦')).toBe(true);

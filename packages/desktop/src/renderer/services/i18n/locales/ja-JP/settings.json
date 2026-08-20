@@ -330,7 +330,7 @@
   "assistantModels": "利用可能なモデル",
   "assistantModelsHint": "このアシスタントが使用できるモデルを選択してください。",
   "assistantSkills": "スキル",
-  "assistantSkillsHint": "List preferred tools/skills for the assistant.",
+  "assistantSkillsHint": "スキルをドラッグして、アシスタントのコンテキストに入る順序を設定します。",
   "assistantSkillsPlaceholder": "Markdown 形式でスキルを入力...",
   "promptEdit": "編集",
   "promptPreview": "プレビュー",

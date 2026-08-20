@@ -4,14 +4,17 @@ import type {
   AssistantDefaultRef,
   UpdateAssistantCatalogSettingsRequest,
 } from '@/common/types/platform/assistantCatalog';
-import { skillIdentityKey } from '@/common/types/platform/skill';
+import { skillIdentityKey, type SkillCatalogItem } from '@/common/types/platform/skill';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderList';
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
 import MarkdownPreview from '@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer';
 import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
+import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button, Input, Radio, Select } from '@arco-design/web-react';
-import { Brain, IdCard, Lightning, ListView, Robot, UploadPicture } from '@icon-park/react';
+import { Brain, CloseSmall, Drag, IdCard, ListView, Robot, UploadPicture } from '@icon-park/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
@@ -34,6 +37,53 @@ const parseSkillValue = (value: string): AssistantDefaultRef => {
   return { source, namespace, slug: slugParts.join(':') };
 };
 
+const SortableSkillRow: React.FC<{
+  id: string;
+  skill?: SkillCatalogItem;
+  disabled: boolean;
+  onRemove: () => void;
+}> = ({ id, skill, disabled, onRemove }) => {
+  const { t } = useTranslation();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled,
+  });
+  const identity = parseSkillValue(id);
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${styles.skillRow} ${isDragging ? styles.skillRowDragging : ''}`}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+    >
+      <button
+        type='button'
+        className={styles.skillDragHandle}
+        aria-label={t('settings.assistantReorderHintShort')}
+        disabled={disabled}
+        {...attributes}
+        {...listeners}
+      >
+        <Drag theme='outline' size='16' />
+      </button>
+      <div className={styles.skillSummary}>
+        <div>
+          <strong>{skill?.name ?? identity.slug}</strong>
+          <span>{skill ? `v${skill.latestVersion}` : identity.source}</span>
+        </div>
+        <p>{skill?.description || t('settings.skillsHub.noDescription')}</p>
+      </div>
+      <Button
+        type='text'
+        shape='circle'
+        aria-label={t('common.remove')}
+        icon={<CloseSmall theme='outline' size='16' />}
+        disabled={disabled}
+        onClick={onRemove}
+      />
+    </div>
+  );
+};
+
 const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) => {
   const { t } = useTranslation();
   const [section, setSection] = useState<Section>('identity');
@@ -50,6 +100,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   const [thoughtMode, setThoughtMode] = useState('auto');
   const [thought, setThought] = useState<string>();
   const [skills, setSkills] = useState<string[]>([]);
+  const [skillToAdd, setSkillToAdd] = useState<string>();
   const [mcps, setMcps] = useState<string[]>([]);
   const [rules, setRules] = useState('');
   const [rulesMode, setRulesMode] = useState<'edit' | 'render'>('edit');
@@ -62,6 +113,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     ipcBridge.fs.listSkillCatalog.invoke({ limit: 200 })
   );
   const { data: mcpCatalog } = useSWR('assistant-settings-mcp-catalog', ensureBackendMcpCatalog);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
     setName(detail.manifest.name);
@@ -103,6 +155,14 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
       })),
     [skillPage]
   );
+  const skillById = useMemo(
+    () => new Map((skillPage?.items ?? []).map((item) => [skillIdentityKey(item.identity), item])),
+    [skillPage]
+  );
+  const availableSkillOptions = useMemo(
+    () => skillOptions.filter((option) => !skills.includes(option.value)),
+    [skillOptions, skills]
+  );
   const mcpOptions = useMemo(
     () => (mcpCatalog?.allServers ?? []).map((item) => ({ value: item.id, label: item.name })),
     [mcpCatalog]
@@ -140,6 +200,15 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
         .filter(Boolean),
       rules,
     });
+
+  const reorderSkills = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    setSkills((current) => {
+      const from = current.indexOf(String(active.id));
+      const to = current.indexOf(String(over.id));
+      return from < 0 || to < 0 ? current : arrayMove(current, from, to);
+    });
+  };
 
   const scalarField = (
     label: string,
@@ -285,15 +354,41 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
             )}
             <label className={styles.field}>
               <span>{t('settings.assistantDefaultSkillsLabel')}</span>
-              <Select
-                mode='multiple'
-                value={skills}
-                options={skillOptions}
-                allowClear
-                showSearch
-                disabled={!editable}
-                onChange={setSkills}
-              />
+              <div className={styles.skillField}>
+                <Select
+                  value={skillToAdd}
+                  options={availableSkillOptions}
+                  showSearch
+                  allowClear
+                  disabled={!editable || availableSkillOptions.length === 0}
+                  placeholder={t('settings.addSkills')}
+                  onChange={(value) => {
+                    if (!value) return;
+                    setSkills((current) => (current.includes(value) ? current : [...current, value]));
+                    setSkillToAdd(undefined);
+                  }}
+                />
+                <small>{t('settings.assistantSkillsHint')}</small>
+                {skills.length ? (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderSkills}>
+                    <SortableContext items={skills} strategy={verticalListSortingStrategy}>
+                      <div className={styles.skillList}>
+                        {skills.map((id) => (
+                          <SortableSkillRow
+                            key={id}
+                            id={id}
+                            skill={skillById.get(id)}
+                            disabled={!editable}
+                            onRemove={() => setSkills((current) => current.filter((item) => item !== id))}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  <div className={styles.skillEmpty}>{t('settings.assistantNoDefaultSkillsSelected')}</div>
+                )}
+              </div>
             </label>
             <label className={styles.field}>
               <span>{t('settings.assistantDefaultMcpLabel')}</span>

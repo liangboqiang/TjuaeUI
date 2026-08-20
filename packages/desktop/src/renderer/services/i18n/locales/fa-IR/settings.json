@@ -330,7 +330,7 @@
   "assistantModels": "مدل‌های موجود",
   "assistantModelsHint": "مشخص کنید این دستیار از کدام مدل‌ها استفاده کند.",
   "assistantSkills": "مهارت‌ها",
-  "assistantSkillsHint": "ابزارها/مهارت‌های ترجیحی دستیار را فهرست کنید.",
+  "assistantSkillsHint": "مهارت‌ها را بکشید تا ترتیب ورود آن‌ها به زمینهٔ دستیار تعیین شود.",
   "assistantSkillsPlaceholder": "مهارت‌ها را به‌صورت Markdown وارد کنید...",
   "promptEdit": "ویرایش",
   "promptPreview": "پیش‌نمایش",

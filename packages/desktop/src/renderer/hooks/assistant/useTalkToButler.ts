@@ -26,8 +26,8 @@ const findButler = (assistants: Assistant[]): Assistant | undefined => {
 /**
  * Shared entry point behind every "via chat" action: jump to the home page,
  * select the TjuaeUI Butler, and pre-fill the chat input with a ready-made
- * prompt (and optional attachments). The Butler is never enabled silently:
- * resource activation must be confirmed from its catalog detail page first.
+ * prompt (and optional attachments). The Butler is a local system assistant;
+ * when its runtime resources need attention, open that canonical local entry.
  *
  * Reuses the home page's `prefillPrompt` navigation contract (added with the
  * scheduled-tasks "create via chat" entry) and extends it with `prefillFiles`.
@@ -52,7 +52,7 @@ export const useTalkToButler = (): ((args: TalkToButlerArgs) => Promise<void>) =
               defaultValue: 'Please enable the TjuaeUI Butler and confirm its required resources first.',
             })
           );
-          globalNavigate('/settings/assistants/tjuae-hub/official/tjuaeui-assistant');
+          globalNavigate('/settings/assistants/mine/~/tjuaeui-assistant');
           return;
         }
       } catch (error) {

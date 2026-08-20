@@ -330,7 +330,7 @@
   "assistantModels": "Modèles disponibles",
   "assistantModelsHint": "Sélectionner les modèles que cet assistant peut utiliser.",
   "assistantSkills": "Compétences",
-  "assistantSkillsHint": "Lister les outils/compétences préférés pour l'assistant.",
+  "assistantSkillsHint": "Faites glisser les compétences pour définir leur ordre dans le contexte de l’assistant.",
   "assistantSkillsPlaceholder": "Entrer les compétences au format Markdown...",
   "promptEdit": "Modifier",
   "promptPreview": "Aperçu",

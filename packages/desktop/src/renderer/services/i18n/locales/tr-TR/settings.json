@@ -330,7 +330,7 @@
   "assistantModels": "Mevcut Modeller",
   "assistantModelsHint": "Bu asistanın hangi modelleri kullanabileceğini seçin.",
   "assistantSkills": "Yetenekler",
-  "assistantSkillsHint": "List preferred tools/skills for the assistant.",
+  "assistantSkillsHint": "Becerileri sürükleyerek asistan bağlamındaki sıralarını belirleyin.",
   "assistantSkillsPlaceholder": "Yetenekleri Markdown formatında girin...",
   "promptEdit": "Düzenle",
   "promptPreview": "Önizleme",

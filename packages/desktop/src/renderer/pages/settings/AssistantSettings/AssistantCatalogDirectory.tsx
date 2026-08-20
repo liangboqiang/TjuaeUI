@@ -19,8 +19,15 @@ export const AssistantGlyph: React.FC<{
 
   useEffect(() => setFailed(false), [imageSource]);
 
-  return imageSource && !failed ? (
-    <img className={className} src={imageSource} alt='' onError={() => setFailed(true)} />
+  return large && imageSource && !failed ? (
+    <img
+      className={className}
+      src={imageSource}
+      alt=''
+      loading='lazy'
+      decoding='async'
+      onError={() => setFailed(true)}
+    />
   ) : (
     <span className={className} aria-hidden='true'>
       {avatar && !imageSource ? avatar : content}

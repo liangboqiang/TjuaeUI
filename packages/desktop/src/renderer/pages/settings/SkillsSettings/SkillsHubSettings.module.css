@@ -215,6 +215,19 @@
   justify-content: center;
 }
 
+.errorState {
+  display: grid;
+  max-width: 520px;
+  justify-items: center;
+  gap: 10px;
+}
+
+.errorState small {
+  color: var(--color-text-3);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .detailMain {
   min-width: 0;
   padding-bottom: 48px;
