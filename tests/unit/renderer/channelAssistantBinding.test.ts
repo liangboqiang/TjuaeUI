@@ -7,10 +7,11 @@ import {
 } from '@/renderer/components/settings/SettingsModal/contents/channels/assistantBinding';
 import { describe, expect, it } from 'vitest';
 
-function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name' | 'preset_agent_type'>): Assistant {
+function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'> & { runtimeKey: string }): Assistant {
+  const isTjuaeCli = overrides.runtimeKey === 'tjuaecli';
   return {
     id: overrides.id,
-    source: overrides.source ?? 'user',
+    source: overrides.source ?? 'mine',
     name: overrides.name,
     name_i18n: {},
     description: overrides.description,
@@ -18,10 +19,12 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
     avatar: overrides.avatar,
     enabled: overrides.enabled ?? true,
     sort_order: overrides.sort_order ?? 1000,
-    preset_agent_type: overrides.preset_agent_type,
+    agent_id: `agent-${overrides.runtimeKey}`,
+    agent: isTjuaeCli
+      ? { type: 'tjuaecli', source: 'internal' }
+      : { type: 'acp', source: 'builtin', acp_backend: overrides.runtimeKey },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
+    context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
@@ -34,21 +37,21 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
 
 describe('channel assistant binding helpers', () => {
   const assistants = [
-    assistant({ id: 'bare-tjuaecli', name: 'Tjuae CLI', source: 'generated', preset_agent_type: 'tjuaecli' }),
-    assistant({ id: 'bare-claude', name: 'Claude', source: 'generated', preset_agent_type: 'claude' }),
-    assistant({ id: 'user-writer', name: 'Writer', source: 'user', preset_agent_type: 'claude' }),
+    assistant({ id: 'tjuaeui-butler', name: 'TjuaeUI 管家', source: 'tjuae-hub', runtimeKey: 'tjuaecli' }),
+    assistant({ id: 'hub-claude', name: 'Claude', source: 'tjuae-hub', runtimeKey: 'claude' }),
+    assistant({ id: 'mine-writer', name: 'Writer', source: 'mine', runtimeKey: 'claude' }),
   ];
 
-  it('prefers the generated tjuaecli assistant as the default selection', () => {
-    expect(getDefaultChannelAssistant(assistants)?.id).toBe('bare-tjuaecli');
+  it('prefers the activated TjuaeUI butler as the default selection', () => {
+    expect(getDefaultChannelAssistant(assistants)?.id).toBe('tjuaeui-butler');
   });
 
   it('resolves explicit assistant ids from new channel bindings', () => {
-    expect(resolveChannelAssistantId({ assistant_id: 'user-writer' }, assistants)).toBe('user-writer');
+    expect(resolveChannelAssistantId({ assistant_id: 'mine-writer' }, assistants)).toBe('mine-writer');
   });
 
   it('falls back to the default assistant only when no binding was saved', () => {
-    expect(resolveChannelAssistantId(undefined, assistants)).toBe('bare-tjuaecli');
+    expect(resolveChannelAssistantId(undefined, assistants)).toBe('tjuaeui-butler');
   });
 
   it('marks unresolved saved bindings instead of silently selecting a default assistant', () => {
@@ -75,8 +78,6 @@ describe('channel assistant binding helpers', () => {
   });
 
   it('serializes only assistant identity for new channel bindings', () => {
-    expect(buildChannelAssistantBinding(assistants[1])).toEqual({
-      assistant_id: 'bare-claude',
-    });
+    expect(buildChannelAssistantBinding(assistants[1])).toEqual({ assistant_id: 'hub-claude' });
   });
 });

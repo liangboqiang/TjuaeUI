@@ -10,7 +10,9 @@ import { resolveAvatarImageSrc } from '@/renderer/pages/settings/AssistantSettin
 describe('assistantAvatarUtils', () => {
   describe('resolveAvatarImageSrc', () => {
     it('returns backend image paths as-is', () => {
-      expect(resolveAvatarImageSrc('/api/assistants/custom-1/avatar')).toBe('/api/assistants/custom-1/avatar');
+      expect(resolveAvatarImageSrc('/api/assistant-assets/mine/custom-1/avatar')).toBe(
+        '/api/assistant-assets/mine/custom-1/avatar'
+      );
       expect(resolveAvatarImageSrc('/assets/avatar.png')).toBe('/assets/avatar.png');
     });
 

@@ -3,9 +3,9 @@ import { resolveAssistantAvatar } from '@/renderer/utils/model/assistantAvatar';
 
 describe('resolveAssistantAvatar', () => {
   it('treats assistant avatar api routes as image sources', () => {
-    expect(resolveAssistantAvatar('/api/assistants/custom-1/avatar')).toEqual({
+    expect(resolveAssistantAvatar('/api/assistant-assets/mine/custom-1/avatar')).toEqual({
       kind: 'image',
-      value: '/api/assistants/custom-1/avatar',
+      value: '/api/assistant-assets/mine/custom-1/avatar',
     });
   });
 

@@ -52,10 +52,8 @@ const createDeps = (): GuidSendDeps => ({
   selectedAcpModel: 'claude-opus',
   currentAcpCachedModelInfo: null,
   current_model: undefined,
-  guidDisabledBuiltinSkills: undefined,
   guidEnabledSkills: undefined,
   assistantDefaultSkillIds: undefined,
-  assistantDefaultDisabledBuiltinSkillIds: undefined,
   availableMcpServers: [{ id: 'mcp-user', name: 'User MCP', enabled: true, builtin: false } as IMcpServer],
   selectedMcpServerIds: ['mcp-user'],
   assistantDefaultMcpIds: undefined,
@@ -104,15 +102,13 @@ describe('useGuidSend', () => {
     expect(payload.extra.current_model_id).toBeUndefined();
     expect(payload.extra.preset_assistant_id).toBeUndefined();
     expect(swrMutateMock).toHaveBeenCalledWith('guid.assistant.detail.assistant-1.zh-CN');
-    expect(swrMutateMock).toHaveBeenCalledWith('assistants.list');
+    expect(swrMutateMock).toHaveBeenCalledWith('assistants.listSelectable');
   });
 
   it('falls back to assistant default skill and MCP ids for preset conversations before local Guid overrides exist', async () => {
     const deps = createDeps();
     deps.guidEnabledSkills = undefined;
-    deps.guidDisabledBuiltinSkills = undefined;
     deps.assistantDefaultSkillIds = ['assistant-skill'];
-    deps.assistantDefaultDisabledBuiltinSkillIds = ['builtin-skill'];
     deps.selectedMcpServerIds = undefined;
     deps.assistantDefaultMcpIds = ['mcp-user'];
 
@@ -124,7 +120,6 @@ describe('useGuidSend', () => {
 
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['assistant-skill']);
-    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['builtin-skill']);
     expect(payload.assistant?.conversation_overrides?.mcp_ids).toEqual(['mcp-user']);
     expect(payload.extra.selected_mcp_server_ids).toEqual(['mcp-user']);
   });
@@ -166,7 +161,6 @@ describe('useGuidSend', () => {
   it('forwards local skill overrides through assistant conversation overrides for ACP assistants', async () => {
     const deps = createDeps();
     deps.guidEnabledSkills = ['pdf-reader'];
-    deps.guidDisabledBuiltinSkills = ['todo-tracker'];
 
     const { result } = renderHook(() => useGuidSend(deps));
 
@@ -177,16 +171,15 @@ describe('useGuidSend', () => {
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.assistant?.id).toBe('assistant-1');
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['pdf-reader']);
-    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['todo-tracker']);
+    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toBeUndefined();
   });
 
-  it('forwards local skill overrides for generated Tjuae CLI assistants through assistant conversation overrides', async () => {
+  it('forwards local skill overrides for activated TjuaeCLI assistants through assistant conversation overrides', async () => {
     const deps = createDeps();
-    deps.selectedAssistantId = 'bare:tjuaecli';
+    deps.selectedAssistantId = 'tjuae-hub:tjuae:tjuaeui-assistant';
     deps.selectedAssistantBackend = 'tjuaecli';
     deps.current_model = { provider_id: 'openai', model: 'gemini-2.5-pro', use_model: 'gemini-2.5-pro' } as never;
     deps.guidEnabledSkills = ['pdf-reader'];
-    deps.guidDisabledBuiltinSkills = ['todo-tracker'];
 
     const { result } = renderHook(() => useGuidSend(deps));
 
@@ -197,15 +190,15 @@ describe('useGuidSend', () => {
     const payload = createConversationInvokeMock.mock.calls[0][0];
     expect(payload.type).toBeUndefined();
     expect(payload.model).toBe(deps.current_model);
-    expect(payload.assistant?.id).toBe('bare:tjuaecli');
+    expect(payload.assistant?.id).toBe('tjuae-hub:tjuae:tjuaeui-assistant');
     expect(payload.assistant?.conversation_overrides?.skill_ids).toEqual(['pdf-reader']);
-    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toEqual(['todo-tracker']);
+    expect(payload.assistant?.conversation_overrides?.disabled_builtin_skill_ids).toBeUndefined();
     expect(payload.extra.session_mode).toBeUndefined();
   });
 
-  it('does not write legacy preset_assistant_id for generated Tjuae CLI assistant conversations', async () => {
+  it('does not write a duplicate legacy identity for activated TjuaeCLI assistant conversations', async () => {
     const deps = createDeps();
-    deps.selectedAssistantId = 'bare:tjuaecli';
+    deps.selectedAssistantId = 'tjuae-hub:tjuae:tjuaeui-assistant';
     deps.selectedAssistantBackend = 'tjuaecli';
     deps.current_model = { provider_id: 'openai', model: 'gemini-2.5-pro', use_model: 'gemini-2.5-pro' } as never;
 
@@ -216,13 +209,13 @@ describe('useGuidSend', () => {
     });
 
     const payload = createConversationInvokeMock.mock.calls[0][0];
-    expect(payload.assistant?.id).toBe('bare:tjuaecli');
+    expect(payload.assistant?.id).toBe('tjuae-hub:tjuae:tjuaeui-assistant');
     expect(payload.extra.preset_assistant_id).toBeUndefined();
   });
 
-  it('does not write legacy preset_assistant_id for generated ACP assistant conversations', async () => {
+  it('does not write a duplicate legacy identity for activated ACP assistant conversations', async () => {
     const deps = createDeps();
-    deps.selectedAssistantId = 'bare:claude';
+    deps.selectedAssistantId = 'mine:tjuae:claude';
     deps.selectedAssistantBackend = 'claude';
     deps.current_model = { provider_id: 'anthropic', model: 'claude-sonnet', use_model: 'claude-sonnet' } as never;
 
@@ -233,7 +226,7 @@ describe('useGuidSend', () => {
     });
 
     const payload = createConversationInvokeMock.mock.calls[0][0];
-    expect(payload.assistant?.id).toBe('bare:claude');
+    expect(payload.assistant?.id).toBe('mine:tjuae:claude');
     expect(payload.type).toBeUndefined();
     expect('model' in payload).toBe(false);
     expect(payload.extra.preset_assistant_id).toBeUndefined();

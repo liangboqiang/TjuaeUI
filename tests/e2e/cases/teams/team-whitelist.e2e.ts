@@ -7,6 +7,8 @@
 import { test, expect } from '../../fixtures';
 import { httpDelete, httpGet, httpPost, navigateTo } from '../../helpers';
 import type { Assistant } from '@/common/types/agent/assistantTypes';
+import { toAssistantSelectionItem } from '@/common/types/agent/assistantTypes';
+import type { AssistantRuntimeOption } from '@/common/types/platform/assistantCatalog';
 
 type AgentMetadata = {
   id: string;
@@ -17,20 +19,24 @@ async function waitForAssistant(page: import('@playwright/test').Page, assistant
   await expect
     .poll(
       async () => {
-        const assistants = await httpGet<Assistant[]>(page, '/api/assistants');
+        const assistants = (await httpGet<AssistantRuntimeOption[]>(page, '/api/assistant-runtime/options')).map(
+          toAssistantSelectionItem
+        );
         return assistants.some((assistant) => assistant.id === assistantId);
       },
       {
         timeout: 15_000,
-        message: `Waiting for generated assistant ${assistantId}`,
+        message: `Waiting for activated assistant ${assistantId}`,
       }
     )
     .toBe(true);
 
-  const assistants = await httpGet<Assistant[]>(page, '/api/assistants');
+  const assistants = (await httpGet<AssistantRuntimeOption[]>(page, '/api/assistant-runtime/options')).map(
+    toAssistantSelectionItem
+  );
   const found = assistants.find((assistant) => assistant.id === assistantId);
   if (!found) {
-    throw new Error(`Generated assistant ${assistantId} disappeared after materialization`);
+    throw new Error(`Activated assistant ${assistantId} disappeared from the runtime catalog`);
   }
   return found;
 }
@@ -76,7 +82,9 @@ test.describe('Team Assistant Leader Options', () => {
     await page.screenshot({ path: 'tests/e2e/results/team-assistant-options-01-list.png' });
 
     const totalCount = await allOptions.count();
-    const assistants = await httpGet<Assistant[]>(page, '/api/assistants');
+    const assistants = (await httpGet<AssistantRuntimeOption[]>(page, '/api/assistant-runtime/options')).map(
+      toAssistantSelectionItem
+    );
 
     if (totalCount === 0) {
       await expect(emptyState.or(noSearchResults).first()).toBeVisible();

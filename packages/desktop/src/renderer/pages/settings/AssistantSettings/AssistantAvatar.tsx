@@ -1,14 +1,14 @@
 /**
  * AssistantAvatar — Renders an assistant's avatar with emoji, image, or fallback icon.
  */
-import type { AssistantListItem } from './types';
+import type { Assistant } from '@/common/types/agent/assistantTypes';
 import { Avatar } from '@arco-design/web-react';
 import { Robot } from '@icon-park/react';
 import React from 'react';
 import { isEmoji, resolveAvatarImageSrc } from './assistantUtils';
 
 type AssistantAvatarProps = {
-  assistant: AssistantListItem;
+  assistant: Assistant;
   imageFit?: 'contain' | 'cover';
   shape?: 'circle' | 'square';
   size?: number;

@@ -4,7 +4,6 @@ import { globalNavigate } from '@/renderer/utils/navigation';
 import { Message } from '@arco-design/web-react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { mutate as swrMutate } from 'swr';
 
 /** Backend manifest id of the built-in TjuaeUI Butler assistant. */
 const BUTLER_ASSISTANT_ID = 'tjuaeui-assistant';
@@ -21,17 +20,14 @@ export type TalkToButlerArgs = {
  * prefix the frontend sometimes carries on built-in ids.
  */
 const findButler = (assistants: Assistant[]): Assistant | undefined => {
-  const candidates = new Set([BUTLER_ASSISTANT_ID, `builtin-${BUTLER_ASSISTANT_ID}`]);
-  return assistants.find(
-    (assistant) => candidates.has(assistant.id) || assistant.id.replace(/^builtin-/, '') === BUTLER_ASSISTANT_ID
-  );
+  return assistants.find((assistant) => assistant.id.endsWith(`:${BUTLER_ASSISTANT_ID}`));
 };
 
 /**
  * Shared entry point behind every "via chat" action: jump to the home page,
  * select the TjuaeUI Butler, and pre-fill the chat input with a ready-made
- * prompt (and optional attachments). Auto-enables the Butler if the user has
- * disabled it, since clicking the action is an explicit intent to use it.
+ * prompt (and optional attachments). The Butler is never enabled silently:
+ * resource activation must be confirmed from its catalog detail page first.
  *
  * Reuses the home page's `prefillPrompt` navigation contract (added with the
  * scheduled-tasks "create via chat" entry) and extends it with `prefillFiles`.
@@ -46,22 +42,23 @@ export const useTalkToButler = (): ((args: TalkToButlerArgs) => Promise<void>) =
       let selectedAssistantId: string | undefined;
 
       try {
-        const assistants = await ipcBridge.assistants.list.invoke();
+        const assistants = await ipcBridge.assistants.listSelectable.invoke();
         const butler = findButler(assistants);
         if (butler) {
           selectedAssistantId = butler.id;
-          if (butler.enabled === false) {
-            await ipcBridge.assistants.setState.invoke({ id: butler.id, enabled: true });
-            await swrMutate('assistants.list');
-            Message.success(
-              t('settings.talkToButler.enabledToast', { defaultValue: 'Enabled the TjuaeUI Butler for you' })
-            );
-          }
+        } else {
+          Message.warning(
+            t('settings.talkToButler.activationRequired', {
+              defaultValue: 'Please enable the TjuaeUI Butler and confirm its required resources first.',
+            })
+          );
+          globalNavigate('/settings/assistants/tjuae-hub/official/tjuaeui-assistant');
+          return;
         }
       } catch (error) {
-        // Non-fatal: fall through to the home page with the prompt pre-filled
-        // but no assistant pinned, rather than blocking the user.
-        console.error('[talkToButler] failed to resolve/enable butler:', error);
+        console.error('[talkToButler] failed to resolve butler:', error);
+        Message.error(t('settings.talkToButler.resolveFailed', { defaultValue: 'Unable to load the TjuaeUI Butler.' }));
+        return;
       }
 
       globalNavigate('/guid', {

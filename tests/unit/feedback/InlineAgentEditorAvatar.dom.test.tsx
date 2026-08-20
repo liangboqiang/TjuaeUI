@@ -108,7 +108,7 @@ vi.mock('@/common/adapter/ipcBridge', () => ({
 // useAssistantList: return one builtin assistant with an image avatar and one
 // with an emoji avatar (should be filtered out of the gallery).
 const assistantListMock = vi.fn();
-vi.mock('@/renderer/hooks/assistant', () => ({
+vi.mock('@/renderer/hooks/assistant/useAssistantList', () => ({
   useAssistantList: (...args: unknown[]) => assistantListMock(...args),
 }));
 
@@ -117,14 +117,14 @@ import InlineAgentEditor from '@/renderer/pages/settings/AgentSettings/InlineAge
 const BUILTIN_IMAGE_ASSISTANT = {
   id: 'pdf-to-ppt',
   name: 'PDF to PPT',
-  source: 'builtin',
-  avatar: '/api/assistants/pdf-to-ppt/avatar',
+  source: 'tjuae-hub',
+  avatar: '/api/assistant-assets/tjuae-hub/pdf-to-ppt/avatar',
   name_i18n: { 'en-US': 'PDF to PPT' },
 };
 const BUILTIN_EMOJI_ASSISTANT = {
   id: 'word-creator',
   name: 'Word Creator',
-  source: 'builtin',
+  source: 'tjuae-hub',
   avatar: '📝',
   name_i18n: { 'en-US': 'Word Creator' },
 };
@@ -169,7 +169,11 @@ describe('InlineAgentEditor — image avatar', () => {
   it('derives built-in gallery options only from image avatars', () => {
     renderEditor();
     expect(lastEmojiPickerProps.builtinAvatars).toEqual([
-      { id: 'pdf-to-ppt', label: 'PDF to PPT', src: '/api/assistants/pdf-to-ppt/avatar' },
+      {
+        id: 'pdf-to-ppt',
+        label: 'PDF to PPT',
+        src: '/api/assistant-assets/tjuae-hub/pdf-to-ppt/avatar',
+      },
     ]);
   });
 

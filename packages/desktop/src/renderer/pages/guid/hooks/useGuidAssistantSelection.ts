@@ -97,10 +97,7 @@ function persistGuidAssistantSelectionKey(assistantId: string): void {
 
 export function pickDefaultAssistantSelectionKey(assistants: Assistant[]): string | null {
   const enabledAssistants = assistants.filter((assistant) => assistant.enabled !== false);
-  const preferred =
-    enabledAssistants.find((assistant) => assistant.source === 'generated' && isTjuaeCliAssistant(assistant)) ??
-    enabledAssistants.find((assistant) => isTjuaeCliAssistant(assistant)) ??
-    enabledAssistants[0];
+  const preferred = enabledAssistants.find((assistant) => isTjuaeCliAssistant(assistant)) ?? enabledAssistants[0];
   return preferred?.id ?? null;
 }
 

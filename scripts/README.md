@@ -10,7 +10,7 @@
 | `rebuildNativeModules.js`              | 统一处理原生模块重建与二进制校验                           |
 | `afterPack.js`                         | 打包后校验与平台专用原生模块处理                           |
 | `prepareTjuaeCore.js`                  | 按版本和目标平台准备 TjuaeCore 可执行文件                  |
-| `prepareHubResources.js`               | 准备 TjuaeHub 索引与扩展包，供离线回退                     |
+| `prepareHubResources.js`               | 准备 TjuaeHub 技能索引，供只读后备                         |
 | `build-mcp-servers.js`                 | 将内置 MCP server 打成可由外部 Node.js 运行的自包含 bundle |
 | `webui.ts`                             | 启动 WebUI 开发或生产服务                                  |
 | `resetpass.ts`                         | 重置 WebUI 用户密码                                        |
@@ -116,13 +116,13 @@ node scripts/build-with-builder.js x64 --win --x64 --force
 
 ## TjuaeHub 资源
 
-`prepareHubResources.js` 将 `index.json` 与扩展 zip 放入 `resources/hub/`。
+`prepareHubResources.js` 将固定提交下的 `dist/skills.json` 放入 `resources/hub/skills.json`。
 
 - 根目录 `package.json` 的 `tjuaeHubRef`：固定的 40 位分发提交哈希
 - `TJUAEUI_HUB_REF`：仅用于临时覆盖固定提交，同样必须是完整提交哈希
 - `TJUAEUI_HUB_SKIP=1`：跳过 Hub 资源准备
 
-脚本会对每个扩展执行 SHA-256 完整性校验，任何缺失或损坏都会阻断构建。这些文件是应用内的离线回退，不替代在线更新检查。
+脚本会校验技能索引协议并记录 SHA-256；安装包不包含技能 ZIP、安装器或第三方 CLI。该索引仅作只读后备，不替代在线更新检查。
 
 ## 原生模块
 

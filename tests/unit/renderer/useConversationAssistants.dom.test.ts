@@ -7,37 +7,53 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
 vi.mock('@/common', () => ({
   ipcBridge: {
     assistants: {
-      list: { invoke: vi.fn() },
+      listSelectable: { invoke: vi.fn() },
     },
   },
 }));
+
+const assistant = (id: string, source: Assistant['source'], sortOrder: number): Assistant => ({
+  id,
+  source,
+  name: id,
+  name_i18n: {},
+  description_i18n: {},
+  enabled: true,
+  sort_order: sortOrder,
+  agent_id: 'tjuaecli',
+  enabled_skills: [],
+  context_i18n: {},
+  prompts: [],
+  prompts_i18n: {},
+  models: [],
+  mcp_ids: [],
+  agent_status: 'online',
+  team_selectable: true,
+  deletable: source === 'mine',
+});
 
 describe('useConversationAssistants', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('loads only enabled assistants from the backend catalog', async () => {
-    (ipcBridge.assistants.list.invoke as never as ReturnType<typeof vi.fn>).mockResolvedValue([
-      { id: 'bare-tjuaecli', name: 'Tjuae CLI', enabled: true, source: 'generated' },
-      { id: 'disabled-writer', name: 'Writer', enabled: false, source: 'user' },
-      { id: 'assistant-1', name: 'Researcher', source: 'user' },
-    ] satisfies Partial<Assistant>[]);
+  it('loads the explicitly activated runtime catalog', async () => {
+    (ipcBridge.assistants.listSelectable.invoke as never as ReturnType<typeof vi.fn>).mockResolvedValue([
+      assistant('assistant-1', 'mine', 0),
+      assistant('tjuaeui-assistant', 'tjuae-hub', 0),
+    ]);
 
     const { result } = renderHook(() => useConversationAssistants());
 
     await waitFor(() => expect(result.current.presetAssistants).toHaveLength(2));
 
-    expect(result.current.presetAssistants.map((assistant) => assistant.id)).toEqual(['bare-tjuaecli', 'assistant-1']);
+    expect(result.current.presetAssistants.map((item) => item.id)).toEqual(['assistant-1', 'tjuaeui-assistant']);
   });
 
   it('keeps the filtered assistant list stable across rerenders when SWR data is unchanged', async () => {
-    const catalog = [
-      { id: 'bare-tjuaecli', name: 'Tjuae CLI', enabled: true, source: 'generated' },
-      { id: 'assistant-1', name: 'Researcher', source: 'user' },
-    ] satisfies Partial<Assistant>[];
+    const catalog = [assistant('assistant-1', 'mine', 0), assistant('tjuaeui-assistant', 'tjuae-hub', 0)];
 
-    (ipcBridge.assistants.list.invoke as never as ReturnType<typeof vi.fn>).mockResolvedValue(catalog);
+    (ipcBridge.assistants.listSelectable.invoke as never as ReturnType<typeof vi.fn>).mockResolvedValue(catalog);
 
     const { result, rerender } = renderHook(() => useConversationAssistants());
 

@@ -16,7 +16,7 @@ export type UseManagedAgentsResult = {
 export async function refreshManagedAgentCatalogAndAssistants(): Promise<ManagedAgent[] | undefined> {
   const [agents] = await Promise.all([
     mutate<ManagedAgent[]>(MANAGED_AGENTS_SWR_KEY),
-    mutate('assistants.list'),
+    mutate('assistants.listSelectable'),
     mutate('assistants'),
   ]);
   return agents;
@@ -32,8 +32,8 @@ export async function refreshManagedAgentCatalogAndAssistants(): Promise<Managed
  * diagnostics-only changes such as health checks that should not invalidate the
  * shared detected-agent catalog.
  *
- * `refreshCatalog` refreshes the management catalog plus assistant list caches
- * after structural or health changes that can affect generated generated assistants.
+ * `refreshCatalog` refreshes the management diagnostics plus the activated
+ * assistant runtime catalog after structural or health changes.
  * Business assistant pickers must not depend on this hook or on `/api/agents`.
  *
  * Do not use this anywhere other than `AgentSettings`.

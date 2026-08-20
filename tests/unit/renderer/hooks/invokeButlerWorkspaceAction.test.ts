@@ -15,7 +15,6 @@ const bridge = vi.hoisted(() => {
   return {
     state,
     list: vi.fn(),
-    setState: vi.fn(),
     create: vi.fn(),
     ensureRuntime: vi.fn(),
     sendMessage: vi.fn(),
@@ -30,8 +29,7 @@ const bridge = vi.hoisted(() => {
 vi.mock('@/common', () => ({
   ipcBridge: {
     assistants: {
-      list: { invoke: bridge.list },
-      setState: { invoke: bridge.setState },
+      listSelectable: { invoke: bridge.list },
     },
     conversation: {
       create: { invoke: bridge.create },
@@ -47,8 +45,7 @@ describe('invokeButlerWorkspaceAction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     bridge.state.handler = undefined;
-    bridge.list.mockResolvedValue([{ id: 'builtin-tjuaeui-assistant', enabled: false }]);
-    bridge.setState.mockResolvedValue(true);
+    bridge.list.mockResolvedValue([{ id: 'tjuae-hub:tjuae:tjuaeui-assistant', enabled: true }]);
     bridge.create.mockResolvedValue({ id: 'system-action-conversation' });
     bridge.ensureRuntime.mockResolvedValue(true);
     bridge.remove.mockResolvedValue(true);
@@ -67,10 +64,9 @@ describe('invokeButlerWorkspaceAction', () => {
     const result = await invokeButlerWorkspaceAction('C:\\workspace', '生成提交说明');
 
     expect(result).toBe('<COMMIT_MESSAGE>完善 Git 工作台</COMMIT_MESSAGE>');
-    expect(bridge.setState).toHaveBeenCalledWith({ id: 'builtin-tjuaeui-assistant', enabled: true });
     expect(bridge.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        assistant: { id: 'builtin-tjuaeui-assistant' },
+        assistant: { id: 'tjuae-hub:tjuae:tjuaeui-assistant' },
         extra: expect.objectContaining({
           workspace: 'C:\\workspace',
           custom_workspace: true,

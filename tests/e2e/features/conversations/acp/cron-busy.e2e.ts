@@ -248,7 +248,7 @@ test.describe('ACP cron busy handling', () => {
         test.skip(true, `No selectable assistant for backend ${backend}`);
         return;
       }
-      const assistants = await httpGet<AssistantListItem[]>(page, '/api/assistants');
+      const assistants = await httpGet<AssistantListItem[]>(page, '/api/assistant-runtime/options');
       const assistant = assistants.find((item) => item.id === selectedAssistantId);
       if (!assistant) {
         test.skip(true, `Assistant ${selectedAssistantId} missing from catalog`);

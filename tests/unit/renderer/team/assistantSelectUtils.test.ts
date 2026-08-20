@@ -7,25 +7,25 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
 
 describe('assistantSelectUtils', () => {
   it('localizes assistant option names for the active locale', () => {
-    const bareAssistant = makeAssistant({
-      id: 'bare-tjuaecli',
+    const catalogAssistant = makeAssistant({
+      id: 'tjuaeui-butler',
       name: 'Tjuae CLI',
       name_i18n: { 'zh-CN': 'Tjuae 命令行' },
-      source: 'generated',
-      preset_agent_type: 'tjuaecli',
+      source: 'tjuae-hub',
+      runtimeKey: 'tjuaecli',
     });
 
-    const option = assistantToOption(bareAssistant, 'zh-CN');
+    const option = assistantToOption(catalogAssistant, 'zh-CN');
 
     expect(option.name).toBe('Tjuae 命令行');
   });
 
   it('preserves backend-provided team availability for selectable assistants', () => {
     const remoteAssistant = makeAssistant({
-      id: 'bare-remote',
+      id: 'hub-remote',
       name: 'Remote Runner',
-      source: 'generated',
-      preset_agent_type: 'remote',
+      source: 'tjuae-hub',
+      runtimeKey: 'remote',
       team_selectable: true,
       team_block_reason: undefined,
     });
@@ -40,8 +40,8 @@ describe('assistantSelectUtils', () => {
     const assistant = makeAssistant({
       id: 'unchecked',
       name: 'Unchecked',
-      source: 'generated',
-      preset_agent_type: 'tjuaecli',
+      source: 'tjuae-hub',
+      runtimeKey: 'tjuaecli',
       agent_status: 'unchecked',
       team_selectable: true,
     });
@@ -53,8 +53,9 @@ describe('assistantSelectUtils', () => {
 });
 
 function makeAssistant(
-  overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name' | 'source' | 'preset_agent_type'>
+  overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name' | 'source'> & { runtimeKey: string }
 ): Assistant {
+  const isTjuaeCli = overrides.runtimeKey === 'tjuaecli';
   return {
     id: overrides.id,
     source: overrides.source,
@@ -63,10 +64,9 @@ function makeAssistant(
     description_i18n: {},
     enabled: true,
     sort_order: 0,
-    preset_agent_type: overrides.preset_agent_type,
+    agent_id: `agent-${overrides.runtimeKey}`,
+    agent: isTjuaeCli ? { type: 'tjuaecli', source: 'internal' } : { type: overrides.runtimeKey, source: 'custom' },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

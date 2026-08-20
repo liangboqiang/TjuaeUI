@@ -113,7 +113,7 @@ extraResources:
   - from: resources/hub
     to: hub
 win:
-  signAndEditExecutable: false
+  signExecutable: false
   target:
     - nsis
     #    - msi

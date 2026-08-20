@@ -457,7 +457,7 @@ function assistants(): Assistant[] {
   return [
     {
       id: 'assistant-1',
-      source: 'user',
+      source: 'mine',
       name: '问好助手',
       name_i18n: {},
       description_i18n: {},
@@ -467,8 +467,6 @@ function assistants(): Assistant[] {
       agent_id: 'agent-codex',
       agent: { type: 'acp', source: 'builtin', acp_backend: 'codex' },
       enabled_skills: [],
-      custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: [],
       prompts_i18n: {},
@@ -479,8 +477,8 @@ function assistants(): Assistant[] {
 
 function bareAssistant(): Assistant {
   return {
-    id: 'bare-codex',
-    source: 'generated',
+    id: 'hub-codex',
+    source: 'tjuae-hub',
     name: 'Codex',
     name_i18n: { 'zh-CN': '代码助手' },
     description_i18n: {},
@@ -490,8 +488,6 @@ function bareAssistant(): Assistant {
     agent_id: 'agent-codex',
     agent: { type: 'acp', source: 'builtin', acp_backend: 'codex' },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

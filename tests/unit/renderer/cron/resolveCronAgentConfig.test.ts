@@ -153,7 +153,7 @@ describe('resolveCronAgentConfig', () => {
 function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name' | 'agent_id'>): Assistant {
   return {
     id: overrides.id,
-    source: 'user',
+    source: 'mine',
     name: overrides.name,
     name_i18n: {},
     description_i18n: {},
@@ -161,8 +161,6 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
     sort_order: 0,
     agent_id: overrides.agent_id,
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

@@ -213,7 +213,7 @@ const Main = () => {
         if (cancelled) return;
         await Promise.all([
           mutate<ManagedAgent[]>(MANAGED_AGENTS_SWR_KEY, agents, { revalidate: false }),
-          mutate('assistants.list'),
+          mutate('assistants.listSelectable'),
           mutate('assistants'),
         ]);
       })

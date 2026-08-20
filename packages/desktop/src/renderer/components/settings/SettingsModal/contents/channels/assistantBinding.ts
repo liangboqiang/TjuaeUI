@@ -15,11 +15,7 @@ export type ResolvedChannelAssistantSelection = {
 };
 
 export function getDefaultChannelAssistant(assistants: Assistant[]): Assistant | undefined {
-  return (
-    assistants.find((assistant) => assistant.source === 'generated' && isTjuaeCliAssistant(assistant)) ||
-    assistants.find((assistant) => isTjuaeCliAssistant(assistant)) ||
-    assistants[0]
-  );
+  return assistants.find((assistant) => isTjuaeCliAssistant(assistant)) || assistants[0];
 }
 
 export function resolveChannelAssistantId(saved: ChannelAssistantBinding, assistants: Assistant[]): string | undefined {

@@ -53,14 +53,14 @@ describe('AssistantSelectionArea', () => {
   it('keeps the assistant picker visible after an assistant is selected', () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={assistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
       />
     );
 
-    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-hub-tjuaecli')).toBeInTheDocument();
     expect(screen.queryByTestId('btn-add-preset')).not.toBeInTheDocument();
     expect(screen.queryByText('Select an assistant to start a task')).not.toBeInTheDocument();
     expect(screen.queryByText('Try these example prompts:')).not.toBeInTheDocument();
@@ -70,34 +70,33 @@ describe('AssistantSelectionArea', () => {
   it('moves overflow assistants into a more dropdown', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
       />
     );
 
-    // Selection lists group by source: CLI (generated) → user → official
-    // (builtin). So the top row is [bare-tjuaecli, user-research, user-review,
-    // user-translate] and the official Writer + trailing user-finance overflow.
-    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
+    // Mine entries lead the stable catalog order. The selected Hub assistant
+    // occupies the last visible slot; the remaining Hub entry overflows.
+    expect(screen.getByTestId('preset-pill-hub-tjuaecli')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-research')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-review')).toBeInTheDocument();
     expect(screen.getByTestId('preset-pill-user-translate')).toBeInTheDocument();
-    expect(screen.queryByTestId('preset-pill-builtin-writer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('preset-pill-hub-writer')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('assistant-more-btn'));
 
     expect(await screen.findByTestId('assistant-overflow-user-finance')).toBeInTheDocument();
-    expect(screen.getByTestId('assistant-overflow-builtin-writer')).toBeInTheDocument();
-    expect(screen.queryByTestId('assistant-overflow-bare-tjuaecli')).not.toBeInTheDocument();
+    expect(screen.getByTestId('assistant-overflow-hub-writer')).toBeInTheDocument();
+    expect(screen.queryByTestId('assistant-overflow-hub-tjuaecli')).not.toBeInTheDocument();
     expect(screen.queryByTestId('assistant-overflow-user-research')).not.toBeInTheDocument();
   });
 
   it('lays out the overflow dropdown as a grid matching the visible pill count', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
@@ -116,7 +115,7 @@ describe('AssistantSelectionArea', () => {
   it('narrows the overflow grid together with the visible pill count', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         maxVisibleAssistants={2}
@@ -135,7 +134,7 @@ describe('AssistantSelectionArea', () => {
   it('hides the overflow search until the list exceeds five rows', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
@@ -151,12 +150,12 @@ describe('AssistantSelectionArea', () => {
 
   it('shows the overflow search once the list exceeds five rows', async () => {
     const bulk = Array.from({ length: 25 }, (_, index) =>
-      mkAssistant(`user-bulk-${index}`, `Bulk ${index}`, 'user', 'claude', 100 + index)
+      mkAssistant(`user-bulk-${index}`, `Bulk ${index}`, 'mine', 'claude', 100 + index)
     );
 
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={[...manyAssistants(), ...bulk]}
         localeKey='en-US'
         maxVisibleAssistants={1}
@@ -174,7 +173,7 @@ describe('AssistantSelectionArea', () => {
   it('limits the top assistant row when a smaller visible count is provided', async () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={manyAssistants()}
         localeKey='en-US'
         maxVisibleAssistants={1}
@@ -182,7 +181,7 @@ describe('AssistantSelectionArea', () => {
       />
     );
 
-    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-hub-tjuaecli')).toBeInTheDocument();
     expect(screen.queryByTestId('preset-pill-user-research')).not.toBeInTheDocument();
     expect(screen.queryByTestId('preset-pill-user-review')).not.toBeInTheDocument();
 
@@ -197,41 +196,40 @@ describe('AssistantSelectionArea', () => {
 
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={assistants()}
         localeKey='en-US'
         onSelectAssistant={onSelectAssistant}
       />
     );
 
-    fireEvent.click(screen.getByTestId('preset-pill-builtin-writer'));
+    fireEvent.click(screen.getByTestId('preset-pill-hub-writer'));
 
-    expect(onSelectAssistant).toHaveBeenCalledWith('builtin-writer');
+    expect(onSelectAssistant).toHaveBeenCalledWith('hub-writer');
   });
 
   it('orders assistant pills by group then sort_order before applying overflow', () => {
     render(
       <AssistantSelectionArea
-        selectedAssistantId='bare-tjuaecli'
+        selectedAssistantId='hub-tjuaecli'
         assistants={[
-          mkAssistant('late', 'Late', 'user', 'claude', 90),
-          mkAssistant('early', 'Early', 'user', 'claude', 5),
+          mkAssistant('late', 'Late', 'mine', 'claude', 90),
+          mkAssistant('early', 'Early', 'mine', 'claude', 5),
           ...assistants(),
-          mkAssistant('mid', 'Mid', 'user', 'claude', 15),
+          mkAssistant('mid', 'Mid', 'mine', 'claude', 15),
         ]}
         localeKey='en-US'
         onSelectAssistant={vi.fn()}
       />
     );
 
-    // CLI (generated) first, then user-created by sort_order (Early 5, Mid 15,
-    // Late 90); the official Writer sinks to the bottom group and overflows.
+    // Mine entries are ordered by sort_order, followed by TjuaeHub entries.
     expect(
       screen
         .getAllByRole('button')
         .slice(0, 4)
         .map((node) => node.textContent?.trim())
-    ).toEqual(['Tjuae CLI', 'Early', 'Mid', 'Late']);
+    ).toEqual(['Early', 'Mid', 'Late', 'Tjuae CLI']);
   });
 
   it('keeps a selected overflow assistant visible in the top pill row', () => {
@@ -244,10 +242,9 @@ describe('AssistantSelectionArea', () => {
       />
     );
 
-    // The selected overflow assistant (finance) is pulled into the top row;
-    // translate (the last of the visible-4 before pull-in) drops to overflow.
+    // The selected mine assistant remains in the top source group.
     expect(screen.getByTestId('preset-pill-user-finance')).toBeInTheDocument();
-    expect(screen.queryByTestId('preset-pill-user-translate')).not.toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-user-translate')).toBeInTheDocument();
   });
 
   it('uses the last visible slot for an overflow selection at smaller visible counts', () => {
@@ -262,10 +259,10 @@ describe('AssistantSelectionArea', () => {
     );
 
     expect(screen.getAllByTestId(/^preset-pill-/).map((node) => node.getAttribute('data-assistant-id'))).toEqual([
-      'bare-tjuaecli',
+      'user-research',
       'user-finance',
     ]);
-    expect(screen.queryByTestId('preset-pill-user-research')).not.toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-user-research')).toBeInTheDocument();
   });
 
   it('can re-render from an empty assistant catalog without breaking hook order', () => {
@@ -281,7 +278,7 @@ describe('AssistantSelectionArea', () => {
     expect(() =>
       rerender(
         <AssistantSelectionArea
-          selectedAssistantId='bare-tjuaecli'
+          selectedAssistantId='hub-tjuaecli'
           assistants={assistants()}
           localeKey='en-US'
           onSelectAssistant={vi.fn()}
@@ -289,48 +286,46 @@ describe('AssistantSelectionArea', () => {
       )
     ).not.toThrow();
 
-    expect(screen.getByTestId('preset-pill-bare-tjuaecli')).toBeInTheDocument();
+    expect(screen.getByTestId('preset-pill-hub-tjuaecli')).toBeInTheDocument();
   });
 });
 
 function assistants(): Assistant[] {
   return [
     {
-      id: 'bare-tjuaecli',
-      source: 'generated',
+      id: 'hub-tjuaecli',
+      source: 'tjuae-hub',
       name: 'Tjuae CLI',
       name_i18n: {},
       description_i18n: {},
       enabled: true,
       sort_order: 10,
-      preset_agent_type: 'tjuaecli',
+      agent_id: 'tjuaecli',
       enabled_skills: [],
-      custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: ['Summarize today'],
       prompts_i18n: {},
       models: [],
+      mcp_ids: [],
       agent_status: 'online',
       team_selectable: true,
       deletable: false,
     },
     {
-      id: 'builtin-writer',
-      source: 'builtin',
+      id: 'hub-writer',
+      source: 'tjuae-hub',
       name: 'Writer',
       name_i18n: {},
       description_i18n: {},
       enabled: true,
       sort_order: 20,
-      preset_agent_type: 'claude',
+      agent_id: 'claude',
       enabled_skills: [],
-      custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: ['Draft a post'],
       prompts_i18n: {},
       models: [],
+      mcp_ids: [],
       agent_status: 'online',
       team_selectable: true,
       deletable: false,
@@ -341,10 +336,10 @@ function assistants(): Assistant[] {
 function manyAssistants(): Assistant[] {
   return [
     ...assistants(),
-    mkAssistant('user-research', 'Researcher', 'user', 'gemini', 30),
-    mkAssistant('user-review', 'Reviewer', 'user', 'codex', 40),
-    mkAssistant('user-translate', 'Translator', 'user', 'qwen', 50),
-    mkAssistant('user-finance', 'Finance', 'user', 'claude', 60),
+    mkAssistant('user-research', 'Researcher', 'mine', 'gemini', 30),
+    mkAssistant('user-review', 'Reviewer', 'mine', 'codex', 40),
+    mkAssistant('user-translate', 'Translator', 'mine', 'qwen', 50),
+    mkAssistant('user-finance', 'Finance', 'mine', 'claude', 60),
   ];
 }
 
@@ -352,7 +347,7 @@ function mkAssistant(
   id: string,
   name: string,
   source: Assistant['source'],
-  preset_agent_type: string,
+  agent_id: string,
   sort_order: number
 ): Assistant {
   return {
@@ -363,16 +358,15 @@ function mkAssistant(
     description_i18n: {},
     enabled: true,
     sort_order,
-    preset_agent_type,
+    agent_id,
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
+    mcp_ids: [],
     agent_status: 'online',
     team_selectable: true,
-    deletable: source === 'user',
+    deletable: source === 'mine',
   };
 }

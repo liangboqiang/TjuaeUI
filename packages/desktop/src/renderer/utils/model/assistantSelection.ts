@@ -4,31 +4,20 @@ import type { Assistant } from '@/common/types/agent/assistantTypes';
  * Single source of truth for which assistants appear in a *selection* list
  * (home pill bar, team creation, scheduled-task dropdown, …) and in what order.
  *
- * Rules (see PRD F-AHM-06 / F-AHM-07):
- *  - Only enabled assistants are selectable.
- *  - A stored enabled-order preference takes priority across every source.
- *  - Without a preference, preserve the legacy bare CLI → user → official
- *    order so an upgrade does not reshuffle an existing user's picker.
- *  - New assistants missing from a stored preference append in legacy order.
- *
- * Note: a bare CLI assistant surfaces with `source === 'generated'`.
+ * 目录运行时只包含已完成逐资源确认并成功激活的助手。用户排序优先；
+ * 未排序项按“我的助手 → TjuaeHub”及目录顺序稳定追加。
  */
 
-/** Legacy group weight — lower comes first. Bare CLI < user-created < official. */
-const sourceGroupWeight = (source: string): number => {
+const sourceGroupWeight = (source: Assistant['source']): number => {
   switch (source) {
-    case 'generated':
+    case 'mine':
       return 0;
-    case 'user':
-      return 1;
-    case 'builtin':
-      return 2;
-    default:
+    case 'tjuae-hub':
       return 1;
   }
 };
 
-const compareLegacyAssistantOrder = (left: Assistant, right: Assistant): number => {
+const compareCatalogAssistantOrder = (left: Assistant, right: Assistant): number => {
   const groupDelta = sourceGroupWeight(left.source) - sourceGroupWeight(right.source);
   if (groupDelta !== 0) return groupDelta;
 
@@ -43,15 +32,15 @@ const compareLegacyAssistantOrder = (left: Assistant, right: Assistant): number 
  * Stale IDs and duplicates in `preferredOrder` are ignored.
  */
 export const selectableAssistants = (assistants: Assistant[], preferredOrder?: readonly string[]): Assistant[] => {
-  const legacyOrdered = assistants
+  const catalogOrdered = assistants
     .filter((assistant) => assistant.enabled !== false)
-    .toSorted(compareLegacyAssistantOrder);
+    .toSorted(compareCatalogAssistantOrder);
 
   if (!preferredOrder || preferredOrder.length === 0) {
-    return legacyOrdered;
+    return catalogOrdered;
   }
 
-  const enabledById = new Map(legacyOrdered.map((assistant) => [assistant.id, assistant]));
+  const enabledById = new Map(catalogOrdered.map((assistant) => [assistant.id, assistant]));
   const orderedAssistants: Assistant[] = [];
   const includedIds = new Set<string>();
 
@@ -62,25 +51,11 @@ export const selectableAssistants = (assistants: Assistant[], preferredOrder?: r
     orderedAssistants.push(assistant);
   }
 
-  for (const assistant of legacyOrdered) {
+  for (const assistant of catalogOrdered) {
     if (includedIds.has(assistant.id)) continue;
     includedIds.add(assistant.id);
     orderedAssistants.push(assistant);
   }
 
   return orderedAssistants;
-};
-
-/** Build the persisted enabled order after an assistant is toggled. */
-export const assistantOrderAfterToggle = (
-  assistants: Assistant[],
-  preferredOrder: readonly string[],
-  assistantId: string,
-  enabled: boolean
-): string[] => {
-  const currentOrder = selectableAssistants(assistants, preferredOrder)
-    .map((assistant) => assistant.id)
-    .filter((id) => id !== assistantId);
-
-  return enabled ? [...currentOrder, assistantId] : currentOrder;
 };

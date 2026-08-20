@@ -10,33 +10,12 @@ import {
 } from '@/common/config/imageGenerationMcpEnv';
 import { BUILTIN_IMAGE_GEN_NAME, type IMcpServer, type IProvider } from '@/common/config/storage';
 import { getBuiltinMcpScriptPath, type ProcessConfig as ProcessConfigType } from './initStorage';
-import { migrateAssistantsToBackend } from './migrateAssistants';
 
 type ConfigFile = typeof ProcessConfigType;
 type MigrationStepResult = boolean;
 type McpImportServer = Partial<IMcpServer> & Pick<IMcpServer, 'name' | 'transport'>;
 type BackendClientPreferences = Record<string, unknown>;
 const BUILTIN_CHROME_DEVTOOLS_NAME = 'chrome-devtools';
-
-const LEGACY_BACKEND_CLIENT_PREFERENCE_KEYS = [
-  'assistants',
-  'migration.assistantEnabledFixed',
-  'migration.coworkDefaultSkillsAdded',
-  'migration.builtinDefaultSkillsAdded_v2',
-  'migration.promptsI18nAdded',
-  'migration.assistantsSplitCustom',
-] as const;
-
-async function cleanupLegacyClientPreferences(): Promise<void> {
-  const payloadEntries = LEGACY_BACKEND_CLIENT_PREFERENCE_KEYS.map((key): [string, null] => [key, null]);
-  const payload = Object.fromEntries(payloadEntries);
-  await httpRequest<void>('PUT', '/api/settings/client', payload);
-}
-
-const CLEANUP_STEPS: Array<{
-  name: string;
-  run: () => Promise<void>;
-}> = [{ name: 'cleanupLegacyClientPreferences', run: async () => cleanupLegacyClientPreferences() }];
 
 async function fetchBackendClientPreferences(): Promise<BackendClientPreferences> {
   try {
@@ -368,7 +347,6 @@ const MIGRATION_STEPS: Array<{
     name: 'ensureBootstrapMcpServersInDb',
     run: async (configFile) => (await ensureBootstrapMcpServersInDb(configFile), true),
   },
-  { name: 'migrateAssistantsToBackend', run: async (configFile) => migrateAssistantsToBackend(configFile) },
 ];
 
 async function syncBuiltinMcpConfig(configFile: ConfigFile): Promise<void> {
@@ -398,17 +376,6 @@ async function syncBuiltinMcpConfig(configFile: ConfigFile): Promise<void> {
 }
 
 export async function runBackendMigrations(configFile: ConfigFile): Promise<void> {
-  await CLEANUP_STEPS.reduce<Promise<void>>(async (previous, step) => {
-    await previous;
-    const start = Date.now();
-    try {
-      await step.run();
-      console.info(`[TjuaeUI] Backend migration step completed: ${step.name} (${Date.now() - start}ms)`);
-    } catch (error) {
-      console.error(`[TjuaeUI] Backend migration step failed: ${step.name} (${Date.now() - start}ms)`, error);
-    }
-  }, Promise.resolve());
-
   await MIGRATION_STEPS.reduce<Promise<void>>(async (previous, step) => {
     await previous;
     const start = Date.now();

@@ -44,7 +44,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'assistant-claude',
-        source: 'builtin',
+        source: 'tjuae-hub',
         name: 'Claude Assistant',
         name_i18n: {},
         description_i18n: {},
@@ -53,8 +53,6 @@ describe('useGuidAssistantSelection', () => {
         agent_id: 'agent-claude',
         agent: { type: 'acp', source: 'builtin', acp_backend: 'claude' },
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
@@ -91,8 +89,8 @@ describe('useGuidAssistantSelection', () => {
 
   it('restores the last selected guid assistant before falling back to the tjuaecli default', async () => {
     mockAssistants = [
-      assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'tjuaeui-butler', runtimeKey: 'tjuaecli', source: 'tjuae-hub', sortOrder: 1 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'tjuae-hub', sortOrder: 2 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'assistant-claude' : undefined
@@ -111,8 +109,8 @@ describe('useGuidAssistantSelection', () => {
 
   it('restores the last selected guid assistant when the guid page resets for a new chat', async () => {
     mockAssistants = [
-      assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'tjuaeui-butler', runtimeKey: 'tjuaecli', source: 'tjuae-hub', sortOrder: 1 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'tjuae-hub', sortOrder: 2 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'assistant-claude' : undefined
@@ -132,8 +130,8 @@ describe('useGuidAssistantSelection', () => {
 
   it('persists manual guid assistant selections for the next visit', async () => {
     mockAssistants = [
-      assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'tjuaeui-butler', runtimeKey: 'tjuaecli', source: 'tjuae-hub', sortOrder: 1 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'tjuae-hub', sortOrder: 2 }),
     ];
 
     const { result } = renderHook(() =>
@@ -143,7 +141,7 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare-tjuaecli');
+      expect(result.current.selectedAssistantId).toBe('tjuaeui-butler');
     });
 
     act(() => {
@@ -155,8 +153,8 @@ describe('useGuidAssistantSelection', () => {
 
   it('falls back to the default assistant when the persisted guid assistant no longer exists', async () => {
     mockAssistants = [
-      assistantFixture({ id: 'bare-tjuaecli', runtimeKey: 'tjuaecli', source: 'generated', sortOrder: 1 }),
-      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'builtin', sortOrder: 2 }),
+      assistantFixture({ id: 'tjuaeui-butler', runtimeKey: 'tjuaecli', source: 'tjuae-hub', sortOrder: 1 }),
+      assistantFixture({ id: 'assistant-claude', runtimeKey: 'claude', source: 'tjuae-hub', sortOrder: 2 }),
     ];
     configGetMock.mockImplementation((key: string) =>
       key === 'guid.lastAssistantId' ? 'removed-assistant' : undefined
@@ -169,7 +167,7 @@ describe('useGuidAssistantSelection', () => {
     );
 
     await waitFor(() => {
-      expect(result.current.selectedAssistantId).toBe('bare-tjuaecli');
+      expect(result.current.selectedAssistantId).toBe('tjuaeui-butler');
     });
   });
 
@@ -206,7 +204,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'custom-1781258588874-26ad',
-        source: 'user',
+        source: 'mine',
         name: '文件规划助手 (Copy)',
         name_i18n: {},
         description_i18n: {},
@@ -219,8 +217,6 @@ describe('useGuidAssistantSelection', () => {
           acp_backend: 'claude',
         },
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
@@ -282,7 +278,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'assistant-with-default-model',
-        source: 'user',
+        source: 'mine',
         name: 'Assistant With Default Model',
         name_i18n: {},
         description_i18n: {},
@@ -295,8 +291,6 @@ describe('useGuidAssistantSelection', () => {
           acp_backend: 'claude',
         },
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
@@ -343,7 +337,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'assistant-with-runtime-models',
-        source: 'user',
+        source: 'mine',
         name: 'Runtime Model Assistant',
         name_i18n: {},
         description_i18n: {},
@@ -356,8 +350,6 @@ describe('useGuidAssistantSelection', () => {
           acp_backend: 'claude',
         },
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
@@ -408,7 +400,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'assistant-claude-empty',
-        source: 'generated',
+        source: 'tjuae-hub',
         name: 'Claude',
         name_i18n: {},
         description_i18n: {},
@@ -417,8 +409,6 @@ describe('useGuidAssistantSelection', () => {
         agent_id: 'agent-claude-empty',
         agent: { type: 'acp', source: 'builtin', acp_backend: 'claude' },
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
@@ -448,7 +438,7 @@ describe('useGuidAssistantSelection', () => {
     mockAssistants = [
       {
         id: 'bare:632f31d2',
-        source: 'generated',
+        source: 'tjuae-hub',
         name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
@@ -457,8 +447,6 @@ describe('useGuidAssistantSelection', () => {
         agent_id: '632f31d2',
         agent: { type: 'tjuaecli', source: 'internal' },
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
@@ -524,8 +512,6 @@ function assistantFixture({
       ? { type: 'tjuaecli', source: 'internal' }
       : { type: 'acp', source: 'builtin', acp_backend: runtimeKey },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

@@ -55,7 +55,7 @@ describe('useHubAgents', () => {
     });
 
     expect(mutate).toHaveBeenCalledWith('agents.managed');
-    expect(mutate).toHaveBeenCalledWith('assistants.list');
+    expect(mutate).toHaveBeenCalledWith('assistants.listSelectable');
     expect(mutate).toHaveBeenCalledWith('assistants');
   });
 });

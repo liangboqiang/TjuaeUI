@@ -173,7 +173,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
         if (assistantConversationId) {
           await Promise.all([
             swrMutate(`guid.assistant.detail.${assistantConversationId}.${localeKey}`),
-            swrMutate('assistants.list'),
+            swrMutate('assistants.listSelectable'),
           ]);
         }
 
@@ -222,7 +222,7 @@ export const useGuidSend = (deps: GuidSendDeps): GuidSendResult => {
       if (assistantConversationId) {
         await Promise.all([
           swrMutate(`guid.assistant.detail.${assistantConversationId}.${localeKey}`),
-          swrMutate('assistants.list'),
+          swrMutate('assistants.listSelectable'),
         ]);
       }
 

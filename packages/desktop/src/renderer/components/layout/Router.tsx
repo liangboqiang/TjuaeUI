@@ -64,6 +64,10 @@ const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
           {/* Both entries share this content while preserving the surrounding
               navigation context selected by the user. */}
           <Route path='/settings/assistants' element={withRouteFallback(AssistantSettings)} />
+          <Route
+            path='/settings/assistants/:source/:namespace/:assistantName'
+            element={withRouteFallback(AssistantSettings)}
+          />
           <Route path='/settings/agent' element={withRouteFallback(AgentSettings)} />
           <Route path='/settings/agent/:id/repair' element={withRouteFallback(AgentRepairPage)} />
           {/* Skills and Tools are top-level settings entries. */}

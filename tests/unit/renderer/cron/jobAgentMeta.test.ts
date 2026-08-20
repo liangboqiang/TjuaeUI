@@ -121,7 +121,7 @@ function cronJob(overrides: Partial<ICronJob>): ICronJob {
 function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'>): Assistant {
   return {
     id: overrides.id,
-    source: 'builtin',
+    source: 'tjuae-hub',
     name: overrides.name,
     name_i18n: {},
     description_i18n: {},
@@ -130,8 +130,6 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
     agent_id: 'agent-codex',
     agent: { type: 'acp', source: 'builtin', acp_backend: 'codex' },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

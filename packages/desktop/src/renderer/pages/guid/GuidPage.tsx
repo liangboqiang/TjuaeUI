@@ -3,7 +3,6 @@ import { buildGuidSlashCommands } from '@/common/chat/slash/guidSlashCommands';
 import type { SlashCommandItem } from '@/common/chat/slash/types';
 import type { IMcpServer, TProviderWithModel } from '@/common/config/storage';
 import { resolveLocaleKey } from '@/common/utils';
-import type { AssistantDetail } from '@/common/types/agent/assistantTypes';
 
 import { useInputFocusRing } from '@/renderer/hooks/chat/useInputFocusRing';
 import { appendPromptToDraft } from '@/renderer/hooks/chat/useSendBoxDraft';
@@ -31,7 +30,6 @@ import { Button, ConfigProvider } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import useSWR from 'swr';
 import styles from './index.module.css';
 
 type GuidNavigationState = {
@@ -137,16 +135,13 @@ const GuidPage: React.FC = () => {
 
   const selectedAssistantId = agentSelection.selectedAssistantId;
   const hasSelectedAssistant = selectedAssistantId !== null;
-  const { data: selectedAssistantDetail } = useSWR(
-    selectedAssistantId ? `guid.assistant.detail.${selectedAssistantId}.${localeKey}` : null,
-    async (): Promise<AssistantDetail | null> =>
-      ipcBridge.assistants.get
-        .invoke({ id: selectedAssistantId!, locale: localeKey })
-        .catch((_error: unknown): AssistantDetail | null => null)
+  const selectedAssistantRecord = useMemo(
+    () => agentSelection.assistants.find((item) => item.id === selectedAssistantId),
+    [agentSelection.assistants, selectedAssistantId]
   );
   const resolvedAssistantDefaults = useMemo(
-    () => resolveGuidAssistantDefaults(selectedAssistantDetail),
-    [selectedAssistantDetail]
+    () => resolveGuidAssistantDefaults(selectedAssistantRecord),
+    [selectedAssistantRecord]
   );
   const handleToggleSkill = useCallback(
     (skillId: string) => {
@@ -161,11 +156,7 @@ const GuidPage: React.FC = () => {
     const enabledSkillSet = new Set(guidEnabledSkills ?? resolvedAssistantDefaults.skillIds);
 
     return allSkills.filter((skill) => enabledSkillSet.has(skill.id)).map((skill) => skill.id);
-  }, [
-    allSkills,
-    guidEnabledSkills,
-    resolvedAssistantDefaults.skillIds,
-  ]);
+  }, [allSkills, guidEnabledSkills, resolvedAssistantDefaults.skillIds]);
   const skillDescriptionByName = useMemo(
     () => new Map(allSkills.map((skill) => [skill.id, skill.description])),
     [allSkills]
@@ -294,19 +285,9 @@ const GuidPage: React.FC = () => {
 
   // Typewriter placeholder
   const typewriterPlaceholder = useTypewriterPlaceholder(t('conversation.welcome.placeholder'));
-  const selectedAssistantRecord = useMemo(() => {
-    if (!selectedAssistantId) return undefined;
-    const selectedId = agentSelection.selectedAssistantId;
-    const strippedId = selectedId.replace(/^builtin-/, '');
-    const candidates = new Set([selectedId, `builtin-${strippedId}`, strippedId]);
-    return agentSelection.assistants.find((item) => candidates.has(item.id));
-  }, [agentSelection.assistants, selectedAssistantId, agentSelection.selectedAssistantId]);
   const selectedAssistantPrompts = useMemo(() => {
     if (!selectedAssistantId) return [];
     const resolvedPrompts =
-      selectedAssistantDetail?.prompts.recommended_i18n?.[localeKey] ||
-      selectedAssistantDetail?.prompts.recommended_i18n?.['en-US'] ||
-      selectedAssistantDetail?.prompts.recommended ||
       selectedAssistantRecord?.prompts_i18n?.[localeKey] ||
       selectedAssistantRecord?.prompts_i18n?.['en-US'] ||
       selectedAssistantRecord?.prompts ||
@@ -317,24 +298,24 @@ const GuidPage: React.FC = () => {
     }
 
     return [t('guid.defaultPrompts.understand'), t('guid.defaultPrompts.cleanup'), t('guid.defaultPrompts.create')];
-  }, [localeKey, selectedAssistantDetail, selectedAssistantRecord, selectedAssistantId, t]);
+  }, [localeKey, selectedAssistantRecord, selectedAssistantId, t]);
 
   // Reset the conversation override whenever the active assistant changes.
   useEffect(() => {
-    if (!selectedAssistantId || !selectedAssistantDetail) {
+    if (!selectedAssistantId || !selectedAssistantRecord) {
       setGuidEnabledSkills(undefined);
       return;
     }
 
-    const resolvedDefaults = resolveGuidAssistantDefaults(selectedAssistantDetail);
+    const resolvedDefaults = resolveGuidAssistantDefaults(selectedAssistantRecord);
     setGuidEnabledSkills(resolvedDefaults.skillIds);
-  }, [selectedAssistantDetail, selectedAssistantId]);
+  }, [selectedAssistantRecord, selectedAssistantId]);
 
   const appliedAssistantDefaultsKeyRef = useRef<string | null>(null);
   const manualModelSelectionAssistantRef = useRef<string | null>(null);
   const manualThoughtLevelSelectionAssistantRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!selectedAssistantId || !selectedAssistantDetail) {
+    if (!selectedAssistantId || !selectedAssistantRecord) {
       appliedAssistantDefaultsKeyRef.current = null;
       manualModelSelectionAssistantRef.current = null;
       manualThoughtLevelSelectionAssistantRef.current = null;
@@ -344,13 +325,7 @@ const GuidPage: React.FC = () => {
     const signature = JSON.stringify({
       assistantId: selectedAssistantId,
       backend: agentSelection.selectedAssistantBackend,
-      defaults: selectedAssistantDetail.defaults,
-      preferences: {
-        last_model_id: selectedAssistantDetail.preferences.last_model_id,
-        last_permission_value: selectedAssistantDetail.preferences.last_permission_value,
-        last_thought_level_value: selectedAssistantDetail.preferences.last_thought_level_value,
-        last_mcp_ids: selectedAssistantDetail.preferences.last_mcp_ids,
-      },
+      defaults: resolvedAssistantDefaults,
       availableModels: {
         acp: agentSelection.currentAcpCachedModelInfo?.available_models.map((model) => model.id) ?? [],
         tjuaecli: modelSelection.modelList.map((provider) => ({
@@ -367,7 +342,7 @@ const GuidPage: React.FC = () => {
     appliedAssistantDefaultsKeyRef.current = signature;
 
     const applyAssistantDefaults = async () => {
-      const resolvedDefaults = resolveGuidAssistantDefaults(selectedAssistantDetail);
+      const resolvedDefaults = resolveGuidAssistantDefaults(selectedAssistantRecord);
       const effectiveBackend = agentSelection.selectedAssistantBackend;
       const shouldApplyDefaultModel = manualModelSelectionAssistantRef.current !== selectedAssistantId;
       const shouldApplyDefaultThoughtLevel = manualThoughtLevelSelectionAssistantRef.current !== selectedAssistantId;
@@ -444,7 +419,8 @@ const GuidPage: React.FC = () => {
     modelSelection.resetCurrentModel,
     modelSelection.setCurrentModel,
     selectedAssistantId,
-    selectedAssistantDetail,
+    resolvedAssistantDefaults,
+    selectedAssistantRecord,
   ]);
 
   const setGuidSelectedMode = useCallback(

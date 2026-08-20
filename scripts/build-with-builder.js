@@ -749,7 +749,7 @@ try {
     version: resolveTjuaeCoreVersion(projectRoot),
   });
 
-  // 6. Prepare hub resources (index.json + extension zips for offline fallback)
+  // 6. Prepare the fixed TjuaeHub skill index for read-only fallback.
   execSync('node scripts/prepareHubResources.js', { stdio: 'inherit', env: process.env });
 
   // 6. 运行 electron-builder 生成分发包；始终禁用隐式发布，发布由 CI 独立任务负责。

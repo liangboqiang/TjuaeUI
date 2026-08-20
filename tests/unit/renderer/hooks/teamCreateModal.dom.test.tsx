@@ -127,7 +127,7 @@ describe('TeamCreateModal', () => {
   it('keeps blocked assistants visible and prevents selecting them', () => {
     render(<TeamCreateModal visible onClose={vi.fn()} onCreated={vi.fn()} />);
 
-    expect(screen.getByTestId('team-create-agent-option-bare-tjuaecli')).toBeInTheDocument();
+    expect(screen.getByTestId('team-create-agent-option-tjuaeui-butler')).toBeInTheDocument();
     expect(screen.getByText('Tjuae 命令行')).toBeInTheDocument();
     expect(screen.queryByText('Tjuae CLI')).not.toBeInTheDocument();
     expect(screen.getByTestId('team-create-agent-option-blocked-reviewer')).toBeInTheDocument();
@@ -203,8 +203,10 @@ describe('TeamCreateModal', () => {
     expect(searchInput).toHaveAttribute('placeholder', 'Search');
     expect(within(assistantPane).getByTestId('team-create-agent-picker-body')).not.toHaveClass('bg-fill-1');
     expect(within(assistantPane).getByTestId('team-create-agent-picker-body')).toHaveClass('bg-dialog-fill-0');
-    expect(within(assistantPane).getByTestId('team-create-agent-option-bare-tjuaecli')).toHaveClass('!h-44px');
-    expect(within(assistantPane).getByTestId('team-create-agent-option-bare-tjuaecli')).toHaveClass('hover:!bg-fill-2');
+    expect(within(assistantPane).getByTestId('team-create-agent-option-tjuaeui-butler')).toHaveClass('!h-44px');
+    expect(within(assistantPane).getByTestId('team-create-agent-option-tjuaeui-butler')).toHaveClass(
+      'hover:!bg-fill-2'
+    );
     expect(within(detailsPane).getByText('Selected members 0')).toBeInTheDocument();
     expect(within(detailsPane).getByText('Selected members 0')).toHaveClass('text-15px');
     expect(nameInput).toHaveClass('!h-38px', '!text-13px');
@@ -218,19 +220,19 @@ describe('TeamCreateModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Team name'), {
       target: { value: 'Docs Team' },
     });
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
 
     await waitFor(() => expect(createTeamInvokeMock).toHaveBeenCalledTimes(1));
 
     const payload = createTeamInvokeMock.mock.calls[0][0];
     expect(resolveDefaultTeamAgentModelMock).toHaveBeenCalledWith({
-      assistant_id: 'bare-tjuaecli',
+      assistant_id: 'tjuaeui-butler',
       assistant_backend: 'tjuaecli',
     });
     expect(payload.agents[0]).toMatchObject({
       role: 'leader',
-      assistant_id: 'bare-tjuaecli',
+      assistant_id: 'tjuaeui-butler',
       assistant_name: 'Tjuae 命令行',
     });
     // Runtime backend / conversation type are derived server-side from the
@@ -249,8 +251,8 @@ describe('TeamCreateModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Team name'), {
       target: { value: 'Duplicate Team' },
     });
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
 
     await waitFor(() => expect(createTeamInvokeMock).toHaveBeenCalledTimes(1));
@@ -258,8 +260,8 @@ describe('TeamCreateModal', () => {
     const payload = createTeamInvokeMock.mock.calls[0][0];
     expect(payload.agents).toHaveLength(2);
     expect(payload.agents.map((agent: { assistant_id?: string }) => agent.assistant_id)).toEqual([
-      'bare-tjuaecli',
-      'bare-tjuaecli',
+      'tjuaeui-butler',
+      'tjuaeui-butler',
     ]);
     expect(payload.agents.filter((agent: { role: string }) => agent.role === 'leader')).toHaveLength(1);
   });
@@ -270,7 +272,7 @@ describe('TeamCreateModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Team name'), {
       target: { value: 'Manual Team' },
     });
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByTestId('team-create-agent-option-remote-runner'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
 
@@ -286,7 +288,7 @@ describe('TeamCreateModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Team name'), {
       target: { value: 'Switch Leader Team' },
     });
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByTestId('team-create-agent-option-remote-runner'));
     fireEvent.click(screen.getByRole('button', { name: 'Set as Leader' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
@@ -301,7 +303,7 @@ describe('TeamCreateModal', () => {
   it('leader_flag_controls_show_and_switch_a_single_active_leader', () => {
     render(<TeamCreateModal visible onClose={vi.fn()} onCreated={vi.fn()} />);
 
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByTestId('team-create-agent-option-remote-runner'));
     fireEvent.click(screen.getByTestId('team-create-agent-option-remote-runner'));
 
@@ -326,7 +328,7 @@ describe('TeamCreateModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Team name'), {
       target: { value: 'Promote Leader Team' },
     });
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByTestId('team-create-agent-option-remote-runner'));
     fireEvent.click(screen.getAllByTestId(/team-create-member-remove-/)[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
@@ -354,7 +356,7 @@ describe('TeamCreateModal', () => {
     fireEvent.change(screen.getByPlaceholderText('Team name'), {
       target: { value: 'Model Failure Team' },
     });
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.click(screen.getByTestId('team-create-agent-option-remote-runner'));
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
 
@@ -399,7 +401,7 @@ describe('TeamCreateModal · mobile (narrow screen)', () => {
 
     // Dropdown reveals the reused picker (same search box + options as desktop).
     await waitFor(() => expect(screen.getByTestId('team-create-agent-search')).toBeInTheDocument());
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
 
     // Select-and-close: the dropdown collapses so the user sees the result below.
     await waitFor(() => expect(screen.queryByTestId('team-create-agent-search')).not.toBeInTheDocument());
@@ -416,24 +418,24 @@ describe('TeamCreateModal · mobile (narrow screen)', () => {
 
     fireEvent.click(screen.getByTestId('team-create-add-member-btn'));
     await waitFor(() => expect(screen.getByTestId('team-create-agent-search')).toBeInTheDocument());
-    fireEvent.click(screen.getByTestId('team-create-agent-option-bare-tjuaecli'));
+    fireEvent.click(screen.getByTestId('team-create-agent-option-tjuaeui-butler'));
     fireEvent.change(screen.getByTestId('team-create-name-input'), { target: { value: 'Mobile Team' } });
     fireEvent.click(screen.getByRole('button', { name: 'Confirm Create' }));
 
     await waitFor(() => expect(createTeamInvokeMock).toHaveBeenCalledTimes(1));
     const payload = createTeamInvokeMock.mock.calls[0][0];
     expect(payload.name).toBe('Mobile Team');
-    expect(payload.agents[0]).toMatchObject({ role: 'leader', assistant_id: 'bare-tjuaecli' });
+    expect(payload.agents[0]).toMatchObject({ role: 'leader', assistant_id: 'tjuaeui-butler' });
   });
 });
 
 function assistants(): Assistant[] {
   return [
     assistant({
-      id: 'bare-tjuaecli',
+      id: 'tjuaeui-butler',
       name: 'Tjuae CLI',
       name_i18n: { 'zh-CN': 'Tjuae 命令行' },
-      source: 'generated',
+      source: 'tjuae-hub',
       agent_id: 'agent-tjuaecli',
       agent: { type: 'tjuaecli', source: 'internal' },
       team_selectable: true,
@@ -441,7 +443,7 @@ function assistants(): Assistant[] {
     assistant({
       id: 'blocked-reviewer',
       name: 'Reviewer',
-      source: 'user',
+      source: 'mine',
       agent_id: 'agent-claude',
       agent: { type: 'acp', source: 'builtin', acp_backend: 'claude' },
       team_selectable: false,
@@ -451,7 +453,7 @@ function assistants(): Assistant[] {
     assistant({
       id: 'remote-runner',
       name: 'Remote Runner',
-      source: 'generated',
+      source: 'tjuae-hub',
       agent_id: 'agent-remote',
       agent: { type: 'remote', source: 'custom' },
       team_selectable: true,
@@ -470,8 +472,6 @@ function assistant(overrides: Partial<Assistant> & Pick<Assistant, 'id' | 'name'
     sort_order: 0,
     agent_id: overrides.agent_id,
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

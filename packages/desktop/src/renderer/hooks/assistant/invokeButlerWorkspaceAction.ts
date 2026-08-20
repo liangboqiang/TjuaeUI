@@ -5,7 +5,7 @@ const BUTLER_ASSISTANT_ID = 'tjuaeui-assistant';
 const ACTION_TIMEOUT_MS = 120_000;
 
 const findButler = (assistants: Assistant[]): Assistant | undefined =>
-  assistants.find((assistant) => assistant.id.replace(/^builtin-/, '') === BUTLER_ASSISTANT_ID);
+  assistants.find((assistant) => assistant.id.endsWith(`:${BUTLER_ASSISTANT_ID}`));
 
 const waitForButlerResponse = async (conversationId: string, prompt: string): Promise<string> => {
   let content = '';
@@ -41,14 +41,11 @@ const waitForButlerResponse = async (conversationId: string, prompt: string): Pr
   }
 };
 
-/** Execute a one-shot, hidden workspace task with the built-in TjuaeUI Butler. */
+/** Execute a one-shot, hidden workspace task with an explicitly activated TjuaeUI Butler. */
 export const invokeButlerWorkspaceAction = async (workspace: string, prompt: string): Promise<string> => {
-  const assistants = await ipcBridge.assistants.list.invoke();
+  const assistants = await ipcBridge.assistants.listSelectable.invoke();
   const butler = findButler(assistants);
   if (!butler) throw new Error('BUTLER_NOT_AVAILABLE');
-  if (butler.enabled === false) {
-    await ipcBridge.assistants.setState.invoke({ id: butler.id, enabled: true });
-  }
 
   const conversation = await ipcBridge.conversation.create.invoke({
     assistant: { id: butler.id },

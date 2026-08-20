@@ -8,13 +8,13 @@ import {
 
 describe('guid assistant selection helpers', () => {
   const assistants: Assistant[] = [
-    assistant({ id: 'builtin-writer', source: 'builtin', runtimeKey: 'claude', sort_order: 20 }),
-    assistant({ id: 'bare-tjuaecli', source: 'generated', runtimeKey: 'tjuaecli', sort_order: 10 }),
-    assistant({ id: 'user-research', source: 'user', runtimeKey: 'gemini', sort_order: 30 }),
+    assistant({ id: 'hub-writer', source: 'tjuae-hub', runtimeKey: 'claude', sort_order: 20 }),
+    assistant({ id: 'tjuaeui-butler', source: 'tjuae-hub', runtimeKey: 'tjuaecli', sort_order: 10 }),
+    assistant({ id: 'mine-research', source: 'mine', runtimeKey: 'gemini', sort_order: 30 }),
   ];
 
   it('prefers explicit custom assistant keys when the assistant exists', () => {
-    expect(resolveAssistantSelectionKey('custom:user-research', assistants)).toBe('user-research');
+    expect(resolveAssistantSelectionKey('custom:mine-research', assistants)).toBe('mine-research');
   });
 
   it('does not accept legacy backend keys as assistant selection ids', () => {
@@ -23,7 +23,7 @@ describe('guid assistant selection helpers', () => {
   });
 
   it('defaults to the generated tjuaecli assistant when available', () => {
-    expect(pickDefaultAssistantSelectionKey(assistants)).toBe('bare-tjuaecli');
+    expect(pickDefaultAssistantSelectionKey(assistants)).toBe('tjuaeui-butler');
   });
 
   it('returns null when no assistants are available', () => {
@@ -49,15 +49,13 @@ function assistant(
       ? { type: 'tjuaecli', source: 'internal' }
       : { type: 'acp', source: 'builtin', acp_backend: overrides.runtimeKey },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},
     models: [],
     agent_status: 'online',
     team_selectable: true,
-    deletable: overrides.source === 'user',
+    deletable: overrides.source === 'mine',
     ...overrides,
   };
 }

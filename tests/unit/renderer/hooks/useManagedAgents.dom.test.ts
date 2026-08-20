@@ -90,7 +90,7 @@ describe('useManagedAgents', () => {
     });
 
     expect(mutate).toHaveBeenCalledWith('agents.managed');
-    expect(mutate).toHaveBeenCalledWith('assistants.list');
+    expect(mutate).toHaveBeenCalledWith('assistants.listSelectable');
     expect(mutate).toHaveBeenCalledWith('assistants');
   });
 
@@ -105,7 +105,7 @@ describe('useManagedAgents', () => {
 
     expect(ipcBridge.acpConversation.refreshCustomAgents.invoke).toHaveBeenCalled();
     expect(mutate).toHaveBeenCalledWith('agents.managed');
-    expect(mutate).toHaveBeenCalledWith('assistants.list');
+    expect(mutate).toHaveBeenCalledWith('assistants.listSelectable');
     expect(mutate).toHaveBeenCalledWith('assistants');
   });
 

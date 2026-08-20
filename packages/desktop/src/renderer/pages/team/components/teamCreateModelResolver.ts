@@ -1,5 +1,5 @@
 import { ipcBridge } from '@/common';
-import { assistantRuntimeKey, type AssistantDetail } from '@/common/types/agent/assistantTypes';
+import { assistantRuntimeKey, type Assistant } from '@/common/types/agent/assistantTypes';
 
 /**
  * Resolve the `model` value a team agent should send to `POST /api/teams`.
@@ -23,40 +23,28 @@ export async function resolveDefaultTeamAgentModel(params: {
 }): Promise<string> {
   const { assistant_id, assistant_backend } = params;
 
-  const assistantDetail = await resolveAssistantDetail(assistant_id);
-  if (assistantDetail) {
-    const assistantModel = resolveAssistantModel(assistantDetail);
+  const assistant = await resolveAssistant(assistant_id);
+  if (assistant) {
+    const assistantModel = assistant.models[0];
     if (assistantModel) {
       return assistantModel;
     }
 
-    return resolveBackendDefaultModel(assistantRuntimeKey({ agent: assistantDetail.engine.agent }));
+    return resolveBackendDefaultModel(assistantRuntimeKey(assistant));
   }
 
   return resolveBackendDefaultModel(assistant_backend);
 }
 
-async function resolveAssistantDetail(assistant_id?: string): Promise<AssistantDetail | undefined> {
+async function resolveAssistant(assistant_id?: string): Promise<Assistant | undefined> {
   if (!assistant_id) return undefined;
 
   try {
-    const detail = (await ipcBridge.assistants.get.invoke({ id: assistant_id })) as AssistantDetail | null;
-    return detail ?? undefined;
+    const assistants = await ipcBridge.assistants.listSelectable.invoke();
+    return assistants.find((assistant) => assistant.id === assistant_id);
   } catch {
     return undefined;
   }
-}
-
-function resolveAssistantModel(detail: AssistantDetail): string | undefined {
-  if (detail.defaults.model.mode === 'fixed' && detail.defaults.model.value) {
-    return detail.defaults.model.value;
-  }
-
-  if (detail.defaults.model.mode === 'auto' && detail.preferences.last_model_id) {
-    return detail.preferences.last_model_id;
-  }
-
-  return undefined;
 }
 
 function resolveBackendDefaultModel(assistant_backend?: string): Promise<string> {

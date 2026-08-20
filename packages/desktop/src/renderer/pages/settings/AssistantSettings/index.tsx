@@ -1,268 +1,563 @@
-/**
- * AssistantSettings — Settings page for managing assistants.
- *
- * Editing permissions by assistant type:
- *
- * | Field          | Builtin | Custom |
- * |----------------|---------|--------|
- * | Save button    |  yes    |  yes   |
- * | Name           |  no     |  yes   |
- * | Description    |  no     |  yes   |
- * | Avatar         |  no     |  yes   |
- * | Main Agent     |  yes    |  yes   |
- * | Prompt editing |  no     |  yes   |
- * | Delete         |  no     |  yes   |
- *
- * Builtin assistants only allow Main Agent plus default model / permission
- * overrides. The full-page editor still renders builtin skills and prompts as
- * read-only so users can inspect what's bundled.
- */
-import { Message } from '@arco-design/web-react';
-import { useAssistantEditor, useAssistantList } from '@/renderer/hooks/assistant';
-import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
-import { buildAssistantEditorBackends, resolveAvatarImageSrc } from './assistantUtils';
-import AssistantEditorPage from './AssistantEditorPage';
-import AssistantHomeTabs from './home/AssistantHomeTabs';
-import DeleteAssistantModal from './DeleteAssistantModal';
-import type { AssistantEditorViewModel, AssistantListItem } from './types';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { ipcBridge } from '@/common';
+import type {
+  AssistantActivationChoice,
+  AssistantActivationPlan,
+  AssistantCatalogDetail,
+  AssistantCatalogIdentity,
+  AssistantCatalogItem,
+  AssistantCatalogPage,
+  AssistantCatalogSource,
+  AssistantRequirementKind,
+  AssistantVersionComparison,
+  UpdateAssistantCatalogSettingsRequest,
+} from '@/common/types/platform/assistantCatalog';
+import { Button, Input, Message, Modal, Radio, Select } from '@arco-design/web-react';
+import { Plus, Search } from '@icon-park/react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import useSWR from 'swr';
+import SettingsPageWrapper from '../components/SettingsPageWrapper';
+import styles from '../SkillsSettings/SkillsHubSettings.module.css';
+import AssistantActivationModal from './AssistantActivationModal';
+import AssistantCatalogDetailView, { type AssistantDetailTab } from './AssistantCatalogDetailView';
+import AssistantCatalogDirectory from './AssistantCatalogDirectory';
+import {
+  ASSISTANT_SOURCES,
+  assistantCatalogRoute,
+  assistantSourceTranslationKey,
+} from './assistantCatalogPresentation';
 
-type AssistantNavigationState = {
-  openAssistantId?: string;
-  openAssistantEditor?: boolean;
+type SourceFilter = 'all' | AssistantCatalogSource;
+type StatusFilter = 'all' | 'enabled' | 'disabled';
+type ActivationAttempt = { assistant: AssistantCatalogItem; version: string };
+
+const describeError = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 };
-const OPEN_ASSISTANT_EDITOR_INTENT_KEY = 'guid.openAssistantEditorIntent';
+
+const parseSource = (value?: string): AssistantCatalogSource | undefined =>
+  ASSISTANT_SOURCES.includes(value as AssistantCatalogSource) ? (value as AssistantCatalogSource) : undefined;
 
 const AssistantSettings: React.FC = () => {
-  const [message, messageContext] = Message.useMessage({ maxCount: 10 });
   const { t } = useTranslation();
-  const location = useLocation();
   const navigate = useNavigate();
-  const navigationState = (location.state as AssistantNavigationState | null) ?? null;
+  const route = useParams<{ source?: string; namespace?: string; assistantName?: string }>();
+  const routeSource = parseSource(route.source);
+  const routeIdentity: AssistantCatalogIdentity | undefined =
+    routeSource && route.assistantName
+      ? {
+          source: routeSource,
+          namespace: decodeURIComponent(route.namespace === '~' ? '' : (route.namespace ?? '')),
+          slug: decodeURIComponent(route.assistantName),
+        }
+      : undefined;
 
-  // Keep the current management surface when returning from the editor. The
-  // unified Enabled tab is the default entry point for assistant ordering.
-  const [homeTab, setHomeTab] = React.useState<'enabled' | 'mine' | 'official'>('enabled');
-
-  // "Chat" on an assistant → open a new conversation with it preselected.
-  const handleStartChat = useCallback(
-    (assistant: AssistantListItem) => {
-      navigate('/guid', { state: { selectedAssistantId: assistant.id } });
-    },
-    [navigate]
-  );
-
-  // Compose hooks
-  const {
-    assistants,
-    activeAssistantId,
-    setActiveAssistantId,
-    activeAssistant,
-    loadAssistants,
-    reorderEnabledAssistants,
-    assistantOrder,
-    setAssistantOrder,
-    localeKey,
-  } = useAssistantList();
-  const managedAgentRuntimeCatalog = useManagedAgentRuntimeCatalog();
-  const builtinAvatarOptions = useMemo(
-    () =>
-      assistants
-        .filter((assistant) => assistant.source === 'builtin' && assistant.avatar?.startsWith('/api/assistants/'))
-        .map((assistant) => {
-          const src = resolveAvatarImageSrc(assistant.avatar);
-          if (!src) {
-            return null;
-          }
-
-          return {
-            id: assistant.id,
-            label: assistant.name_i18n?.[localeKey] || assistant.name,
-            src,
-          };
-        })
-        .filter((option): option is NonNullable<typeof option> => option !== null),
-    [assistants, localeKey]
-  );
-  const editor = useAssistantEditor({
-    localeKey,
-    activeAssistant,
-    setActiveAssistantId,
-    loadAssistants,
-    assistants,
-    assistantOrder,
-    setAssistantOrder,
-    message,
-  });
-  const availableBackends = useMemo(
-    () => buildAssistantEditorBackends(managedAgentRuntimeCatalog, localeKey, editor.editAgent),
-    [editor.editAgent, localeKey, managedAgentRuntimeCatalog]
-  );
-
-  const editAvatarImage = editor.editAvatarPreview || resolveAvatarImageSrc(editor.editAvatar);
-  const hasConsumedNavigationIntentRef = useRef(false);
-  const showEditor = editor.editVisible && (editor.isCreating || activeAssistantId !== null);
-  const editorViewModel: AssistantEditorViewModel = {
-    isCreating: editor.isCreating,
-    profile: {
-      name: editor.editName,
-      setName: editor.setEditName,
-      description: editor.editDescription,
-      setDescription: editor.setEditDescription,
-      avatar: editor.editAvatar,
-      setAvatar: editor.setEditAvatar,
-      setAvatarPreview: editor.setEditAvatarPreview,
-      avatarImage: editAvatarImage,
-      builtinAvatarOptions,
-    },
-    agent: {
-      value: editor.editAgent,
-      setValue: editor.setEditAgent,
-      availableBackends,
-    },
-    prompts: {
-      text: editor.editRecommendedPromptsText,
-      setText: editor.setEditRecommendedPromptsText,
-    },
-    defaults: {
-      model: {
-        mode: editor.defaultModelMode,
-        setMode: editor.setDefaultModelMode,
-        value: editor.defaultModelValue,
-        setValue: editor.setDefaultModelValue,
-      },
-      permission: {
-        mode: editor.defaultPermissionMode,
-        setMode: editor.setDefaultPermissionMode,
-        value: editor.defaultPermissionValue,
-        setValue: editor.setDefaultPermissionValue,
-      },
-      thoughtLevel: {
-        mode: editor.defaultThoughtLevelMode,
-        setMode: editor.setDefaultThoughtLevelMode,
-        value: editor.defaultThoughtLevelValue,
-        setValue: editor.setDefaultThoughtLevelValue,
-      },
-      mcps: {
-        mode: editor.defaultMcpMode,
-        setMode: editor.setDefaultMcpMode,
-        availableServers: editor.availableMcpServers,
-        selectedIds: editor.selectedMcpIds,
-        setSelectedIds: editor.setSelectedMcpIds,
-      },
-    },
-    rules: {
-      content: editor.editContext,
-      setContent: editor.setEditContext,
-      viewMode: editor.promptViewMode,
-      setViewMode: editor.setPromptViewMode,
-    },
-    skills: {
-      availableSkills: editor.availableSkills,
-      selectedSkills: editor.selectedSkills,
-      setSelectedSkills: editor.setSelectedSkills,
-    },
-    actions: {
-      save: editor.handleSave,
-      requestDelete: editor.handleDeleteClick,
-      duplicate: (assistant) => void editor.handleDuplicate(assistant),
-    },
-  };
+  const [source, setSource] = useState<SourceFilter>(routeSource ?? 'all');
+  const [status, setStatus] = useState<StatusFilter>('all');
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [busyIdentity, setBusyIdentity] = useState<string>();
+  const [detailTab, setDetailTab] = useState<AssistantDetailTab>('overview');
+  const [selectedVersion, setSelectedVersion] = useState<string>();
+  const [baseVersion, setBaseVersion] = useState<string>();
+  const [targetVersion, setTargetVersion] = useState<string>();
+  const [activationPlan, setActivationPlan] = useState<AssistantActivationPlan>();
+  const [activationVisible, setActivationVisible] = useState(false);
+  const [activationSubmitting, setActivationSubmitting] = useState(false);
+  const [activationRetrying, setActivationRetrying] = useState(false);
+  const [activationError, setActivationError] = useState<string>();
+  const [activationAttempt, setActivationAttempt] = useState<ActivationAttempt>();
+  const [createVisible, setCreateVisible] = useState(false);
+  const [createSlug, setCreateSlug] = useState('');
+  const [createName, setCreateName] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+  const [copyVisible, setCopyVisible] = useState(false);
+  const [copySlug, setCopySlug] = useState('');
+  const [publishVisible, setPublishVisible] = useState(false);
+  const [publishMessage, setPublishMessage] = useState('');
 
   useEffect(() => {
-    if (hasConsumedNavigationIntentRef.current) return;
-    const openAssistantFromRoute =
-      navigationState?.openAssistantEditor && navigationState.openAssistantId ? navigationState.openAssistantId : null;
+    const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
-    let openAssistantFromSession: string | null = null;
-    try {
-      const rawIntent = sessionStorage.getItem(OPEN_ASSISTANT_EDITOR_INTENT_KEY);
-      if (rawIntent) {
-        const parsedIntent = JSON.parse(rawIntent) as { assistantId?: string; openAssistantEditor?: boolean };
-        if (parsedIntent.openAssistantEditor && parsedIntent.assistantId) {
-          openAssistantFromSession = parsedIntent.assistantId;
-        }
+  useEffect(() => {
+    setSelectedVersion(undefined);
+    setBaseVersion(undefined);
+    setTargetVersion(undefined);
+    setDetailTab('overview');
+  }, [routeIdentity?.source, routeIdentity?.namespace, routeIdentity?.slug]);
+
+  const listSources = source === 'all' ? ASSISTANT_SOURCES : [source];
+  const catalogKey = ['assistant-catalog', listSources.join(','), debouncedQuery, status] as const;
+  const {
+    data: page,
+    error,
+    isLoading,
+    mutate: refreshCatalog,
+  } = useSWR<AssistantCatalogPage>(catalogKey, async () => {
+    const pages = await Promise.all(
+      listSources.map((catalogSource) =>
+        ipcBridge.assistants.listCatalog.invoke({
+          source: catalogSource,
+          query: debouncedQuery || undefined,
+          limit: 100,
+        })
+      )
+    );
+    const items = pages
+      .flatMap((item) => item.items)
+      .filter((item) =>
+        status === 'all' ? true : status === 'enabled' ? item.preferences.enabled : !item.preferences.enabled
+      )
+      .sort((left, right) => left.name.localeCompare(right.name));
+    return { items, total: items.length };
+  });
+
+  const detailKey = routeIdentity ? ['assistant-catalog-detail', routeIdentity, selectedVersion] : null;
+  const {
+    data: detail,
+    error: detailError,
+    isLoading: detailLoading,
+    mutate: refreshDetail,
+  } = useSWR<AssistantCatalogDetail>(detailKey, () =>
+    ipcBridge.assistants.getCatalogDetail.invoke({ ...routeIdentity!, version: selectedVersion })
+  );
+
+  useEffect(() => {
+    if (!detail) return;
+    const versions = detail.versions.map((item) => item.version);
+    setTargetVersion((current) => (current && versions.includes(current) ? current : detail.manifest.version));
+    setBaseVersion((current) => {
+      if (current && versions.includes(current) && current !== detail.manifest.version) return current;
+      return versions.find((version) => version !== detail.manifest.version);
+    });
+  }, [detail]);
+
+  const compareKey =
+    routeIdentity && baseVersion && targetVersion && baseVersion !== targetVersion
+      ? ['assistant-version-compare', routeIdentity, baseVersion, targetVersion]
+      : null;
+  const { data: comparison, isLoading: comparisonLoading } = useSWR<AssistantVersionComparison>(compareKey, () =>
+    ipcBridge.assistants.compareCatalogVersions.invoke({
+      ...routeIdentity!,
+      base: baseVersion!,
+      target: targetVersion!,
+    })
+  );
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshCatalog(), routeIdentity ? refreshDetail() : Promise.resolve()]);
+  }, [refreshCatalog, refreshDetail, routeIdentity]);
+
+  const identityKey = (identity: AssistantCatalogIdentity) =>
+    `${identity.source}:${identity.namespace}:${identity.slug}`;
+
+  const commitActivation = useCallback(
+    async (
+      plan: AssistantActivationPlan,
+      confirmedGroups: AssistantRequirementKind[],
+      choices: AssistantActivationChoice[]
+    ) => {
+      setActivationSubmitting(true);
+      try {
+        await ipcBridge.assistants.commitActivation.invoke({
+          ...plan.identity,
+          planId: plan.planId,
+          fingerprint: plan.fingerprint,
+          confirmedGroups,
+          choices,
+        });
+        setActivationVisible(false);
+        setActivationPlan(undefined);
+        setActivationError(undefined);
+        setActivationAttempt(undefined);
+        Message.success(t('settings.assistantCatalog.activation.enabledSuccess'));
+        await refreshAll();
+      } catch (activationError) {
+        console.error('[AssistantCatalog] activation failed', activationError);
+        setActivationError(describeError(activationError));
+      } finally {
+        setActivationSubmitting(false);
+        setBusyIdentity(undefined);
       }
-    } catch (error) {
-      console.error('[AssistantManagement] Failed to parse assistant open intent:', error);
-    }
+    },
+    [refreshAll, t]
+  );
 
-    const targetAssistantId = openAssistantFromRoute ?? openAssistantFromSession;
-    if (!targetAssistantId) return;
-    if (assistants.length === 0) return;
+  const prepareActivation = useCallback(
+    async (attempt: ActivationAttempt, retry = false) => {
+      const key = identityKey(attempt.assistant.identity);
+      setBusyIdentity(key);
+      setActivationAttempt(attempt);
+      setActivationVisible(true);
+      setActivationPlan(undefined);
+      setActivationError(undefined);
+      setActivationRetrying(retry);
+      try {
+        const plan = await ipcBridge.assistants.prepareActivation.invoke({
+          ...attempt.assistant.identity,
+          version: attempt.version,
+        });
+        setActivationPlan(plan);
+        if (plan.readyWithoutChanges) await commitActivation(plan, [], []);
+      } catch (prepareError) {
+        console.error('[AssistantCatalog] prepare activation failed', prepareError);
+        setActivationError(describeError(prepareError));
+        setBusyIdentity(undefined);
+      } finally {
+        setActivationRetrying(false);
+      }
+    },
+    [commitActivation]
+  );
 
-    const targetAssistant = assistants.find((assistant) => assistant.id === targetAssistantId);
-    if (!targetAssistant) return;
+  const changeEnabled = useCallback(
+    async (assistant: AssistantCatalogItem, enabled: boolean, version?: string) => {
+      const key = identityKey(assistant.identity);
+      setBusyIdentity(key);
+      if (!enabled) {
+        try {
+          await ipcBridge.assistants.updateCatalogPreferences.invoke({
+            ...assistant.identity,
+            selectedVersion: version ?? assistant.preferences.selectedVersion ?? assistant.latestVersion,
+            followLatest: assistant.preferences.followLatest,
+            enabled: false,
+            sortOrder: assistant.preferences.sortOrder,
+          });
+          Message.success(t('settings.assistantCatalog.disabledSuccess'));
+          await refreshAll();
+        } catch (disableError) {
+          console.error('[AssistantCatalog] disable failed', disableError);
+          Message.error(t('settings.assistantCatalog.actionFailed'));
+        } finally {
+          setBusyIdentity(undefined);
+        }
+        return;
+      }
+      await prepareActivation({
+        assistant,
+        version: version ?? assistant.preferences.selectedVersion ?? assistant.latestVersion,
+      });
+    },
+    [prepareActivation, refreshAll, t]
+  );
 
-    hasConsumedNavigationIntentRef.current = true;
+  const createAssistant = async () => {
+    if (!createSlug.trim() || !createName.trim()) return;
     try {
-      sessionStorage.removeItem(OPEN_ASSISTANT_EDITOR_INTENT_KEY);
-    } catch (error) {
-      console.error('[AssistantManagement] Failed to clear assistant open intent:', error);
+      const created = await ipcBridge.assistants.createMine.invoke({
+        slug: createSlug.trim(),
+        name: createName.trim(),
+        description: createDescription.trim(),
+      });
+      setCreateVisible(false);
+      setCreateSlug('');
+      setCreateName('');
+      setCreateDescription('');
+      await refreshCatalog();
+      void navigate(assistantCatalogRoute(created.item.identity));
+      Message.success(t('settings.assistantCatalog.createSuccess'));
+    } catch (createError) {
+      console.error('[AssistantCatalog] create failed', createError);
+      Message.error(t('settings.assistantCatalog.actionFailed'));
     }
-    void editor.handleEdit(targetAssistant);
-  }, [assistants, editor, navigationState]);
+  };
+
+  const copyToMine = async () => {
+    if (!routeIdentity || !detail || !copySlug.trim()) return;
+    try {
+      const copied = await ipcBridge.assistants.copyToMine.invoke({
+        ...routeIdentity,
+        version: detail.manifest.version,
+        targetSlug: copySlug.trim(),
+      });
+      setCopyVisible(false);
+      setCopySlug('');
+      await refreshCatalog();
+      void navigate(assistantCatalogRoute(copied.item.identity));
+      Message.success(t('settings.assistantCatalog.copySuccess'));
+    } catch (copyError) {
+      console.error('[AssistantCatalog] copy failed', copyError);
+      Message.error(t('settings.assistantCatalog.actionFailed'));
+    }
+  };
+
+  const exportCurrent = async () => {
+    if (!routeIdentity || !detail) return;
+    const directories = await ipcBridge.dialog.showOpen.invoke({ properties: ['openDirectory', 'createDirectory'] });
+    if (!directories?.[0]) return;
+    const root = directories[0].replace(/[\\/]+$/u, '');
+    try {
+      await ipcBridge.assistants.exportCatalog.invoke({
+        ...routeIdentity,
+        version: detail.manifest.version,
+        outputPath: `${root}/${routeIdentity.slug}-${detail.manifest.version}.zip`,
+      });
+      Message.success(t('settings.assistantCatalog.exportSuccess'));
+    } catch (exportError) {
+      console.error('[AssistantCatalog] export failed', exportError);
+      Message.error(t('settings.assistantCatalog.actionFailed'));
+    }
+  };
+
+  const saveSettings = async (
+    settings: Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>
+  ) => {
+    if (!routeIdentity) return;
+    setBusyIdentity(identityKey(routeIdentity));
+    try {
+      await ipcBridge.assistants.updateCatalogSettings.invoke({ ...routeIdentity, ...settings });
+      await Promise.all([refreshDetail(), refreshCatalog()]);
+      Message.success(t('settings.assistantCatalog.settingsSaved'));
+    } catch (saveError) {
+      console.error('[AssistantCatalog] save settings failed', saveError);
+      Message.error(t('settings.assistantCatalog.actionFailed'));
+    } finally {
+      setBusyIdentity(undefined);
+    }
+  };
+
+  const deleteCurrent = () => {
+    if (!routeIdentity || routeIdentity.source !== 'mine') return;
+    Modal.confirm({
+      title: t('settings.assistantCatalog.deleteTitle'),
+      content: t('settings.assistantCatalog.deleteConfirm'),
+      okButtonProps: { status: 'danger' },
+      onOk: async () => {
+        await ipcBridge.assistants.deleteCatalog.invoke(routeIdentity);
+        await refreshCatalog();
+        Message.success(t('settings.assistantCatalog.deleteSuccess'));
+        void navigate('/settings/assistants');
+      },
+    });
+  };
+
+  const publishCurrent = async () => {
+    if (!routeIdentity || routeIdentity.source !== 'tjuae-hub' || !publishMessage.trim()) return;
+    setBusyIdentity(identityKey(routeIdentity));
+    try {
+      await ipcBridge.assistants.publishCatalog.invoke({
+        ...routeIdentity,
+        message: publishMessage.trim(),
+      });
+      setPublishVisible(false);
+      setPublishMessage('');
+      await refreshAll();
+      Message.success(t('settings.assistantCatalog.publishSuccess'));
+    } catch (publishError) {
+      console.error('[AssistantCatalog] publish failed', publishError);
+      Message.error(t('settings.assistantCatalog.actionFailed'));
+    } finally {
+      setBusyIdentity(undefined);
+    }
+  };
+
+  const currentAssistant = detail?.item;
+  if (routeIdentity) {
+    return (
+      <SettingsPageWrapper className={styles.page} contentClassName={styles.detailPageContent}>
+        <AssistantCatalogDetailView
+          detail={detail}
+          loading={detailLoading}
+          failed={Boolean(detailError)}
+          busy={Boolean(currentAssistant && busyIdentity === identityKey(currentAssistant.identity))}
+          activeTab={detailTab}
+          comparison={comparison}
+          comparisonLoading={comparisonLoading}
+          baseVersion={baseVersion}
+          targetVersion={targetVersion}
+          onBack={() => void navigate('/settings/assistants')}
+          onTabChange={setDetailTab}
+          onVersionChange={setSelectedVersion}
+          onEnabledChange={(enabled) => {
+            if (currentAssistant) void changeEnabled(currentAssistant, enabled, detail?.manifest.version);
+          }}
+          onCompareVersions={(base, target) => {
+            setBaseVersion(base);
+            setTargetVersion(target);
+          }}
+          onCopyToMine={() => {
+            setCopySlug(`${routeIdentity.slug}-copy`);
+            setCopyVisible(true);
+          }}
+          onExport={() => void exportCurrent()}
+          onSaveSettings={(settings) => void saveSettings(settings)}
+          onDelete={deleteCurrent}
+          onPublish={() => setPublishVisible(true)}
+        />
+        <AssistantActivationModal
+          plan={activationPlan}
+          error={activationError}
+          visible={activationVisible}
+          submitting={activationSubmitting}
+          retrying={activationRetrying}
+          onCancel={() => {
+            setActivationVisible(false);
+            setActivationPlan(undefined);
+            setActivationError(undefined);
+            setActivationAttempt(undefined);
+            setBusyIdentity(undefined);
+          }}
+          onRetry={() => {
+            if (activationAttempt) void prepareActivation(activationAttempt, true);
+          }}
+          onCommit={(groups, choices) => {
+            if (activationPlan) void commitActivation(activationPlan, groups, choices);
+          }}
+          onOpenSettings={(kind) => {
+            const path =
+              kind === 'mcp'
+                ? '/settings/tools'
+                : kind === 'model'
+                  ? '/settings/model'
+                  : kind === 'agent'
+                    ? '/settings/agent'
+                    : '/settings/skills';
+            void navigate(path);
+          }}
+        />
+        <Modal
+          visible={copyVisible}
+          title={t('settings.assistantCatalog.copyTitle')}
+          okButtonProps={{ disabled: !copySlug.trim() }}
+          onOk={() => void copyToMine()}
+          onCancel={() => setCopyVisible(false)}
+        >
+          <Input value={copySlug} onChange={setCopySlug} placeholder={t('settings.assistantCatalog.slugPlaceholder')} />
+        </Modal>
+        <Modal
+          visible={publishVisible}
+          title={t('settings.assistantCatalog.publishTitle')}
+          okButtonProps={{ disabled: !publishMessage.trim() }}
+          onOk={() => void publishCurrent()}
+          onCancel={() => setPublishVisible(false)}
+        >
+          <Input.TextArea
+            value={publishMessage}
+            onChange={setPublishMessage}
+            maxLength={500}
+            showWordLimit
+            placeholder={t('settings.assistantCatalog.publishPlaceholder')}
+          />
+        </Modal>
+      </SettingsPageWrapper>
+    );
+  }
 
   return (
-    <div className='h-full w-full overflow-hidden bg-bg-0'>
-      <div className='flex flex-col h-full w-full'>
-        {messageContext}
-        <div className='flex-1 min-h-0'>
-          {showEditor ? (
-            <AssistantEditorPage
-              editor={editorViewModel}
-              activeAssistant={activeAssistant}
-              onBack={() => editor.setEditVisible(false)}
-            />
-          ) : (
-            <AssistantHomeTabs
-              assistants={assistants}
-              assistantOrder={assistantOrder}
-              localeKey={localeKey}
-              initialTab={homeTab}
-              onTabChange={setHomeTab}
-              onOpenDetail={(assistant) => {
-                setActiveAssistantId(assistant.id);
-                void editor.handleEdit(assistant);
-              }}
-              onOpenSettings={(assistant) => {
-                setActiveAssistantId(assistant.id);
-                void editor.handleEdit(assistant);
-              }}
-              onDuplicate={(assistant) => {
-                // A duplicate becomes a new user assistant, so return to My
-                // Assistants after saving — not the Official tab it came from.
-                setHomeTab('mine');
-                void editor.handleDuplicate(assistant);
-              }}
-              onDelete={(assistant) => editor.handleDeleteRequest(assistant)}
-              onCreate={() => {
-                setHomeTab('mine');
-                void editor.handleCreate();
-              }}
-              onToggleEnabled={(assistant, checked) => void editor.handleToggleEnabled(assistant, checked)}
-              onReorderEnabled={async (activeId, overId) => {
-                try {
-                  await reorderEnabledAssistants(activeId, overId);
-                } catch {
-                  message.error(t('common.failed', { defaultValue: 'Failed' }));
-                }
-              }}
-              onStartChat={handleStartChat}
-            />
-          )}
-
-          <DeleteAssistantModal
-            visible={editor.deleteConfirmVisible}
-            onCancel={() => editor.setDeleteConfirmVisible(false)}
-            onConfirm={editor.handleDeleteConfirm}
-            activeAssistant={activeAssistant}
+    <SettingsPageWrapper className={styles.page} contentClassName={styles.directoryPageContent}>
+      <header className={styles.catalogHeader}>
+        <div>
+          <h1>{t('settings.assistantCatalog.title')}</h1>
+          <p>{t('settings.assistantCatalog.description')}</p>
+        </div>
+        <Button type='primary' icon={<Plus />} onClick={() => setCreateVisible(true)}>
+          {t('settings.assistantCatalog.add')}
+        </Button>
+      </header>
+      <div className={styles.catalogToolbar}>
+        <Input
+          allowClear
+          prefix={<Search />}
+          value={query}
+          placeholder={t('settings.assistantCatalog.searchPlaceholder')}
+          onChange={setQuery}
+        />
+        <Select
+          value={source}
+          onChange={setSource}
+          options={[
+            { value: 'all', label: t('settings.assistantCatalog.allSources') },
+            ...ASSISTANT_SOURCES.map((item) => ({ value: item, label: t(assistantSourceTranslationKey[item]) })),
+          ]}
+        />
+        <Radio.Group
+          type='button'
+          value={status}
+          onChange={setStatus}
+          options={[
+            { value: 'all', label: t('settings.assistantCatalog.allStatuses') },
+            { value: 'enabled', label: t('settings.assistantCatalog.enabledOnly') },
+            { value: 'disabled', label: t('settings.assistantCatalog.disabledOnly') },
+          ]}
+        />
+      </div>
+      <div className={styles.directoryHeading}>
+        <strong>{t('settings.assistantCatalog.loadedCount', { count: page?.total ?? 0 })}</strong>
+        {error ? <span>{t('settings.assistantCatalog.fetchFailed')}</span> : null}
+      </div>
+      <AssistantCatalogDirectory
+        page={page}
+        loading={isLoading}
+        busyIdentity={busyIdentity}
+        onOpen={(assistant) => void navigate(assistantCatalogRoute(assistant.identity))}
+        onEnabledChange={(assistant, enabled) => void changeEnabled(assistant, enabled)}
+      />
+      <AssistantActivationModal
+        plan={activationPlan}
+        error={activationError}
+        visible={activationVisible}
+        submitting={activationSubmitting}
+        retrying={activationRetrying}
+        onCancel={() => {
+          setActivationVisible(false);
+          setActivationPlan(undefined);
+          setActivationError(undefined);
+          setActivationAttempt(undefined);
+          setBusyIdentity(undefined);
+        }}
+        onRetry={() => {
+          if (activationAttempt) void prepareActivation(activationAttempt, true);
+        }}
+        onCommit={(groups, choices) => {
+          if (activationPlan) void commitActivation(activationPlan, groups, choices);
+        }}
+        onOpenSettings={(kind) => {
+          const path =
+            kind === 'mcp'
+              ? '/settings/tools'
+              : kind === 'model'
+                ? '/settings/model'
+                : kind === 'agent'
+                  ? '/settings/agent'
+                  : '/settings/skills';
+          void navigate(path);
+        }}
+      />
+      <Modal
+        visible={createVisible}
+        title={t('settings.assistantCatalog.createTitle')}
+        okButtonProps={{ disabled: !createSlug.trim() || !createName.trim() }}
+        onOk={() => void createAssistant()}
+        onCancel={() => setCreateVisible(false)}
+      >
+        <div className={styles.modalFields}>
+          <Input
+            value={createSlug}
+            onChange={setCreateSlug}
+            placeholder={t('settings.assistantCatalog.slugPlaceholder')}
+          />
+          <Input
+            value={createName}
+            onChange={setCreateName}
+            placeholder={t('settings.assistantCatalog.namePlaceholder')}
+          />
+          <Input.TextArea
+            value={createDescription}
+            onChange={setCreateDescription}
+            placeholder={t('settings.assistantCatalog.descriptionPlaceholder')}
           />
         </div>
-      </div>
-    </div>
+      </Modal>
+    </SettingsPageWrapper>
   );
 };
 

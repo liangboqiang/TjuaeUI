@@ -1,7 +1,7 @@
 import type { CustomAgentAdvancedOverrides } from '@/common/types/platform/acpTypes';
 import type { AgentMetadata, ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import { acpConversation, dialog, fs } from '@/common/adapter/ipcBridge';
-import { useAssistantList } from '@/renderer/hooks/assistant';
+import { useAssistantList } from '@/renderer/hooks/assistant/useAssistantList';
 import { resolveAvatarImageSrc } from '@/renderer/pages/settings/AssistantSettings/assistantUtils';
 import { resolveAssistantAvatar } from '@/renderer/utils/model/assistantAvatar';
 import {
@@ -100,7 +100,7 @@ export interface CustomAgentDraft {
   /**
    * User-picked avatar — backend field name is `icon`. May be:
    *   - a single emoji glyph,
-   *   - a backend-relative URL (e.g. `/api/assistants/{id}/avatar`, from the
+   *   - a backend-relative URL (e.g. `/api/assistant-assets/{source}/{id}/avatar`, from the
    *     built-in avatar gallery), or
    *   - a `data:` URL (uploaded image, client-side downscaled to ≤256px).
    */
@@ -222,15 +222,12 @@ const InlineAgentEditor: React.FC<InlineAgentEditorProps> = ({ agent, onSave, on
   const [testErrorDetail, setTestErrorDetail] = useState('');
   const runtimeScopeId = useMemo(() => agent?.id || uuid(), [agent?.id]);
 
-  // Built-in avatar gallery: reuse the same source as the assistant editor —
-  // builtin assistants that ship an image avatar (`/api/assistants/{id}/avatar`).
-  // Centralizing this here avoids a new asset directory and keeps the gallery
-  // visually consistent across both editors.
+  // 复用已激活助手目录中的图片头像，避免维护第二套头像资产清单。
   const { assistants: builtinAssistants, localeKey } = useAssistantList();
   const builtinAvatarOptions = useMemo(
     () =>
       builtinAssistants
-        .filter((assistant) => assistant.source === 'builtin' && assistant.avatar?.startsWith('/api/assistants/'))
+        .filter((assistant) => Boolean(assistant.avatar))
         .map((assistant) => {
           const src = resolveAvatarImageSrc(assistant.avatar);
           if (!src) return null;

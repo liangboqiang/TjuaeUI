@@ -124,7 +124,7 @@ const WecomConfigForm: React.FC<WecomConfigFormProps> = ({
     const loadAssistantsAndSelection = async () => {
       try {
         const [assistantList, saved] = await Promise.all([
-          assistants.list.invoke(),
+          assistants.listSelectable.invoke(),
           channel.getPlatformSettings.invoke({ platform: 'wecom' }),
         ]);
 

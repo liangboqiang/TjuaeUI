@@ -1,0 +1,149 @@
+.workspace {
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
+  min-height: 540px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-2);
+  border-radius: 16px;
+  background: var(--color-bg-2);
+}
+
+.rail {
+  padding: 14px 10px;
+  border-right: 1px solid var(--color-border-2);
+  background: var(--color-fill-1);
+}
+
+.rail button {
+  width: 100%;
+  height: 42px;
+  justify-content: flex-start;
+  margin-bottom: 4px;
+  border-radius: 10px;
+}
+
+.active {
+  color: var(--color-text-1) !important;
+  background: var(--color-fill-3) !important;
+  font-weight: 600;
+}
+
+.content {
+  min-width: 0;
+  padding: 28px 32px 96px;
+  position: relative;
+}
+
+.sectionHeader {
+  margin-bottom: 24px;
+}
+
+.sectionHeader h3 {
+  margin: 0 0 6px;
+  color: var(--color-text-1);
+  font-size: 20px;
+}
+
+.sectionHeader p {
+  margin: 0;
+  color: var(--color-text-3);
+}
+
+.fields {
+  display: grid;
+  gap: 20px;
+  max-width: 780px;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 156px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.field > span {
+  padding-top: 8px;
+  color: var(--color-text-2);
+  font-weight: 500;
+}
+
+.fieldControl {
+  min-width: 0;
+}
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarPreview {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border-2);
+  border-radius: 14px;
+  background: var(--color-fill-1);
+  font-size: 24px;
+}
+
+.avatarPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.rulesToolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.rulesEditor {
+  min-height: 360px;
+  font-family: var(--font-mono);
+}
+
+.rulesPreview {
+  min-height: 360px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border-2);
+  border-radius: 12px;
+  background: var(--color-fill-1);
+}
+
+.footer {
+  position: absolute;
+  right: 28px;
+  bottom: 22px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border-2);
+  background: var(--color-bg-2);
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 156px minmax(0, 1fr);
+  }
+
+  .content {
+    padding-inline: 20px;
+  }
+
+  .field {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .field > span {
+    padding-top: 0;
+  }
+}

@@ -5,15 +5,13 @@
  * - Guid "+" menu: skills submenu gains a search box above the list when the
  *   skill count exceeds the threshold (5), and typing filters the checkboxes.
  * - Guid "+" menu: MCP submenu gets the same treatment.
- * - Assistant editor: default model / skills / MCP selects become searchable
- *   when their option count exceeds the threshold.
  *
  * The sandboxed E2E environment controls neither the number of skills nor MCP
  * servers, so each test branches on the actual count: above the threshold it
  * asserts search + filtering; at or below it asserts the search box is absent.
  */
 import { test, expect, type Page } from '../fixtures';
-import { closeAssistantEditor, fillAssistantName, goToGuid } from '../helpers';
+import { goToGuid } from '../helpers';
 
 const SEARCH_THRESHOLD = 5;
 
@@ -116,57 +114,5 @@ test.describe('Guid plus-menu submenu search', () => {
     } else {
       await expect(search).toHaveCount(0);
     }
-  });
-});
-
-test.describe('Assistant editor default selects search', () => {
-  test.setTimeout(90_000);
-
-  test('default model / skills / mcp selects expose search above the threshold', async ({ page }) => {
-    // Assistants moved from settings to a standalone `#/assistants` page; the
-    // legacy goToAssistantSettings helper still walks the settings sider and
-    // fails, so navigate directly. Create is now a TalkToButler dropdown —
-    // open it and pick "create manually" to reach the editor.
-    await page.evaluate(() => window.location.assign('#/assistants'));
-    const createButton = page.locator('[data-testid="btn-create-assistant"]');
-    await createButton.waitFor({ state: 'visible', timeout: 15_000 });
-    await createButton.click();
-    await page.locator('[data-testid="btn-create-assistant-manual"]').click();
-    await page.locator('[data-testid="input-assistant-name"]').waitFor({ state: 'visible', timeout: 10_000 });
-    await fillAssistantName(page, `Dropdown Search ${Date.now()}`);
-
-    for (const testId of [
-      'select-assistant-default-model',
-      'select-assistant-default-skills',
-      'select-assistant-default-mcp',
-    ]) {
-      const select = page.locator(`[data-testid="${testId}"]`);
-      if (!(await select.isVisible().catch(() => false))) continue;
-
-      await select.click();
-      const options = page.locator('.arco-select-option:visible');
-      await options
-        .first()
-        .waitFor({ state: 'visible', timeout: 5_000 })
-        .catch(() => {});
-      const optionCount = await options.count();
-
-      // Arco showSearch keeps the trigger's inner input editable when open.
-      const searchInput = select.locator('input');
-      const isSearchable = await searchInput
-        .evaluate((node) => !(node as HTMLInputElement).readOnly)
-        .catch(() => false);
-
-      if (optionCount > SEARCH_THRESHOLD + 1) {
-        // +1: the hidden/auto option is part of the popup but not of the threshold count.
-        expect(isSearchable, `${testId} should be searchable with ${optionCount} options`).toBe(true);
-      }
-      // Below the threshold we don't assert false: optionCount includes the auto
-      // option and (for skills) possibly hidden entries, so it over-counts.
-
-      await page.keyboard.press('Escape');
-    }
-
-    await closeAssistantEditor(page);
   });
 });

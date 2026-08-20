@@ -61,7 +61,7 @@ function assistant(id: string, team_selectable: boolean, team_block_reason?: str
   const isTjuaeCli = runtimeKey === 'tjuaecli';
   return {
     id,
-    source: 'generated',
+    source: 'tjuae-hub',
     name: id,
     name_i18n: {},
     description_i18n: {},
@@ -72,8 +72,6 @@ function assistant(id: string, team_selectable: boolean, team_block_reason?: str
       ? { type: 'tjuaecli', source: 'internal' }
       : { type: 'acp', source: 'builtin', acp_backend: runtimeKey },
     enabled_skills: [],
-    custom_skill_names: [],
-    disabled_builtin_skills: [],
     context_i18n: {},
     prompts: [],
     prompts_i18n: {},

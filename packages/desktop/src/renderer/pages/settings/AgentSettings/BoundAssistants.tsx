@@ -24,7 +24,9 @@ export const getBoundAssistants = (agent: Pick<ManagedAgent, 'id'>, assistants: 
  * SWR cache so the list page and every repair page reuse one fetch.
  */
 export const useAssistantsForAgents = (): { assistants: Assistant[]; isLoading: boolean } => {
-  const { data, isLoading } = useSWR<Assistant[]>(BOUND_ASSISTANTS_SWR_KEY, () => ipcBridge.assistants.list.invoke());
+  const { data, isLoading } = useSWR<Assistant[]>(BOUND_ASSISTANTS_SWR_KEY, () =>
+    ipcBridge.assistants.listSelectable.invoke()
+  );
   return { assistants: data ?? [], isLoading };
 };
 

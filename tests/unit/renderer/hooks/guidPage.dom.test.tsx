@@ -24,44 +24,42 @@ const {
     resetCurrentModel: vi.fn(),
   },
   agentSelectionMock: {
-    selectedAssistantId: 'bare-tjuaecli',
+    selectedAssistantId: 'tjuae-hub:tjuae:tjuaeui-assistant',
     selectedAssistant: {
-      id: 'bare-tjuaecli',
-      source: 'generated',
+      id: 'tjuae-hub:tjuae:tjuaeui-assistant',
+      source: 'tjuae-hub',
       name: 'Tjuae CLI',
       name_i18n: {},
       description_i18n: {},
       enabled: true,
       sort_order: 10,
-      preset_agent_type: 'tjuaecli',
+      agent_id: 'tjuaecli',
       enabled_skills: [],
-      custom_skill_names: [],
-      disabled_builtin_skills: [],
       context_i18n: {},
       prompts: [],
       prompts_i18n: {},
       models: [],
+      mcp_ids: [],
       agent_status: 'online',
       team_selectable: true,
       deletable: false,
     },
     assistants: [
       {
-        id: 'bare-tjuaecli',
-        source: 'generated',
+        id: 'tjuae-hub:tjuae:tjuaeui-assistant',
+        source: 'tjuae-hub',
         name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        agent_id: 'tjuaecli',
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
+        mcp_ids: [],
         agent_status: 'online',
         team_selectable: true,
         deletable: false,
@@ -74,7 +72,7 @@ const {
     selectedAcpModel: null,
     setSelectedAcpModel: vi.fn(),
     currentAcpCachedModelInfo: null,
-    defaultAssistantId: 'bare-tjuaecli',
+    defaultAssistantId: 'tjuae-hub:tjuae:tjuaeui-assistant',
     setSelectedAssistantId: vi.fn(),
   },
   guidInputMock: {
@@ -107,7 +105,6 @@ const {
   capturedGuidInputCardProps: [] as Array<Record<string, unknown>>,
   capturedGuidSendDeps: [] as Array<Record<string, unknown>>,
   resolveGuidAssistantDefaultsMock: vi.fn(() => ({
-    disabledBuiltinSkillIds: [],
     skillIds: [],
     mcpIds: [],
   })),
@@ -302,7 +299,6 @@ describe('GuidPage', () => {
     capturedGuidSendDeps.length = 0;
     useGuidAssistantSelectionMock.mockClear();
     resolveGuidAssistantDefaultsMock.mockReturnValue({
-      disabledBuiltinSkillIds: [],
       skillIds: [],
       mcpIds: [],
     });
@@ -316,21 +312,20 @@ describe('GuidPage', () => {
     agentSelectionMock.setSelectedMode.mockReset();
     agentSelectionMock.assistants = [
       {
-        id: 'bare-tjuaecli',
-        source: 'generated',
+        id: 'tjuae-hub:tjuae:tjuaeui-assistant',
+        source: 'tjuae-hub',
         name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        agent_id: 'tjuaecli',
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
+        mcp_ids: [],
         agent_status: 'online',
         team_selectable: true,
         deletable: false,
@@ -456,17 +451,15 @@ describe('GuidPage', () => {
   it('renders example prompts with wrapping text for long assistant suggestions', () => {
     agentSelectionMock.assistants = [
       {
-        id: 'bare-tjuaecli',
-        source: 'generated',
+        id: 'tjuae-hub:tjuae:tjuaeui-assistant',
+        source: 'tjuae-hub',
         name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        agent_id: 'tjuaecli',
         enabled_skills: [],
-        custom_skill_names: [],
-        disabled_builtin_skills: [],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {
@@ -475,6 +468,7 @@ describe('GuidPage', () => {
           ],
         },
         models: [],
+        mcp_ids: [],
         agent_status: 'online',
         team_selectable: true,
         deletable: false,
@@ -508,29 +502,32 @@ describe('GuidPage', () => {
     expect(screen.getByRole('button', { name: 'guid.defaultPrompts.create' })).toBeInTheDocument();
   });
 
-  it('does not seed skill defaults from the assistant list while detail is loading', async () => {
+  it('uses the activated runtime skill defaults without a second detail model', async () => {
     agentSelectionMock.assistants = [
       {
-        id: 'bare-tjuaecli',
-        source: 'generated',
+        id: 'tjuae-hub:tjuae:tjuaeui-assistant',
+        source: 'tjuae-hub',
         name: 'Tjuae CLI',
         name_i18n: {},
         description_i18n: {},
         enabled: true,
         sort_order: 10,
-        preset_agent_type: 'tjuaecli',
+        agent_id: 'tjuaecli',
         enabled_skills: ['stale-list-skill'],
-        custom_skill_names: [],
-        disabled_builtin_skills: ['stale-disabled-builtin'],
         context_i18n: {},
         prompts: [],
         prompts_i18n: {},
         models: [],
+        mcp_ids: [],
         agent_status: 'online',
         team_selectable: true,
         deletable: false,
       },
     ];
+    resolveGuidAssistantDefaultsMock.mockReturnValue({
+      skillIds: ['runtime-skill'],
+      mcpIds: [],
+    });
     swrMock.useSWRMock.mockReturnValue({ data: null });
 
     render(<GuidPage />);
@@ -538,8 +535,8 @@ describe('GuidPage', () => {
     await vi.waitFor(() => {
       const latestDeps = capturedGuidSendDeps.at(-1);
       expect(latestDeps).toMatchObject({
-        guidEnabledSkills: undefined,
-        guidDisabledBuiltinSkills: undefined,
+        guidEnabledSkills: ['runtime-skill'],
+        assistantDefaultSkillIds: ['runtime-skill'],
       });
     });
   });
@@ -548,7 +545,6 @@ describe('GuidPage', () => {
     swrMock.useSWRMock.mockReturnValue({ data: assistantDetailFixture });
     resolveGuidAssistantDefaultsMock.mockReturnValue({
       modelId: 'gpt-4.1',
-      disabledBuiltinSkillIds: [],
       skillIds: [],
       mcpIds: [],
     });
@@ -584,7 +580,6 @@ describe('GuidPage', () => {
     swrMock.useSWRMock.mockReturnValue({ data: assistantDetailFixture });
     resolveGuidAssistantDefaultsMock.mockReturnValue({
       modelId: 'default',
-      disabledBuiltinSkillIds: [],
       skillIds: [],
       mcpIds: [],
     });

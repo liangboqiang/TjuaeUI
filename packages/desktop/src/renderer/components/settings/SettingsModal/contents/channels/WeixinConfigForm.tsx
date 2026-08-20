@@ -195,7 +195,7 @@ const WeixinConfigForm: React.FC<WeixinConfigFormProps> = ({ pluginStatus, model
     const load = async () => {
       try {
         const [assistantList, saved] = await Promise.all([
-          assistants.list.invoke(),
+          assistants.listSelectable.invoke(),
           channel.getPlatformSettings.invoke({ platform: 'weixin' }),
         ]);
 

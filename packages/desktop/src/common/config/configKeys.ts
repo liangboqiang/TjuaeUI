@@ -22,9 +22,8 @@ export type ConfigKeyMap = {
   // One-shot completion flags for legacy → backend migrations. Kept in the
   // local config file (not the backend client-preferences bag) so a downgrade
   // to a pre-flag build still re-reads the legacy data unchanged. See
-  // `migrateProviders` / `migrateAssistantsToBackend` (ELECTRON-1KT).
+  // `migrateProviders` (ELECTRON-1KT).
   'migration.providersMigrated_v1': boolean | undefined;
-  'migration.assistantsMigrated_v1': boolean | undefined;
 };
 
 export type ConfigKey = keyof ConfigKeyMap;

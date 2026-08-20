@@ -13,9 +13,9 @@ export type UseConversationAssistantsResult = {
 
 export const useConversationAssistants = (): UseConversationAssistantsResult => {
   const { assistantOrder } = useAssistantOrder();
-  const { data: assistants, isLoading } = useSWR('assistants.list', async () => {
+  const { data: assistants, isLoading } = useSWR('assistants.listSelectable', async () => {
     try {
-      return await ipcBridge.assistants.list.invoke();
+      return await ipcBridge.assistants.listSelectable.invoke();
     } catch (error) {
       console.error('Failed to load assistants for conversation flows:', error);
       return [] as Assistant[];
@@ -37,7 +37,7 @@ export const useConversationAssistants = (): UseConversationAssistantsResult => 
     presetAssistants,
     isLoading,
     refresh: async () => {
-      await mutate('assistants.list');
+      await mutate('assistants.listSelectable');
     },
   };
 };

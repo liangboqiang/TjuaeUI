@@ -1,13 +1,15 @@
 /**
  * prepareHubResources.js
  *
- * 下载 TjuaeHub 的 index.json 与全部扩展压缩包，放入 resources/hub/，
- * 随应用打包作为本地后备。
+ * 准备 TjuaeHub 的技能与助手目录索引，放入 resources/hub/，随应用打包
+ * 作为只读后备。资产内容始终按索引中的 Git revision 从远程仓库读取，
+ * 不在安装包内分发 ZIP 或安装器。
  *
  * 由构建流水线在 electron-builder 运行前调用。
  *
  * 环境变量：
  *   TJUAEUI_HUB_REF    - 临时覆盖 package.json 中固定的 tjuaeHubRef
+ *   TJUAEUI_HUB_WORKTREE - 从指定的本地 TjuaeHub 工作树准备（开发/验收用）
  *   TJUAEUI_HUB_SKIP   - 设为 1 时跳过 Hub 资源准备
  */
 
@@ -114,13 +116,39 @@ function resolveHubRef() {
   return ref;
 }
 
-function verifyIntegrity(filePath, integrity) {
-  const expected = typeof integrity === 'string' ? integrity.match(/^sha256-([0-9a-f]{64})$/i)?.[1] : null;
-  if (!expected) throw new Error(`${path.basename(filePath)} 缺少有效的 sha256 完整性声明`);
-  const actual = crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
-  if (actual.toLowerCase() !== expected.toLowerCase()) {
-    throw new Error(`${path.basename(filePath)} 完整性校验失败：预期 ${expected}，实际 ${actual}`);
+function resolveHubWorktree() {
+  const configured = String(process.env.TJUAEUI_HUB_WORKTREE || '').trim();
+  if (!configured) return null;
+  const worktree = path.resolve(configured);
+  if (!fs.existsSync(path.join(worktree, 'dist', 'skills.json'))) {
+    throw new Error(`TJUAEUI_HUB_WORKTREE 缺少 dist/skills.json：${worktree}`);
   }
+  if (!fs.existsSync(path.join(worktree, 'dist', 'assistants.json'))) {
+    throw new Error(`TJUAEUI_HUB_WORKTREE 缺少 dist/assistants.json：${worktree}`);
+  }
+  return worktree;
+}
+
+function prepareIndex({ ref, worktree, relativePath, fileName, assetKey }) {
+  const destination = path.join(HUB_DIR, fileName);
+  let source;
+  if (worktree) {
+    fs.copyFileSync(path.join(worktree, relativePath), destination);
+    source = 'local-worktree';
+  } else {
+    source = downloadFile(ref, relativePath, destination);
+  }
+
+  const index = JSON.parse(fs.readFileSync(destination, 'utf-8'));
+  if (index.schemaVersion !== 1 || !index.market || !Array.isArray(index[assetKey])) {
+    throw new Error(`${relativePath} 不符合 Tjuae ${assetKey === 'skills' ? '技能' : '助手'}目录索引协议`);
+  }
+  return {
+    file: fileName,
+    source,
+    sha256: crypto.createHash('sha256').update(fs.readFileSync(destination)).digest('hex'),
+    count: index[assetKey].length,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -133,8 +161,9 @@ function prepareHubResources() {
     return { skipped: true };
   }
 
-  const ref = resolveHubRef();
-  console.log(`[hub] 正在从固定提交 ${ref} 准备 Hub 资源`);
+  const worktree = resolveHubWorktree();
+  const ref = worktree ? null : resolveHubRef();
+  console.log(worktree ? '[hub] 正在从本地 TjuaeHub 工作树准备 Hub 资源' : `[hub] 正在从固定提交 ${ref} 准备 Hub 资源`);
 
   // 清理并创建目标目录。
   if (fs.existsSync(HUB_DIR)) {
@@ -142,57 +171,30 @@ function prepareHubResources() {
   }
   ensureDir(HUB_DIR);
 
-  // 第 1 步：下载 index.json。
-  const indexPath = path.join(HUB_DIR, 'index.json');
-  console.log('[hub] 正在下载 index.json……');
-  const indexUrl = downloadFile(ref, 'index.json', indexPath);
-  console.log(`[hub] 已从 ${indexUrl} 下载 index.json`);
-
-  // 第 2 步：解析索引并下载全部扩展压缩包。
-  const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
-  const extensions = index.extensions || {};
-  const names = Object.keys(extensions);
-
-  console.log(`[hub] 找到 ${names.length} 个待打包扩展`);
-
-  const results = [];
-  for (const name of names) {
-    const ext = extensions[name];
-    const tarball = ext.dist?.tarball;
-    if (!tarball) {
-      throw new Error(`${name} 缺少 dist.tarball，无法生成完整的离线资源包`);
-    }
-
-    const zipPath = path.join(HUB_DIR, path.basename(tarball));
-    const url = downloadFile(ref, tarball, zipPath);
-    verifyIntegrity(zipPath, ext.dist?.archiveIntegrity);
-    const size = fs.statSync(zipPath).size;
-    console.log(`[hub] ${name} -> ${path.basename(tarball)}（${(size / 1024).toFixed(1)} KB，校验通过）`);
-    results.push({
-      name,
-      file: path.basename(tarball),
-      size,
-      integrity: ext.dist.integrity,
-      archiveIntegrity: ext.dist.archiveIntegrity,
-      url,
-    });
-  }
-
-  if (results.length !== names.length) {
-    throw new Error(`Hub 离线资源不完整：预期 ${names.length} 个扩展，实际 ${results.length} 个`);
-  }
-
-  // 第 3 步：写入可追踪、可验证的清单。
+  const skills = prepareIndex({
+    ref,
+    worktree,
+    relativePath: 'dist/skills.json',
+    fileName: 'skills.json',
+    assetKey: 'skills',
+  });
+  const assistants = prepareIndex({
+    ref,
+    worktree,
+    relativePath: 'dist/assistants.json',
+    fileName: 'assistants.json',
+    assetKey: 'assistants',
+  });
   const manifest = {
     ref,
     generatedAt: new Date().toISOString(),
-    indexUrl,
-    extensions: results,
+    source: worktree ? 'local-worktree' : 'pinned-git-revision',
+    indexes: { skills, assistants },
   };
   fs.writeFileSync(path.join(HUB_DIR, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 
-  console.log(`[hub] 完成：已将 ${results.length}/${names.length} 个扩展打包到 resources/hub/`);
-  return { skipped: false, count: results.length, total: names.length };
+  console.log(`[hub] 完成：已写入 ${skills.count} 个技能和 ${assistants.count} 个助手的目录索引`);
+  return { skipped: false, skillCount: skills.count, assistantCount: assistants.count };
 }
 
 // 同时支持直接执行和被 build-with-builder.js 引用。
@@ -205,4 +207,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { prepareHubResources, resolveHubRef, verifyIntegrity };
+module.exports = { prepareHubResources, resolveHubRef, resolveHubWorktree };

@@ -18,15 +18,28 @@ import type {
   TConversationRuntimeSummary,
   TProviderWithModel,
 } from '../config/storage';
+import type { Assistant } from '../types/agent/assistantTypes';
+import { toAssistantSelectionItem } from '../types/agent/assistantTypes';
 import type {
-  Assistant,
-  AssistantDetail,
-  CreateAssistantRequest,
-  ImportAssistantsRequest,
-  ImportAssistantsResult,
-  SetAssistantStateRequest,
-  UpdateAssistantRequest,
-} from '../types/agent/assistantTypes';
+  AssistantActivationChoice,
+  AssistantActivationPlan,
+  AssistantCatalogDetail,
+  AssistantCatalogFileContent,
+  AssistantCatalogIdentity,
+  AssistantCatalogOperation,
+  AssistantCatalogPage,
+  AssistantCatalogSource,
+  AssistantRuntimeOption,
+  AssistantVersionComparison,
+  CopyAssistantToMineRequest,
+  CreateMineAssistantRequest,
+  ExportAssistantRequest,
+  ExportAssistantResponse,
+  PublishAssistantCatalogRequest,
+  PublishAssistantCatalogResponse,
+  SaveAssistantCatalogFileRequest,
+  UpdateAssistantCatalogSettingsRequest,
+} from '../types/platform/assistantCatalog';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from '../types/office/preview';
 import type {
   EnsureConversationRuntimeResponse,
@@ -169,27 +182,109 @@ export const shell = {
 };
 
 // ---------------------------------------------------------------------------
-// Assistants — routed to /api/assistants/*
+// Assistants — catalog, activation transaction, and activated runtime routes.
 // ---------------------------------------------------------------------------
 
 export const assistants = {
-  list: httpGet<Assistant[], void>('/api/assistants'),
-  get: httpGet<AssistantDetail, { id: string; locale?: string }>(
-    ({ id, locale }) =>
-      `/api/assistants/${encodeURIComponent(id)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`
+  listRuntimeOptions: httpGet<AssistantRuntimeOption[], void>('/api/assistant-runtime/options'),
+  listSelectable: withResponseMap(
+    httpGet<AssistantRuntimeOption[], void>('/api/assistant-runtime/options'),
+    (items): Assistant[] => items.map(toAssistantSelectionItem)
   ),
-  create: httpPost<Assistant, CreateAssistantRequest>('/api/assistants'),
-  update: httpPut<Assistant, UpdateAssistantRequest>((p) => `/api/assistants/${p.id}`),
-  delete: httpDelete<void, { id: string }>((p) => `/api/assistants/${p.id}`),
-  setState: httpPatch<Assistant, SetAssistantStateRequest>(
-    (p) => `/api/assistants/${p.id}/state`,
-    (p) => {
-      const { id: _id, ...body } = p;
-      return body;
+  listCatalog: httpGet<
+    AssistantCatalogPage,
+    { source: AssistantCatalogSource; query?: string; sort?: string; cursor?: string; limit?: number }
+  >((params) => {
+    const query = new URLSearchParams();
+    if (params.query) query.set('query', params.query);
+    if (params.sort) query.set('sort', params.sort);
+    if (params.cursor) query.set('cursor', params.cursor);
+    if (params.limit) query.set('limit', String(params.limit));
+    const suffix = query.toString();
+    return `/api/assistants/catalog/${params.source}${suffix ? `?${suffix}` : ''}`;
+  }),
+  getCatalogDetail: httpGet<AssistantCatalogDetail, AssistantCatalogIdentity & { version?: string }>((params) => {
+    const query = params.version ? `?version=${encodeURIComponent(params.version)}` : '';
+    return `${assistantCatalogUrl(params)}${query}`;
+  }),
+  getCatalogFile: httpGet<AssistantCatalogFileContent, AssistantCatalogIdentity & { path: string; version?: string }>(
+    (params) => {
+      const query = new URLSearchParams({ path: params.path });
+      if (params.version) query.set('version', params.version);
+      return `${assistantCatalogUrl(params)}/file?${query}`;
     }
   ),
-  import: httpPost<ImportAssistantsResult, ImportAssistantsRequest>('/api/assistants/import'),
+  saveCatalogFile: httpPut<AssistantCatalogDetail, SaveAssistantCatalogFileRequest>(
+    (params) => `${assistantCatalogUrl(params)}/file`,
+    ({ path, content }) => ({ path, content })
+  ),
+  updateCatalogSettings: httpPut<AssistantCatalogDetail, UpdateAssistantCatalogSettingsRequest>(
+    (params) => `${assistantCatalogUrl(params)}/settings`,
+    ({ name, description, avatar, avatarDataUrl, defaults, recommendedPrompts, rules }) => ({
+      name,
+      description,
+      avatar,
+      avatarDataUrl,
+      defaults,
+      recommendedPrompts,
+      rules,
+    })
+  ),
+  compareCatalogVersions: httpGet<
+    AssistantVersionComparison,
+    AssistantCatalogIdentity & { base: string; target: string }
+  >(
+    (params) =>
+      `${assistantCatalogUrl(params)}/compare/${encodeURIComponent(params.base)}/${encodeURIComponent(params.target)}`
+  ),
+  updateCatalogPreferences: httpPatch<
+    AssistantCatalogOperation,
+    AssistantCatalogIdentity & {
+      selectedVersion?: string;
+      followLatest: boolean;
+      enabled: boolean;
+      sortOrder?: number;
+    }
+  >(
+    (params) => assistantCatalogUrl(params),
+    ({ source: _source, namespace: _namespace, slug: _slug, ...preferences }) => preferences
+  ),
+  prepareActivation: httpPost<AssistantActivationPlan, AssistantCatalogIdentity & { version?: string }>(
+    (params) => `${assistantCatalogUrl(params)}/activation/prepare`,
+    ({ version }) => ({ version })
+  ),
+  commitActivation: httpPost<
+    AssistantCatalogOperation,
+    AssistantCatalogIdentity & {
+      planId: string;
+      fingerprint: string;
+      confirmedGroups: string[];
+      choices: AssistantActivationChoice[];
+    }
+  >(
+    (params) => `${assistantCatalogUrl(params)}/activation/commit`,
+    ({ planId, fingerprint, confirmedGroups, choices }) => ({ planId, fingerprint, confirmedGroups, choices })
+  ),
+  createMine: httpPost<AssistantCatalogDetail, CreateMineAssistantRequest>('/api/assistants/catalog/mine'),
+  copyToMine: httpPost<AssistantCatalogDetail, CopyAssistantToMineRequest>(
+    (params) => `${assistantCatalogUrl(params)}/copy-to-mine`,
+    ({ version, targetSlug }) => ({ version, targetSlug })
+  ),
+  exportCatalog: httpPost<ExportAssistantResponse, ExportAssistantRequest>(
+    (params) => `${assistantCatalogUrl(params)}/export`,
+    ({ version, outputPath }) => ({ version, outputPath })
+  ),
+  publishCatalog: httpPost<PublishAssistantCatalogResponse, PublishAssistantCatalogRequest>(
+    (params) => `${assistantCatalogUrl(params)}/publish`,
+    ({ message }) => ({ message })
+  ),
+  deleteCatalog: httpDelete<void, AssistantCatalogIdentity>((params) => assistantCatalogUrl(params)),
 };
+
+const assistantCatalogUrl = (identity: AssistantCatalogIdentity): string =>
+  `/api/assistants/catalog/${encodeURIComponent(identity.source)}/${encodeURIComponent(
+    identity.namespace || '~'
+  )}/${encodeURIComponent(identity.slug)}`;
 
 // ---------------------------------------------------------------------------
 // Conversation — REST + WS
@@ -606,13 +701,6 @@ export const fs = {
   >('/api/fs/copy'),
   removeEntry: httpPost<void, { path: string; workspace?: string }>('/api/fs/remove'),
   renameEntry: httpPost<{ new_path: string }, { path: string; new_name: string; workspace?: string }>('/api/fs/rename'),
-  readAssistantRule: httpPost<string, { assistant_id: string; locale?: string }>('/api/skills/assistant-rule/read'),
-  writeAssistantRule: httpPost<boolean, { assistant_id: string; content: string; locale?: string }>(
-    '/api/skills/assistant-rule/write'
-  ),
-  deleteAssistantRule: httpDelete<boolean, { assistant_id: string }>(
-    (p) => `/api/skills/assistant-rule/${p.assistant_id}`
-  ),
   listAvailableSkills: withResponseMap(
     httpGet<SkillCatalogPage, void>('/api/skills/catalog?enabled=true'),
     (page): SkillWorkspace[] => page.items.map(toAvailableSkill)

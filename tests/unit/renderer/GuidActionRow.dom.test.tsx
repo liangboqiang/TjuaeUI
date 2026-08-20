@@ -126,7 +126,7 @@ vi.mock('@arco-design/web-react', () => {
 });
 
 const makeSkills = (count: number) =>
-  Array.from({ length: count }, (_, i) => ({ name: `skill-${i}`, description: '', isAuto: false }));
+  Array.from({ length: count }, (_, i) => ({ id: `skill-${i}`, name: `skill-${i}`, description: '' }));
 
 const makeMcpServers = (count: number): IMcpServer[] =>
   Array.from({ length: count }, (_, i) => ({ id: `mcp-${i}`, name: `server-${i}` }) as IMcpServer);
@@ -226,6 +226,6 @@ describe('GuidActionRow skill/MCP submenu search', () => {
     fireEvent.change(screen.getByTestId('guid-skill-search'), { target: { value: 'skill-3' } });
     fireEvent.click(screen.getByText('skill-3').closest('[role="menuitem"]')!);
 
-    expect(onToggleSkill).toHaveBeenCalledWith('skill-3', false);
+    expect(onToggleSkill).toHaveBeenCalledWith('skill-3');
   });
 });

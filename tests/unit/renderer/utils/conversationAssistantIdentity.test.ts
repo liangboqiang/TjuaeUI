@@ -14,7 +14,7 @@ describe('resolveConversationLeadingMark', () => {
       makeConversation(),
       {
         name: 'Academic Paper',
-        logo: '/api/assistants/academic-paper/avatar',
+        logo: '/api/assistant-assets/tjuae-hub/academic-paper/avatar',
         isEmoji: false,
         backend: 'claude',
         assistantId: 'academic-paper',
@@ -24,7 +24,7 @@ describe('resolveConversationLeadingMark', () => {
 
     expect(result).toEqual({
       kind: 'image',
-      value: '/api/assistants/academic-paper/avatar',
+      value: '/api/assistant-assets/tjuae-hub/academic-paper/avatar',
       label: 'Academic Paper',
     });
   });

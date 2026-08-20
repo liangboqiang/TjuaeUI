@@ -6,7 +6,7 @@ import { resolveAssistantConfigId, usePresetAssistantInfo } from '@/renderer/hoo
 const useSWRMock = vi.fn();
 let currentLanguage = 'en-US';
 
-// Backend logo catalog stub. The hook resolves generated/legacy backends to their
+// Backend logo catalog stub. The hook resolves runtime backends to their
 // logo via `resolveAgentLogo(useAgentLogos(), ...)`, so the test mirrors the
 // backend-provided map here.
 const TEST_LOGOS: Record<string, string> = {
@@ -69,7 +69,7 @@ describe('usePresetAssistantInfo', () => {
             {
               id: 'assistant-social',
               name: 'Social Job Publisher',
-              avatar: 'http://127.0.0.1:56663/api/assistants/social-job-publisher/avatar',
+              avatar: 'http://127.0.0.1:56663/api/assistant-assets/tjuae-hub/social-job-publisher/avatar',
               name_i18n: {},
             },
           ],
@@ -91,7 +91,7 @@ describe('usePresetAssistantInfo', () => {
 
     expect(result.current.info).toEqual({
       name: 'Social Job Publisher',
-      logo: 'http://127.0.0.1:56663/api/assistants/social-job-publisher/avatar',
+      logo: 'http://127.0.0.1:56663/api/assistant-assets/tjuae-hub/social-job-publisher/avatar',
       isEmoji: false,
       backend: undefined,
       assistantId: 'assistant-social',
@@ -152,9 +152,9 @@ describe('usePresetAssistantInfo', () => {
       }),
       assistant: {
         id: 'assistant-social',
-        source: 'generated',
+        source: 'tjuae-hub',
         name: 'Social Job Publisher',
-        avatar: '/api/assistants/assistant-social/avatar',
+        avatar: '/api/assistant-assets/tjuae-hub/assistant-social/avatar',
         backend: 'gemini',
       },
     } as TChatConversation;
@@ -163,7 +163,7 @@ describe('usePresetAssistantInfo', () => {
 
     expect(result.current.info).toEqual({
       name: 'Social Job Publisher',
-      logo: '/api/assistants/assistant-social/avatar',
+      logo: '/api/assistant-assets/tjuae-hub/assistant-social/avatar',
       isEmoji: false,
       backend: 'gemini',
       assistantId: 'assistant-social',
@@ -178,7 +178,7 @@ describe('usePresetAssistantInfo', () => {
             {
               id: 'assistant-local-avatar',
               name: 'Local Avatar',
-              avatar: '/api/assistants/assistant-local-avatar/avatar',
+              avatar: '/api/assistant-assets/mine/assistant-local-avatar/avatar',
               name_i18n: {},
             },
           ],
@@ -196,7 +196,7 @@ describe('usePresetAssistantInfo', () => {
       }),
       assistant: {
         id: 'assistant-local-avatar',
-        source: 'user',
+        source: 'mine',
         name: 'Local Avatar',
         avatar: '/Users/demo/.tjuaeui/assistant-avatars/assistant-local-avatar.jpg',
         backend: 'codex',
@@ -207,7 +207,7 @@ describe('usePresetAssistantInfo', () => {
 
     expect(result.current.info).toEqual({
       name: 'Local Avatar',
-      logo: '/api/assistants/assistant-local-avatar/avatar',
+      logo: '/api/assistant-assets/mine/assistant-local-avatar/avatar',
       isEmoji: false,
       backend: undefined,
       assistantId: 'assistant-local-avatar',
@@ -228,7 +228,7 @@ describe('usePresetAssistantInfo', () => {
       }),
       assistant: {
         id: 'assistant-local-avatar',
-        source: 'user',
+        source: 'mine',
         name: 'Local Avatar',
         avatar: '/Users/demo/.tjuaeui/assistant-avatars/assistant-local-avatar.jpg',
         backend: 'codex',
@@ -247,7 +247,7 @@ describe('usePresetAssistantInfo', () => {
     });
   });
 
-  it('returns assistant fallback for generated assistants whose avatar is empty', () => {
+  it('returns assistant fallback for Hub assistants whose avatar is empty', () => {
     useSWRMock.mockImplementation((key: unknown) => {
       if (key === 'assistants') return { data: [], isLoading: false };
       if (key === 'extensions.acpAdapters') return { data: [], isLoading: false };
@@ -256,12 +256,12 @@ describe('usePresetAssistantInfo', () => {
 
     const conversation = {
       ...makeConversation({
-        assistant_id: 'bare-codex',
+        assistant_id: 'hub-codex',
         backend: 'codex',
       }),
       assistant: {
-        id: 'bare-codex',
-        source: 'generated',
+        id: 'hub-codex',
+        source: 'tjuae-hub',
         name: 'codex',
         avatar: '',
         backend: 'codex',
@@ -276,7 +276,7 @@ describe('usePresetAssistantInfo', () => {
       isEmoji: false,
       isFallback: true,
       backend: 'codex',
-      assistantId: 'bare-codex',
+      assistantId: 'hub-codex',
     });
   });
 

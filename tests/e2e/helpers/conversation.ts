@@ -16,7 +16,8 @@ import {
   assistantOverflowPillById,
   presetPillById,
 } from './selectors';
-import { assistantRuntimeKey, type Assistant } from '@/common/types/agent/assistantTypes';
+import { assistantRuntimeKey, toAssistantSelectionItem, type Assistant } from '@/common/types/agent/assistantTypes';
+import type { AssistantRuntimeOption } from '@/common/types/platform/assistantCatalog';
 
 type FindAssistantOptions = {
   requireAvailable?: boolean;
@@ -35,11 +36,16 @@ function pickAssistantForBackend(assistants: Assistant[], backend: string, optio
   const selectableCandidates = options.requireAvailable ? availabilityFiltered : candidates;
 
   return (
-    selectableCandidates.find((assistant) => assistant.source === 'generated') ??
-    selectableCandidates.find((assistant) => assistant.source === 'user') ??
+    selectableCandidates.find((assistant) => assistant.source === 'mine') ??
+    selectableCandidates.find((assistant) => assistant.source === 'tjuae-hub') ??
     selectableCandidates[0] ??
     null
   );
+}
+
+async function getSelectableAssistants(page: Page): Promise<Assistant[]> {
+  const options = await httpGet<AssistantRuntimeOption[]>(page, '/api/assistant-runtime/options');
+  return options.map(toAssistantSelectionItem);
 }
 
 async function clickAssistantPillById(page: Page, assistantId: string): Promise<void> {
@@ -123,7 +129,7 @@ export async function selectAgent(page: Page, backend: string, model?: string): 
   const deadline = Date.now() + 20_000;
   let selected = false;
   while (Date.now() < deadline && !selected) {
-    const assistants = await httpGet<Assistant[]>(page, '/api/assistants').catch(() => [] as Assistant[]);
+    const assistants = await getSelectableAssistants(page).catch(() => [] as Assistant[]);
     const assistant = pickAssistantForBackend(assistants, backend, { requireAvailable: true });
     if (!assistant) {
       await page.waitForTimeout(500);
@@ -151,7 +157,7 @@ export async function findAssistantIdForBackend(
   backend: string,
   options: FindAssistantOptions = {}
 ): Promise<string | null> {
-  const assistants = await httpGet<Assistant[]>(page, '/api/assistants');
+  const assistants = await getSelectableAssistants(page);
   return pickAssistantForBackend(assistants, backend, options)?.id ?? null;
 }
 

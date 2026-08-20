@@ -45,10 +45,6 @@ vi.mock('@/process/utils/initStorage', () => ({
   getBuiltinMcpScriptPath: (name: string) => `/mock/${name}.js`,
 }));
 
-vi.mock('@/process/utils/migrateAssistants', () => ({
-  migrateAssistantsToBackend: vi.fn().mockResolvedValue(true),
-}));
-
 const provider: IProvider = {
   id: 'provider-1',
   platform: 'gemini',

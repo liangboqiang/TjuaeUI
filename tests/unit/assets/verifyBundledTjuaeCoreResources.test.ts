@@ -366,10 +366,10 @@ describe('verifyBundledTjuaeCoreResources', () => {
     expect(result.missing).toContain('bundled-tjuaecore/win32-x64/managed-resources/manifest.json<contract_failure>');
   });
 
-  it('fails when a required CLI is missing from the contract', () => {
+  it('accepts a contract without bundled third-party CLIs', () => {
     const manifestPath = join(managedResourcesDir, 'manifest.json');
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-    manifest.clis = manifest.clis.filter((cli: { name: string }) => cli.name !== 'codex');
+    manifest.clis = [];
     writeJson(manifestPath, manifest);
 
     const result = verifyBundledTjuaeCoreResources({
@@ -378,12 +378,7 @@ describe('verifyBundledTjuaeCoreResources', () => {
       targetArch: 'x64',
     });
 
-    expect(result.failures).toContainEqual(
-      expect.objectContaining({
-        component: 'codex',
-        reason: 'missing_required_cli',
-      })
-    );
+    expect(result.failures).toEqual([]);
   });
 
   it('fails when the contract is invalid JSON', () => {

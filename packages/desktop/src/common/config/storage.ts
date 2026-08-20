@@ -48,14 +48,6 @@ export interface IConfigStorageRefer {
    * pre-flag build still re-reads the legacy data unchanged.
    */
   'migration.providersMigrated_v1'?: boolean;
-  /**
-   * One-shot completion flag for the legacy `assistants` → backend assistants
-   * migration in {@link migrateAssistantsToBackend}. Same rationale as
-   * `migration.providersMigrated_v1` — without it, an assistant the user
-   * deletes after migration would be re-imported on the next launch from the
-   * still-on-disk legacy field.
-   */
-  'migration.assistantsMigrated_v1'?: boolean;
 }
 
 /**

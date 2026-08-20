@@ -1301,7 +1301,7 @@ test.describe('Conversation Full Cycle', () => {
         expect(job.metadata?.created_by).toBe('agent');
         const jobAssistantId = job.metadata?.agent_config?.assistant_id;
         expect(jobAssistantId).toBeTruthy();
-        const assistants = await httpGet<AssistantRecord[]>(page, '/api/assistants');
+        const assistants = await httpGet<AssistantRecord[]>(page, '/api/assistant-runtime/options');
         const jobAssistant = assistants.find((assistant) => assistant.id === jobAssistantId);
         expect(jobAssistant, 'cron agent_config.assistant_id should resolve to an assistant row').toBeTruthy();
         expect(job.metadata?.agent_config?.custom_agent_id).toBeUndefined();

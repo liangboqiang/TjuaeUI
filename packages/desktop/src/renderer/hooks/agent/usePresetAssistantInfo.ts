@@ -276,7 +276,7 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
 
   // Merged assistant catalog (builtin + user) from backend
   const { data: assistantsList, isLoading: isLoadingAssistants } = useSWR('assistants', () =>
-    ipcBridge.assistants.list.invoke().catch(() => [] as Assistant[])
+    ipcBridge.assistants.listSelectable.invoke().catch(() => [] as Assistant[])
   );
 
   // Extension-contributed ACP adapters (for ext:{extensionName}:{adapterId} conversations)

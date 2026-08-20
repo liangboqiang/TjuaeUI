@@ -117,7 +117,7 @@ const TelegramConfigForm: React.FC<TelegramConfigFormProps> = ({
     const loadAssistantsAndSelection = async () => {
       try {
         const [assistantList, saved] = await Promise.all([
-          assistants.list.invoke(),
+          assistants.listSelectable.invoke(),
           channel.getPlatformSettings.invoke({ platform: 'telegram' }),
         ]);
 

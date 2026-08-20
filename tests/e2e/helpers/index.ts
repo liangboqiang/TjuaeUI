@@ -69,25 +69,6 @@ export { startAutoApprovePermissionMessages, waitForPermissionMessageCard } from
 export { TEAM_SUPPORTED_BACKENDS } from './teamConfig';
 export { createTeam, ensureTeam, deleteTeam, cleanupTeamsByName } from './teamHelpers';
 export {
-  goToAssistantSettings,
-  openAssistantEditor,
-  clickCreateAssistant,
-  fillAssistantName,
-  fillAssistantDescription,
-  saveAssistant,
-  deleteAssistant,
-  duplicateAssistant,
-  toggleAssistantEnabled,
-  searchAssistants,
-  clearSearch,
-  selectFilterTab,
-  getVisibleAssistantIds,
-  getVisibleAssistantNames,
-  isAssistantEditorVisible,
-  waitForAssistantEditorClose,
-  closeAssistantEditor,
-} from './assistantSettings';
-export {
   assistantCardById,
   assistantSwitchById,
   assistantDuplicateById,
