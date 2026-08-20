@@ -10,6 +10,11 @@ import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderLis
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
 import MarkdownPreview from '@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer';
 import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
+import {
+  buildAgentRuntimeModeState,
+  buildAgentRuntimeModelInfo,
+  buildAgentRuntimeThoughtLevelOption,
+} from '@/renderer/utils/model/agentRuntimeCatalog';
 import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -55,16 +60,16 @@ const SortableSkillRow: React.FC<{
       className={`${styles.skillRow} ${isDragging ? styles.skillRowDragging : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
-      <button
-        type='button'
+      <Button
+        type='text'
+        shape='circle'
         className={styles.skillDragHandle}
         aria-label={t('settings.assistantReorderHintShort')}
         disabled={disabled}
+        icon={<Drag theme='outline' size='16' />}
         {...attributes}
         {...listeners}
-      >
-        <Drag theme='outline' size='16' />
-      </button>
+      />
       <div className={styles.skillSummary}>
         <div>
           <strong>{skill?.name ?? identity.slug}</strong>
@@ -85,7 +90,7 @@ const SortableSkillRow: React.FC<{
 };
 
 const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [section, setSection] = useState<Section>('identity');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -110,7 +115,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   const managedAgents = useManagedAgentRuntimeCatalog();
   const { providers, getAvailableModels } = useModelProviderList();
   const { data: skillPage } = useSWR('assistant-settings-skill-catalog', () =>
-    ipcBridge.fs.listSkillCatalog.invoke({ limit: 200 })
+    ipcBridge.fs.listSkillCatalog.invoke({ enabled: true, limit: 200 })
   );
   const { data: mcpCatalog } = useSWR('assistant-settings-mcp-catalog', ensureBackendMcpCatalog);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -137,15 +142,42 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     () =>
       managedAgents
         .filter((item) => item.enabled && item.installed)
-        .map((item) => ({ value: item.id, label: item.name })),
-    [managedAgents]
+        .map((item) => ({ value: item.id, label: item.name_i18n?.[i18n.language] || item.name })),
+    [i18n.language, managedAgents]
   );
-  const modelOptions = useMemo(
+  const selectedAgent = useMemo(
+    () => managedAgents.find((item) => item.id === agent || item.backend === agent),
+    [agent, managedAgents]
+  );
+  const selectedAgentModelInfo = useMemo(() => buildAgentRuntimeModelInfo(selectedAgent), [selectedAgent]);
+  const selectedAgentModeState = useMemo(() => buildAgentRuntimeModeState(selectedAgent), [selectedAgent]);
+  const selectedAgentThoughtOption = useMemo(() => buildAgentRuntimeThoughtLevelOption(selectedAgent), [selectedAgent]);
+  const modelOptions = useMemo(() => {
+    if (selectedAgentModelInfo?.available_models.length) {
+      return selectedAgentModelInfo.available_models.map((item) => ({
+        value: item.id,
+        label: item.label || item.id,
+      }));
+    }
+    return providers.flatMap((provider) =>
+      getAvailableModels(provider).map((value) => ({ value, label: `${provider.name || provider.id} · ${value}` }))
+    );
+  }, [getAvailableModels, providers, selectedAgentModelInfo]);
+  const permissionOptions = useMemo(
     () =>
-      providers.flatMap((provider) =>
-        getAvailableModels(provider).map((value) => ({ value, label: `${provider.name || provider.id} · ${value}` }))
-      ),
-    [getAvailableModels, providers]
+      selectedAgentModeState.options.map((item) => ({
+        value: item.value,
+        label: t(`agentMode.${item.value}`, { defaultValue: item.label }),
+      })),
+    [selectedAgentModeState.options, t]
+  );
+  const thoughtOptions = useMemo(
+    () =>
+      (selectedAgentThoughtOption?.options ?? []).map((item) => ({
+        value: item.value,
+        label: item.label,
+      })),
+    [selectedAgentThoughtOption]
   );
   const skillOptions = useMemo(
     () =>
@@ -164,9 +196,47 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     [skillOptions, skills]
   );
   const mcpOptions = useMemo(
-    () => (mcpCatalog?.allServers ?? []).map((item) => ({ value: item.id, label: item.name })),
+    () =>
+      (mcpCatalog?.allServers ?? [])
+        .filter((item) => item.enabled)
+        .map((item) => ({ value: item.id, label: item.name })),
     [mcpCatalog]
   );
+
+  useEffect(() => {
+    if (modelMode === 'fixed' && model && modelOptions.length && !modelOptions.some((item) => item.value === model)) {
+      setModelMode('auto');
+      setModel(undefined);
+    }
+    if (
+      permissionMode === 'fixed' &&
+      permission &&
+      permissionOptions.length &&
+      !permissionOptions.some((item) => item.value === permission)
+    ) {
+      setPermissionMode('auto');
+      setPermission(undefined);
+    }
+    if (
+      thoughtMode === 'fixed' &&
+      thought &&
+      thoughtOptions.length &&
+      !thoughtOptions.some((item) => item.value === thought)
+    ) {
+      setThoughtMode('auto');
+      setThought(undefined);
+    }
+  }, [
+    model,
+    modelMode,
+    modelOptions,
+    permission,
+    permissionMode,
+    permissionOptions,
+    thought,
+    thoughtMode,
+    thoughtOptions,
+  ]);
 
   const pickAvatar = async () => {
     const files = await ipcBridge.dialog.showOpen.invoke({
@@ -237,7 +307,6 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
             style={{ marginTop: 10, width: '100%' }}
             value={value}
             options={options}
-            allowCreate
             showSearch
             disabled={!editable}
             placeholder={placeholder}
@@ -316,14 +385,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
           <div className={styles.fields}>
             <label className={styles.field}>
               <span>{t('settings.assistantMainAgent')}</span>
-              <Select
-                value={agent}
-                options={agentOptions}
-                allowCreate
-                showSearch
-                disabled={!editable}
-                onChange={setAgent}
-              />
+              <Select value={agent} options={agentOptions} showSearch disabled={!editable} onChange={setAgent} />
             </label>
             {scalarField(
               t('settings.assistantDefaultModelLabel'),
@@ -340,7 +402,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
               setPermissionMode,
               permission,
               setPermission,
-              [],
+              permissionOptions,
               t('settings.assistantSelectDefaultPermission')
             )}
             {scalarField(
@@ -349,7 +411,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
               setThoughtMode,
               thought,
               setThought,
-              [],
+              thoughtOptions,
               t('settings.assistantSelectDefaultThoughtLevel')
             )}
             <label className={styles.field}>

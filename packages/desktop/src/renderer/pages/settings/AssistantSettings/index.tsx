@@ -11,13 +11,15 @@ import type {
   AssistantVersionComparison,
   UpdateAssistantCatalogSettingsRequest,
 } from '@/common/types/platform/assistantCatalog';
-import { Button, Input, Message, Modal, Radio, Select } from '@arco-design/web-react';
-import { Plus, Search } from '@icon-park/react';
+import { Input, Message, Modal, Radio, Select } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import useSWR from 'swr';
 import SettingsPageWrapper from '../components/SettingsPageWrapper';
+import SettingsPageHeader from '../components/SettingsPageHeader';
+import { SettingsManagementHeaderActions } from '../components/management';
+import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import styles from '../SkillsSettings/SkillsHubSettings.module.css';
 import AssistantActivationModal from './AssistantActivationModal';
 import AssistantCatalogDetailView, { type AssistantDetailTab } from './AssistantCatalogDetailView';
@@ -286,6 +288,23 @@ const AssistantSettings: React.FC = () => {
     }
   };
 
+  const importAssistant = useCallback(async () => {
+    const files = await ipcBridge.dialog.showOpen.invoke({
+      properties: ['openFile'],
+      filters: [{ name: t('settings.assistantCatalog.packageFile'), extensions: ['zip'] }],
+    });
+    if (!files?.[0]) return;
+    try {
+      const imported = await ipcBridge.assistants.importCatalog.invoke({ archivePath: files[0] });
+      await refreshCatalog();
+      void navigate(assistantCatalogRoute(imported.item.identity));
+      Message.success(t('settings.assistantCatalog.importSuccess'));
+    } catch (importError) {
+      console.error('[AssistantCatalog] import failed', importError);
+      Message.error(describeError(importError));
+    }
+  }, [navigate, refreshCatalog, t]);
+
   const copyToMine = async () => {
     if (!routeIdentity || !detail || !copySlug.trim()) return;
     try {
@@ -471,23 +490,38 @@ const AssistantSettings: React.FC = () => {
 
   return (
     <SettingsPageWrapper className={styles.page} contentClassName={styles.directoryPageContent}>
-      <header className={styles.catalogHeader}>
-        <div>
-          <h1>{t('settings.assistantCatalog.title')}</h1>
-          <p>{t('settings.assistantCatalog.description')}</p>
-        </div>
-        <Button type='primary' icon={<Plus />} onClick={() => setCreateVisible(true)}>
-          {t('settings.assistantCatalog.add')}
-        </Button>
-      </header>
+      <SettingsPageHeader
+        data-testid='assistant-catalog-header'
+        title={t('settings.assistantCatalog.title')}
+        description={t('settings.assistantCatalog.description')}
+        actions={
+          <SettingsManagementHeaderActions
+            searchValue={query}
+            onSearchChange={setQuery}
+            searchPlaceholder={t('settings.assistantCatalog.searchPlaceholder')}
+            searchTestId='input-search-assistants'
+            action={
+              <TalkToButlerButton
+                label={t('settings.assistantCatalog.add')}
+                chatLabel={t('settings.talkToButler.addViaChat')}
+                prompt={t('settings.talkToButler.prompt.createAssistant')}
+                onManual={() => setCreateVisible(true)}
+                manualLabel={t('settings.talkToButler.addManually')}
+                extraActions={[
+                  {
+                    key: 'import',
+                    label: t('settings.assistantCatalog.importAssistant'),
+                    onClick: () => void importAssistant(),
+                  },
+                ]}
+                chatPlacement='last'
+                data-testid='btn-add-assistant'
+              />
+            }
+          />
+        }
+      />
       <div className={styles.catalogToolbar}>
-        <Input
-          allowClear
-          prefix={<Search />}
-          value={query}
-          placeholder={t('settings.assistantCatalog.searchPlaceholder')}
-          onChange={setQuery}
-        />
         <Select
           value={source}
           onChange={setSource}

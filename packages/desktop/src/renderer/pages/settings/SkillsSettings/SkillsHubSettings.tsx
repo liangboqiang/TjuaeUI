@@ -8,14 +8,16 @@ import type {
   SkillSource,
   SkillVersionComparison,
 } from '@/common/types/platform/skill';
-import { Button, Dropdown, Empty, Input, Menu, Message, Modal, Radio, Select, Spin } from '@arco-design/web-react';
-import { Plus, Search } from '@icon-park/react';
+import { Empty, Input, Message, Modal, Radio, Select, Spin } from '@arco-design/web-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import useSWR from 'swr';
 import { useTalkToButler } from '@/renderer/hooks/assistant/useTalkToButler';
+import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import SettingsPageWrapper from '../components/SettingsPageWrapper';
+import SettingsPageHeader from '../components/SettingsPageHeader';
+import { SettingsManagementHeaderActions } from '../components/management';
 import SkillCatalogDetailView, { type BusyAction, type DetailTab } from './SkillCatalogDetailView';
 import SkillCatalogDirectory from './SkillCatalogDirectory';
 import styles from './SkillsHubSettings.module.css';
@@ -269,19 +271,6 @@ const SkillsHubSettings: React.FC = () => {
     if (result) void navigate(skillRoute(result.identity));
   }, [navigate, run, t]);
 
-  const handleAddAction = useCallback(
-    (key: string) => {
-      if (key === 'import') {
-        void importZip();
-      } else if (key === 'manual') {
-        setCreateOpen(true);
-      } else if (key === 'chat') {
-        void talkToButler({ prompt: t('settings.talkToButler.prompt.addSkill') });
-      }
-    },
-    [importZip, t, talkToButler]
-  );
-
   const exportCurrent = useCallback(async () => {
     if (!detail || !routeIdentity) return;
     const directories = await ipcBridge.dialog.showOpen.invoke({ properties: ['openDirectory', 'createDirectory'] });
@@ -415,36 +404,38 @@ const SkillsHubSettings: React.FC = () => {
 
   return (
     <SettingsPageWrapper className={styles.page} contentClassName={styles.directoryPageContent}>
-      <section className={styles.catalogHeader}>
-        <div>
-          <h1>{t('settings.skillsHub.title')}</h1>
-          <p>{t('settings.skillsHub.catalogDescription')}</p>
-        </div>
-        <div className={styles.topActions}>
-          <Dropdown
-            trigger='click'
-            droplist={
-              <Menu onClickMenuItem={handleAddAction}>
-                <Menu.Item key='import'>{t('settings.skillsHub.importSkill')}</Menu.Item>
-                <Menu.Item key='manual'>{t('settings.skillsHub.addManually')}</Menu.Item>
-                <Menu.Item key='chat'>{t('settings.talkToButler.addViaChat')}</Menu.Item>
-              </Menu>
+      <SettingsPageHeader
+        data-testid='skill-catalog-header'
+        title={t('settings.skillsHub.title')}
+        description={t('settings.skillsHub.catalogDescription')}
+        actions={
+          <SettingsManagementHeaderActions
+            searchValue={query}
+            onSearchChange={setQuery}
+            searchPlaceholder={t('settings.skillsHub.searchPlaceholder')}
+            searchTestId='input-search-skills'
+            action={
+              <TalkToButlerButton
+                label={t('settings.skillsHub.addSkill')}
+                chatLabel={t('settings.talkToButler.addViaChat')}
+                onChat={() => void talkToButler({ prompt: t('settings.talkToButler.prompt.addSkill') })}
+                onManual={() => setCreateOpen(true)}
+                manualLabel={t('settings.skillsHub.addManually')}
+                extraActions={[
+                  {
+                    key: 'import',
+                    label: t('settings.skillsHub.importSkill'),
+                    onClick: () => void importZip(),
+                  },
+                ]}
+                chatPlacement='last'
+                data-testid='btn-add-skill'
+              />
             }
-          >
-            <Button type='primary' icon={<Plus />}>
-              {t('settings.skillsHub.addSkill')}
-            </Button>
-          </Dropdown>
-        </div>
-      </section>
+          />
+        }
+      />
       <section className={styles.catalogToolbar}>
-        <Input
-          prefix={<Search />}
-          value={query}
-          onChange={setQuery}
-          allowClear
-          placeholder={t('settings.skillsHub.searchPlaceholder')}
-        />
         <Select
           value={source}
           onChange={(value) => setSource(value as SourceFilter)}

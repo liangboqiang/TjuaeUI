@@ -2,7 +2,6 @@ import { ipcBridge } from '@/common';
 import { parseError } from '@/common/utils';
 import { formatManagedAgentDiagnosticMessage, type ManagedAgent } from '@/renderer/utils/model/agentTypes';
 import TjuaeModal from '@/renderer/components/base/TjuaeModal';
-import { TjuaeSearchInput } from '@/renderer/components/base';
 import { useManagedAgents } from '@/renderer/hooks/agent/useManagedAgents';
 import { openExternalUrl } from '@/renderer/utils/platform';
 import { Button, Message, Select } from '@arco-design/web-react';
@@ -14,7 +13,7 @@ import { isDeprecatedRuntimeAgentType } from '@/renderer/utils/model/agentTypeSu
 import InlineAgentEditor, { type CustomAgentDraft } from './InlineAgentEditor';
 import { getBoundAssistants, useAssistantsForAgents } from './BoundAssistants';
 import SettingsPageHeader from '../components/SettingsPageHeader';
-import { SettingsFilterBar, SettingsManagementList } from '../components/management';
+import { SettingsFilterBar, SettingsManagementHeaderActions, SettingsManagementList } from '../components/management';
 import { useNavigate } from 'react-router-dom';
 import {
   filterAgentsByAvailability,
@@ -266,26 +265,25 @@ const LocalAgents: React.FC = () => {
           defaultValue: '管理可用于会话的内置、本机和远程智能体连接。',
         })}
         actions={
-          <>
-            <TjuaeSearchInput
-              className='hidden w-[200px] shrink-0 md:flex'
-              data-testid='input-search-agents'
-              placeholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: '搜索智能体' })}
-              value={searchQuery}
-              onChange={setSearchQuery}
-            />
-            <TalkToButlerButton
-              className='shrink-0'
-              label={t('settings.agentManagement.addCustomAgent', { defaultValue: '添加智能体' })}
-              chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: '通过对话添加' })}
-              onManual={openCustomAgentEditor}
-              manualLabel={t('settings.talkToButler.addManually', { defaultValue: '手动添加' })}
-              prompt={t('settings.talkToButler.prompt.addCustomAgent', {
-                defaultValue: '帮我添加一个自定义智能体，并先询问使用 ACP 还是 A2A 协议。',
-              })}
-              data-testid='btn-add-custom-agent'
-            />
-          </>
+          <SettingsManagementHeaderActions
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: '搜索智能体' })}
+            searchTestId='input-search-agents'
+            action={
+              <TalkToButlerButton
+                className='shrink-0'
+                label={t('settings.agentManagement.addCustomAgent', { defaultValue: '添加智能体' })}
+                chatLabel={t('settings.talkToButler.addViaChat', { defaultValue: '通过对话添加' })}
+                onManual={openCustomAgentEditor}
+                manualLabel={t('settings.talkToButler.addManually', { defaultValue: '手动添加' })}
+                prompt={t('settings.talkToButler.prompt.addCustomAgent', {
+                  defaultValue: '帮我添加一个自定义智能体，并先询问使用 ACP 还是 A2A 协议。',
+                })}
+                data-testid='btn-add-custom-agent'
+              />
+            }
+          />
         }
         tabs={[
           {
@@ -329,15 +327,6 @@ const LocalAgents: React.FC = () => {
                 online: filterStats.online,
                 needsAuth: filterStats.needs_auth,
               })
-        }
-        mobileContent={
-          <TjuaeSearchInput
-            className='w-full'
-            data-testid='input-search-agents-mobile'
-            placeholder={t('settings.agentManagement.searchPlaceholder', { defaultValue: '搜索智能体' })}
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
         }
       >
         <Button

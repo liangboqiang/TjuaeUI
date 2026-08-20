@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import useConfigModelListWithImage from '@/renderer/hooks/agent/useConfigModelListWithImage';
 import TjuaeScrollArea from '@/renderer/components/base/TjuaeScrollArea';
 import TjuaeSelect from '@/renderer/components/base/TjuaeSelect';
-import { TjuaeSearchInput } from '@/renderer/components/base';
 import TalkToButlerButton from '@/renderer/components/base/TalkToButlerButton';
 import AddMcpServerModal from '@/renderer/pages/settings/components/AddMcpServerModal';
 import McpServerItem from '@/renderer/pages/settings/ToolsSettings/McpServerItem';
@@ -31,6 +30,7 @@ import classNames from 'classnames';
 import { useSettingsTabNavigate, useSettingsViewMode } from '../settingsViewContext';
 import SettingsPageHeader from '@/renderer/pages/settings/components/SettingsPageHeader';
 import SettingsManagementList from '@/renderer/pages/settings/components/management/SettingsManagementList';
+import SettingsManagementHeaderActions from '@/renderer/pages/settings/components/management/SettingsManagementHeaderActions';
 
 type MessageInstance = ReturnType<typeof Message.useMessage>[0];
 
@@ -218,31 +218,25 @@ const ModalMcpManagementSection: React.FC<{
             defaultValue: 'Configure MCP servers and built-in tools such as image generation.',
           })}
           actions={
-            <>
-              <TjuaeSearchInput
-                className='hidden w-[200px] shrink-0 md:flex'
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={t('settings.mcpSearchPlaceholder', { defaultValue: '搜索 MCP 服务器' })}
-                data-testid='input-search-mcp-servers'
-              />
-              {renderAddButton()}
-            </>
+            <SettingsManagementHeaderActions
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder={t('settings.mcpSearchPlaceholder', { defaultValue: '搜索 MCP 服务器' })}
+              searchTestId='input-search-mcp-servers'
+              action={renderAddButton()}
+            />
           }
         />
       ) : (
         <div className='flex flex-wrap items-center justify-between gap-8px'>
           <div className='text-14px text-t-primary'>{t('settings.mcpSettings')}</div>
-          <div className='flex items-center gap-8px'>
-            <TjuaeSearchInput
-              className='hidden w-[200px] shrink-0 md:flex'
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder={t('settings.mcpSearchPlaceholder', { defaultValue: '搜索 MCP 服务器' })}
-              data-testid='input-search-mcp-servers'
-            />
-            {renderAddButton()}
-          </div>
+          <SettingsManagementHeaderActions
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder={t('settings.mcpSearchPlaceholder', { defaultValue: '搜索 MCP 服务器' })}
+            searchTestId='input-search-mcp-servers'
+            action={renderAddButton()}
+          />
         </div>
       )}
 

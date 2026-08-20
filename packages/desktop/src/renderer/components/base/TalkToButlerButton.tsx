@@ -35,6 +35,8 @@ export type TalkToButlerButtonProps = {
   manualLabel?: string;
   /** Extra menu actions inserted before the manual item (e.g. MCP imports). */
   extraActions?: TalkToButlerExtraAction[];
+  /** Keep legacy catalog ordering when import/manual should precede chat. */
+  chatPlacement?: 'first' | 'last';
   type?: 'primary' | 'outline' | 'secondary' | 'default';
   size?: 'mini' | 'small' | 'default' | 'large';
   className?: string;
@@ -61,6 +63,7 @@ const TalkToButlerButton: React.FC<TalkToButlerButtonProps> = ({
   onManual,
   manualLabel,
   extraActions,
+  chatPlacement = 'first',
   type = 'primary',
   size = 'small',
   className,
@@ -82,11 +85,14 @@ const TalkToButlerButton: React.FC<TalkToButlerButtonProps> = ({
     [onChat, talkToButler, prompt, files, onManual, extraActions]
   );
 
+  const chatItem = (
+    <Menu.Item key={CHAT_KEY} data-testid={testId ? `${testId}-chat` : undefined}>
+      {chatLabel}
+    </Menu.Item>
+  );
   const droplist = (
     <Menu onClickMenuItem={handleSelect}>
-      <Menu.Item key={CHAT_KEY} data-testid={testId ? `${testId}-chat` : undefined}>
-        {chatLabel}
-      </Menu.Item>
+      {chatPlacement === 'first' ? chatItem : null}
       {extraActions?.map((action) => (
         <Menu.Item key={action.key} data-testid={testId ? `${testId}-${action.key}` : undefined}>
           {action.label}
@@ -97,6 +103,7 @@ const TalkToButlerButton: React.FC<TalkToButlerButtonProps> = ({
           {manualLabel}
         </Menu.Item>
       ) : null}
+      {chatPlacement === 'last' ? chatItem : null}
     </Menu>
   );
 

@@ -35,6 +35,7 @@ import type {
   CreateMineAssistantRequest,
   ExportAssistantRequest,
   ExportAssistantResponse,
+  ImportAssistantRequest,
   PublishAssistantCatalogRequest,
   PublishAssistantCatalogResponse,
   SaveAssistantCatalogFileRequest,
@@ -266,6 +267,7 @@ export const assistants = {
     ({ planId, fingerprint, confirmedGroups, choices }) => ({ planId, fingerprint, confirmedGroups, choices })
   ),
   createMine: httpPost<AssistantCatalogDetail, CreateMineAssistantRequest>('/api/assistants/catalog/mine'),
+  importCatalog: httpPost<AssistantCatalogDetail, ImportAssistantRequest>('/api/assistants/import'),
   copyToMine: httpPost<AssistantCatalogDetail, CopyAssistantToMineRequest>(
     (params) => `${assistantCatalogUrl(params)}/copy-to-mine`,
     ({ version, targetSlug }) => ({ version, targetSlug })

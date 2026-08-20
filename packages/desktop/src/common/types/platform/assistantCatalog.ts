@@ -201,6 +201,8 @@ export type CreateMineAssistantRequest = {
   description: string;
 };
 
+export type ImportAssistantRequest = { archivePath: string };
+
 export type CopyAssistantToMineRequest = AssistantCatalogIdentity & {
   version?: string;
   targetSlug: string;
