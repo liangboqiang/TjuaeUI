@@ -4,7 +4,7 @@ import type {
   UpdateAssistantCatalogSettingsRequest,
 } from '@/common/types/platform/assistantCatalog';
 import { Button, Empty, Select, Spin, Switch, Tabs, Tag } from '@arco-design/web-react';
-import { ArrowLeft, Copy, Delete, Download, Upload } from '@icon-park/react';
+import { ArrowLeft, Copy, Delete, Download } from '@icon-park/react';
 import { diffLines } from 'diff';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -196,11 +196,6 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
             <Button icon={<Download />} onClick={props.onExport}>
               {t('settings.assistantCatalog.export')}
             </Button>
-            {detail.item.editable && !detail.item.system && detail.manifest.version === detail.item.latestVersion ? (
-              <Button type='primary' icon={<Upload />} onClick={props.onPublish}>
-                {t('settings.assistantCatalog.publish')}
-              </Button>
-            ) : null}
             {detail.item.canDelete ? (
               <Button status='danger' icon={<Delete />} onClick={props.onDelete}>
                 {t('settings.assistantCatalog.delete')}
@@ -243,6 +238,12 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
             editable={detail.item.editable && detail.manifest.version === detail.item.latestVersion}
             saving={props.busy}
             noDescription={t('settings.assistantCatalog.noDescription')}
+            publishLabel={
+              detail.item.editable && !detail.item.system && detail.manifest.version === detail.item.latestVersion
+                ? t('settings.assistantCatalog.publish')
+                : undefined
+            }
+            publishing={props.busy}
             onVersionChange={props.onVersionChange}
             onSave={(draft: CatalogProfileDraft) =>
               props.onSaveSettings({
@@ -255,6 +256,11 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
                 recommendedPrompts: detail.manifest.recommendedPrompts,
                 rules: detail.readme,
               })
+            }
+            onPublish={
+              detail.item.editable && !detail.item.system && detail.manifest.version === detail.item.latestVersion
+                ? props.onPublish
+                : undefined
             }
           />
           <section className={styles.preferenceBar}>

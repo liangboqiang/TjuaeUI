@@ -139,12 +139,15 @@ describe('AssistantSettingsWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'settings.assistantDefaultConfigSection' }));
 
     const choose = async (fieldLabel: string, optionLabel: string) => {
-      const field = screen.getByText(fieldLabel).closest('label');
+      const label = screen.getByText(fieldLabel);
+      expect(label.closest('label')).toBeNull();
+      const field = label.parentElement;
       expect(field).not.toBeNull();
       const select = field!.querySelector('.arco-select-view');
       expect(select).not.toBeNull();
       fireEvent.click(select!);
       fireEvent.click(await screen.findByText(optionLabel));
+      expect(field!.querySelector('.arco-select-view')).not.toBeNull();
     };
 
     await choose('settings.assistantDefaultPermissionLabel', 'agentMode.full-access');

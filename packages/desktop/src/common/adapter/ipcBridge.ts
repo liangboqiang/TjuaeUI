@@ -223,11 +223,12 @@ export const assistants = {
   ),
   updateCatalogSettings: httpPut<AssistantCatalogDetail, UpdateAssistantCatalogSettingsRequest>(
     (params) => `${assistantCatalogUrl(params)}/settings`,
-    ({ name, description, avatar, avatarDataUrl, defaults, recommendedPrompts, rules }) => ({
+    ({ name, description, avatar, avatarDataUrl, categories, defaults, recommendedPrompts, rules }) => ({
       name,
       description,
       avatar,
       avatarDataUrl,
+      categories,
       defaults,
       recommendedPrompts,
       rules,

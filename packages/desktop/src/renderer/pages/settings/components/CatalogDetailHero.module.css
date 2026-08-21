@@ -100,6 +100,18 @@
   width: 150px;
 }
 
+.versionActions {
+  display: flex;
+  width: 170px;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.versionActions .versionPicker {
+  width: 100%;
+}
+
 @media (max-width: 720px) {
   .hero {
     flex-wrap: wrap;
@@ -109,6 +121,7 @@
     grid-template-columns: 1fr;
   }
 
+  .versionActions,
   .versionPicker {
     width: 100%;
   }

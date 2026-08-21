@@ -75,7 +75,7 @@
     "deleteTitle": "删除我的助手",
     "deleteConfirm": "将永久删除这个本地助手及其文件，是否继续？",
     "deleteSuccess": "助手已删除",
-    "publish": "发布",
+    "publish": "发布新版本",
     "publishTitle": "发布新版本",
     "publishVersion": "版本号",
     "publishNotes": "版本说明",

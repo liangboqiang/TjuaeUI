@@ -1,6 +1,6 @@
 import { ipcBridge } from '@/common';
 import { Button, Input, Select, Tag } from '@arco-design/web-react';
-import { CloseSmall, Edit, Save, UploadPicture } from '@icon-park/react';
+import { CloseSmall, Edit, Save, Upload, UploadPicture } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './CatalogDetailHero.module.css';
@@ -26,8 +26,11 @@ type Props = {
   editable: boolean;
   saving: boolean;
   noDescription: string;
+  publishLabel?: string;
+  publishing?: boolean;
   onVersionChange: (version: string) => void;
   onSave: (draft: CatalogProfileDraft) => Promise<boolean>;
+  onPublish?: () => void;
 };
 
 const CatalogDetailHero: React.FC<Props> = (props) => {
@@ -163,10 +166,23 @@ const CatalogDetailHero: React.FC<Props> = (props) => {
           </div>
         )}
       </div>
-      <label className={styles.versionPicker}>
-        <span>{props.versionLabel}</span>
-        <Select value={props.version} options={props.versionOptions} onChange={props.onVersionChange} />
-      </label>
+      <div className={styles.versionActions}>
+        <label className={styles.versionPicker}>
+          <span>{props.versionLabel}</span>
+          <Select value={props.version} options={props.versionOptions} onChange={props.onVersionChange} />
+        </label>
+        {!editing && props.onPublish && props.publishLabel ? (
+          <Button
+            type='primary'
+            icon={<Upload />}
+            loading={props.publishing}
+            disabled={props.saving}
+            onClick={props.onPublish}
+          >
+            {props.publishLabel}
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 };

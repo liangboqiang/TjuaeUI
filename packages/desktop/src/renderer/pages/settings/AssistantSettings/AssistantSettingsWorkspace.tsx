@@ -289,7 +289,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     options: Array<{ value: string; label: string }>,
     placeholder: string
   ) => (
-    <label className={styles.field}>
+    <div className={styles.field}>
       <span>{label}</span>
       <div className={styles.fieldControl}>
         <Radio.Group
@@ -314,7 +314,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
           />
         ) : null}
       </div>
-    </label>
+    </div>
   );
 
   const sections = [
@@ -354,10 +354,10 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
         ) : null}
         {section === 'defaults' ? (
           <div className={styles.fields}>
-            <label className={styles.field}>
+            <div className={styles.field}>
               <span>{t('settings.assistantMainAgent')}</span>
               <Select value={agent} options={agentOptions} showSearch disabled={!editable} onChange={setAgent} />
-            </label>
+            </div>
             {scalarField(
               t('settings.assistantDefaultModelLabel'),
               modelMode,
@@ -385,7 +385,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
               thoughtOptions,
               t('settings.assistantSelectDefaultThoughtLevel')
             )}
-            <label className={styles.field}>
+            <div className={styles.field}>
               <span>{t('settings.assistantDefaultSkillsLabel')}</span>
               <div className={styles.skillField}>
                 <Select
@@ -422,8 +422,8 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
                   <div className={styles.skillEmpty}>{t('settings.assistantNoDefaultSkillsSelected')}</div>
                 )}
               </div>
-            </label>
-            <label className={styles.field}>
+            </div>
+            <div className={styles.field}>
               <span>{t('settings.assistantDefaultMcpLabel')}</span>
               <Select
                 mode='multiple'
@@ -436,7 +436,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
                 placeholder={t('settings.assistantSelectDefaultMcp')}
                 onChange={setMcps}
               />
-            </label>
+            </div>
           </div>
         ) : null}
         {section === 'rules' ? (

@@ -75,7 +75,7 @@
     "deleteTitle": "刪除我的助手",
     "deleteConfirm": "將永久刪除此本機助手及其檔案，是否繼續？",
     "deleteSuccess": "助手已刪除",
-    "publish": "發布",
+    "publish": "發布新版本",
     "publishTitle": "發布新版本",
     "publishVersion": "版本號",
     "publishNotes": "版本說明",

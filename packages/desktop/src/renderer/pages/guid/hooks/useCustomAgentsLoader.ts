@@ -20,14 +20,9 @@ type UseCustomAgentsLoaderResult = {
 export const useCustomAgentsLoader = (): UseCustomAgentsLoaderResult => {
   // Preset assistants share their own cache so settings / guid / conversation
   // all see the same list without duplicate HTTP calls.
-  const { data: assistantList } = useSWR('assistants.listSelectable', async () => {
-    try {
-      return await ipcBridge.assistants.listSelectable.invoke();
-    } catch (error) {
-      console.error('Failed to load assistants:', error);
-      return [] as Assistant[];
-    }
-  });
+  const { data: assistantList } = useSWR('assistants.listSelectable', () =>
+    ipcBridge.assistants.listSelectable.invoke()
+  );
   const assistants = assistantList ?? [];
 
   useEffect(() => {

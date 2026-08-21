@@ -346,16 +346,6 @@ const SkillCatalogDetailView: React.FC<Props> = (props) => {
                 {t('settings.skillsHub.copyToMine')}
               </Button>
             ) : null}
-            {detail.skill.editable && detail.selectedVersion === detail.skill.latestVersion ? (
-              <Button
-                type='primary'
-                icon={<Upload />}
-                loading={props.busy === 'publishVersion'}
-                onClick={props.onPublishVersion}
-              >
-                {t('settings.skillsHub.publishVersion')}
-              </Button>
-            ) : null}
             {detail.skill.canPublishToTjuaeHub ? (
               <Button icon={<Upload />} onClick={props.onPublish}>
                 {t('settings.skillsHub.publish')}
@@ -404,8 +394,19 @@ const SkillCatalogDetailView: React.FC<Props> = (props) => {
             editable={detail.skill.editable && detail.selectedVersion === detail.skill.latestVersion}
             saving={props.busy === 'save'}
             noDescription={t('settings.skillsHub.noDescription')}
+            publishLabel={
+              detail.skill.editable && detail.selectedVersion === detail.skill.latestVersion
+                ? t('settings.skillsHub.publishVersion')
+                : undefined
+            }
+            publishing={props.busy === 'publishVersion'}
             onVersionChange={props.onVersionChange}
             onSave={(draft: CatalogProfileDraft) => props.onSaveProfile(draft)}
+            onPublish={
+              detail.skill.editable && detail.selectedVersion === detail.skill.latestVersion
+                ? props.onPublishVersion
+                : undefined
+            }
           />
           <section className={styles.preferenceBar}>
             <label>
