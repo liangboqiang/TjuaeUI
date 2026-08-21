@@ -12,7 +12,7 @@ import type {
   UpdateAssistantCatalogSettingsRequest,
 } from '@/common/types/platform/assistantCatalog';
 import { Input, Message, Modal, Radio, Select } from '@arco-design/web-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import useSWR from 'swr';
@@ -46,6 +46,8 @@ const describeError = (error: unknown): string => {
 
 const parseSource = (value?: string): AssistantCatalogSource | undefined =>
   ASSISTANT_SOURCES.includes(value as AssistantCatalogSource) ? (value as AssistantCatalogSource) : undefined;
+
+const identityKey = (identity: AssistantCatalogIdentity) => `${identity.source}:${identity.namespace}:${identity.slug}`;
 
 const AssistantSettings: React.FC = () => {
   const { t } = useTranslation();
@@ -130,7 +132,7 @@ const AssistantSettings: React.FC = () => {
         .filter((item) =>
           status === 'all' ? true : status === 'enabled' ? item.preferences.enabled : !item.preferences.enabled
         )
-        .sort((left, right) => left.name.localeCompare(right.name));
+        .toSorted((left, right) => left.name.localeCompare(right.name));
       return { items, total: items.length };
     },
     { revalidateOnFocus: false, dedupingInterval: 30_000, shouldRetryOnError: false }
@@ -151,18 +153,24 @@ const AssistantSettings: React.FC = () => {
   useEffect(() => {
     if (!detail) return;
     const versions = detail.versions.map((item) => item.version);
-    setTargetVersion((current) => (current && versions.includes(current) ? current : detail.manifest.version));
-    setBaseVersion((current) => {
-      if (current && versions.includes(current) && current !== detail.manifest.version) return current;
-      return versions.find((version) => version !== detail.manifest.version);
-    });
-  }, [detail]);
+    setTargetVersion(detail.manifest.version);
+    setBaseVersion(versions.find((version) => version !== detail.manifest.version));
+  }, [
+    detail?.item.identity.source,
+    detail?.item.identity.namespace,
+    detail?.item.identity.slug,
+    detail?.manifest.version,
+  ]);
 
   const compareKey =
     routeIdentity && baseVersion && targetVersion && baseVersion !== targetVersion
       ? ['assistant-version-compare', routeIdentity, baseVersion, targetVersion]
       : null;
-  const { data: comparison, isLoading: comparisonLoading } = useSWR<AssistantVersionComparison>(compareKey, () =>
+  const {
+    data: comparison,
+    error: comparisonError,
+    isLoading: comparisonLoading,
+  } = useSWR<AssistantVersionComparison>(compareKey, () =>
     ipcBridge.assistants.compareCatalogVersions.invoke({
       ...routeIdentity!,
       base: baseVersion!,
@@ -173,9 +181,6 @@ const AssistantSettings: React.FC = () => {
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshCatalog(), routeIdentity ? refreshDetail() : Promise.resolve()]);
   }, [refreshCatalog, refreshDetail, routeIdentity]);
-
-  const identityKey = (identity: AssistantCatalogIdentity) =>
-    `${identity.source}:${identity.namespace}:${identity.slug}`;
 
   const commitActivation = useCallback(
     async (
@@ -198,9 +203,9 @@ const AssistantSettings: React.FC = () => {
         setActivationAttempt(undefined);
         Message.success(t('settings.assistantCatalog.activation.enabledSuccess'));
         await refreshAll();
-      } catch (activationError) {
-        console.error('[AssistantCatalog] activation failed', activationError);
-        setActivationError(describeError(activationError));
+      } catch (activationFailure) {
+        console.error('[AssistantCatalog] activation failed', activationFailure);
+        setActivationError(describeError(activationFailure));
       } finally {
         setActivationSubmitting(false);
         setBusyIdentity(undefined);
@@ -307,6 +312,7 @@ const AssistantSettings: React.FC = () => {
 
   const copyToMine = async () => {
     if (!routeIdentity || !detail || !copySlug.trim()) return;
+    setBusyIdentity(identityKey(routeIdentity));
     try {
       const copied = await ipcBridge.assistants.copyToMine.invoke({
         ...routeIdentity,
@@ -315,12 +321,16 @@ const AssistantSettings: React.FC = () => {
       });
       setCopyVisible(false);
       setCopySlug('');
-      await refreshCatalog();
-      void navigate(assistantCatalogRoute(copied.item.identity));
       Message.success(t('settings.assistantCatalog.copySuccess'));
+      void navigate(assistantCatalogRoute(copied.item.identity));
+      void refreshCatalog().catch((refreshError) =>
+        console.warn('[AssistantCatalog] copied successfully but catalog refresh failed', refreshError)
+      );
     } catch (copyError) {
       console.error('[AssistantCatalog] copy failed', copyError);
-      Message.error(t('settings.assistantCatalog.actionFailed'));
+      Message.error(describeError(copyError));
+    } finally {
+      setBusyIdentity(undefined);
     }
   };
 
@@ -344,16 +354,18 @@ const AssistantSettings: React.FC = () => {
 
   const saveSettings = async (
     settings: Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>
-  ) => {
-    if (!routeIdentity) return;
+  ): Promise<boolean> => {
+    if (!routeIdentity) return false;
     setBusyIdentity(identityKey(routeIdentity));
     try {
       await ipcBridge.assistants.updateCatalogSettings.invoke({ ...routeIdentity, ...settings });
       await Promise.all([refreshDetail(), refreshCatalog()]);
       Message.success(t('settings.assistantCatalog.settingsSaved'));
+      return true;
     } catch (saveError) {
       console.error('[AssistantCatalog] save settings failed', saveError);
       Message.error(describeError(saveError));
+      return false;
     } finally {
       setBusyIdentity(undefined);
     }
@@ -407,6 +419,7 @@ const AssistantSettings: React.FC = () => {
           activeTab={detailTab}
           comparison={comparison}
           comparisonLoading={comparisonLoading}
+          comparisonFailed={comparisonError != null}
           baseVersion={baseVersion}
           targetVersion={targetVersion}
           onBack={() => void navigate('/settings/assistants')}
@@ -425,7 +438,7 @@ const AssistantSettings: React.FC = () => {
             setCopyVisible(true);
           }}
           onExport={() => void exportCurrent()}
-          onSaveSettings={(settings) => void saveSettings(settings)}
+          onSaveSettings={saveSettings}
           onDelete={deleteCurrent}
           onPublish={() => setPublishVisible(true)}
         />
@@ -463,8 +476,9 @@ const AssistantSettings: React.FC = () => {
         <Modal
           visible={copyVisible}
           title={t('settings.assistantCatalog.copyTitle')}
+          confirmLoading={Boolean(routeIdentity && busyIdentity === identityKey(routeIdentity))}
           okButtonProps={{ disabled: !copySlug.trim() }}
-          onOk={() => void copyToMine()}
+          onOk={copyToMine}
           onCancel={() => setCopyVisible(false)}
         >
           <Input value={copySlug} onChange={setCopySlug} placeholder={t('settings.assistantCatalog.slugPlaceholder')} />

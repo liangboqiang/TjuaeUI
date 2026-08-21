@@ -1,5 +1,9 @@
 {
   "title": "设置",
+  "catalogCategories": "分类",
+  "catalogTags": "标签",
+  "catalogCompareFailed": "无法比较这两个版本，请重试。",
+  "catalogProfileSaved": "资料已保存",
   "mcpCompatibility": "兼容",
   "mcpSearchPlaceholder": "搜索 MCP 服务器",
   "mcpAuthentication": "认证方式",
@@ -163,7 +167,7 @@
     },
     "noDescription": "暂无技能说明",
     "enabled": "启用",
-    "latestVersion": "当前版本",
+    "latestVersion": "最新版本",
     "skillCount": "已加载 {{count}} 个技能",
     "copyToMine": "复制到我的技能",
     "version": "版本",

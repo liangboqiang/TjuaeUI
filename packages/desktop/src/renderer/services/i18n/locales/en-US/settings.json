@@ -1,5 +1,9 @@
 {
   "title": "Settings",
+  "catalogCategories": "Categories",
+  "catalogTags": "Tags",
+  "catalogCompareFailed": "These versions could not be compared. Please try again.",
+  "catalogProfileSaved": "Profile saved",
   "mcpCompatibility": "Compatibility",
   "mcpSearchPlaceholder": "Search MCP servers",
   "mcpAuthentication": "Authentication",
@@ -173,7 +177,7 @@
     },
     "noDescription": "No description",
     "enabled": "Enabled",
-    "latestVersion": "Current version",
+    "latestVersion": "Latest version",
     "skillCount": "{{count}} skills loaded",
     "copyToMine": "Copy to My Skills",
     "version": "Version",

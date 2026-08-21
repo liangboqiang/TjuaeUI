@@ -73,13 +73,15 @@ const detail: AssistantCatalogDetail = {
     nameI18n: {},
     description: '写作助手',
     descriptionI18n: {},
+    categories: [],
+    tags: [],
     defaults: {
       agent: 'codex',
       model: { mode: 'fixed', value: 'gpt-5.6' },
       permission: { mode: 'fixed', value: 'admin' },
       thoughtLevel: { mode: 'fixed', value: 'high' },
       skills: [{ source: 'mine', namespace: '', slug: 'writing' }],
-      mcps: ['filesystem'],
+      mcps: ['filesystem', 'disabled-server'],
     },
     requirements: [],
     recommendedPrompts: [],
@@ -109,7 +111,7 @@ describe('AssistantSettingsWorkspace', () => {
     });
   });
 
-  it('restores capability-backed defaults and only loads enabled reusable resources', async () => {
+  it('restores capability-backed defaults and keeps every configured MCP visible', async () => {
     render(
       <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
         <AssistantSettingsWorkspace detail={detail} busy={false} onSave={vi.fn()} />
@@ -123,7 +125,7 @@ describe('AssistantSettingsWorkspace', () => {
     expect(screen.getByText('High thinking')).toBeInTheDocument();
     expect(screen.getByText('Writing')).toBeInTheDocument();
     expect(screen.getByText('Filesystem')).toBeInTheDocument();
-    expect(screen.queryByText('Disabled server')).not.toBeInTheDocument();
+    expect(screen.getByText('Disabled server')).toBeInTheDocument();
     await waitFor(() => expect(mocks.listSkillCatalog).toHaveBeenCalledWith({ enabled: true, limit: 200 }));
   });
 });

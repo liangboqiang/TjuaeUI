@@ -390,6 +390,11 @@
   background: var(--color-fill-1);
 }
 
+.versionList .versionSelected {
+  box-shadow: inset 3px 0 0 rgb(var(--primary-6));
+  background: var(--color-primary-light-1);
+}
+
 .versionList button > span {
   display: flex;
   align-items: center;

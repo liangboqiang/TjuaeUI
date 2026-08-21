@@ -1,0 +1,115 @@
+.hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 28px 0 22px;
+}
+
+.glyphArea {
+  position: relative;
+  flex: none;
+}
+
+.imagePreview {
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--color-border-2);
+  border-radius: 16px;
+  background: var(--color-fill-1);
+  object-fit: cover;
+}
+
+.uploadButton {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  border: 1px solid var(--color-border-2) !important;
+  background: var(--color-bg-2) !important;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+}
+
+.identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.titleRow,
+.tags,
+.editActions {
+  display: flex;
+  align-items: center;
+}
+
+.titleRow {
+  gap: 10px;
+}
+
+.titleRow > :global(.arco-input) {
+  max-width: 420px;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.titleRow h1 {
+  margin: 0;
+  color: var(--color-text-1);
+  font-size: 26px;
+}
+
+.editActions {
+  margin-left: auto;
+  gap: 4px;
+}
+
+.identity > p {
+  max-width: 760px;
+  margin: 8px 0 12px;
+  color: var(--color-text-2);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.identity > :global(.arco-textarea-wrapper) {
+  max-width: 760px;
+  margin-top: 10px;
+}
+
+.tags {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metadataEditor {
+  display: grid;
+  max-width: 760px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.metadataEditor label,
+.versionPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--color-text-3);
+  font-size: 11px;
+}
+
+.versionPicker {
+  width: 150px;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    flex-wrap: wrap;
+  }
+
+  .metadataEditor {
+    grid-template-columns: 1fr;
+  }
+
+  .versionPicker {
+    width: 100%;
+  }
+}

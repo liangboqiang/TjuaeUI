@@ -1,6 +1,6 @@
 import React from 'react';
 import { Message } from '@arco-design/web-react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { SWRConfig } from 'swr';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,6 +10,10 @@ const mocks = vi.hoisted(() => ({
   showOpen: vi.fn(),
   talkToButler: vi.fn(),
   navigate: vi.fn(),
+  params: {} as { source?: string; namespace?: string; assistantName?: string },
+  getCatalogDetail: vi.fn(),
+  compareCatalogVersions: vi.fn(),
+  copyToMine: vi.fn(),
 }));
 
 vi.mock('@/common', () => ({
@@ -20,19 +24,29 @@ vi.mock('@/common', () => ({
       createMine: { invoke: vi.fn() },
       updateCatalogPreferences: { invoke: vi.fn() },
       prepareActivation: { invoke: vi.fn() },
+      getCatalogDetail: { invoke: mocks.getCatalogDetail },
+      compareCatalogVersions: { invoke: mocks.compareCatalogVersions },
+      copyToMine: { invoke: mocks.copyToMine },
+      exportCatalog: { invoke: vi.fn() },
+      updateCatalogSettings: { invoke: vi.fn() },
+      deleteCatalog: { invoke: vi.fn() },
+      publishCatalog: { invoke: vi.fn() },
     },
     dialog: { showOpen: { invoke: mocks.showOpen } },
   },
 }));
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mocks.navigate,
-  useParams: () => ({}),
+  useParams: () => mocks.params,
 }));
 vi.mock('@/renderer/pages/settings/components/SettingsPageWrapper', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 vi.mock('@/renderer/hooks/assistant/useTalkToButler', () => ({
   useTalkToButler: () => mocks.talkToButler,
+}));
+vi.mock('@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer', () => ({
+  default: ({ content }: { content: string }) => <article data-testid='rendered-readme'>{content}</article>,
 }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -55,6 +69,17 @@ vi.mock('react-i18next', () => ({
         'settings.assistantCatalog.sources.mine': '我的助手',
         'settings.assistantCatalog.sources.tjuaeHub': 'TjuaeHub',
         'settings.assistantCatalog.activationStatus.ready': '就绪',
+        'settings.assistantCatalog.backToList': '全部助手',
+        'settings.assistantCatalog.copyToMine': '复制到我的助手',
+        'settings.assistantCatalog.copyTitle': '复制助手',
+        'settings.assistantCatalog.copySuccess': '助手已复制',
+        'settings.assistantCatalog.slugPlaceholder': '助手标识',
+        'settings.assistantCatalog.export': '导出',
+        'settings.assistantCatalog.version': '版本',
+        'settings.assistantCatalog.tabs.overview': '概述',
+        'settings.assistantCatalog.tabs.settings': '设置',
+        'settings.assistantCatalog.tabs.versions': '版本历史',
+        'settings.assistantCatalog.tabs.compare': '版本比较',
         'settings.talkToButler.addViaChat': '通过对话添加',
         'settings.talkToButler.addManually': '手动添加',
         'settings.talkToButler.prompt.createAssistant': '帮我创建一个新助手',
@@ -87,6 +112,43 @@ const assistant = {
   },
 };
 
+const remoteAssistant = {
+  ...assistant,
+  identity: { source: 'tjuae-hub' as const, namespace: 'official', slug: 'writer' },
+  editable: false,
+  canDelete: false,
+};
+
+const remoteDetail = {
+  item: remoteAssistant,
+  manifest: {
+    format: 'tjuae-assistant',
+    formatVersion: 1,
+    id: 'writer',
+    version: '1.0.0',
+    name: 'Writer',
+    nameI18n: {},
+    description: '写作助手',
+    descriptionI18n: {},
+    categories: ['写作'],
+    tags: ['文章'],
+    defaults: {
+      model: { mode: 'auto' },
+      permission: { mode: 'auto' },
+      thoughtLevel: { mode: 'auto' },
+      skills: [],
+      mcps: [],
+    },
+    requirements: [],
+    recommendedPrompts: [],
+    recommendedPromptsI18n: {},
+    contentHash: 'hash',
+  },
+  readme: '# Writer',
+  files: [],
+  versions: [{ version: '1.0.0', revision: 'main', digest: 'hash' }],
+};
+
 const renderPage = () =>
   render(
     <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
@@ -102,6 +164,7 @@ describe('AssistantCatalogPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.params = {};
     vi.spyOn(Message, 'success').mockImplementation(() => undefined as never);
     mocks.listCatalog.mockImplementation(async ({ source }: { source: string }) => ({
       items: source === 'mine' ? [assistant] : [],
@@ -109,6 +172,12 @@ describe('AssistantCatalogPage', () => {
     }));
     mocks.showOpen.mockResolvedValue(['C:\\packages\\writer.zip']);
     mocks.importCatalog.mockResolvedValue({ item: assistant });
+    mocks.getCatalogDetail.mockResolvedValue(remoteDetail);
+    mocks.copyToMine.mockResolvedValue({
+      ...remoteDetail,
+      item: { ...assistant, identity: { source: 'mine', namespace: '', slug: 'writer-copy' } },
+      manifest: { ...remoteDetail.manifest, id: 'writer-copy' },
+    });
   });
 
   it('uses the shared search/add header and exposes import, manual, and chat creation', async () => {
@@ -138,5 +207,26 @@ describe('AssistantCatalogPage', () => {
     fireEvent.error(image!);
     expect(card.querySelector('img')).toBeNull();
     expect(card).toHaveTextContent('W');
+  });
+
+  it('closes the copy dialog and enters the new local assistant after a successful copy', async () => {
+    mocks.params = { source: 'tjuae-hub', namespace: 'official', assistantName: 'writer' };
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: '复制到我的助手' }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByText(/确定|OK/u));
+
+    await waitFor(() =>
+      expect(mocks.copyToMine).toHaveBeenCalledWith({
+        source: 'tjuae-hub',
+        namespace: 'official',
+        slug: 'writer',
+        version: '1.0.0',
+        targetSlug: 'writer-copy',
+      })
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(mocks.navigate).toHaveBeenCalledWith('/settings/assistants/mine/~/writer-copy');
   });
 });

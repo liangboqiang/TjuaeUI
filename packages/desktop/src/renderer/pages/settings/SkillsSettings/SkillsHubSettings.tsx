@@ -29,6 +29,16 @@ type StatusFilter = 'all' | 'enabled' | 'autoInject';
 const parseRouteSource = (value?: string): SkillSource | undefined =>
   SKILL_SOURCES.includes(value as SkillSource) ? (value as SkillSource) : undefined;
 
+const describeError = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+
 const SkillsHubSettings: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -43,6 +53,7 @@ const SkillsHubSettings: React.FC = () => {
           slug: decodeURIComponent(route.skillName),
         }
       : undefined;
+  const routeIdentityPath = routeIdentity ? skillRoute(routeIdentity) : undefined;
   const [source, setSource] = useState<SourceFilter>(routeSource ?? 'all');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [query, setQuery] = useState('');
@@ -106,18 +117,24 @@ const SkillsHubSettings: React.FC = () => {
 
   useEffect(() => {
     if (!detail) return;
-    if (routeIdentity && skillRoute(routeIdentity) !== skillRoute(detail.skill.identity)) {
+    if (routeIdentityPath && routeIdentityPath !== skillRoute(detail.skill.identity)) {
       void navigate(skillRoute(detail.skill.identity), { replace: true });
       return;
     }
     setSelectedFilePath((value) => value ?? detail.files[0]?.path);
     const versions = detail.versions.map((item) => item.version);
-    setTargetVersion((value) => (value && versions.includes(value) ? value : detail.selectedVersion));
-    setBaseVersion((value) => {
-      if (value && versions.includes(value) && value !== detail.selectedVersion) return value;
-      return versions.find((version) => version !== detail.selectedVersion);
-    });
-  }, [detail, navigate, routeIdentity]);
+    setTargetVersion(detail.selectedVersion);
+    setBaseVersion(versions.find((version) => version !== detail.selectedVersion));
+  }, [
+    detail?.files,
+    detail?.selectedVersion,
+    detail?.skill.identity.namespace,
+    detail?.skill.identity.slug,
+    detail?.skill.identity.source,
+    detail?.versions,
+    navigate,
+    routeIdentityPath,
+  ]);
 
   const fileKey =
     routeIdentity && selectedFilePath && detail
@@ -139,7 +156,11 @@ const SkillsHubSettings: React.FC = () => {
     routeIdentity && baseVersion && targetVersion && baseVersion !== targetVersion
       ? (['skill-compare', routeIdentity, baseVersion, targetVersion] as const)
       : null;
-  const { data: comparison, isLoading: comparisonLoading } = useSWR<SkillVersionComparison>(compareKey, () =>
+  const {
+    data: comparison,
+    error: comparisonError,
+    isLoading: comparisonLoading,
+  } = useSWR<SkillVersionComparison>(compareKey, () =>
     ipcBridge.fs.compareSkillVersions.invoke({ ...routeIdentity!, base: baseVersion!, target: targetVersion! })
   );
 
@@ -153,11 +174,13 @@ const SkillsHubSettings: React.FC = () => {
       try {
         const result = await operation();
         Message.success(success);
-        await refreshAll();
+        void refreshAll().catch((refreshError) =>
+          console.warn(`[SkillCatalog] ${action ?? 'operation'} succeeded but refresh failed`, refreshError)
+        );
         return result;
       } catch (operationError) {
         console.error(`[SkillCatalog] ${action ?? 'operation'} failed`, operationError);
-        Message.error(t('settings.skillsHub.actionFailed'));
+        Message.error(describeError(operationError));
         return undefined;
       } finally {
         setBusy(null);
@@ -260,7 +283,7 @@ const SkillsHubSettings: React.FC = () => {
   const importZip = useCallback(async () => {
     const files = await ipcBridge.dialog.showOpen.invoke({
       properties: ['openFile'],
-      filters: [{ name: 'Skill ZIP', extensions: ['zip'] }],
+      filters: [{ name: t('settings.skillsHub.importZip'), extensions: ['zip'] }],
     });
     if (!files?.[0]) return;
     const result = await run(
@@ -302,6 +325,7 @@ const SkillsHubSettings: React.FC = () => {
           selectedFileLoading={selectedFileLoading}
           comparison={comparison}
           comparisonLoading={comparisonLoading}
+          comparisonFailed={comparisonError != null}
           baseVersion={baseVersion}
           targetVersion={targetVersion}
           onBack={() => void navigate('/settings/skills')}
@@ -344,6 +368,24 @@ const SkillsHubSettings: React.FC = () => {
               t('settings.skillsHub.saveSuccess')
             ).then(() => refreshFile());
           }}
+          onSaveProfile={async (draft) => {
+            const updated = await run(
+              'save',
+              () =>
+                ipcBridge.fs.updateSkillProfile.invoke({
+                  ...routeIdentity,
+                  name: draft.name,
+                  description: draft.description,
+                  categories: draft.categories,
+                  tags: draft.tags,
+                  iconDataUrl: draft.imageDataUrl,
+                }),
+              t('settings.catalogProfileSaved')
+            );
+            if (!updated) return false;
+            await refreshDetail(updated, { revalidate: false });
+            return true;
+          }}
           onCompareVersions={(base, target) => {
             setBaseVersion(base);
             setTargetVersion(target);
@@ -352,10 +394,11 @@ const SkillsHubSettings: React.FC = () => {
         <Modal
           title={t('settings.skillsHub.copyTitle')}
           visible={copyOpen}
+          confirmLoading={busy === 'copy'}
           onCancel={() => setCopyOpen(false)}
-          onOk={() => {
+          onOk={async () => {
             if (!detail) return;
-            void run(
+            const result = await run(
               'copy',
               () =>
                 ipcBridge.fs.copySkillToMine.invoke({
@@ -364,11 +407,11 @@ const SkillsHubSettings: React.FC = () => {
                   targetSlug: copySlug.trim(),
                 }),
               t('settings.skillsHub.copySuccess')
-            ).then((result) => {
-              if (!result) return;
-              setCopyOpen(false);
-              void navigate(skillRoute(result.identity));
-            });
+            );
+            if (!result) return;
+            setCopyOpen(false);
+            setCopySlug('');
+            void navigate(skillRoute(result.identity));
           }}
         >
           <p>{t('settings.skillsHub.copyDescription')}</p>

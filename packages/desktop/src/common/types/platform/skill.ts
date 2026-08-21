@@ -89,6 +89,14 @@ export type SkillOperation = {
 
 export type UpdateSkillPreferences = SkillPreferences;
 
+export type UpdateSkillProfile = {
+  name: string;
+  description: string;
+  categories: string[];
+  tags: string[];
+  iconDataUrl?: string;
+};
+
 /** Compact runtime shape used by assistant and conversation selectors. */
 export type SkillWorkspace = {
   id: string;

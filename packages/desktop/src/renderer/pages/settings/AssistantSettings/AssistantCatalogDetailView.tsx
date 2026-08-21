@@ -9,6 +9,7 @@ import { diffLines } from 'diff';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import MarkdownPreview from '@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer';
+import CatalogDetailHero, { type CatalogProfileDraft } from '../components/CatalogDetailHero';
 import styles from '../SkillsSettings/SkillsHubSettings.module.css';
 import { AssistantGlyph } from './AssistantCatalogDirectory';
 import { assistantSourceTranslationKey } from './assistantCatalogPresentation';
@@ -55,6 +56,7 @@ type Props = {
   activeTab: AssistantDetailTab;
   comparison?: AssistantVersionComparison;
   comparisonLoading: boolean;
+  comparisonFailed: boolean;
   baseVersion?: string;
   targetVersion?: string;
   onBack: () => void;
@@ -65,14 +67,25 @@ type Props = {
   onCompareVersions: (base: string, target: string) => void;
   onCopyToMine: () => void;
   onExport: () => void;
-  onSaveSettings: (settings: Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>) => void;
+  onSaveSettings: (
+    settings: Omit<UpdateAssistantCatalogSettingsRequest, 'source' | 'namespace' | 'slug'>
+  ) => Promise<boolean>;
   onDelete: () => void;
   onPublish: () => void;
 };
 
 const VersionCompare: React.FC<
-  Pick<Props, 'detail' | 'comparison' | 'comparisonLoading' | 'baseVersion' | 'targetVersion' | 'onCompareVersions'>
-> = ({ detail, comparison, comparisonLoading, baseVersion, targetVersion, onCompareVersions }) => {
+  Pick<
+    Props,
+    | 'detail'
+    | 'comparison'
+    | 'comparisonLoading'
+    | 'comparisonFailed'
+    | 'baseVersion'
+    | 'targetVersion'
+    | 'onCompareVersions'
+  >
+> = ({ detail, comparison, comparisonLoading, comparisonFailed, baseVersion, targetVersion, onCompareVersions }) => {
   const { t } = useTranslation();
   const versions = detail?.versions.map((item) => item.version) ?? [];
   const [selectedPath, setSelectedPath] = useState<string>();
@@ -82,8 +95,13 @@ const VersionCompare: React.FC<
     () => buildDiffSides(selected?.baseContent ?? '', selected?.targetContent ?? ''),
     [selected?.baseContent, selected?.targetContent]
   );
-  const run = (base: string, target: string) => {
-    if (base && target && base !== target) onCompareVersions(base, target);
+  const changeBase = (base: string) => {
+    const target = targetVersion === base ? versions.find((version) => version !== base) : targetVersion;
+    if (target) onCompareVersions(base, target);
+  };
+  const changeTarget = (target: string) => {
+    const base = baseVersion === target ? versions.find((version) => version !== target) : baseVersion;
+    if (base) onCompareVersions(base, target);
   };
   if (!detail) return null;
   return (
@@ -93,8 +111,12 @@ const VersionCompare: React.FC<
           <span>{t('settings.assistantCatalog.baseVersion')}</span>
           <Select
             value={baseVersion}
-            options={versions.map((version) => ({ label: `v${version}`, value: version }))}
-            onChange={(value) => run(value, targetVersion ?? '')}
+            options={versions.map((version) => ({
+              label: `v${version}`,
+              value: version,
+              disabled: version === targetVersion,
+            }))}
+            onChange={changeBase}
           />
         </label>
         <span>→</span>
@@ -102,12 +124,17 @@ const VersionCompare: React.FC<
           <span>{t('settings.assistantCatalog.targetVersion')}</span>
           <Select
             value={targetVersion}
-            options={versions.map((version) => ({ label: `v${version}`, value: version }))}
-            onChange={(value) => run(baseVersion ?? '', value)}
+            options={versions.map((version) => ({
+              label: `v${version}`,
+              value: version,
+              disabled: version === baseVersion,
+            }))}
+            onChange={changeTarget}
           />
         </label>
       </div>
       {comparisonLoading ? <Spin /> : null}
+      {!comparisonLoading && comparisonFailed ? <Empty description={t('settings.catalogCompareFailed')} /> : null}
       {!comparisonLoading && comparison?.files.length === 0 ? (
         <Empty description={t('settings.assistantCatalog.compareNoChanges')} />
       ) : null}
@@ -201,30 +228,35 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
       ) : null}
       {detail ? (
         <>
-          <section className={styles.detailHero}>
-            <AssistantGlyph assistant={detail.item} large />
-            <div className={styles.detailIdentity}>
-              <div>
-                <h1>{detail.item.name}</h1>
-                <Tag>{t(assistantSourceTranslationKey[detail.item.identity.source])}</Tag>
-              </div>
-              <p>{detail.item.description || t('settings.assistantCatalog.noDescription')}</p>
-              <div className={styles.detailTags}>
-                {detail.item.categories.map((category) => (
-                  <Tag key={category}>{category}</Tag>
-                ))}
-                {detail.item.tags.map((tag) => (
-                  <Tag key={tag} color='gray'>
-                    #{tag}
-                  </Tag>
-                ))}
-              </div>
-            </div>
-            <label className={styles.versionPicker}>
-              <span>{t('settings.assistantCatalog.version')}</span>
-              <Select value={detail.manifest.version} options={versionOptions} onChange={props.onVersionChange} />
-            </label>
-          </section>
+          <CatalogDetailHero
+            identityKey={`${detail.item.identity.source}:${detail.item.identity.namespace}:${detail.item.identity.slug}`}
+            glyph={<AssistantGlyph assistant={detail.item} large />}
+            name={detail.item.name}
+            description={detail.item.description}
+            categories={detail.item.categories}
+            tags={detail.item.tags}
+            sourceLabel={t(assistantSourceTranslationKey[detail.item.identity.source])}
+            versionLabel={t('settings.assistantCatalog.version')}
+            version={detail.manifest.version}
+            versionOptions={versionOptions}
+            editable={detail.item.editable && detail.manifest.version === detail.item.latestVersion}
+            saving={props.busy}
+            noDescription={t('settings.assistantCatalog.noDescription')}
+            onVersionChange={props.onVersionChange}
+            onSave={(draft: CatalogProfileDraft) =>
+              props.onSaveSettings({
+                name: draft.name,
+                description: draft.description,
+                avatar: detail.manifest.avatar,
+                avatarDataUrl: draft.imageDataUrl,
+                categories: draft.categories,
+                tags: draft.tags,
+                defaults: detail.manifest.defaults,
+                recommendedPrompts: detail.manifest.recommendedPrompts,
+                rules: detail.readme,
+              })
+            }
+          />
           <section className={styles.preferenceBar}>
             <label>
               <Switch
@@ -255,7 +287,13 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
             <Tabs.TabPane key='versions' title={t('settings.assistantCatalog.tabs.versions')}>
               <div className={styles.versionList}>
                 {detail.versions.map((version) => (
-                  <Button type='text' key={version.version} onClick={() => props.onVersionChange(version.version)}>
+                  <Button
+                    type='text'
+                    key={version.version}
+                    aria-current={version.version === detail.manifest.version ? 'true' : undefined}
+                    className={version.version === detail.manifest.version ? styles.versionSelected : undefined}
+                    onClick={() => props.onVersionChange(version.version)}
+                  >
                     <span>
                       <strong>v{version.version}</strong>
                       {version.version === detail.item.latestVersion ? (

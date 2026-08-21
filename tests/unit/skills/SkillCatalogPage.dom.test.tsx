@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { SWRConfig } from 'swr';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,6 +9,10 @@ const mocks = vi.hoisted(() => ({
   getSkillCatalogFile: vi.fn(),
   compareSkillVersions: vi.fn(),
   updateSkillPreferences: vi.fn(),
+  copySkillToMine: vi.fn(),
+  importSkill: vi.fn(),
+  updateSkillProfile: vi.fn(),
+  showOpen: vi.fn(),
   talkToButler: vi.fn(),
   navigate: vi.fn(),
   params: {} as { source?: string; namespace?: string; skillName?: string },
@@ -22,15 +26,16 @@ vi.mock('@/common', () => ({
       getSkillCatalogFile: { invoke: mocks.getSkillCatalogFile },
       compareSkillVersions: { invoke: mocks.compareSkillVersions },
       updateSkillPreferences: { invoke: mocks.updateSkillPreferences },
-      copySkillToMine: { invoke: vi.fn() },
+      copySkillToMine: { invoke: mocks.copySkillToMine },
       saveSkillCatalogFile: { invoke: vi.fn() },
+      updateSkillProfile: { invoke: mocks.updateSkillProfile },
       publishSkillToTjuaeHub: { invoke: vi.fn() },
       exportSkill: { invoke: vi.fn() },
-      importSkill: { invoke: vi.fn() },
+      importSkill: { invoke: mocks.importSkill },
       createSkill: { invoke: vi.fn() },
       deleteSkill: { invoke: vi.fn() },
     },
-    dialog: { showOpen: { invoke: vi.fn() } },
+    dialog: { showOpen: { invoke: mocks.showOpen } },
   },
 }));
 vi.mock('react-router-dom', () => ({
@@ -88,6 +93,11 @@ vi.mock('react-i18next', () => ({
         'settings.skillsHub.targetVersion': '目标版本',
         'settings.skillsHub.latestVersion': '最新',
         'settings.skillsHub.detailBackToList': '全部技能',
+        'settings.skillsHub.copyTitle': '复制技能',
+        'settings.skillsHub.copyDescription': '复制当前版本',
+        'settings.skillsHub.copyPlaceholder': '新技能标识',
+        'settings.skillsHub.copySuccess': '技能已复制',
+        'settings.skillsHub.importSuccess': '技能已导入',
       };
       return labels[key] ?? key;
     },
@@ -164,6 +174,15 @@ describe('SkillCatalogPage', () => {
       enabled: true,
       autoInject: true,
     });
+    mocks.copySkillToMine.mockResolvedValue({
+      identity: { source: 'mine', namespace: '', slug: 'cron-copy' },
+      version: '2.0.0',
+    });
+    mocks.importSkill.mockResolvedValue({
+      identity: { source: 'mine', namespace: '', slug: 'imported-skill' },
+      version: '1.0.0',
+    });
+    mocks.showOpen.mockResolvedValue(['C:\\packages\\imported-skill.zip']);
   });
 
   it('shows every source in one card directory and opens the canonical identity route', async () => {
@@ -190,6 +209,38 @@ describe('SkillCatalogPage', () => {
     fireEvent.click(chatEntry);
 
     expect(mocks.talkToButler).toHaveBeenCalledWith({ prompt: 'settings.talkToButler.prompt.addSkill' });
+  });
+
+  it('navigates immediately after importing a valid skill package', async () => {
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: '添加技能' }));
+    fireEvent.click(await screen.findByText('导入技能'));
+
+    await waitFor(() =>
+      expect(mocks.importSkill).toHaveBeenCalledWith({ archivePath: 'C:\\packages\\imported-skill.zip' })
+    );
+    expect(mocks.navigate).toHaveBeenCalledWith('/settings/skills/mine/~/imported-skill');
+  });
+
+  it('closes the copy dialog and navigates after the copy itself succeeds', async () => {
+    mocks.params = { source: 'skillhub', namespace: 'alice', skillName: 'cron' };
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: '复制到我的技能' }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByText(/确定|OK/u));
+
+    await waitFor(() =>
+      expect(mocks.copySkillToMine).toHaveBeenCalledWith({
+        source: 'skillhub',
+        namespace: 'alice',
+        slug: 'cron',
+        version: '2.0.0',
+        targetSlug: 'cron-copy',
+      })
+    );
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(mocks.navigate).toHaveBeenCalledWith('/settings/skills/mine/~/cron-copy');
   });
 
   it('updates enablement directly on a remote card without copying or installing it', async () => {

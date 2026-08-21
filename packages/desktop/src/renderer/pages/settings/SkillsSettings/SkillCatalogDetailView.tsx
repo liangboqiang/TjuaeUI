@@ -10,6 +10,7 @@ import { diffLines } from 'diff';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import MarkdownPreview from '@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer';
+import CatalogDetailHero, { type CatalogProfileDraft } from '../components/CatalogDetailHero';
 import styles from './SkillsHubSettings.module.css';
 import { compactBytes, sourceTranslationKey } from './skillCatalogPresentation';
 import { SkillGlyph } from './SkillCatalogDirectory';
@@ -22,6 +23,19 @@ type FileTreeNode = {
   path: string;
   file?: SkillCatalogFile;
   children: FileTreeNode[];
+};
+
+const sortFileTree = (nodes: FileTreeNode[]): FileTreeNode[] => {
+  const sortedNodes = nodes.toSorted((left, right) => {
+    const leftFolder = left.children.length > 0 && !left.file;
+    const rightFolder = right.children.length > 0 && !right.file;
+    if (leftFolder !== rightFolder) return leftFolder ? -1 : 1;
+    return left.name.localeCompare(right.name);
+  });
+  sortedNodes.forEach((node) => {
+    node.children = sortFileTree(node.children);
+  });
+  return sortedNodes;
 };
 
 const buildFileTree = (files: SkillCatalogFile[]): FileTreeNode[] => {
@@ -40,17 +54,7 @@ const buildFileTree = (files: SkillCatalogFile[]): FileTreeNode[] => {
       parent = node;
     });
   });
-  const sort = (nodes: FileTreeNode[]) => {
-    nodes.sort((left, right) => {
-      const leftFolder = left.children.length > 0 && !left.file;
-      const rightFolder = right.children.length > 0 && !right.file;
-      if (leftFolder !== rightFolder) return leftFolder ? -1 : 1;
-      return left.name.localeCompare(right.name);
-    });
-    nodes.forEach((node) => sort(node.children));
-  };
-  sort(root.children);
-  return root.children;
+  return sortFileTree(root.children);
 };
 
 const FileTreeNodes: React.FC<{
@@ -138,6 +142,7 @@ type Props = {
   selectedFileLoading: boolean;
   comparison?: SkillVersionComparison;
   comparisonLoading: boolean;
+  comparisonFailed: boolean;
   baseVersion?: string;
   targetVersion?: string;
   onBack: () => void;
@@ -150,6 +155,7 @@ type Props = {
   onDelete: () => void;
   onOpenFile: (path: string) => void;
   onSaveFile: (content: string) => void;
+  onSaveProfile: (draft: CatalogProfileDraft) => Promise<boolean>;
   onCompareVersions: (base: string, target: string) => void;
 };
 
@@ -214,8 +220,17 @@ const FileWorkspace: React.FC<
 };
 
 const VersionCompare: React.FC<
-  Pick<Props, 'detail' | 'comparison' | 'comparisonLoading' | 'baseVersion' | 'targetVersion' | 'onCompareVersions'>
-> = ({ detail, comparison, comparisonLoading, baseVersion, targetVersion, onCompareVersions }) => {
+  Pick<
+    Props,
+    | 'detail'
+    | 'comparison'
+    | 'comparisonLoading'
+    | 'comparisonFailed'
+    | 'baseVersion'
+    | 'targetVersion'
+    | 'onCompareVersions'
+  >
+> = ({ detail, comparison, comparisonLoading, comparisonFailed, baseVersion, targetVersion, onCompareVersions }) => {
   const { t } = useTranslation();
   const versions = detail?.versions.map((item) => item.version) ?? [];
   const [selectedPath, setSelectedPath] = useState<string>();
@@ -226,8 +241,13 @@ const VersionCompare: React.FC<
     [selected?.baseContent, selected?.targetContent]
   );
   if (!detail) return null;
-  const run = (nextBase: string, nextTarget: string) => {
-    if (nextBase && nextTarget && nextBase !== nextTarget) onCompareVersions(nextBase, nextTarget);
+  const changeBase = (base: string) => {
+    const target = targetVersion === base ? versions.find((version) => version !== base) : targetVersion;
+    if (target) onCompareVersions(base, target);
+  };
+  const changeTarget = (target: string) => {
+    const base = baseVersion === target ? versions.find((version) => version !== target) : baseVersion;
+    if (base) onCompareVersions(base, target);
   };
   return (
     <div className={styles.compareWorkspace}>
@@ -236,8 +256,12 @@ const VersionCompare: React.FC<
           <span>{t('settings.skillsHub.baseVersion')}</span>
           <Select
             value={baseVersion}
-            options={versions.map((v) => ({ label: `v${v}`, value: v }))}
-            onChange={(v) => run(v, targetVersion ?? '')}
+            options={versions.map((version) => ({
+              label: `v${version}`,
+              value: version,
+              disabled: version === targetVersion,
+            }))}
+            onChange={changeBase}
           />
         </label>
         <span>→</span>
@@ -245,8 +269,12 @@ const VersionCompare: React.FC<
           <span>{t('settings.skillsHub.targetVersion')}</span>
           <Select
             value={targetVersion}
-            options={versions.map((v) => ({ label: `v${v}`, value: v }))}
-            onChange={(v) => run(baseVersion ?? '', v)}
+            options={versions.map((version) => ({
+              label: `v${version}`,
+              value: version,
+              disabled: version === baseVersion,
+            }))}
+            onChange={changeTarget}
           />
         </label>
       </div>
@@ -255,6 +283,7 @@ const VersionCompare: React.FC<
           <Spin />
         </div>
       ) : null}
+      {!comparisonLoading && comparisonFailed ? <Empty description={t('settings.catalogCompareFailed')} /> : null}
       {!comparisonLoading && comparison?.files.length === 0 ? (
         <Empty description={t('settings.skillsHub.compareNoChanges')} />
       ) : null}
@@ -349,30 +378,23 @@ const SkillCatalogDetailView: React.FC<Props> = (props) => {
       ) : null}
       {detail ? (
         <>
-          <section className={styles.detailHero}>
-            <SkillGlyph skill={detail.skill} large />
-            <div className={styles.detailIdentity}>
-              <div>
-                <h1>{detail.skill.name}</h1>
-                <Tag>{t(sourceTranslationKey[detail.skill.identity.source])}</Tag>
-              </div>
-              <p>{detail.skill.description || t('settings.skillsHub.noDescription')}</p>
-              <div className={styles.detailTags}>
-                {detail.skill.categories.map((category) => (
-                  <Tag key={category}>{category}</Tag>
-                ))}
-                {detail.skill.tags.map((tag) => (
-                  <Tag key={tag} color='gray'>
-                    #{tag}
-                  </Tag>
-                ))}
-              </div>
-            </div>
-            <label className={styles.versionPicker}>
-              <span>{t('settings.skillsHub.version')}</span>
-              <Select value={detail.selectedVersion} options={versionOptions} onChange={props.onVersionChange} />
-            </label>
-          </section>
+          <CatalogDetailHero
+            identityKey={`${detail.skill.identity.source}:${detail.skill.identity.namespace}:${detail.skill.identity.slug}`}
+            glyph={<SkillGlyph skill={detail.skill} large />}
+            name={detail.skill.name}
+            description={detail.skill.description}
+            categories={detail.skill.categories}
+            tags={detail.skill.tags}
+            sourceLabel={t(sourceTranslationKey[detail.skill.identity.source])}
+            versionLabel={t('settings.skillsHub.version')}
+            version={detail.selectedVersion}
+            versionOptions={versionOptions}
+            editable={detail.skill.editable && detail.selectedVersion === detail.skill.latestVersion}
+            saving={props.busy === 'save'}
+            noDescription={t('settings.skillsHub.noDescription')}
+            onVersionChange={props.onVersionChange}
+            onSave={(draft: CatalogProfileDraft) => props.onSaveProfile(draft)}
+          />
           <section className={styles.preferenceBar}>
             <label>
               <Switch
@@ -416,7 +438,13 @@ const SkillCatalogDetailView: React.FC<Props> = (props) => {
             <Tabs.TabPane key='versions' title={t('settings.skillsHub.tabs.versions')}>
               <div className={styles.versionList}>
                 {detail.versions.map((version) => (
-                  <Button type='text' key={version.version} onClick={() => props.onVersionChange(version.version)}>
+                  <Button
+                    type='text'
+                    key={version.version}
+                    aria-current={version.version === detail.selectedVersion ? 'true' : undefined}
+                    className={version.version === detail.selectedVersion ? styles.versionSelected : undefined}
+                    onClick={() => props.onVersionChange(version.version)}
+                  >
                     <span>
                       <strong>v{version.version}</strong>
                       {version.version === detail.skill.latestVersion ? (

@@ -66,6 +66,8 @@ export type AssistantCatalogManifest = {
   nameI18n: Record<string, string>;
   description: string;
   descriptionI18n: Record<string, string>;
+  categories: string[];
+  tags: string[];
   avatar?: string;
   defaults: {
     agent?: string;
@@ -225,6 +227,8 @@ export type UpdateAssistantCatalogSettingsRequest = AssistantCatalogIdentity & {
   description: string;
   avatar?: string;
   avatarDataUrl?: string;
+  categories: string[];
+  tags: string[];
   defaults: AssistantCatalogManifest['defaults'];
   recommendedPrompts: string[];
   rules: string;

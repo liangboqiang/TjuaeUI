@@ -77,4 +77,25 @@ describe('ensureBackendMcpCatalog', () => {
     expect(result.builtinServers).toEqual([]);
     expect(result.allServers).toEqual([]);
   });
+
+  it('keeps persisted MCP rows visible while the Core catalog is temporarily unavailable', async () => {
+    getClientBusinessSettingMock.mockResolvedValue([
+      {
+        id: 'local-user-1',
+        name: 'local fallback',
+        enabled: false,
+        transport: { type: 'stdio', command: 'local', args: [] },
+        created_at: 1,
+        updated_at: 1,
+        original_json: '{}',
+        builtin: false,
+      },
+    ]);
+    mcpServiceMock.listServers.invoke.mockRejectedValue(new Error('Core is starting'));
+
+    const result = await ensureBackendMcpCatalog();
+
+    expect(result.userServers.map((server) => server.id)).toEqual(['local-user-1']);
+    expect(result.allServers.map((server) => server.id)).toEqual(['local-user-1']);
+  });
 });

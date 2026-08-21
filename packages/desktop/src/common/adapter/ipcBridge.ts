@@ -58,6 +58,7 @@ import type {
   SkillVersionComparison,
   SkillWorkspace,
   UpdateSkillPreferences,
+  UpdateSkillProfile,
 } from '../types/platform/skill';
 import { toAvailableSkill } from '../types/platform/skill';
 import type {
@@ -746,6 +747,10 @@ export const fs = {
   saveSkillCatalogFile: httpPut<SkillCatalogFileContent, SkillIdentity & { path: string; content: string }>(
     (p) => `${skillCatalogUrl(p)}/file`,
     ({ path, content }) => ({ path, content })
+  ),
+  updateSkillProfile: httpPut<SkillCatalogDetail, SkillIdentity & UpdateSkillProfile>(
+    (p) => `${skillCatalogUrl(p)}/profile`,
+    ({ source: _source, namespace: _namespace, slug: _slug, ...profile }) => profile
   ),
   compareSkillVersions: httpGet<SkillVersionComparison, SkillIdentity & { base: string; target: string }>((p) => {
     const query = new URLSearchParams({ base: p.base, target: p.target });

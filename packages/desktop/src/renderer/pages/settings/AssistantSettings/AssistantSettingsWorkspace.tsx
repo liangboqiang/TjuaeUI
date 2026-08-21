@@ -9,7 +9,6 @@ import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManaged
 import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderList';
 import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
 import MarkdownPreview from '@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer';
-import { resolveBackendAssetUrl } from '@/renderer/utils/platform';
 import {
   buildAgentRuntimeModeState,
   buildAgentRuntimeModelInfo,
@@ -19,7 +18,7 @@ import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor,
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Input, Radio, Select } from '@arco-design/web-react';
-import { Brain, CloseSmall, Drag, IdCard, ListView, Robot, UploadPicture } from '@icon-park/react';
+import { Brain, CloseSmall, Drag, ListView, Robot } from '@icon-park/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useSWR from 'swr';
@@ -33,7 +32,7 @@ type Props = {
   onSave: (draft: SettingsDraft) => void;
 };
 
-type Section = 'identity' | 'prompts' | 'defaults' | 'rules';
+type Section = 'prompts' | 'defaults' | 'rules';
 
 const skillValue = (identity: AssistantDefaultRef) => `${identity.source}:${identity.namespace}:${identity.slug}`;
 
@@ -91,11 +90,7 @@ const SortableSkillRow: React.FC<{
 
 const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) => {
   const { t, i18n } = useTranslation();
-  const [section, setSection] = useState<Section>('identity');
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [avatar, setAvatar] = useState<string>();
-  const [avatarDataUrl, setAvatarDataUrl] = useState<string>();
+  const [section, setSection] = useState<Section>('prompts');
   const [promptsText, setPromptsText] = useState('');
   const [agent, setAgent] = useState<string>();
   const [modelMode, setModelMode] = useState('auto');
@@ -110,7 +105,6 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   const [rules, setRules] = useState('');
   const [rulesMode, setRulesMode] = useState<'edit' | 'render'>('edit');
   const editable = detail.item.editable && detail.manifest.version === detail.item.latestVersion;
-  const avatarPreviewUrl = avatarDataUrl || resolveBackendAssetUrl(detail.item.avatarUrl);
 
   const managedAgents = useManagedAgentRuntimeCatalog();
   const { providers, getAvailableModels } = useModelProviderList();
@@ -121,30 +115,28 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
-    setName(detail.manifest.name);
-    setDescription(detail.manifest.description);
-    setAvatar(detail.manifest.avatar);
-    setAvatarDataUrl(undefined);
     setPromptsText(detail.manifest.recommendedPrompts.join('\n'));
     setAgent(detail.manifest.defaults.agent);
-    setModelMode(detail.manifest.defaults.model.mode);
+    setModelMode(detail.manifest.defaults.model.mode === 'fixed' ? 'fixed' : 'auto');
     setModel(detail.manifest.defaults.model.value);
-    setPermissionMode(detail.manifest.defaults.permission.mode);
+    setPermissionMode(detail.manifest.defaults.permission.mode === 'fixed' ? 'fixed' : 'auto');
     setPermission(detail.manifest.defaults.permission.value);
-    setThoughtMode(detail.manifest.defaults.thoughtLevel.mode);
+    setThoughtMode(detail.manifest.defaults.thoughtLevel.mode === 'fixed' ? 'fixed' : 'auto');
     setThought(detail.manifest.defaults.thoughtLevel.value);
     setSkills(detail.manifest.defaults.skills.map(skillValue));
     setMcps(detail.manifest.defaults.mcps);
     setRules(detail.readme);
   }, [detail]);
 
-  const agentOptions = useMemo(
-    () =>
-      managedAgents
-        .filter((item) => item.enabled && item.installed)
-        .map((item) => ({ value: item.id, label: item.name_i18n?.[i18n.language] || item.name })),
-    [i18n.language, managedAgents]
-  );
+  const agentOptions = useMemo(() => {
+    const options = managedAgents
+      .filter((item) => item.enabled && item.installed)
+      .map((item) => ({ value: item.id, label: item.name_i18n?.[i18n.language] || item.name }));
+    if (agent && !options.some((item) => item.value === agent)) {
+      options.unshift({ value: agent, label: agent });
+    }
+    return options;
+  }, [agent, i18n.language, managedAgents]);
   const selectedAgent = useMemo(
     () => managedAgents.find((item) => item.id === agent || item.backend === agent),
     [agent, managedAgents]
@@ -153,32 +145,44 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   const selectedAgentModeState = useMemo(() => buildAgentRuntimeModeState(selectedAgent), [selectedAgent]);
   const selectedAgentThoughtOption = useMemo(() => buildAgentRuntimeThoughtLevelOption(selectedAgent), [selectedAgent]);
   const modelOptions = useMemo(() => {
-    if (selectedAgentModelInfo?.available_models.length) {
-      return selectedAgentModelInfo.available_models.map((item) => ({
-        value: item.id,
-        label: item.label || item.id,
-      }));
+    const options = selectedAgentModelInfo?.available_models.length
+      ? selectedAgentModelInfo.available_models.map((item) => ({
+          value: item.id,
+          label: item.label || item.id,
+        }))
+      : providers.flatMap((provider) =>
+          getAvailableModels(provider).map((value) => ({ value, label: `${provider.name || provider.id} · ${value}` }))
+        );
+    if (model && !options.some((item) => item.value === model)) options.unshift({ value: model, label: model });
+    return options;
+  }, [getAvailableModels, model, providers, selectedAgentModelInfo]);
+  const permissionOptions = useMemo(() => {
+    const options = selectedAgentModeState.options.map((item) => ({
+      value: item.value,
+      label: t(`agentMode.${item.value}`, { defaultValue: item.label }),
+    }));
+    if (!options.length) {
+      options.push(
+        { value: 'read-only', label: t('agentMode.read-only') },
+        { value: 'auto', label: t('agentMode.auto') },
+        { value: 'full-access', label: t('agentMode.full-access') }
+      );
     }
-    return providers.flatMap((provider) =>
-      getAvailableModels(provider).map((value) => ({ value, label: `${provider.name || provider.id} · ${value}` }))
-    );
-  }, [getAvailableModels, providers, selectedAgentModelInfo]);
-  const permissionOptions = useMemo(
-    () =>
-      selectedAgentModeState.options.map((item) => ({
-        value: item.value,
-        label: t(`agentMode.${item.value}`, { defaultValue: item.label }),
-      })),
-    [selectedAgentModeState.options, t]
-  );
-  const thoughtOptions = useMemo(
-    () =>
-      (selectedAgentThoughtOption?.options ?? []).map((item) => ({
-        value: item.value,
-        label: item.label,
-      })),
-    [selectedAgentThoughtOption]
-  );
+    if (permission && !options.some((item) => item.value === permission)) {
+      options.unshift({ value: permission, label: permission });
+    }
+    return options;
+  }, [permission, selectedAgentModeState.options, t]);
+  const thoughtOptions = useMemo(() => {
+    const options = (selectedAgentThoughtOption?.options ?? []).map((item) => ({
+      value: item.value,
+      label: item.label,
+    }));
+    if (thought && !options.some((item) => item.value === thought)) {
+      options.unshift({ value: thought, label: thought });
+    }
+    return options;
+  }, [selectedAgentThoughtOption, thought]);
   const skillOptions = useMemo(
     () =>
       (skillPage?.items ?? []).map((item) => ({
@@ -195,13 +199,13 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     () => skillOptions.filter((option) => !skills.includes(option.value)),
     [skillOptions, skills]
   );
-  const mcpOptions = useMemo(
-    () =>
-      (mcpCatalog?.allServers ?? [])
-        .filter((item) => item.enabled)
-        .map((item) => ({ value: item.id, label: item.name })),
-    [mcpCatalog]
-  );
+  const mcpOptions = useMemo(() => {
+    const options = (mcpCatalog?.allServers ?? []).map((item) => ({ value: item.id, label: item.name }));
+    mcps.forEach((id) => {
+      if (!options.some((item) => item.value === id)) options.push({ value: id, label: id });
+    });
+    return options;
+  }, [mcpCatalog, mcps]);
 
   useEffect(() => {
     if (modelMode === 'fixed' && model && modelOptions.length && !modelOptions.some((item) => item.value === model)) {
@@ -238,24 +242,13 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     thoughtOptions,
   ]);
 
-  const pickAvatar = async () => {
-    const files = await ipcBridge.dialog.showOpen.invoke({
-      properties: ['openFile'],
-      filters: [
-        { name: t('settings.assistantAvatarImageFiles'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'] },
-      ],
-    });
-    if (!files?.[0]) return;
-    const dataUrl = await ipcBridge.fs.getImageBase64.invoke({ path: files[0] });
-    if (dataUrl) setAvatarDataUrl(dataUrl);
-  };
-
   const save = () =>
     onSave({
-      name: name.trim(),
-      description: description.trim(),
-      avatar,
-      avatarDataUrl,
+      name: detail.manifest.name,
+      description: detail.manifest.description,
+      avatar: detail.manifest.avatar,
+      categories: detail.manifest.categories,
+      tags: detail.manifest.tags,
       defaults: {
         agent,
         model: { mode: modelMode, value: modelMode === 'fixed' ? model : undefined },
@@ -308,6 +301,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
             value={value}
             options={options}
             showSearch
+            allowCreate
             disabled={!editable}
             placeholder={placeholder}
             onChange={setValue}
@@ -318,7 +312,6 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
   );
 
   const sections = [
-    { key: 'identity' as const, icon: <IdCard />, label: t('settings.assistantIdentitySection') },
     { key: 'prompts' as const, icon: <ListView />, label: t('settings.assistantRecommendedPromptsLabel') },
     { key: 'defaults' as const, icon: <Robot />, label: t('settings.assistantDefaultConfigSection') },
     { key: 'rules' as const, icon: <Brain />, label: t('settings.assistantRules') },
@@ -344,34 +337,6 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
           <h3>{sections.find((item) => item.key === section)?.label}</h3>
           <p>{t(`settings.assistantCatalog.settingsHints.${section}`)}</p>
         </header>
-        {section === 'identity' ? (
-          <div className={styles.fields}>
-            <label className={styles.field}>
-              <span>{t('settings.assistantName')}</span>
-              <Input value={name} disabled={!editable} onChange={setName} />
-            </label>
-            <label className={styles.field}>
-              <span>{t('settings.assistantDescription')}</span>
-              <Input.TextArea
-                value={description}
-                disabled={!editable}
-                autoSize={{ minRows: 3, maxRows: 8 }}
-                onChange={setDescription}
-              />
-            </label>
-            <div className={styles.field}>
-              <span>{t('settings.assistantNameAvatar')}</span>
-              <div className={styles.avatarRow}>
-                <div className={styles.avatarPreview}>
-                  {avatarPreviewUrl ? <img src={avatarPreviewUrl} alt='' /> : name.slice(0, 1)}
-                </div>
-                <Button icon={<UploadPicture />} disabled={!editable} onClick={() => void pickAvatar()}>
-                  {t('settings.assistantAvatarUploadImage')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : null}
         {section === 'prompts' ? (
           <Input.TextArea
             value={promptsText}
@@ -461,6 +426,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
                 allowClear
                 showSearch
                 disabled={!editable}
+                placeholder={t('settings.assistantSelectDefaultMcp')}
                 onChange={setMcps}
               />
             </label>
@@ -490,7 +456,7 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
         ) : null}
         {editable ? (
           <footer className={styles.footer}>
-            <Button type='primary' loading={busy} disabled={!name.trim() || !rules.trim()} onClick={save}>
+            <Button type='primary' loading={busy} disabled={!rules.trim()} onClick={save}>
               {t('settings.saveAssistant')}
             </Button>
           </footer>
