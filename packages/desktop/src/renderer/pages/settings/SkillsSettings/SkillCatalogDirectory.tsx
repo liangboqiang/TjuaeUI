@@ -56,7 +56,7 @@ const SkillCatalogDirectory: React.FC<{
             enabledLabel={t('settings.skillsHub.enabled')}
             description={skill.description || t('settings.skillsHub.noDescription')}
             onOpen={() => onOpen(skill)}
-            tags={
+            badges={
               <>
                 <Tag size='small'>
                   <LinkCloud /> {t(sourceTranslationKey[skill.identity.source])}

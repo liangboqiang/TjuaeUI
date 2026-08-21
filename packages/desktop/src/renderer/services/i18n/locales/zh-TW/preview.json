@@ -154,7 +154,6 @@
       "revision": "遠端修訂",
       "name": "名稱",
       "description": "說明",
-      "tags": "標籤",
       "compatibility": "相容性",
       "requirements": "執行需求",
       "contentHash": "內容校驗值",

@@ -54,6 +54,7 @@ import type {
   SkillCatalogPage,
   SkillIdentity,
   SkillOperation,
+  PublishSkillVersion,
   SkillSource,
   SkillVersionComparison,
   SkillWorkspace,
@@ -279,7 +280,7 @@ export const assistants = {
   ),
   publishCatalog: httpPost<PublishAssistantCatalogResponse, PublishAssistantCatalogRequest>(
     (params) => `${assistantCatalogUrl(params)}/publish`,
-    ({ message }) => ({ message })
+    ({ version, message }) => ({ version, message })
   ),
   deleteCatalog: httpDelete<void, AssistantCatalogIdentity>((params) => assistantCatalogUrl(params)),
 };
@@ -714,7 +715,6 @@ export const fs = {
       sources?: SkillSource[];
       q?: string;
       categories?: string[];
-      tags?: string[];
       enabled?: boolean;
       autoInject?: boolean;
       cursor?: string;
@@ -725,7 +725,6 @@ export const fs = {
     if (p.sources?.length) query.set('sources', p.sources.join(','));
     if (p.q) query.set('q', p.q);
     if (p.categories?.length) query.set('categories', p.categories.join(','));
-    if (p.tags?.length) query.set('tags', p.tags.join(','));
     if (p.enabled != null) query.set('enabled', String(p.enabled));
     if (p.autoInject != null) query.set('autoInject', String(p.autoInject));
     if (p.cursor) query.set('cursor', p.cursor);
@@ -751,6 +750,10 @@ export const fs = {
   updateSkillProfile: httpPut<SkillCatalogDetail, SkillIdentity & UpdateSkillProfile>(
     (p) => `${skillCatalogUrl(p)}/profile`,
     ({ source: _source, namespace: _namespace, slug: _slug, ...profile }) => profile
+  ),
+  publishSkillVersion: httpPost<SkillOperation, SkillIdentity & PublishSkillVersion>(
+    (p) => `${skillCatalogUrl(p)}/publish`,
+    ({ version, message }) => ({ version, message })
   ),
   compareSkillVersions: httpGet<SkillVersionComparison, SkillIdentity & { base: string; target: string }>((p) => {
     const query = new URLSearchParams({ base: p.base, target: p.target });

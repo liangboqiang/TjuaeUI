@@ -154,7 +154,6 @@
       "revision": "远端修订",
       "name": "名称",
       "description": "说明",
-      "tags": "标签",
       "compatibility": "兼容性",
       "requirements": "运行要求",
       "contentHash": "内容校验值",

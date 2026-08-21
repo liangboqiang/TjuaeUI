@@ -25,7 +25,6 @@ export type AssistantCatalogItem = {
   avatarUrl?: string;
   latestVersion: string;
   categories: string[];
-  tags: string[];
   editable: boolean;
   system: boolean;
   canDisable: boolean;
@@ -67,7 +66,6 @@ export type AssistantCatalogManifest = {
   description: string;
   descriptionI18n: Record<string, string>;
   categories: string[];
-  tags: string[];
   avatar?: string;
   defaults: {
     agent?: string;
@@ -228,13 +226,13 @@ export type UpdateAssistantCatalogSettingsRequest = AssistantCatalogIdentity & {
   avatar?: string;
   avatarDataUrl?: string;
   categories: string[];
-  tags: string[];
   defaults: AssistantCatalogManifest['defaults'];
   recommendedPrompts: string[];
   rules: string;
 };
 
 export type PublishAssistantCatalogRequest = AssistantCatalogIdentity & {
+  version: string;
   message: string;
 };
 

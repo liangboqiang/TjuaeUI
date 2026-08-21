@@ -25,7 +25,6 @@ export type SkillCatalogItem = {
   description: string;
   latestVersion: string;
   categories: string[];
-  tags: string[];
   iconUrl?: string;
   author?: string;
   preferences: SkillPreferences;
@@ -93,8 +92,12 @@ export type UpdateSkillProfile = {
   name: string;
   description: string;
   categories: string[];
-  tags: string[];
   iconDataUrl?: string;
+};
+
+export type PublishSkillVersion = {
+  version: string;
+  message: string;
 };
 
 /** Compact runtime shape used by assistant and conversation selectors. */

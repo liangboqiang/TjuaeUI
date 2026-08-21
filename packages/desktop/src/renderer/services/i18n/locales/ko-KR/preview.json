@@ -154,7 +154,6 @@
       "revision": "Remote revision",
       "name": "Name",
       "description": "Description",
-      "tags": "Tags",
       "compatibility": "호환성",
       "requirements": "실행 요구 사항",
       "contentHash": "콘텐츠 해시",

@@ -154,7 +154,6 @@
       "revision": "Remote revision",
       "name": "Name",
       "description": "Description",
-      "tags": "Tags",
       "compatibility": "Uyumluluk",
       "requirements": "Çalıştırma gereksinimleri",
       "contentHash": "İçerik karması",

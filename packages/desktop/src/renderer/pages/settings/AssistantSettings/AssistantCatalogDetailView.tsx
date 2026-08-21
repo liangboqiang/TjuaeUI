@@ -59,6 +59,7 @@ type Props = {
   comparisonFailed: boolean;
   baseVersion?: string;
   targetVersion?: string;
+  categoryOptions: string[];
   onBack: () => void;
   onRetry: () => void;
   onTabChange: (tab: AssistantDetailTab) => void;
@@ -195,7 +196,7 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
             <Button icon={<Download />} onClick={props.onExport}>
               {t('settings.assistantCatalog.export')}
             </Button>
-            {detail.item.identity.source === 'tjuae-hub' && detail.item.editable ? (
+            {detail.item.editable && !detail.item.system && detail.manifest.version === detail.item.latestVersion ? (
               <Button type='primary' icon={<Upload />} onClick={props.onPublish}>
                 {t('settings.assistantCatalog.publish')}
               </Button>
@@ -234,7 +235,7 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
             name={detail.item.name}
             description={detail.item.description}
             categories={detail.item.categories}
-            tags={detail.item.tags}
+            categoryOptions={props.categoryOptions}
             sourceLabel={t(assistantSourceTranslationKey[detail.item.identity.source])}
             versionLabel={t('settings.assistantCatalog.version')}
             version={detail.manifest.version}
@@ -250,7 +251,6 @@ const AssistantCatalogDetailView: React.FC<Props> = (props) => {
                 avatar: detail.manifest.avatar,
                 avatarDataUrl: draft.imageDataUrl,
                 categories: draft.categories,
-                tags: draft.tags,
                 defaults: detail.manifest.defaults,
                 recommendedPrompts: detail.manifest.recommendedPrompts,
                 rules: detail.readme,

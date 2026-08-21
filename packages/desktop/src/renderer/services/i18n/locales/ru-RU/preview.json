@@ -154,7 +154,6 @@
       "revision": "Remote revision",
       "name": "Name",
       "description": "Description",
-      "tags": "Tags",
       "compatibility": "Совместимость",
       "requirements": "Требования к запуску",
       "contentHash": "Хеш содержимого",

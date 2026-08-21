@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   getCatalogDetail: vi.fn(),
   compareCatalogVersions: vi.fn(),
   copyToMine: vi.fn(),
+  publishCatalog: vi.fn(),
 }));
 
 vi.mock('@/common', () => ({
@@ -30,7 +31,7 @@ vi.mock('@/common', () => ({
       exportCatalog: { invoke: vi.fn() },
       updateCatalogSettings: { invoke: vi.fn() },
       deleteCatalog: { invoke: vi.fn() },
-      publishCatalog: { invoke: vi.fn() },
+      publishCatalog: { invoke: mocks.publishCatalog },
     },
     dialog: { showOpen: { invoke: mocks.showOpen } },
   },
@@ -75,6 +76,12 @@ vi.mock('react-i18next', () => ({
         'settings.assistantCatalog.copySuccess': '助手已复制',
         'settings.assistantCatalog.slugPlaceholder': '助手标识',
         'settings.assistantCatalog.export': '导出',
+        'settings.assistantCatalog.publish': '发布新版本',
+        'settings.assistantCatalog.publishTitle': '发布助手新版本',
+        'settings.assistantCatalog.publishVersion': '版本号',
+        'settings.assistantCatalog.publishNotes': '发布说明',
+        'settings.assistantCatalog.publishPlaceholder': '说明本次更新',
+        'settings.assistantCatalog.publishSuccess': '助手版本已发布',
         'settings.assistantCatalog.version': '版本',
         'settings.assistantCatalog.tabs.overview': '概述',
         'settings.assistantCatalog.tabs.settings': '设置',
@@ -98,7 +105,6 @@ const assistant = {
   avatarUrl: '/api/assistant-assets/mine/~/writer?path=avatar.png',
   latestVersion: '1.0.0',
   categories: ['写作'],
-  tags: [],
   editable: true,
   system: false,
   canDisable: true,
@@ -131,7 +137,6 @@ const remoteDetail = {
     description: '写作助手',
     descriptionI18n: {},
     categories: ['写作'],
-    tags: ['文章'],
     defaults: {
       model: { mode: 'auto' },
       permission: { mode: 'auto' },
@@ -178,6 +183,7 @@ describe('AssistantCatalogPage', () => {
       item: { ...assistant, identity: { source: 'mine', namespace: '', slug: 'writer-copy' } },
       manifest: { ...remoteDetail.manifest, id: 'writer-copy' },
     });
+    mocks.publishCatalog.mockResolvedValue({ commit: 'abc123' });
   });
 
   it('uses the shared search/add header and exposes import, manual, and chat creation', async () => {
@@ -228,5 +234,27 @@ describe('AssistantCatalogPage', () => {
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(mocks.navigate).toHaveBeenCalledWith('/settings/assistants/mine/~/writer-copy');
+  });
+
+  it('publishes a saved local assistant as an explicit newer version with release notes', async () => {
+    mocks.params = { source: 'mine', namespace: '~', assistantName: 'writer' };
+    mocks.getCatalogDetail.mockResolvedValue({ ...remoteDetail, item: assistant });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: '发布新版本' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByDisplayValue('1.0.1')).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByPlaceholderText('说明本次更新'), { target: { value: '补齐固定配置' } });
+    fireEvent.click(within(dialog).getByText(/确定|OK/u));
+
+    await waitFor(() =>
+      expect(mocks.publishCatalog).toHaveBeenCalledWith({
+        source: 'mine',
+        namespace: '',
+        slug: 'writer',
+        version: '1.0.1',
+        message: '补齐固定配置',
+      })
+    );
   });
 });

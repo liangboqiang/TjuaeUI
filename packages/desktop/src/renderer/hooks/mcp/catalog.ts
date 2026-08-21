@@ -74,10 +74,13 @@ export const ensureBackendMcpCatalog = async (): Promise<{
 }> => {
   const localServers = ((await getClientBusinessSetting('mcp.config').catch((): IMcpServer[] => [])) ||
     []) as IMcpServer[];
-  const builtinServers = dedupeServers(localServers.filter(isBuiltinServer));
   const backendServers: IMcpServer[] | undefined = await mcpService.listServers
     .invoke()
     .catch((): undefined => undefined);
+  const builtinServers = dedupeServers([
+    ...(backendServers ?? []).filter(isBuiltinServer),
+    ...localServers.filter(isBuiltinServer),
+  ]);
   // The renderer-side catalog is only a startup/error fallback. Once Core
   // answers successfully (including an empty list), it remains authoritative.
   const userServers = dedupeServers((backendServers ?? localServers).filter((server) => !isBuiltinServer(server)));

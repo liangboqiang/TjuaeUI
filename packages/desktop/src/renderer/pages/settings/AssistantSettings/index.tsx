@@ -49,6 +49,13 @@ const parseSource = (value?: string): AssistantCatalogSource | undefined =>
 
 const identityKey = (identity: AssistantCatalogIdentity) => `${identity.source}:${identity.namespace}:${identity.slug}`;
 
+const nextPatchVersion = (version: string): string => {
+  const [core] = version.split('-', 1);
+  const parts = core.split('.').map((part) => Number.parseInt(part, 10));
+  if (parts.length !== 3 || parts.some((part) => !Number.isSafeInteger(part) || part < 0)) return '1.0.0';
+  return `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+};
+
 const AssistantSettings: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -85,6 +92,7 @@ const AssistantSettings: React.FC = () => {
   const [copyVisible, setCopyVisible] = useState(false);
   const [copySlug, setCopySlug] = useState('');
   const [publishVisible, setPublishVisible] = useState(false);
+  const [publishVersion, setPublishVersion] = useState('');
   const [publishMessage, setPublishMessage] = useState('');
   const [catalogWarning, setCatalogWarning] = useState<string>();
 
@@ -387,15 +395,25 @@ const AssistantSettings: React.FC = () => {
   };
 
   const publishCurrent = async () => {
-    if (!routeIdentity || routeIdentity.source !== 'tjuae-hub' || !publishMessage.trim()) return;
+    if (
+      !routeIdentity ||
+      !detail?.item.editable ||
+      detail.item.system ||
+      !publishVersion.trim() ||
+      !publishMessage.trim()
+    )
+      return;
     setBusyIdentity(identityKey(routeIdentity));
     try {
       await ipcBridge.assistants.publishCatalog.invoke({
         ...routeIdentity,
+        version: publishVersion.trim(),
         message: publishMessage.trim(),
       });
       setPublishVisible(false);
+      setPublishVersion('');
       setPublishMessage('');
+      setSelectedVersion(undefined);
       await refreshAll();
       Message.success(t('settings.assistantCatalog.publishSuccess'));
     } catch (publishError) {
@@ -407,6 +425,9 @@ const AssistantSettings: React.FC = () => {
   };
 
   const currentAssistant = detail?.item;
+  const categoryOptions = Array.from(
+    new Set([...(page?.items.flatMap((item) => item.categories) ?? []), ...(detail?.item.categories ?? [])])
+  ).toSorted((left, right) => left.localeCompare(right));
   if (routeIdentity) {
     return (
       <SettingsPageWrapper className={styles.page} contentClassName={styles.detailPageContent}>
@@ -422,6 +443,7 @@ const AssistantSettings: React.FC = () => {
           comparisonFailed={comparisonError != null}
           baseVersion={baseVersion}
           targetVersion={targetVersion}
+          categoryOptions={categoryOptions}
           onBack={() => void navigate('/settings/assistants')}
           onRetry={() => void refreshDetail()}
           onTabChange={setDetailTab}
@@ -440,7 +462,10 @@ const AssistantSettings: React.FC = () => {
           onExport={() => void exportCurrent()}
           onSaveSettings={saveSettings}
           onDelete={deleteCurrent}
-          onPublish={() => setPublishVisible(true)}
+          onPublish={() => {
+            setPublishVersion(nextPatchVersion(detail?.item.latestVersion ?? '0.0.0'));
+            setPublishVisible(true);
+          }}
         />
         <AssistantActivationModal
           plan={activationPlan}
@@ -486,17 +511,26 @@ const AssistantSettings: React.FC = () => {
         <Modal
           visible={publishVisible}
           title={t('settings.assistantCatalog.publishTitle')}
-          okButtonProps={{ disabled: !publishMessage.trim() }}
+          okButtonProps={{ disabled: !publishVersion.trim() || !publishMessage.trim() }}
           onOk={() => void publishCurrent()}
           onCancel={() => setPublishVisible(false)}
         >
-          <Input.TextArea
-            value={publishMessage}
-            onChange={setPublishMessage}
-            maxLength={500}
-            showWordLimit
-            placeholder={t('settings.assistantCatalog.publishPlaceholder')}
-          />
+          <div className={styles.modalFields}>
+            <label>
+              <span>{t('settings.assistantCatalog.publishVersion')}</span>
+              <Input value={publishVersion} onChange={setPublishVersion} placeholder='1.0.0' />
+            </label>
+            <label>
+              <span>{t('settings.assistantCatalog.publishNotes')}</span>
+              <Input.TextArea
+                value={publishMessage}
+                onChange={setPublishMessage}
+                maxLength={500}
+                showWordLimit
+                placeholder={t('settings.assistantCatalog.publishPlaceholder')}
+              />
+            </label>
+          </div>
         </Modal>
       </SettingsPageWrapper>
     );

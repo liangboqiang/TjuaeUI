@@ -56,7 +56,7 @@ const AssistantCatalogDirectory: React.FC<{
             enabledLabel={t('settings.assistantCatalog.enabled')}
             description={assistant.description || t('settings.assistantCatalog.noDescription')}
             onOpen={() => onOpen(assistant)}
-            tags={
+            badges={
               <>
                 <Tag size='small'>
                   <LinkCloud /> {t(assistantSourceTranslationKey[assistant.identity.source])}

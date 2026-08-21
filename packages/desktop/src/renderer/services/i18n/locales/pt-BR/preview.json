@@ -154,7 +154,6 @@
       "revision": "Remote revision",
       "name": "Name",
       "description": "Description",
-      "tags": "Tags",
       "compatibility": "Compatibilidade",
       "requirements": "Requisitos de execução",
       "contentHash": "Hash do conteúdo",

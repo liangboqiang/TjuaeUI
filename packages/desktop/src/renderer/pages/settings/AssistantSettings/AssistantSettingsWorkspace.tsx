@@ -7,7 +7,7 @@ import type {
 import { skillIdentityKey, type SkillCatalogItem } from '@/common/types/platform/skill';
 import { useManagedAgentRuntimeCatalog } from '@/renderer/hooks/agent/useManagedAgents';
 import { useModelProviderList } from '@/renderer/hooks/agent/useModelProviderList';
-import { ensureBackendMcpCatalog } from '@/renderer/hooks/mcp/catalog';
+import { useMcpServers } from '@/renderer/hooks/mcp';
 import MarkdownPreview from '@/renderer/pages/conversation/Preview/components/viewers/MarkdownViewer';
 import {
   buildAgentRuntimeModeState,
@@ -108,10 +108,10 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
 
   const managedAgents = useManagedAgentRuntimeCatalog();
   const { providers, getAvailableModels } = useModelProviderList();
+  const { allMcpServers, isMcpServersLoading } = useMcpServers();
   const { data: skillPage } = useSWR('assistant-settings-skill-catalog', () =>
     ipcBridge.fs.listSkillCatalog.invoke({ enabled: true, limit: 200 })
   );
-  const { data: mcpCatalog } = useSWR('assistant-settings-mcp-catalog', ensureBackendMcpCatalog);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
@@ -161,13 +161,13 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
       value: item.value,
       label: t(`agentMode.${item.value}`, { defaultValue: item.label }),
     }));
-    if (!options.length) {
-      options.push(
-        { value: 'read-only', label: t('agentMode.read-only') },
-        { value: 'auto', label: t('agentMode.auto') },
-        { value: 'full-access', label: t('agentMode.full-access') }
-      );
-    }
+    [
+      { value: 'read-only', label: t('agentMode.read-only') },
+      { value: 'auto', label: t('agentMode.auto') },
+      { value: 'full-access', label: t('agentMode.full-access') },
+    ].forEach((candidate) => {
+      if (!options.some((item) => item.value === candidate.value)) options.push(candidate);
+    });
     if (permission && !options.some((item) => item.value === permission)) {
       options.unshift({ value: permission, label: permission });
     }
@@ -178,11 +178,19 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
       value: item.value,
       label: item.label,
     }));
+    [
+      { value: 'low', label: t('settings.assistantThoughtLevelLow') },
+      { value: 'medium', label: t('settings.assistantThoughtLevelMedium') },
+      { value: 'high', label: t('settings.assistantThoughtLevelHigh') },
+      { value: 'xhigh', label: t('settings.assistantThoughtLevelExtraHigh') },
+    ].forEach((candidate) => {
+      if (!options.some((item) => item.value === candidate.value)) options.push(candidate);
+    });
     if (thought && !options.some((item) => item.value === thought)) {
       options.unshift({ value: thought, label: thought });
     }
     return options;
-  }, [selectedAgentThoughtOption, thought]);
+  }, [selectedAgentThoughtOption, t, thought]);
   const skillOptions = useMemo(
     () =>
       (skillPage?.items ?? []).map((item) => ({
@@ -200,12 +208,12 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
     [skillOptions, skills]
   );
   const mcpOptions = useMemo(() => {
-    const options = (mcpCatalog?.allServers ?? []).map((item) => ({ value: item.id, label: item.name }));
+    const options = allMcpServers.map((item) => ({ value: item.id, label: item.name }));
     mcps.forEach((id) => {
       if (!options.some((item) => item.value === id)) options.push({ value: id, label: id });
     });
     return options;
-  }, [mcpCatalog, mcps]);
+  }, [allMcpServers, mcps]);
 
   useEffect(() => {
     if (modelMode === 'fixed' && model && modelOptions.length && !modelOptions.some((item) => item.value === model)) {
@@ -248,7 +256,6 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
       description: detail.manifest.description,
       avatar: detail.manifest.avatar,
       categories: detail.manifest.categories,
-      tags: detail.manifest.tags,
       defaults: {
         agent,
         model: { mode: modelMode, value: modelMode === 'fixed' ? model : undefined },
@@ -301,10 +308,9 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
             value={value}
             options={options}
             showSearch
-            allowCreate
             disabled={!editable}
             placeholder={placeholder}
-            onChange={setValue}
+            onChange={(nextValue) => setValue(nextValue || undefined)}
           />
         ) : null}
       </div>
@@ -425,7 +431,8 @@ const AssistantSettingsWorkspace: React.FC<Props> = ({ detail, busy, onSave }) =
                 options={mcpOptions}
                 allowClear
                 showSearch
-                disabled={!editable}
+                loading={isMcpServersLoading}
+                disabled={!editable || isMcpServersLoading}
                 placeholder={t('settings.assistantSelectDefaultMcp')}
                 onChange={setMcps}
               />

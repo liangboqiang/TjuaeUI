@@ -154,7 +154,6 @@
       "revision": "Remote revision",
       "name": "Name",
       "description": "Description",
-      "tags": "Tags",
       "compatibility": "互換性",
       "requirements": "実行要件",
       "contentHash": "コンテンツハッシュ",

@@ -8,7 +8,7 @@ type SettingsCatalogCardProps = {
   title: React.ReactNode;
   version: React.ReactNode;
   description: React.ReactNode;
-  tags: React.ReactNode;
+  badges: React.ReactNode;
   footer: React.ReactNode;
   enabled?: boolean;
   enabledLabel: React.ReactNode;
@@ -22,7 +22,7 @@ const SettingsCatalogCard: React.FC<SettingsCatalogCardProps> = ({
   title,
   version,
   description,
-  tags,
+  badges,
   footer,
   enabled,
   enabledLabel,
@@ -57,7 +57,7 @@ const SettingsCatalogCard: React.FC<SettingsCatalogCardProps> = ({
       ) : null}
     </div>
     <p className={styles.description}>{description}</p>
-    <div className={styles.tags}>{tags}</div>
+    <div className={styles.badges}>{badges}</div>
     <div className={styles.footer} onClick={(event) => event.stopPropagation()}>
       {footer}
     </div>

@@ -39,6 +39,13 @@ const describeError = (error: unknown): string => {
   }
 };
 
+const nextPatchVersion = (version: string): string => {
+  const [core] = version.split('-', 1);
+  const parts = core.split('.').map((part) => Number.parseInt(part, 10));
+  if (parts.length !== 3 || parts.some((part) => !Number.isSafeInteger(part) || part < 0)) return '1.0.0';
+  return `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+};
+
 const SkillsHubSettings: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -73,6 +80,9 @@ const SkillsHubSettings: React.FC = () => {
   const [copySlug, setCopySlug] = useState('');
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishSlug, setPublishSlug] = useState('');
+  const [versionOpen, setVersionOpen] = useState(false);
+  const [nextVersion, setNextVersion] = useState('');
+  const [versionNotes, setVersionNotes] = useState('');
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query), 250);
@@ -174,7 +184,7 @@ const SkillsHubSettings: React.FC = () => {
       try {
         const result = await operation();
         Message.success(success);
-        void refreshAll().catch((refreshError) =>
+        await refreshAll().catch((refreshError) =>
           console.warn(`[SkillCatalog] ${action ?? 'operation'} succeeded but refresh failed`, refreshError)
         );
         return result;
@@ -312,6 +322,9 @@ const SkillsHubSettings: React.FC = () => {
   }, [detail, routeIdentity, run, t]);
 
   if (routeIdentity) {
+    const categoryOptions = Array.from(
+      new Set([...(page?.items.flatMap((item) => item.categories) ?? []), ...(detail?.skill.categories ?? [])])
+    ).toSorted((left, right) => left.localeCompare(right));
     return (
       <SettingsPageWrapper className={styles.page} contentClassName={styles.detailPageContent}>
         <SkillCatalogDetailView
@@ -328,6 +341,7 @@ const SkillsHubSettings: React.FC = () => {
           comparisonFailed={comparisonError != null}
           baseVersion={baseVersion}
           targetVersion={targetVersion}
+          categoryOptions={categoryOptions}
           onBack={() => void navigate('/settings/skills')}
           onTabChange={setDetailTab}
           onVersionChange={(version) => {
@@ -342,6 +356,11 @@ const SkillsHubSettings: React.FC = () => {
           onPublish={() => {
             setPublishSlug(routeIdentity.slug);
             setPublishOpen(true);
+          }}
+          onPublishVersion={() => {
+            setNextVersion(nextPatchVersion(detail?.skill.latestVersion ?? detail?.selectedVersion ?? '0.0.0'));
+            setVersionNotes('');
+            setVersionOpen(true);
           }}
           onExport={() => void exportCurrent()}
           onDelete={() =>
@@ -377,7 +396,6 @@ const SkillsHubSettings: React.FC = () => {
                   name: draft.name,
                   description: draft.description,
                   categories: draft.categories,
-                  tags: draft.tags,
                   iconDataUrl: draft.imageDataUrl,
                 }),
               t('settings.catalogProfileSaved')
@@ -416,6 +434,47 @@ const SkillsHubSettings: React.FC = () => {
         >
           <p>{t('settings.skillsHub.copyDescription')}</p>
           <Input value={copySlug} onChange={setCopySlug} placeholder={t('settings.skillsHub.copyPlaceholder')} />
+        </Modal>
+        <Modal
+          title={t('settings.skillsHub.publishVersionTitle')}
+          visible={versionOpen}
+          confirmLoading={busy === 'publishVersion'}
+          okButtonProps={{ disabled: !nextVersion.trim() || !versionNotes.trim() }}
+          onCancel={() => setVersionOpen(false)}
+          onOk={() => {
+            if (!detail) return;
+            void run(
+              'publishVersion',
+              () =>
+                ipcBridge.fs.publishSkillVersion.invoke({
+                  ...routeIdentity,
+                  version: nextVersion.trim(),
+                  message: versionNotes.trim(),
+                }),
+              t('settings.skillsHub.publishVersionSuccess')
+            ).then((result) => {
+              if (!result) return;
+              setVersionOpen(false);
+              setSelectedVersion(undefined);
+            });
+          }}
+        >
+          <div className={styles.modalFields}>
+            <label>
+              <span>{t('settings.skillsHub.versionLabel')}</span>
+              <Input value={nextVersion} onChange={setNextVersion} placeholder='1.0.0' />
+            </label>
+            <label>
+              <span>{t('settings.skillsHub.versionNotes')}</span>
+              <Input.TextArea
+                value={versionNotes}
+                onChange={setVersionNotes}
+                maxLength={500}
+                showWordLimit
+                placeholder={t('settings.skillsHub.versionNotesPlaceholder')}
+              />
+            </label>
+          </div>
         </Modal>
         <Modal
           title={t('settings.skillsHub.publishTitle')}

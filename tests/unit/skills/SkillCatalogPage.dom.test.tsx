@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   copySkillToMine: vi.fn(),
   importSkill: vi.fn(),
   updateSkillProfile: vi.fn(),
+  publishSkillVersion: vi.fn(),
   showOpen: vi.fn(),
   talkToButler: vi.fn(),
   navigate: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock('@/common', () => ({
       copySkillToMine: { invoke: mocks.copySkillToMine },
       saveSkillCatalogFile: { invoke: vi.fn() },
       updateSkillProfile: { invoke: mocks.updateSkillProfile },
+      publishSkillVersion: { invoke: mocks.publishSkillVersion },
       publishSkillToTjuaeHub: { invoke: vi.fn() },
       exportSkill: { invoke: vi.fn() },
       importSkill: { invoke: mocks.importSkill },
@@ -88,6 +90,12 @@ vi.mock('react-i18next', () => ({
         'settings.skillsHub.versionCompare': '版本比较',
         'settings.skillsHub.version': '版本',
         'settings.skillsHub.export': '导出',
+        'settings.skillsHub.publishVersion': '发布新版本',
+        'settings.skillsHub.publishVersionTitle': '发布技能新版本',
+        'settings.skillsHub.publishVersionSuccess': '技能版本已发布',
+        'settings.skillsHub.versionLabel': '版本号',
+        'settings.skillsHub.versionNotes': '发布说明',
+        'settings.skillsHub.versionNotesPlaceholder': '说明本次更新',
         'settings.skillsHub.readOnly': '只读',
         'settings.skillsHub.baseVersion': '基准版本',
         'settings.skillsHub.targetVersion': '目标版本',
@@ -112,7 +120,6 @@ const remoteSkill = {
   description: '定时任务技能',
   latestVersion: '2.0.0',
   categories: ['自动化'],
-  tags: ['schedule'],
   author: 'Alice',
   preferences: {
     selectedVersion: '2.0.0',
@@ -183,6 +190,10 @@ describe('SkillCatalogPage', () => {
       version: '1.0.0',
     });
     mocks.showOpen.mockResolvedValue(['C:\\packages\\imported-skill.zip']);
+    mocks.publishSkillVersion.mockResolvedValue({
+      identity: { source: 'mine', namespace: '', slug: 'cron' },
+      version: '2.0.1',
+    });
   });
 
   it('shows every source in one card directory and opens the canonical identity route', async () => {
@@ -347,6 +358,35 @@ describe('SkillCatalogPage', () => {
       })
     );
     expect(mocks.updateSkillPreferences).not.toHaveBeenCalled();
+  });
+
+  it('publishes the editable current skill as a newer version with explicit release notes', async () => {
+    const localSkill = {
+      ...remoteSkill,
+      identity: { source: 'mine' as const, namespace: '', slug: 'cron' },
+      editable: true,
+      canCopyToMine: false,
+      canPublishToTjuaeHub: true,
+    };
+    mocks.params = { source: 'mine', namespace: '~', skillName: 'cron' };
+    mocks.getSkillCatalogDetail.mockResolvedValue({ ...detail, skill: localSkill });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: '发布新版本' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByDisplayValue('2.0.1')).toBeInTheDocument();
+    fireEvent.change(within(dialog).getByPlaceholderText('说明本次更新'), { target: { value: '完善技能内容' } });
+    fireEvent.click(within(dialog).getByText(/确定|OK/u));
+
+    await waitFor(() =>
+      expect(mocks.publishSkillVersion).toHaveBeenCalledWith({
+        source: 'mine',
+        namespace: '',
+        slug: 'cron',
+        version: '2.0.1',
+        message: '完善技能内容',
+      })
+    );
   });
 
   it('compares only versions beneath the current source namespace and slug', async () => {

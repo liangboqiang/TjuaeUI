@@ -1,5 +1,5 @@
 import { ipcBridge } from '@/common';
-import { Button, Input, InputTag, Select, Tag } from '@arco-design/web-react';
+import { Button, Input, Select, Tag } from '@arco-design/web-react';
 import { CloseSmall, Edit, Save, UploadPicture } from '@icon-park/react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ export type CatalogProfileDraft = {
   name: string;
   description: string;
   categories: string[];
-  tags: string[];
   imageDataUrl?: string;
 };
 
@@ -19,7 +18,7 @@ type Props = {
   name: string;
   description: string;
   categories: string[];
-  tags: string[];
+  categoryOptions: string[];
   sourceLabel: string;
   versionLabel: string;
   version: string;
@@ -37,14 +36,12 @@ const CatalogDetailHero: React.FC<Props> = (props) => {
   const [name, setName] = useState(props.name);
   const [description, setDescription] = useState(props.description);
   const [categories, setCategories] = useState(props.categories);
-  const [tags, setTags] = useState(props.tags);
   const [imageDataUrl, setImageDataUrl] = useState<string>();
 
   const reset = () => {
     setName(props.name);
     setDescription(props.description);
     setCategories(props.categories);
-    setTags(props.tags);
     setImageDataUrl(undefined);
   };
 
@@ -71,7 +68,6 @@ const CatalogDetailHero: React.FC<Props> = (props) => {
       name: name.trim(),
       description: description.trim(),
       categories,
-      tags,
       imageDataUrl,
     });
     if (saved) setEditing(false);
@@ -147,22 +143,22 @@ const CatalogDetailHero: React.FC<Props> = (props) => {
           <div className={styles.metadataEditor}>
             <label>
               <span>{t('settings.catalogCategories')}</span>
-              <InputTag value={categories} allowClear onChange={setCategories} />
-            </label>
-            <label>
-              <span>{t('settings.catalogTags')}</span>
-              <InputTag value={tags} allowClear onChange={setTags} />
+              <Select
+                mode='multiple'
+                value={categories}
+                options={props.categoryOptions.map((category) => ({ value: category, label: category }))}
+                allowClear
+                allowCreate
+                showSearch
+                placeholder={t('settings.catalogCategoriesPlaceholder')}
+                onChange={setCategories}
+              />
             </label>
           </div>
         ) : (
-          <div className={styles.tags}>
+          <div className={styles.categories}>
             {props.categories.map((category) => (
               <Tag key={`category:${category}`}>{category}</Tag>
-            ))}
-            {props.tags.map((tag) => (
-              <Tag key={`tag:${tag}`} color='gray'>
-                #{tag}
-              </Tag>
             ))}
           </div>
         )}

@@ -27,12 +27,13 @@ vi.mock('@/renderer/hooks/agent/useManagedAgents', () => ({
 vi.mock('@/renderer/hooks/agent/useModelProviderList', () => ({
   useModelProviderList: () => ({ providers: [], getAvailableModels: () => [] }),
 }));
-vi.mock('@/renderer/hooks/mcp/catalog', () => ({
-  ensureBackendMcpCatalog: async () => ({
-    allServers: [
+vi.mock('@/renderer/hooks/mcp', () => ({
+  useMcpServers: () => ({
+    allMcpServers: [
       { id: 'filesystem', name: 'Filesystem', enabled: true },
       { id: 'disabled-server', name: 'Disabled server', enabled: false },
     ],
+    isMcpServersLoading: false,
   }),
 }));
 vi.mock('@/renderer/utils/model/agentRuntimeCatalog', () => ({
@@ -57,7 +58,6 @@ const detail: AssistantCatalogDetail = {
     description: '写作助手',
     latestVersion: '1.0.0',
     categories: [],
-    tags: [],
     editable: true,
     system: false,
     canDisable: true,
@@ -74,7 +74,6 @@ const detail: AssistantCatalogDetail = {
     description: '写作助手',
     descriptionI18n: {},
     categories: [],
-    tags: [],
     defaults: {
       agent: 'codex',
       model: { mode: 'fixed', value: 'gpt-5.6' },
@@ -127,5 +126,34 @@ describe('AssistantSettingsWorkspace', () => {
     expect(screen.getByText('Filesystem')).toBeInTheDocument();
     expect(screen.getByText('Disabled server')).toBeInTheDocument();
     await waitFor(() => expect(mocks.listSkillCatalog).toHaveBeenCalledWith({ enabled: true, limit: 200 }));
+  });
+
+  it('persists newly selected fixed permission and thought values instead of treating the controls as decoration', async () => {
+    const onSave = vi.fn().mockResolvedValue(true);
+    const { container } = render(
+      <SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+        <AssistantSettingsWorkspace detail={detail} busy={false} onSave={onSave} />
+      </SWRConfig>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings.assistantDefaultConfigSection' }));
+
+    const choose = async (fieldLabel: string, optionLabel: string) => {
+      const field = screen.getByText(fieldLabel).closest('label');
+      expect(field).not.toBeNull();
+      const select = field!.querySelector('.arco-select-view');
+      expect(select).not.toBeNull();
+      fireEvent.click(select!);
+      fireEvent.click(await screen.findByText(optionLabel));
+    };
+
+    await choose('settings.assistantDefaultPermissionLabel', 'agentMode.full-access');
+    await choose('settings.assistantDefaultThoughtLevelLabel', 'settings.assistantThoughtLevelExtraHigh');
+    fireEvent.click(screen.getByRole('button', { name: 'settings.saveAssistant' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(onSave.mock.calls[0][0].defaults.permission).toEqual({ mode: 'fixed', value: 'full-access' });
+    expect(onSave.mock.calls[0][0].defaults.thoughtLevel).toEqual({ mode: 'fixed', value: 'xhigh' });
+    expect(container.querySelectorAll('.arco-select-view').length).toBeGreaterThan(0);
   });
 });

@@ -16,7 +16,7 @@ import { compactBytes, sourceTranslationKey } from './skillCatalogPresentation';
 import { SkillGlyph } from './SkillCatalogDirectory';
 
 export type DetailTab = 'overview' | 'files' | 'versions' | 'compare';
-export type BusyAction = 'preferences' | 'copy' | 'export' | 'save' | 'delete' | null;
+export type BusyAction = 'preferences' | 'copy' | 'export' | 'save' | 'delete' | 'publishVersion' | null;
 
 type FileTreeNode = {
   name: string;
@@ -145,12 +145,14 @@ type Props = {
   comparisonFailed: boolean;
   baseVersion?: string;
   targetVersion?: string;
+  categoryOptions: string[];
   onBack: () => void;
   onTabChange: (tab: DetailTab) => void;
   onVersionChange: (version: string) => void;
   onPreferenceChange: (field: 'enabled' | 'autoInject', value: boolean) => void;
   onCopy: () => void;
   onPublish: () => void;
+  onPublishVersion: () => void;
   onExport: () => void;
   onDelete: () => void;
   onOpenFile: (path: string) => void;
@@ -344,8 +346,18 @@ const SkillCatalogDetailView: React.FC<Props> = (props) => {
                 {t('settings.skillsHub.copyToMine')}
               </Button>
             ) : null}
+            {detail.skill.editable && detail.selectedVersion === detail.skill.latestVersion ? (
+              <Button
+                type='primary'
+                icon={<Upload />}
+                loading={props.busy === 'publishVersion'}
+                onClick={props.onPublishVersion}
+              >
+                {t('settings.skillsHub.publishVersion')}
+              </Button>
+            ) : null}
             {detail.skill.canPublishToTjuaeHub ? (
-              <Button type='primary' icon={<Upload />} onClick={props.onPublish}>
+              <Button icon={<Upload />} onClick={props.onPublish}>
                 {t('settings.skillsHub.publish')}
               </Button>
             ) : null}
@@ -384,7 +396,7 @@ const SkillCatalogDetailView: React.FC<Props> = (props) => {
             name={detail.skill.name}
             description={detail.skill.description}
             categories={detail.skill.categories}
-            tags={detail.skill.tags}
+            categoryOptions={props.categoryOptions}
             sourceLabel={t(sourceTranslationKey[detail.skill.identity.source])}
             versionLabel={t('settings.skillsHub.version')}
             version={detail.selectedVersion}
